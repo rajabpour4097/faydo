@@ -19,8 +19,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserProfile
-    fields = ['user', 'user_type', 'points', 'interests', 'achievements', 'phone', 'avatar', 'level']
-    read_only_fields = ['points', 'achievements']
+        fields = [
+            'user', 'user_type', 'business_type', 'company_name',
+            'points', 'interests', 'achievements', 'phone', 'avatar', 'level'
+        ]
+        read_only_fields = ['points', 'achievements']
 
 
 class CategorySerializer(serializers.ModelSerializer):

@@ -27,16 +27,49 @@ class RegisterView(APIView):
         user_type = request.data.get('user_type', 'customer')
         first_name = request.data.get('first_name', '')
         last_name = request.data.get('last_name', '')
+        email = request.data.get('email', '')
+        business_type = request.data.get('business_type')  # natural | legal
+        company_name = request.data.get('company_name', '')
         if not username or not password:
             return Response({'error': 'username و password الزامی است'}, status=400)
         if User.objects.filter(username=username).exists():
             return Response({'error': 'نام کاربری تکراری است'}, status=400)
-        user = User.objects.create_user(username=username, password=password, first_name=first_name, last_name=last_name)
-        UserProfile.objects.create(user=user, user_type=user_type, points=0)
+        # اعتبارسنجی اختصاصی برای کسب‌وکار
+        if user_type == 'business':
+            if business_type not in ['natural', 'legal']:
+                return Response({'error': 'business_type نامعتبر است (natural یا legal)'}, status=400)
+            if business_type == 'natural':
+                if not first_name or not last_name:
+                    return Response({'error': 'برای کسب‌وکار حقیقی نام و نام خانوادگی الزامی است'}, status=400)
+            else:  # legal
+                if not company_name:
+                    return Response({'error': 'برای کسب‌وکار حقوقی نام شرکت الزامی است'}, status=400)
+                # در صورت تمایل می‌توانیم نام شرکت را در first_name نگه داریم برای نمایش سریع
+                if not first_name:
+                    first_name = company_name
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            email=email
+        )
+        UserProfile.objects.create(
+            user=user,
+            user_type=user_type,
+            business_type=business_type if user_type == 'business' else None,
+            company_name=company_name if (user_type == 'business' and business_type == 'legal') else '',
+            points=0
+        )
         refresh = RefreshToken.for_user(user)
         return Response({
             'user': UserSerializer(user).data,
-            'profile': {'user_type': user_type, 'points': 0},
+            'profile': {
+                'user_type': user_type,
+                'business_type': business_type if user_type == 'business' else None,
+                'company_name': company_name if (user_type == 'business' and business_type == 'legal') else '',
+                'points': 0
+            },
             'access': str(refresh.access_token),
             'refresh': str(refresh),
         }, status=201)

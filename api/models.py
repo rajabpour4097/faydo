@@ -6,6 +6,16 @@ class UserProfile(models.Model):
     """پروفایل کاربر فایدو"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     user_type = models.CharField(max_length=20, choices=[('customer','Customer'), ('business','Business')], default='customer', verbose_name='نوع کاربر')
+    # برای کاربرانی که نوع آنها business است نوع کسب‌وکار (حقیقی/حقوقی) ذخیره می‌شود
+    business_type = models.CharField(
+        max_length=10,
+        choices=[('natural', 'حقیقی'), ('legal', 'حقوقی')],
+        blank=True,
+        null=True,
+        verbose_name='نوع کسب‌وکار'
+    )
+    # در صورت حقوقی بودن (legal) نام شرکت اینجا ذخیره می‌شود
+    company_name = models.CharField(max_length=255, blank=True, verbose_name='نام شرکت')
     points = models.PositiveIntegerField(default=0, verbose_name='امتیاز')
     interests = models.JSONField(default=list, blank=True, verbose_name='علایق')
     achievements = models.JSONField(default=list, blank=True, verbose_name='دستاوردها')

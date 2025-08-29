@@ -1,0 +1,34 @@
+/* Import remote Vazirmatn (fallback) and define local Vazir font */
+@import url('./assets/fonts/Vazirmatn-FD.css');
+
+/* Local Vazir font (ensure files exist in assets/fonts) */
+@font-face {
+	font-family: 'Vazir';
+	font-style: normal;
+	font-weight: 400;
+	src: url('./assets/fonts/Vazir.woff') format('woff'),
+			 url('./assets/fonts/Vazir.ttf') format('truetype');
+	font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { font-family: "Vazir", "Vazirmatn FD", system-ui, sans-serif; }
+.font-vazir { font-family: "Vazir", "Vazirmatn FD", system-ui, sans-serif; }
+
+.container-responsive { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+
+/* Dark theme base (applied when html has class 'dark') */
+html.dark body { @apply bg-surface-200 text-gray-100; }
+
+/* Scrollbar styling for dark mode */
+html.dark ::-webkit-scrollbar { width: 8px; }
+html.dark ::-webkit-scrollbar-track { background: #1a1b1e; }
+html.dark ::-webkit-scrollbar-thumb { background: #2a2d33; border-radius: 4px; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #3a3f47; }
+
+/* Utility shortcuts */
+.card-dark { @apply bg-surface-50 border border-surface-300 rounded-xl; }
+.hover-card-dark { @apply transition-colors duration-200 hover:bg-surface-400/30; }

@@ -1,0 +1,5 @@
+/* استفاده از CDN برای بارگذاری فونت Vazirmatn FD
+  برای انتشار نهایی بهتر است فایل‌های woff2 را دانلود و به صورت محلی سرو کنید. */
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+/* حالا می‌توانید با font-family: 'Vazirmatn FD', sans-serif استفاده کنید */

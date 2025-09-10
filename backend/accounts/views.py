@@ -93,9 +93,30 @@ def logout_view(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
-    """Get current user profile"""
-    serializer = UserProfileSerializer(request.user)
-    return Response(serializer.data)
+    """Get current user profile with role-specific profile data"""
+    user = request.user
+    user_data = UserProfileSerializer(user).data
+    
+    # Add role-specific profile data
+    profile_data = None
+    if user.role == 'customer':
+        try:
+            customer_profile = CustomerProfile.objects.get(user=user)
+            profile_data = CustomerProfileSerializer(customer_profile).data
+        except CustomerProfile.DoesNotExist:
+            profile_data = None
+    elif user.role == 'business':
+        try:
+            business_profile = BusinessProfile.objects.get(user=user)
+            profile_data = BusinessProfileSerializer(business_profile).data
+        except BusinessProfile.DoesNotExist:
+            profile_data = None
+    
+    return Response({
+        'user': user_data,
+        'profile': profile_data,
+        'role': user.role
+    })
 class BaseReadWriteViewSet(viewsets.ModelViewSet):
 	permission_classes = [permissions.AllowAny]
 

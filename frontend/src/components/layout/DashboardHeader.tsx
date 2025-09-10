@@ -7,8 +7,10 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
   const { user, logout } = useAuth()
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
+    // Force redirect to home page after logout
+    window.location.href = '/'
   }
 
   return (

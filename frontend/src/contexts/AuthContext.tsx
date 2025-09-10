@@ -65,7 +65,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true) // Start with true to check auth on mount
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     setIsLoading(true)
@@ -185,23 +185,91 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check for existing session on mount
   React.useEffect(() => {
     const checkAuthStatus = async () => {
-      setIsLoading(true)
-      const savedUser = localStorage.getItem('auth_user')
-      const accessToken = localStorage.getItem('access_token')
-      
-      if (savedUser && accessToken) {
-        try {
-          const parsedUser = JSON.parse(savedUser)
-          // Just restore the user from localStorage, token validation will happen when API calls are made
-          setUser(parsedUser)
-        } catch (error) {
-          console.error('Error parsing saved user:', error)
-          localStorage.removeItem('auth_user')
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
+      try {
+        const savedUser = localStorage.getItem('auth_user')
+        const accessToken = localStorage.getItem('access_token')
+        
+        if (savedUser && accessToken) {
+          // Validate the token by making a profile request
+          console.log('Validating existing session...')
+          const response = await apiService.getProfile()
+          
+          if (response.data) {
+            // Token is valid, update user data from server
+            const apiUser = response.data.user
+            const mappedUser: User = {
+              id: apiUser.id,
+              name: `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
+              email: apiUser.email,
+              type: apiUser.role,
+              avatar: apiUser.image,
+              username: apiUser.username,
+              phone_number: apiUser.phone_number
+            }
+            
+            setUser(mappedUser)
+            localStorage.setItem('auth_user', JSON.stringify(mappedUser))
+            console.log('Session validated successfully')
+          } else {
+            // Token is invalid or expired, try to refresh
+            console.log('Token validation failed, attempting refresh...')
+            const refreshToken = localStorage.getItem('refresh_token')
+            
+            if (refreshToken) {
+              const refreshSuccess = await apiService.refreshToken()
+              if (refreshSuccess) {
+                // Try again after refresh
+                const retryResponse = await apiService.getProfile()
+                if (retryResponse.data) {
+                  const apiUser = retryResponse.data.user
+                  const mappedUser: User = {
+                    id: apiUser.id,
+                    name: `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
+                    email: apiUser.email,
+                    type: apiUser.role,
+                    avatar: apiUser.image,
+                    username: apiUser.username,
+                    phone_number: apiUser.phone_number
+                  }
+                  
+                  setUser(mappedUser)
+                  localStorage.setItem('auth_user', JSON.stringify(mappedUser))
+                  console.log('Session refreshed successfully')
+                } else {
+                  console.log('Profile failed after refresh, clearing session')
+                  localStorage.removeItem('auth_user')
+                  localStorage.removeItem('access_token')
+                  localStorage.removeItem('refresh_token')
+                  setUser(null)
+                }
+              } else {
+                console.log('Token refresh failed, clearing session')
+                localStorage.removeItem('auth_user')
+                localStorage.removeItem('access_token')
+                localStorage.removeItem('refresh_token')
+                setUser(null)
+              }
+            } else {
+              console.log('No refresh token available, clearing session')
+              localStorage.removeItem('auth_user')
+              localStorage.removeItem('access_token')
+              localStorage.removeItem('refresh_token')
+              setUser(null)
+            }
+          }
+        } else {
+          console.log('No saved session found')
+          setUser(null)
         }
+      } catch (error) {
+        console.error('Error validating session:', error)
+        localStorage.removeItem('auth_user')
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        setUser(null)
+      } finally {
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }
 
     checkAuthStatus()

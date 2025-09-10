@@ -35,7 +35,12 @@ export const ProtectedRoute = ({
 
   // Check if user has required role
   if (user && allowedRoles.length > 0 && !allowedRoles.includes(user.type)) {
-    // Redirect to appropriate dashboard based on user role
+    // Only redirect if on root dashboard path, otherwise show access denied
+    if (location.pathname === '/dashboard/customer' || location.pathname === '/dashboard/business') {
+      const userDashboard = user.type === 'business' ? '/dashboard/business' : '/dashboard/customer'
+      return <Navigate to={userDashboard} replace />
+    }
+    // For specific pages, redirect to appropriate dashboard
     const userDashboard = user.type === 'business' ? '/dashboard/business' : '/dashboard/customer'
     return <Navigate to={userDashboard} replace />
   }
@@ -60,20 +65,48 @@ export const GuestRoute = ({ children }: { children: ReactNode }) => {
 
 // Convenience component for customer-only routes
 export const CustomerRoute = ({ children }: { children: ReactNode }) => {
-  return (
-    <ProtectedRoute requireAuth={true} allowedRoles={['customer']}>
-      {children}
-    </ProtectedRoute>
-  )
+  const { user, isLoading } = useAuth()
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+  
+  if (user.type !== 'customer') {
+    return <Navigate to="/dashboard/business" replace />
+  }
+  
+  return <>{children}</>
 }
 
 // Convenience component for business-only routes
 export const BusinessRoute = ({ children }: { children: ReactNode }) => {
-  return (
-    <ProtectedRoute requireAuth={true} allowedRoles={['business']}>
-      {children}
-    </ProtectedRoute>
-  )
+  const { user, isLoading } = useAuth()
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+  
+  if (user.type !== 'business') {
+    return <Navigate to="/dashboard/customer" replace />
+  }
+  
+  return <>{children}</>
 }
 
 // Convenience component for admin routes

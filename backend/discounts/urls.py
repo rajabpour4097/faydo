@@ -1,6 +1,10 @@
 from rest_framework.routers import DefaultRouter
-from .views import *
+from django.urls import path, include
+from .views import DiscountViewSet
 
 router = DefaultRouter()
+router.register(r'discounts', DiscountViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('', include(router.urls)),
+]

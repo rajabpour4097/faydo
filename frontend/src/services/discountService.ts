@@ -1,0 +1,161 @@
+import { 
+  Discount, 
+  DiscountCreate, 
+  DiscountComment, 
+  DashboardSummary 
+} from '../types/discount';
+
+const API_BASE_URL = 'http://localhost:8000/api';
+
+class DiscountService {
+  private getAuthHeaders() {
+    const token = localStorage.getItem('access_token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+  }
+
+  // دریافت تمام تخفیفات
+  async getDiscounts(): Promise<Discount[]> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('خطا در دریافت تخفیفات');
+    }
+
+    const data = await response.json();
+    return data.results || data;
+  }
+
+  // دریافت یک تخفیف
+  async getDiscount(id: number): Promise<Discount> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${id}/`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('خطا در دریافت تخفیف');
+    }
+
+    return response.json();
+  }
+
+  // ایجاد تخفیف جدید
+  async createDiscount(discount: DiscountCreate): Promise<Discount> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(discount),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'خطا در ایجاد تخفیف');
+    }
+
+    return response.json();
+  }
+
+  // ویرایش تخفیف
+  async updateDiscount(id: number, discount: Partial<DiscountCreate>): Promise<Discount> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${id}/`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(discount),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'خطا در ویرایش تخفیف');
+    }
+
+    return response.json();
+  }
+
+  // حذف تخفیف
+  async deleteDiscount(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${id}/`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('خطا در حذف تخفیف');
+    }
+  }
+
+  // امتیازدهی
+  async rateDiscount(id: number, score: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${id}/rate/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ score }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'خطا در ثبت امتیاز');
+    }
+  }
+
+  // دریافت نظرات
+  async getComments(discountId: number): Promise<DiscountComment[]> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${discountId}/comments/`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('خطا در دریافت نظرات');
+    }
+
+    return response.json();
+  }
+
+  // ثبت نظر
+  async addComment(discountId: number, comment: string): Promise<DiscountComment> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${discountId}/comment/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ comment }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'خطا در ثبت نظر');
+    }
+
+    return response.json();
+  }
+
+  // گزارش تخلف
+  async reportDiscount(discountId: number, reason: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${discountId}/report/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ reason }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'خطا در ثبت گزارش');
+    }
+  }
+
+  // خلاصه داشبورد
+  async getDashboardSummary(): Promise<DashboardSummary> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/dashboard_summary/`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('خطا در دریافت خلاصه داشبورد');
+    }
+
+    return response.json();
+  }
+}
+
+export default new DiscountService();

@@ -22,6 +22,9 @@ import { CustomerSupport } from './pages/dashboard/CustomerSupport'
 import { BusinessCustomers } from './pages/dashboard/BusinessCustomers'
 import { Profile } from './pages/profile/Profile'
 import { NotFound } from './pages/NotFound'
+import { DiscountList } from './pages/customer/DiscountList'
+import { DiscountDetail } from './pages/customer/DiscountDetail'
+import { DiscountManagement } from './pages/business/DiscountManagement'
 
 function App() {
   return (
@@ -33,6 +36,8 @@ function App() {
           <Route path="/businesses" element={<Layout><Businesses /></Layout>} />
           <Route path="/about" element={<Layout><About /></Layout>} />
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
+          <Route path="/discounts" element={<Layout><DiscountList /></Layout>} />
+          <Route path="/discounts/:id" element={<Layout><DiscountDetail /></Layout>} />
           
           {/* Guest-only routes with Layout */}
           <Route 
@@ -128,6 +133,14 @@ function App() {
             element={
               <BusinessRoute>
                 <BusinessCustomers />
+              </BusinessRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/business/discounts" 
+            element={
+              <BusinessRoute>
+                <DiscountManagement />
               </BusinessRoute>
             } 
           />

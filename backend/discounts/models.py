@@ -17,8 +17,7 @@ class Discount(BaseModel):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     percentage = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(100)],
-        unique=True
+        validators=[MinValueValidator(1), MaxValueValidator(100)]
     )
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()

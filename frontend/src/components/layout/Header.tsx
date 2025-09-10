@@ -12,6 +12,7 @@ export const Header = () => {
   const navigation = [
     { name: 'خانه', href: '/' },
     { name: 'کسب‌وکارها', href: '/businesses' },
+    { name: 'تخفیفات', href: '/discounts' },
     { name: 'درباره ما', href: '/about' },
     { name: 'ارتباط با ما', href: '/contact' },
   ]

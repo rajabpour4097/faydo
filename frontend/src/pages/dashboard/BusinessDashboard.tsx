@@ -1,4 +1,5 @@
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
+import { DiscountDashboard } from '../../components/discounts/DiscountDashboard'
 
 export const BusinessDashboard = () => {
   const businessStats = {
@@ -89,6 +90,8 @@ export const BusinessDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Discount Dashboard */}
+            <DiscountDashboard />
             {/* Discount Performance */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex justify-between items-center mb-6">

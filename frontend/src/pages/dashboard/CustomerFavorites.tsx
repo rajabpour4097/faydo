@@ -36,7 +36,7 @@ export const CustomerFavorites = () => {
 
   return (
     <DashboardLayout>
-      <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">

@@ -92,7 +92,7 @@ export const DiscountDetail: React.FC = () => {
   if (loading) {
     return isDashboard ? (
       <DashboardLayout>
-        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             <LoadingSpinner />
           </div>
@@ -106,7 +106,7 @@ export const DiscountDetail: React.FC = () => {
   if (!discount) {
     return isDashboard ? (
       <DashboardLayout>
-        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12 text-gray-500">تخفیف یافت نشد</div>
           </div>
@@ -303,7 +303,7 @@ export const DiscountDetail: React.FC = () => {
 
   return isDashboard ? (
     <DashboardLayout>
-      <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {content}
         </div>

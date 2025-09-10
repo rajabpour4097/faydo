@@ -78,7 +78,7 @@ export const DiscountManagement: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           <div className="space-y-6">
       <div className="flex justify-between items-center">

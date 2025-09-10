@@ -43,7 +43,7 @@ export const DiscountList: React.FC = () => {
   if (loading) {
     return isDashboard ? (
       <DashboardLayout>
-        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             <LoadingSpinner />
           </div>
@@ -57,8 +57,8 @@ export const DiscountList: React.FC = () => {
   const content = (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">تخفیفات ویژه</h1>
-        <p className="text-gray-600">از بهترین تخفیفات کسب‌وکارها استفاده کنید</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">تخفیفات ویژه</h1>
+        <p className="text-gray-600 text-sm lg:text-base">از بهترین تخفیفات کسب‌وکارها استفاده کنید</p>
       </div>
 
       {error && (
@@ -76,7 +76,7 @@ export const DiscountList: React.FC = () => {
           <p className="mt-1 text-sm text-gray-500">در حال حاضر تخفیف فعالی وجود ندارد.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           {discounts.map((discount) => (
             <DiscountCard
               key={discount.id}
@@ -91,7 +91,7 @@ export const DiscountList: React.FC = () => {
 
   return isDashboard ? (
     <DashboardLayout>
-      <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {content}
         </div>

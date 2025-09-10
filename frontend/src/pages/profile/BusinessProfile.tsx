@@ -58,7 +58,7 @@ export const BusinessProfile = ({ profileData }: BusinessProfileProps) => {
   }
 
   return (
-    <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-3xl shadow-2xl p-8 mb-8 text-white">

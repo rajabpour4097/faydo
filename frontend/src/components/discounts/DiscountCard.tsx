@@ -20,10 +20,10 @@ export const DiscountCard: React.FC<DiscountCardProps> = ({ discount, onViewDeta
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-bold text-gray-900">{discount.title}</h3>
-        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+        <h3 className="text-lg lg:text-xl font-bold text-gray-900 flex-1 ml-2">{discount.title}</h3>
+        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full whitespace-nowrap">
           {discount.percentage}% تخفیف
         </span>
       </div>

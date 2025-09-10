@@ -31,7 +31,7 @@ export const BusinessDiscounts: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="mr-64 p-6 min-h-[calc(100vh-4rem)] bg-gray-50">
+      <div className="p-4 lg:p-6 min-h-[calc(100vh-4rem)] bg-gray-50">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">مدیریت تخفیف‌ها</h1>
           <button onClick={()=>setOpenCreate(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">+ تخفیف جدید</button>

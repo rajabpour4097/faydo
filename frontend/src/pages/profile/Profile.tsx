@@ -73,7 +73,7 @@ export const Profile = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6 flex items-center justify-center">
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6 flex items-center justify-center">
           <LoadingSpinner />
         </div>
       </DashboardLayout>
@@ -83,7 +83,7 @@ export const Profile = () => {
   if (error || !profileData) {
     return (
       <DashboardLayout>
-        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6 flex items-center justify-center">
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6 flex items-center justify-center">
           <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4">
             <div className="text-center">
               <div className="text-red-500 text-6xl mb-4">⚠️</div>
@@ -118,7 +118,7 @@ export const Profile = () => {
   } else {
     return (
       <DashboardLayout>
-        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6 flex items-center justify-center">
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6 flex items-center justify-center">
           <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full mx-4 text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">نوع کاربری پشتیبانی نشده</h1>
             <p className="text-gray-600">این نوع کاربری هنوز پشتیبانی نمی‌شود.</p>

@@ -32,21 +32,21 @@ export const BusinessDashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">داشبورد کسب‌وکار</h1>
-          <p className="text-gray-600">مدیریت باشگاه مشتریان و مشاهده آمار عملکرد</p>
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">داشبورد کسب‌وکار</h1>
+          <p className="text-gray-600 text-sm lg:text-base">مدیریت باشگاه مشتریان و مشاهده آمار عملکرد</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+          <div className="bg-white rounded-xl lg:rounded-2xl shadow-lg p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">کل مشتریان</p>
-                <p className="text-2xl font-bold text-blue-600">{businessStats.totalCustomers.toLocaleString()}</p>
+                <p className="text-xs lg:text-sm text-gray-600">کل مشتریان</p>
+                <p className="text-xl lg:text-2xl font-bold text-blue-600">{businessStats.totalCustomers.toLocaleString()}</p>
                 <p className="text-xs text-green-600">+{businessStats.monthlyGrowth}% این ماه</p>
               </div>
               <div className="text-3xl">👥</div>

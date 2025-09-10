@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { DashboardHeader } from './DashboardHeader'
@@ -17,6 +17,7 @@ interface MenuItem {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user } = useAuth()
   const location = useLocation()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const customerMenuItems: MenuItem[] = [
     {
@@ -176,18 +177,28 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Dashboard Header */}
-      <DashboardHeader />
+      <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       
-      <div className="flex">
+      <div className="flex relative">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Main Content */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col lg:mr-64">
           <main className="flex-1">
             {children}
           </main>
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-64 bg-white/95 backdrop-blur-sm shadow-2xl border-l border-gray-200 fixed right-0 top-16 h-[calc(100vh-4rem)] z-30 overflow-y-auto">
+        <div className={`w-64 bg-white/95 backdrop-blur-sm shadow-2xl border-l border-gray-200 fixed right-0 top-16 h-[calc(100vh-4rem)] z-50 overflow-y-auto transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
+        }`}>
 
         {/* User Info */}
         <div className="p-4 border-b border-gray-200 bg-gray-50">

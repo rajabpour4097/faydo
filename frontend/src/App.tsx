@@ -10,74 +10,163 @@ import { About } from './pages/About'
 import { Contact } from './pages/Contact'
 import { Login } from './pages/auth/Login'
 import { Register } from './pages/auth/Register'
+import { AuthDebug } from './pages/auth/AuthDebug'
 import { CustomerDashboard } from './pages/dashboard/CustomerDashboard'
 import { BusinessDashboard } from './pages/dashboard/BusinessDashboard'
+import { CustomerOffers } from './pages/dashboard/CustomerOffers'
+import { BusinessOffers } from './pages/dashboard/BusinessOffers'
+import { CustomerFavorites } from './pages/dashboard/CustomerFavorites'
+import { CustomerOrders } from './pages/dashboard/CustomerOrders'
+import { CustomerMessages } from './pages/dashboard/CustomerMessages'
+import { CustomerSupport } from './pages/dashboard/CustomerSupport'
+import { BusinessCustomers } from './pages/dashboard/BusinessCustomers'
+import { Profile } from './pages/profile/Profile'
 import { NotFound } from './pages/NotFound'
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Layout>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/businesses" element={<Businesses />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            
-            {/* Guest-only routes (redirect to dashboard if logged in) */}
-            <Route 
-              path="/login" 
-              element={
+        <Routes>
+          {/* Public routes with Layout (Header + Footer) */}
+          <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/businesses" element={<Layout><Businesses /></Layout>} />
+          <Route path="/about" element={<Layout><About /></Layout>} />
+          <Route path="/contact" element={<Layout><Contact /></Layout>} />
+          
+          {/* Guest-only routes with Layout */}
+          <Route 
+            path="/login" 
+            element={
+              <Layout>
                 <GuestRoute>
                   <Login />
                 </GuestRoute>
-              } 
-            />
-            <Route 
-              path="/register" 
-              element={
+              </Layout>
+            } 
+          />
+          <Route 
+            path="/register" 
+            element={
+              <Layout>
                 <GuestRoute>
                   <Register />
                 </GuestRoute>
-              } 
-            />
+              </Layout>
+            } 
+          />
             
-            {/* Protected routes - Customer only */}
-            <Route 
-              path="/dashboard/customer" 
-              element={
-                <CustomerRoute>
-                  <CustomerDashboard />
-                </CustomerRoute>
-              } 
-            />
-            
-            {/* Protected routes - Business only */}
-            <Route 
-              path="/dashboard/business" 
-              element={
-                <BusinessRoute>
-                  <BusinessDashboard />
-                </BusinessRoute>
-              } 
-            />
-            
-            {/* Generic dashboard redirect based on user role */}
-            <Route 
-              path="/dashboard" 
-              element={
+          {/* Protected routes - Customer only (no Layout) */}
+          <Route 
+            path="/dashboard/customer" 
+            element={
+              <CustomerRoute>
+                <CustomerDashboard />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/offers" 
+            element={
+              <CustomerRoute>
+                <CustomerOffers />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/favorites" 
+            element={
+              <CustomerRoute>
+                <CustomerFavorites />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/orders" 
+            element={
+              <CustomerRoute>
+                <CustomerOrders />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/messages" 
+            element={
+              <CustomerRoute>
+                <CustomerMessages />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/support" 
+            element={
+              <CustomerRoute>
+                <CustomerSupport />
+              </CustomerRoute>
+            } 
+          />
+          
+          {/* Protected routes - Business only (no Layout) */}
+          <Route 
+            path="/dashboard/business" 
+            element={
+              <BusinessRoute>
+                <BusinessDashboard />
+              </BusinessRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/business/offers" 
+            element={
+              <BusinessRoute>
+                <BusinessOffers />
+              </BusinessRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/business/customers" 
+            element={
+              <BusinessRoute>
+                <BusinessCustomers />
+              </BusinessRoute>
+            } 
+          />
+          
+          {/* Profile page (no Layout) */}
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Debug page with Layout */}
+          <Route 
+            path="/debug" 
+            element={
+              <Layout>
                 <ProtectedRoute>
-                  <div></div> {/* This will auto-redirect to appropriate dashboard */}
+                  <AuthDebug />
                 </ProtectedRoute>
-              } 
-            />
-            
-            {/* 404 - Catch all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+              </Layout>
+            } 
+          />
+          
+          {/* Generic dashboard redirect based on user role (no Layout) */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <div></div> {/* This will auto-redirect to appropriate dashboard */}
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* 404 - Catch all route with Layout */}
+          <Route path="*" element={<Layout><NotFound /></Layout>} />
+        </Routes>
       </Router>
     </AuthProvider>
   )

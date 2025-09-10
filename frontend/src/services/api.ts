@@ -71,10 +71,18 @@ class ApiService {
     this.accessToken = localStorage.getItem('access_token')
   }
 
+  // Update token from localStorage (in case it changed)
+  private updateToken() {
+    this.accessToken = localStorage.getItem('access_token')
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
+    // Update token from localStorage in case it changed
+    this.updateToken()
+    
     const url = `${this.baseUrl}${endpoint}`
     const config: RequestInit = {
       headers: {
@@ -84,7 +92,8 @@ class ApiService {
       ...options,
     }
 
-    if (this.accessToken && !endpoint.includes('/auth/')) {
+    // Add authorization header for protected endpoints (exclude login/register)
+    if (this.accessToken && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/auth/refresh')) {
       config.headers = {
         ...config.headers,
         Authorization: `Bearer ${this.accessToken}`,
@@ -96,6 +105,25 @@ class ApiService {
       const data = await response.json()
 
       if (!response.ok) {
+        // If it's a 401 error and we have a refresh token, try to refresh
+        if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+          const refreshSuccess = await this.refreshToken()
+          if (refreshSuccess) {
+            // Retry the request with the new token
+            this.updateToken()
+            config.headers = {
+              ...config.headers,
+              Authorization: `Bearer ${this.accessToken}`,
+            }
+            const retryResponse = await fetch(url, config)
+            const retryData = await retryResponse.json()
+            
+            if (retryResponse.ok) {
+              return { data: retryData }
+            }
+          }
+        }
+        
         return { error: data.detail || data.message || Object.values(data).flat().join(', ') || 'خطا در ارتباط با سرور' }
       }
 
@@ -157,8 +185,8 @@ class ApiService {
     return response
   }
 
-  async getProfile(): Promise<ApiResponse<User>> {
-    return this.request<User>('/accounts/auth/profile/')
+  async getProfile(): Promise<ApiResponse<any>> {
+    return this.request<any>('/accounts/auth/profile/')
   }
 
   async refreshToken(): Promise<boolean> {

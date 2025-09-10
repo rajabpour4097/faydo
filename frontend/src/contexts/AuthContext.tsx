@@ -177,6 +177,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setUser(null)
       localStorage.removeItem('auth_user')
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
     }
   }
 
@@ -190,20 +192,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (savedUser && accessToken) {
         try {
           const parsedUser = JSON.parse(savedUser)
-          
-          // Verify token is still valid by checking profile
-          const response = await apiService.getProfile()
-          if (response.data) {
-            // Token is valid, keep user logged in
-            setUser(parsedUser)
-          } else {
-            // Token invalid, clear session
-            localStorage.removeItem('auth_user')
-            localStorage.removeItem('access_token')
-            localStorage.removeItem('refresh_token')
-          }
+          // Just restore the user from localStorage, token validation will happen when API calls are made
+          setUser(parsedUser)
         } catch (error) {
-          console.error('Error verifying auth status:', error)
+          console.error('Error parsing saved user:', error)
           localStorage.removeItem('auth_user')
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')

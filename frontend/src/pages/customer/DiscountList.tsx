@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Discount } from '../../types/discount';
 import discountService from '../../services/discountService';
 import { DiscountCard } from '../../components/discounts/DiscountCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 export const DiscountList: React.FC = () => {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // تشخیص اینکه آیا در dashboard هستیم یا نه
+  const isDashboard = location.pathname.startsWith('/dashboard');
 
   useEffect(() => {
     loadDiscounts();
@@ -28,12 +33,28 @@ export const DiscountList: React.FC = () => {
   };
 
   const handleViewDetails = (discountId: number) => {
-    navigate(`/discounts/${discountId}`);
+    if (isDashboard) {
+      navigate(`/dashboard/customer/discounts/${discountId}`);
+    } else {
+      navigate(`/discounts/${discountId}`);
+    }
   };
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) {
+    return isDashboard ? (
+      <DashboardLayout>
+        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+          <div className="max-w-7xl mx-auto">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </DashboardLayout>
+    ) : (
+      <LoadingSpinner />
+    );
+  }
 
-  return (
+  const content = (
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">تخفیفات ویژه</h1>
@@ -67,4 +88,14 @@ export const DiscountList: React.FC = () => {
       )}
     </div>
   );
+
+  return isDashboard ? (
+    <DashboardLayout>
+      <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          {content}
+        </div>
+      </div>
+    </DashboardLayout>
+  ) : content;
 };

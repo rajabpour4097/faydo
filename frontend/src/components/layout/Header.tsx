@@ -19,9 +19,10 @@ export const Header = () => {
 
   const isActive = (path: string) => location.pathname === path
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     setIsUserMenuOpen(false)
+    navigate('/')
   }
 
   const getDashboardLink = () => {

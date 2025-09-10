@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Discount, DiscountComment } from '../../types/discount';
 import discountService from '../../services/discountService';
 import { StarRating } from '../../components/ui/StarRating';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ReportDiscountModal } from '../../components/discounts/ReportDiscountModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 export const DiscountDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDashboard = location.pathname.startsWith('/dashboard');
   const [discount, setDiscount] = useState<Discount | null>(null);
   const [comments, setComments] = useState<DiscountComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,10 +89,35 @@ export const DiscountDetail: React.FC = () => {
     return 'red';
   };
 
-  if (loading) return <LoadingSpinner />;
-  if (!discount) return <div className="text-center py-12 text-gray-500">تخفیف یافت نشد</div>;
+  if (loading) {
+    return isDashboard ? (
+      <DashboardLayout>
+        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+          <div className="max-w-7xl mx-auto">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </DashboardLayout>
+    ) : (
+      <LoadingSpinner />
+    );
+  }
+  
+  if (!discount) {
+    return isDashboard ? (
+      <DashboardLayout>
+        <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center py-12 text-gray-500">تخفیف یافت نشد</div>
+          </div>
+        </div>
+      </DashboardLayout>
+    ) : (
+      <div className="text-center py-12 text-gray-500">تخفیف یافت نشد</div>
+    );
+  }
 
-  return (
+  const content = (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* هدر */}
       <div className="flex items-center justify-between">
@@ -272,4 +300,14 @@ export const DiscountDetail: React.FC = () => {
       />
     </div>
   );
+
+  return isDashboard ? (
+    <DashboardLayout>
+      <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          {content}
+        </div>
+      </div>
+    </DashboardLayout>
+  ) : content;
 };

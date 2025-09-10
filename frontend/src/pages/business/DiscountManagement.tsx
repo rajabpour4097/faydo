@@ -5,6 +5,7 @@ import { CreateDiscountModal } from '../../components/discounts/CreateDiscountMo
 import { StarRating } from '../../components/ui/StarRating';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 export const DiscountManagement: React.FC = () => {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -69,10 +70,17 @@ export const DiscountManagement: React.FC = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return (
+    <DashboardLayout>
+      <LoadingSpinner />
+    </DashboardLayout>
+  );
 
   return (
-    <div className="space-y-6">
+    <DashboardLayout>
+      <div className="mr-64 min-h-[calc(100vh-4rem)] bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">مدیریت تخفیفات</h1>
         <button
@@ -240,6 +248,9 @@ export const DiscountManagement: React.FC = () => {
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateDiscount}
       />
-    </div>
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 };

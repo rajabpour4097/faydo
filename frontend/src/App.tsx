@@ -36,8 +36,26 @@ function App() {
           <Route path="/businesses" element={<Layout><Businesses /></Layout>} />
           <Route path="/about" element={<Layout><About /></Layout>} />
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
-          <Route path="/discounts" element={<Layout><DiscountList /></Layout>} />
-          <Route path="/discounts/:id" element={<Layout><DiscountDetail /></Layout>} />
+          <Route 
+            path="/discounts" 
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <DiscountList />
+                </ProtectedRoute>
+              </Layout>
+            } 
+          />
+          <Route 
+            path="/discounts/:id" 
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <DiscountDetail />
+                </ProtectedRoute>
+              </Layout>
+            } 
+          />
           
           {/* Guest-only routes with Layout */}
           <Route 
@@ -67,6 +85,22 @@ function App() {
             element={
               <CustomerRoute>
                 <CustomerDashboard />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/discounts" 
+            element={
+              <CustomerRoute>
+                <DiscountList />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/discounts/:id" 
+            element={
+              <CustomerRoute>
+                <DiscountDetail />
               </CustomerRoute>
             } 
           />

@@ -209,7 +209,7 @@ export const CustomerProfile = ({ profileData }: CustomerProfileProps) => {
               </h3>
               <div className="space-y-3">
                 <button className="w-full text-right p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                  🎯 مشاهده تخفیف‌ها
+                  🎯 تخفیف اعضای ویژه
                 </button>
                 <button className="w-full text-right p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
                   📈 تاریخچه خرید

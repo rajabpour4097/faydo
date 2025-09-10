@@ -1,6 +1,6 @@
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 
-export const BusinessOffers = () => {
+export const BusinessEliteOffer = () => {
   const activeOffers = [
     {
       id: 1,
@@ -75,8 +75,8 @@ export const BusinessOffers = () => {
           {/* Header */}
           <div className="mb-8 flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">مدیریت تخفیف‌ها</h1>
-              <p className="text-gray-600">تخفیف‌های خود را ایجاد و مدیریت کنید.</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">مدیریت تخفیف اعضای ویژه</h1>
+              <p className="text-gray-600">تخفیف اعضای ویژه خود را ایجاد و مدیریت کنید.</p>
             </div>
             <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
               + ایجاد تخفیف جدید
@@ -88,7 +88,7 @@ export const BusinessOffers = () => {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">کل تخفیف‌ها</p>
+                  <p className="text-sm text-gray-600">کل تخفیف اعضای ویژه</p>
                   <p className="text-2xl font-bold text-blue-600">{offerStats.totalOffers}</p>
                 </div>
                 <div className="text-3xl">🎯</div>
@@ -98,7 +98,7 @@ export const BusinessOffers = () => {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">تخفیف‌های فعال</p>
+                  <p className="text-sm text-gray-600">تخفیف فعال اعضای ویژه</p>
                   <p className="text-2xl font-bold text-green-600">{offerStats.activeOffers}</p>
                 </div>
                 <div className="text-3xl">✅</div>
@@ -141,7 +141,7 @@ export const BusinessOffers = () => {
           {/* Active Offers */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">تخفیف‌های فعال</h2>
+              <h2 className="text-xl font-bold text-gray-900">تخفیف فعال اعضای ویژه</h2>
               <div className="flex space-x-2 space-x-reverse">
                 <button className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
                   فیلتر

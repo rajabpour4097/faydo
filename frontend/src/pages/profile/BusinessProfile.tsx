@@ -232,7 +232,7 @@ export const BusinessProfile = ({ profileData }: BusinessProfileProps) => {
                   📈 مشاهده گزارش‌ها
                 </button>
                 <button className="w-full text-right p-3 rounded-lg border border-gray-200 hover:bg-green-50 hover:border-green-300 transition-colors">
-                  🎯 مدیریت تخفیف‌ها
+                  🎯 تخفیف اعضای ویژه
                 </button>
                 <button className="w-full text-right p-3 rounded-lg border border-gray-200 hover:bg-green-50 hover:border-green-300 transition-colors">
                   👥 مشتریان

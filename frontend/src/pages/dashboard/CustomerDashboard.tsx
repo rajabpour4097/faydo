@@ -1,6 +1,14 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
+import { Discount } from '../../types/discount'
+import { ShoppingBag, Percent, Star, TrendingUp } from 'lucide-react'
+import discountService from '../../services/discountService'
 
 export const CustomerDashboard = () => {
+  const [availableDiscounts, setAvailableDiscounts] = useState<Discount[]>([])
+  const [loadingDiscounts, setLoadingDiscounts] = useState(true)
+  const navigate = useNavigate()
   const userStats = {
     points: 1250,
     level: 'برنزی',
@@ -17,11 +25,23 @@ export const CustomerDashboard = () => {
     { date: '۱۴۰۳/۰۶/۱۰', business: 'مرکز خرید آرمیتا', points: 120, amount: 650000 },
   ]
 
-  const availableDiscounts = [
-    { business: 'رستوران سنتی', discount: '15%', validUntil: '۱۴۰۳/۰۷/۰۱', category: 'رستوران' },
-    { business: 'کافه نوین', discount: '10%', validUntil: '۱۴۰۳/۰۶/۳۰', category: 'کافه' },
-    { business: 'پوشاک مدرن', discount: '20%', validUntil: '۱۴۰۳/۰۷/۱۵', category: 'پوشاک' },
-  ]
+  // Load available discounts from API
+  useEffect(() => {
+    const loadDiscounts = async () => {
+      try {
+        setLoadingDiscounts(true)
+        const data = await discountService.getDiscounts()
+        // Get only first 3 discounts for dashboard preview  
+        setAvailableDiscounts(data.slice(0, 3))
+      } catch (error) {
+        console.error('Error loading discounts:', error)
+      } finally {
+        setLoadingDiscounts(false)
+      }
+    }
+
+    loadDiscounts()
+  }, [])
 
   const badges = [
     { name: 'خریدار منظم', icon: '🏅', description: 'خرید در ۵ کسب‌وکار مختلف' },
@@ -51,13 +71,27 @@ export const CustomerDashboard = () => {
             </div>
           </div>
 
+                    <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">امتیاز</p>
+                <p className="text-2xl font-bold text-blue-600">{userStats.points}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-full">
+                <Star className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">سطح عضویت</p>
-                <p className="text-2xl font-bold text-orange-600">{userStats.level}</p>
+                <p className="text-sm text-gray-600">سطح</p>
+                <p className="text-lg font-bold text-orange-600">{userStats.level}</p>
               </div>
-              <div className="text-3xl">🥉</div>
+              <div className="p-3 bg-orange-100 rounded-full">
+                <TrendingUp className="w-6 h-6 text-orange-600" />
+              </div>
             </div>
           </div>
 
@@ -67,7 +101,9 @@ export const CustomerDashboard = () => {
                 <p className="text-sm text-gray-600">مجموع خرید</p>
                 <p className="text-2xl font-bold text-green-600">{(userStats.totalSpent / 1000000).toFixed(1)}M</p>
               </div>
-              <div className="text-3xl">💳</div>
+              <div className="p-3 bg-green-100 rounded-full">
+                <ShoppingBag className="w-6 h-6 text-green-600" />
+              </div>
             </div>
           </div>
 
@@ -77,7 +113,9 @@ export const CustomerDashboard = () => {
                 <p className="text-sm text-gray-600">تخفیف استفاده شده</p>
                 <p className="text-2xl font-bold text-purple-600">{userStats.discountsUsed}</p>
               </div>
-              <div className="text-3xl">🎯</div>
+              <div className="p-3 bg-purple-100 rounded-full">
+                <Percent className="w-6 h-6 text-purple-600" />
+              </div>
             </div>
           </div>
         </div>
@@ -130,19 +168,46 @@ export const CustomerDashboard = () => {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">تخفیف‌های موجود</h2>
               <div className="space-y-4">
-                {availableDiscounts.map((discount, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="font-medium text-gray-900">{discount.business}</p>
-                      <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
-                        {discount.discount}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{discount.category}</p>
-                    <p className="text-xs text-gray-500">تا {discount.validUntil}</p>
+                {loadingDiscounts ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-sm text-gray-500 mt-2">در حال بارگذاری...</p>
                   </div>
-                ))}
+                ) : availableDiscounts.length > 0 ? (
+                  availableDiscounts.map((discount) => (
+                    <div 
+                      key={discount.id} 
+                      className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => navigate('/dashboard/customer/discounts')}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="font-medium text-gray-900">{discount.business_name || 'کسب‌وکار'}</p>
+                        <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
+                          {discount.percentage}%
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{discount.title}</p>
+                      <p className="text-xs text-gray-500">
+                        تا {new Date(discount.end_date).toLocaleDateString('fa-IR')}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">تخفیفی موجود نیست</p>
+                  </div>
+                )}
               </div>
+              {availableDiscounts.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => navigate('/dashboard/customer/discounts')}
+                    className="w-full text-center text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors"
+                  >
+                    مشاهده همه تخفیف‌ها ←
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Badges */}

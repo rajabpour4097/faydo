@@ -13,8 +13,8 @@ import { Register } from './pages/auth/Register'
 import { AuthDebug } from './pages/auth/AuthDebug'
 import { CustomerDashboard } from './pages/dashboard/CustomerDashboard'
 import { BusinessDashboard } from './pages/dashboard/BusinessDashboard'
-import { CustomerOffers } from './pages/dashboard/CustomerOffers'
-import { BusinessOffers } from './pages/dashboard/BusinessOffers'
+import { CustomerEliteOffer } from './pages/dashboard/CustomerEliteOffer'
+import { BusinessEliteOffer } from './pages/dashboard/BusinessEliteOffer'
 import { CustomerFavorites } from './pages/dashboard/CustomerFavorites'
 import { CustomerOrders } from './pages/dashboard/CustomerOrders'
 import { CustomerMessages } from './pages/dashboard/CustomerMessages'
@@ -105,10 +105,18 @@ function App() {
             } 
           />
           <Route 
-            path="/dashboard/customer/offers" 
+            path="/dashboard/customer/eliteoffer" 
             element={
               <CustomerRoute>
-                <CustomerOffers />
+                <CustomerEliteOffer />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/discounts" 
+            element={
+              <CustomerRoute>
+                <DiscountList />
               </CustomerRoute>
             } 
           />
@@ -155,10 +163,10 @@ function App() {
             } 
           />
           <Route 
-            path="/dashboard/business/offers" 
+            path="/dashboard/business/eliteoffer" 
             element={
               <BusinessRoute>
-                <BusinessOffers />
+                <BusinessEliteOffer />
               </BusinessRoute>
             } 
           />

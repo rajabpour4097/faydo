@@ -1,6 +1,6 @@
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 
-export const CustomerOffers = () => {
+export const CustomerEliteOffer = () => {
   const availableOffers = [
     {
       id: 1,
@@ -71,8 +71,8 @@ export const CustomerOffers = () => {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">تخفیف‌ها و پیشنهادات</h1>
-            <p className="text-gray-600">از تخفیف‌های ویژه و پیشنهادات محدود استفاده کنید.</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">تخفیف اعضای ویژه</h1>
+            <p className="text-gray-600">از تخفیف‌های ویژه اعضای پلاتینیوم و الماس استفاده کنید.</p>
           </div>
 
           {/* Stats */}
@@ -80,7 +80,7 @@ export const CustomerOffers = () => {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">تخفیف‌های موجود</p>
+                  <p className="text-sm text-gray-600">تخفیف ویژه موجود</p>
                   <p className="text-2xl font-bold text-blue-600">{availableOffers.length}</p>
                 </div>
                 <div className="text-3xl">🎯</div>
@@ -114,7 +114,7 @@ export const CustomerOffers = () => {
             {/* Available Offers */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">تخفیف‌های موجود</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">تخفیف اعضای ویژه موجود</h2>
                 <div className="grid gap-6">
                   {availableOffers.map((offer) => (
                     <div key={offer.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">

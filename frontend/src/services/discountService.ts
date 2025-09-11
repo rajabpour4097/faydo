@@ -17,8 +17,13 @@ class DiscountService {
   }
 
   // دریافت تمام تخفیفات
-  async getDiscounts(): Promise<Discount[]> {
-    const response = await fetch(`${API_BASE_URL}/discounts/discounts/`, {
+  async getDiscounts(options?: { mine?: boolean }): Promise<Discount[]> {
+    const params = new URLSearchParams();
+    if (options?.mine) {
+      params.append('mine', 'true');
+    }
+    const url = `${API_BASE_URL}/discounts/discounts/${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await fetch(url, {
       headers: this.getAuthHeaders(),
     });
 

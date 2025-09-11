@@ -76,12 +76,40 @@ class ApiService {
     this.accessToken = localStorage.getItem('access_token')
   }
 
+  private isTokenExpired(): boolean {
+    const token = this.accessToken
+    if (!token) return true
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const currentTime = Math.floor(Date.now() / 1000)
+      // Check if token expires in next 5 minutes (300 seconds buffer)
+      return payload.exp < (currentTime + 300)
+    } catch {
+      return true
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     // Update token from localStorage in case it changed
     this.updateToken()
+    
+    // Check if token is expired and try to refresh before making request
+    if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/auth/refresh')) {
+      if (this.isTokenExpired()) {
+        console.log('Token is expired, attempting refresh before request...')
+        const refreshSuccess = await this.refreshToken()
+        if (!refreshSuccess) {
+          console.log('Token refresh failed, clearing tokens')
+          this.clearTokens()
+          return { error: 'نشست شما منقضی شده است. لطفا مجددا وارد شوید.' }
+        }
+        this.updateToken()
+      }
+    }
     
     const url = `${this.baseUrl}${endpoint}`
     const config: RequestInit = {

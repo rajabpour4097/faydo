@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
-import { discountService } from '../../services/discountService'
-import { DiscountCard, DiscountCardData } from '../../components/discounts/DiscountCard'
+import discountService from '../../services/discountService'
+import { DiscountCard } from '../../components/discounts/DiscountCard'
 import { DiscountCreateModal } from '../../components/discounts/DiscountCreateModal'
+import { Discount, DiscountCreate } from '../../types/discount'
 
 export const BusinessDiscounts: React.FC = () => {
-  const [discounts,setDiscounts] = useState<DiscountCardData[]>([])
+  const [discounts,setDiscounts] = useState<Discount[]>([])
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState<string|null>(null)
   const [openCreate,setOpenCreate] = useState(false)
@@ -13,20 +14,25 @@ export const BusinessDiscounts: React.FC = () => {
   const load = async ()=>{
     setLoading(true); setError(null)
     try {
-      const data = await discountService.list({mine:true})
+      const data = await discountService.getDiscounts({ mine: true })
       setDiscounts(data)
     } catch(err:any){ setError(err.message) } finally { setLoading(false) }
   }
   useEffect(()=>{ load() },[])
 
-  const create = async (payload:any) => {
-    await discountService.create(payload)
+  const create = async (payload: DiscountCreate) => {
+    await discountService.createDiscount(payload)
     await load()
   }
 
   const del = async (id:number) => {
     if(!confirm('حذف تخفیف؟')) return
-    try { await discountService.remove(id); await load() } catch(e){ alert('خطا') }
+    try { await discountService.deleteDiscount(id); await load() } catch(e){ alert('خطا') }
+  }
+
+  const handleViewDetails = (id: number) => {
+    // Placeholder for viewing discount details
+    console.log('View details for discount:', id)
   }
 
   return (
@@ -41,7 +47,7 @@ export const BusinessDiscounts: React.FC = () => {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {discounts.map(d => (
               <div key={d.id} className="relative group">
-                <DiscountCard data={d} />
+                <DiscountCard discount={d} onViewDetails={handleViewDetails} />
                 <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition flex gap-2">
                   <button onClick={()=>del(d.id)} className="text-xs bg-red-600 text-white px-2 py-1 rounded">حذف</button>
                 </div>

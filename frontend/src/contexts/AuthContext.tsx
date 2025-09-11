@@ -67,6 +67,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true) // Start with true to check auth on mount
 
+  const clearSession = () => {
+    localStorage.removeItem('auth_user')
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    setUser(null)
+  }
+
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     setIsLoading(true)
     
@@ -175,10 +182,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      setUser(null)
-      localStorage.removeItem('auth_user')
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
+      clearSession()
     }
   }
 
@@ -236,25 +240,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   localStorage.setItem('auth_user', JSON.stringify(mappedUser))
                   console.log('Session refreshed successfully')
                 } else {
-                  console.log('Profile failed after refresh, clearing session')
-                  localStorage.removeItem('auth_user')
-                  localStorage.removeItem('access_token')
-                  localStorage.removeItem('refresh_token')
-                  setUser(null)
+                  console.log('Profile failed after refresh, clearing session and redirecting to login')
+                  clearSession()
+                  // Force redirect to login
+                  setTimeout(() => {
+                    window.location.href = '/auth/login'
+                  }, 100)
                 }
               } else {
-                console.log('Token refresh failed, clearing session')
-                localStorage.removeItem('auth_user')
-                localStorage.removeItem('access_token')
-                localStorage.removeItem('refresh_token')
-                setUser(null)
+                console.log('Token refresh failed, clearing session and redirecting to login')
+                clearSession()
+                // Force redirect to login
+                setTimeout(() => {
+                  window.location.href = '/auth/login'
+                }, 100)
               }
             } else {
-              console.log('No refresh token available, clearing session')
-              localStorage.removeItem('auth_user')
-              localStorage.removeItem('access_token')
-              localStorage.removeItem('refresh_token')
-              setUser(null)
+              console.log('No refresh token available, clearing session and redirecting to login')
+              clearSession()
+              // Force redirect to login
+              setTimeout(() => {
+                window.location.href = '/auth/login'
+              }, 100)
             }
           }
         } else {
@@ -263,10 +270,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error('Error validating session:', error)
-        localStorage.removeItem('auth_user')
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        setUser(null)
+        clearSession()
       } finally {
         setIsLoading(false)
       }

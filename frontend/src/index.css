@@ -1,11 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* IRANYekan Font Face */
+@font-face {
+  font-family: 'IRANYekan';
+  src: url('./assets/fonts/IRANYekan-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANYekan';
+  src: url('./assets/fonts/IRANYekan-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: 'IRANSans', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'IRANYekan', sans-serif;
   line-height: 1.5;
   font-weight: 400;
   
@@ -58,7 +75,7 @@ body {
 
 /* Persian font smoothing */
 .font-persian {
-  font-family: 'IRANSans', 'Tahoma', sans-serif;
+  font-family: 'IRANYekan', sans-serif;
 }
 
 /* Custom utilities */

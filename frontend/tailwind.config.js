@@ -81,8 +81,8 @@ export default {
         },
       },
       fontFamily: {
-        'sans': ['IRANSans', 'Vazirmatn', 'system-ui', 'sans-serif'],
-        'display': ['IRANSans', 'Vazirmatn', 'system-ui', 'sans-serif'],
+        'sans': ['IRANYekan', 'system-ui', 'sans-serif'],
+        'display': ['IRANYekan', 'system-ui', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

@@ -37,15 +37,27 @@ class DiscountService {
 
   // دریافت یک تخفیف
   async getDiscount(id: number): Promise<Discount> {
-    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${id}/`, {
+    console.log('discountService.getDiscount called with id:', id);
+    const url = `${API_BASE_URL}/discounts/discounts/${id}/`;
+    console.log('Request URL:', url);
+    console.log('Headers:', this.getAuthHeaders());
+    
+    const response = await fetch(url, {
       headers: this.getAuthHeaders(),
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response error:', errorText);
       throw new Error('خطا در دریافت تخفیف');
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('Response data:', data);
+    return data;
   }
 
   // ایجاد تخفیف جدید
@@ -108,15 +120,26 @@ class DiscountService {
 
   // دریافت نظرات
   async getComments(discountId: number): Promise<DiscountComment[]> {
-    const response = await fetch(`${API_BASE_URL}/discounts/discounts/${discountId}/comments/`, {
+    console.log('discountService.getComments called with discountId:', discountId);
+    const url = `${API_BASE_URL}/discounts/discounts/${discountId}/comments/`;
+    console.log('Comments request URL:', url);
+    
+    const response = await fetch(url, {
       headers: this.getAuthHeaders(),
     });
 
+    console.log('Comments response status:', response.status);
+    console.log('Comments response ok:', response.ok);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Comments response error:', errorText);
       throw new Error('خطا در دریافت نظرات');
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('Comments response data:', data);
+    return data;
   }
 
   // ثبت نظر

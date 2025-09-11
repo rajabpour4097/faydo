@@ -53,6 +53,10 @@ class DiscountViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Discount.objects.filter(is_deleted=False)
         
+        # برای retrieve (دیدن جزئیات) همه تخفیفات قابل دسترسی هستند
+        if self.action == 'retrieve':
+            return queryset
+        
         if self.request.user.role == 'business':
             # کسب‌وکار فقط تخفیفات خودش را می‌بیند
             try:

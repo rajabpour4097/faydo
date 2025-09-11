@@ -9,10 +9,15 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 export const DiscountDetail: React.FC = () => {
+  console.log('=== DiscountDetail component mounted ===');
+  
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const isDashboard = location.pathname.startsWith('/dashboard');
+  
+  console.log('Component params:', { id, pathname: location.pathname, isDashboard });
+  
   const [discount, setDiscount] = useState<Discount | null>(null);
   const [comments, setComments] = useState<DiscountComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,24 +28,51 @@ export const DiscountDetail: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    console.log('=== useEffect called ===');
+    console.log('ID from useParams:', id);
     if (id) {
+      console.log('ID exists, calling loadDiscountDetails');
       loadDiscountDetails();
+    } else {
+      console.log('No ID found in params');
     }
   }, [id]);
 
   const loadDiscountDetails = async () => {
     try {
-      setLoading(true);
-      const discountData = await discountService.getDiscount(Number(id));
-      const commentsData = await discountService.getComments(Number(id));
+      console.log('=== loadDiscountDetails called ===');
+      console.log('ID parameter:', id);
+      console.log('Number(id):', Number(id));
       
+      setLoading(true);
+      setError('');
+      
+      console.log('Calling discountService.getDiscount...');
+      const discountData = await discountService.getDiscount(Number(id));
+      console.log('Discount data received:', discountData);
+      
+      // Set discount data first, regardless of comments
       setDiscount(discountData);
-      setComments(commentsData);
       setUserRating(discountData.user_score || 0);
+      
+      // Try to get comments, but don't fail if it doesn't work
+      try {
+        console.log('Calling discountService.getComments...');
+        const commentsData = await discountService.getComments(Number(id));
+        console.log('Comments data received:', commentsData);
+        setComments(commentsData);
+      } catch (commentsErr: any) {
+        console.warn('Failed to load comments:', commentsErr);
+        setComments([]); // Set empty array if comments fail
+      }
+      
+      console.log('Discount data loaded successfully');
     } catch (err: any) {
+      console.error('Error in loadDiscountDetails:', err);
       setError(err.message);
     } finally {
       setLoading(false);
+      console.log('Loading set to false');
     }
   };
 
@@ -89,7 +121,14 @@ export const DiscountDetail: React.FC = () => {
     return 'red';
   };
 
+  console.log('=== Render cycle ===');
+  console.log('Current state:', { discount, loading, error, id });
+  
+  // Test component is working
+  console.log('DiscountDetail component is rendering correctly');
+
   if (loading) {
+    console.log('Rendering loading state');
     return isDashboard ? (
       <DashboardLayout>
         <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
@@ -104,6 +143,8 @@ export const DiscountDetail: React.FC = () => {
   }
   
   if (!discount) {
+    console.log('Rendering not found state. Discount value:', discount);
+    console.log('Error value:', error);
     return isDashboard ? (
       <DashboardLayout>
         <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { discountService } from '../services/discountService'
+import discountService from '../services/discountService'
 import { DiscountCard } from '../components/discounts/DiscountCard'
 import { StarRating } from '../components/discounts/StarRating'
 import { DiscountReportModal } from '../components/discounts/DiscountReportModal'
@@ -19,19 +19,28 @@ export const DiscountDetail: React.FC = () => {
 	const load = async () => {
 		if(!id) return
 		setLoading(true)
+		setError(null)
 		try {
-			const d = await discountService.get(Number(id))
+			console.log('🔍 Loading discount with ID:', id)
+			const d = await discountService.getDiscount(Number(id))
+			console.log('✅ Discount loaded:', d)
 			setData(d)
 			setRating(d.user_score || 0)
-			const cm = await discountService.comments(Number(id))
+			const cm = await discountService.getComments(Number(id))
+			console.log('✅ Comments loaded:', cm)
 			setComments(cm)
-		} catch(e:any){ setError(e.message) } finally { setLoading(false) }
+		} catch(e:any){ 
+			console.error('❌ Error loading discount:', e)
+			setError(e.message) 
+		} finally { 
+			setLoading(false) 
+		}
 	}
 	useEffect(()=>{ load() },[id])
 
 	const submitRating = async (val:number) => {
 		if(!id) return
-		try { await discountService.rate(Number(id), val); setRating(val); await load() } catch(e){ alert('خطا در ثبت امتیاز') }
+		try { await discountService.rateDiscount(Number(id), val); setRating(val); await load() } catch(e){ alert('خطا در ثبت امتیاز') }
 	}
 
 	const submitComment = async (e:React.FormEvent) => {
@@ -42,21 +51,32 @@ export const DiscountDetail: React.FC = () => {
 
 	const submitReport = async (reason:string) => {
 		if(!id) return
-		await discountService.report(Number(id), reason)
+		await discountService.reportDiscount(Number(id), reason)
 	}
 
 	return (
 		<Layout>
 			<div className="max-w-4xl mx-auto py-10 px-4">
-				{loading && <div>در حال بارگذاری...</div>}
-				{error && <div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">{error}</div>}
+				{loading && <div className="text-center py-8">در حال بارگذاری...</div>}
+				{error && (
+					<div className="bg-red-100 text-red-700 p-4 rounded mb-4">
+						<h2 className="font-bold mb-2">خطا در بارگذاری تخفیف</h2>
+						<p>{error}</p>
+					</div>
+				)}
+				{!loading && !error && !data && (
+					<div className="text-center py-8">
+						<h2 className="text-xl font-bold text-gray-600">تخفیف یافت نشد</h2>
+						<p className="text-gray-500 mt-2">تخفیف مورد نظر شما وجود ندارد یا حذف شده است.</p>
+					</div>
+				)}
 				{data && (
 					<div className="space-y-6">
 						<div className="flex justify-between items-center">
 							<h1 className="text-2xl font-bold">{data.title}</h1>
 							<button onClick={()=>setReportOpen(true)} className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded">گزارش تخلف</button>
 						</div>
-						<DiscountCard data={data} />
+						<DiscountCard discount={data} onViewDetails={() => {}} />
 						<div className="bg-white p-4 rounded-xl shadow space-y-4">
 							<h2 className="font-semibold">امتیاز شما</h2>
 							<StarRating value={rating} onChange={submitRating} />

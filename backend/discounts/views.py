@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Q, Avg, Count
@@ -8,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from .models import Discount, DiscountScore, DiscountComment, DiscountReport
 from .serializers import (
     DiscountSerializer, DiscountCreateSerializer, DiscountScoreSerializer,
-    DiscountCommentSerializer, DiscountReportSerializer, DiscountSummarySerializer
+    DiscountSummarySerializer, RecentCommentSerializer
 )
 
 
@@ -182,4 +183,54 @@ class DiscountViewSet(viewsets.ModelViewSet):
             return Response(
                 {'error': 'خطا در دریافت اطلاعات'}, 
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def recent_comments(self, request):
+        """دریافت کامنت‌های اخیر کاربران برای تخفیفات کسب‌وکار"""
+        try:
+            user = request.user
+            print(f"DEBUG: User: {user}, is_authenticated: {user.is_authenticated}, role: {getattr(user, 'role', 'N/A')}")
+            
+            if not user.is_authenticated:
+                return Response(
+                    {'error': 'کاربر وارد نشده است'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+                
+            if getattr(user, 'role', None) != 'business':
+                print(f"DEBUG: User {user.username} role is {getattr(user, 'role', 'N/A')}, not business")
+                return Response(
+                    {'error': f'فقط کسب‌وکارها می‌توانند کامنت‌های اخیر را مشاهده کنند. شما {getattr(user, "role", "نامشخص")} هستید'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                
+            if not hasattr(user, 'businessprofile'):
+                print(f"DEBUG: User {user.username} does not have businessprofile")
+                return Response(
+                    {'error': 'پروفایل کسب‌وکار پیدا نشد'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            business = user.businessprofile
+            print(f"DEBUG: Business: {business.name}")
+            
+            # گرفتن کامنت‌های اخیر برای تخفیفات این کسب‌وکار
+            recent_comments = DiscountComment.objects.filter(
+                discount__business=business,
+                is_deleted=False
+            ).select_related('user__user', 'discount').order_by('-created_at')[:5]
+            
+            print(f"DEBUG: Found {recent_comments.count()} comments")
+            
+            serializer = RecentCommentSerializer(recent_comments, many=True)
+            return Response(serializer.data)
+        
+        except Exception as e:
+            print(f"DEBUG: Exception: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': 'خطا در دریافت کامنت‌ها'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

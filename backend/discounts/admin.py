@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Discount
+from .models import Discount, DiscountComment
 
 
 
@@ -10,3 +10,8 @@ class DiscountAdmin(admin.ModelAdmin):
     
     def business_name(self, obj):
         return obj.business.name
+
+@admin.register(DiscountComment)
+class DiscountCommentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'discount', 'user', 'comment', 'created_at')
+    search_fields = ('comment',)

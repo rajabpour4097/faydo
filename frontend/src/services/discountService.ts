@@ -135,6 +135,19 @@ class DiscountService {
     return response.json();
   }
 
+  // دریافت نظرات اخیر برای داشبورد کسب‌وکار
+  async getRecentComments(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/discounts/discounts/recent_comments/`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('خطا در دریافت نظرات اخیر');
+    }
+
+    return response.json();
+  }
+
   // گزارش تخلف
   async reportDiscount(discountId: number, reason: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/discounts/discounts/${discountId}/report/`, {

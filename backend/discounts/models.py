@@ -71,7 +71,7 @@ class DiscountComment(BaseModel):
         self.save()
 
     def __str__(self):
-        return f"Comment by {self.user.username} on {self.discount.title}"
+        return f"Comment by {self.user.user.username} on {self.discount.title}"
     
 
 class DiscountReport(BaseModel):

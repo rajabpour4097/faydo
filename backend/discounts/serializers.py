@@ -184,3 +184,27 @@ class DiscountSummarySerializer(serializers.ModelSerializer):
     def get_is_active(self, obj):
         now = timezone.now()
         return obj.start_date <= now <= obj.end_date and not obj.is_deleted
+
+
+class RecentCommentSerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(source='user.user.get_full_name', read_only=True)
+    customer_username = serializers.CharField(source='user.user.username', read_only=True)
+    discount_title = serializers.CharField(source='discount.title', read_only=True)
+    discount_id = serializers.IntegerField(source='discount.id', read_only=True)
+    date = serializers.DateTimeField(source='created_at', read_only=True)
+    rating = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DiscountComment
+        fields = [
+            'id', 'comment', 'customer_name', 'customer_username', 
+            'discount_title', 'discount_id', 'date', 'rating'
+        ]
+
+    def get_rating(self, obj):
+        # گرفتن امتیاز کاربر برای این تخفیف
+        try:
+            score = obj.discount.scores.filter(user=obj.user).first()
+            return score.score if score else 0
+        except:
+            return 0

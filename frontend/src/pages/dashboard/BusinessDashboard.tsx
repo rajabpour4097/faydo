@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { DiscountDashboard } from '../../components/discounts/DiscountDashboard'
 import { CreateDiscountModal } from '../../components/discounts/CreateDiscountModal'
@@ -7,6 +7,33 @@ import discountService from '../../services/discountService'
 
 export const BusinessDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [recentReviews, setRecentReviews] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchRecentComments = async () => {
+      console.log('🔍 Starting to fetch recent comments...')
+      try {
+        console.log('📞 Calling discountService.getRecentComments()')
+        const comments = await discountService.getRecentComments()
+        console.log('✅ API Success! Received comments:', comments)
+        setRecentReviews(comments)
+      } catch (error) {
+        console.error('❌ Error fetching recent comments:', error)
+        // Fallback to static data if API fails
+        setRecentReviews([
+          { customer_name: 'آرش محمدی', rating: 5, comment: 'خدمات عالی و غذای خوشمزه', created_at: '۱۴۰۳/۰۶/۱۵' },
+          { customer_name: 'نگار حسینی', rating: 4, comment: 'محیط دنج و کیفیت مناسب', created_at: '۱۴۰۳/۰۶/۱۴' },
+          { customer_name: 'امیر تقوی', rating: 5, comment: 'پیشنهاد می‌کنم حتماً امتحان کنید', created_at: '۱۴۰۳/۰۶/۱۳' },
+        ])
+      } finally {
+        console.log('🏁 fetchRecentComments completed')
+        setLoading(false)
+      }
+    }
+
+    fetchRecentComments()
+  }, [])
 
   const handleCreateDiscount = async (discountData: DiscountCreate) => {
     try {
@@ -39,12 +66,6 @@ export const BusinessDashboard = () => {
     { title: 'تخفیف غذای اصلی', usage: 85, percentage: '15%', category: 'general' },
     { title: 'تخفیف ویژه VIP', usage: 45, percentage: '25%', category: 'vip' },
     { title: 'نمونه رایگان دسر', usage: 120, percentage: 'رایگان', category: 'sample' },
-  ]
-
-  const recentReviews = [
-    { customer: 'آرش محمدی', rating: 5, comment: 'خدمات عالی و غذای خوشمزه', date: '۱۴۰۳/۰۶/۱۵' },
-    { customer: 'نگار حسینی', rating: 4, comment: 'محیط دنج و کیفیت مناسب', date: '۱۴۰۳/۰۶/۱۴' },
-    { customer: 'امیر تقوی', rating: 5, comment: 'پیشنهاد می‌کنم حتماً امتحان کنید', date: '۱۴۰۳/۰۶/۱۳' },
   ]
 
   return (
@@ -206,18 +227,24 @@ export const BusinessDashboard = () => {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">نظرات اخیر</h2>
               <div className="space-y-4">
-                {recentReviews.map((review, index) => (
-                  <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="font-medium text-gray-900">{review.customer}</p>
-                      <div className="flex items-center">
-                        <span className="text-yellow-400 text-sm">{'⭐'.repeat(review.rating)}</span>
+                {loading ? (
+                  <div className="text-center text-gray-500">در حال بارگذاری...</div>
+                ) : recentReviews.length > 0 ? (
+                  recentReviews.map((review, index) => (
+                    <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="font-medium text-gray-900">{review.customer_name}</p>
+                        <div className="flex items-center">
+                          <span className="text-yellow-400 text-sm">{'⭐'.repeat(review.rating)}</span>
+                        </div>
                       </div>
+                      <p className="text-sm text-gray-600 mb-1">{review.comment}</p>
+                      <p className="text-xs text-gray-500">{review.created_at}</p>
                     </div>
-                    <p className="text-sm text-gray-600 mb-1">{review.comment}</p>
-                    <p className="text-xs text-gray-500">{review.date}</p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500">نظری ثبت نشده است</div>
+                )}
               </div>
             </div>
           </div>

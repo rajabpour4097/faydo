@@ -4,7 +4,7 @@ import { Discount } from '../../types/discount';
 import discountService from '../../services/discountService';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { Search, Tag, Calendar, Store } from 'lucide-react';
+import { Search, Tag, Store, Star } from 'lucide-react';
 
 export const DiscountList: React.FC = () => {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -119,13 +119,27 @@ export const DiscountList: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">بیشترین تخفیف</p>
+              <p className="text-sm text-gray-600">میانگین امتیاز</p>
               <p className="text-2xl font-bold text-purple-600">
-                {Math.max(...discounts.map(d => d.percentage || 0))}%
+                {(() => {
+                  const totalVotes = discounts.reduce((sum, d) => sum + (d.total_scores || 0), 0);
+                  
+                  if (totalVotes > 0) {
+                    // مجموع کل امتیازات = میانگین × تعداد رای  
+                    const totalRatingPoints = discounts.reduce((sum, d) => sum + (d.average_score * (d.total_scores || 0)), 0);
+                    // میانگین کل = مجموع کل امتیازات ÷ تعداد کل آرا
+                    return (totalRatingPoints / totalVotes).toFixed(1);
+                  } else {
+                    return '0.0';
+                  }
+                })()}
+              </p>
+              <p className="text-xs text-gray-500">
+                از {discounts.reduce((sum, d) => sum + (d.total_scores || 0), 0)} رای
               </p>
             </div>
             <div className="p-3 bg-purple-100 rounded-full">
-              <Calendar className="w-6 h-6 text-purple-600" />
+              <Star className="w-6 h-6 text-purple-600" />
             </div>
           </div>
         </div>
@@ -208,10 +222,18 @@ export const DiscountList: React.FC = () => {
                 <p className="text-gray-700 mb-4">{discount.description || 'تخفیف ویژه برای شما'}</p>
                 
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span>کسب‌وکار: {discount.business_name}</span>
+                  <div className="flex items-center gap-4">
+                    <span>کسب‌وکار: {discount.business_name}</span>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                      <span>{discount.average_score ? discount.average_score.toFixed(1) : '0.0'}</span>
+                      <span className="text-gray-400">({discount.total_scores || 0} رای)</span>
+                    </div>
+                  </div>
                   <span>اعتبار تا: {new Date(discount.end_date).toLocaleDateString('fa-IR')}</span>
                 </div>
                 
+
                 <button 
                   onClick={() => handleViewDetails(discount.id)}
                   className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"

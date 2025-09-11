@@ -25,7 +25,7 @@ class DiscountSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'modified_at', 'business']
 
     def get_average_score(self, obj):
-        scores = obj.scores.filter(discount=obj)
+        scores = obj.scores.all()
         if scores.exists():
             return round(sum(score.score for score in scores) / len(scores), 1)
         return 0
@@ -158,6 +158,7 @@ class DiscountReportSerializer(serializers.ModelSerializer):
 class DiscountSummarySerializer(serializers.ModelSerializer):
     """برای نمایش خلاصه در داشبورد کسب‌وکار"""
     average_score = serializers.SerializerMethodField()
+    total_scores = serializers.SerializerMethodField()
     total_comments = serializers.SerializerMethodField()
     is_active = serializers.SerializerMethodField()
 
@@ -165,14 +166,17 @@ class DiscountSummarySerializer(serializers.ModelSerializer):
         model = Discount
         fields = [
             'id', 'title', 'percentage', 'start_date', 'end_date',
-            'average_score', 'total_comments', 'is_active'
+            'average_score', 'total_scores', 'total_comments', 'is_active'
         ]
 
     def get_average_score(self, obj):
-        scores = obj.scores.filter(discount=obj)
+        scores = obj.scores.all()
         if scores.exists():
             return round(sum(score.score for score in scores) / len(scores), 1)
         return 0
+
+    def get_total_scores(self, obj):
+        return obj.scores.count()
 
     def get_total_comments(self, obj):
         return obj.comments.filter(is_deleted=False).count()

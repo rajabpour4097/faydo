@@ -85,7 +85,18 @@ export const DiscountManagement: React.FC = () => {
       return now > end;
     }).length,
     totalUsage: discounts.reduce((sum, d) => sum + (d.total_scores || 0), 0),
-    averageRating: discounts.length > 0 ? discounts.reduce((sum, d) => sum + d.average_score, 0) / discounts.length : 0
+    averageRating: (() => {
+      const totalVotes = discounts.reduce((sum, d) => sum + (d.total_scores || 0), 0);
+      
+      if (totalVotes > 0) {
+        // مجموع کل امتیازات = میانگین × تعداد رای
+        const totalRatingPoints = discounts.reduce((sum, d) => sum + (d.average_score * (d.total_scores || 0)), 0);
+        // میانگین کل = مجموع کل امتیازات ÷ تعداد کل آرا
+        return totalRatingPoints / totalVotes;
+      } else {
+        return 0;
+      }
+    })()
   };
 
   if (loading) return (

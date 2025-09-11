@@ -1,7 +1,24 @@
+import { useState } from 'react'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { DiscountDashboard } from '../../components/discounts/DiscountDashboard'
+import { CreateDiscountModal } from '../../components/discounts/CreateDiscountModal'
+import { DiscountCreate } from '../../types/discount'
+import discountService from '../../services/discountService'
 
 export const BusinessDashboard = () => {
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  const handleCreateDiscount = async (discountData: DiscountCreate) => {
+    try {
+      await discountService.createDiscount(discountData)
+      setShowCreateModal(false)
+      // می‌توانید اینجا notification نمایش دهید یا صفحه را reload کنید
+      window.location.reload() // برای نمایش تخفیف جدید
+    } catch (error) {
+      console.error('Error creating discount:', error)
+      // می‌توانید اینجا error notification نمایش دهید
+    }
+  }
   const businessStats = {
     totalCustomers: 1289,
     monthlyRevenue: 45000000,
@@ -96,7 +113,10 @@ export const BusinessDashboard = () => {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900">عملکرد تخفیف‌ها</h2>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                <button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
                   افزودن تخفیف جدید +
                 </button>
               </div>
@@ -167,7 +187,10 @@ export const BusinessDashboard = () => {
                 <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
                   📊 مشاهده گزارش‌ها
                 </button>
-                <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
+                <button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                >
                   🎯 ایجاد تخفیف جدید
                 </button>
                 <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
@@ -201,6 +224,15 @@ export const BusinessDashboard = () => {
         </div>
       </div>
       </div>
+      
+      {/* Create Discount Modal */}
+      {showCreateModal && (
+        <CreateDiscountModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateDiscount}
+        />
+      )}
     </DashboardLayout>
   )
 }

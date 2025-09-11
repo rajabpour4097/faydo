@@ -138,16 +138,7 @@ export const DiscountDashboard: React.FC = () => {
               <div key={discount.id} className="p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="text-sm font-medium text-gray-900">{discount.title}</h4>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        discount.is_active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {discount.is_active ? 'فعال' : 'غیرفعال'}
-                      </span>
-                    </div>
+                    <h4 className="text-sm font-medium text-gray-900">{discount.title}</h4>
                     <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
                       <span>{discount.percentage}% تخفیف</span>
                       <span>تا {formatDate(discount.end_date)}</span>

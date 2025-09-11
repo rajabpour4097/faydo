@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Discount, DiscountCreate } from '../../types/discount';
 import discountService from '../../services/discountService';
 import { CreateDiscountModal } from '../../components/discounts/CreateDiscountModal';
+import { ConfirmationModal } from '../../components/ui/ConfirmationModal';
 import { StarRating } from '../../components/ui/StarRating';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -13,6 +14,8 @@ export const DiscountManagement: React.FC = () => {
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedDiscount, setSelectedDiscount] = useState<Discount | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [discountToDelete, setDiscountToDelete] = useState<Discount | null>(null);
 
   useEffect(() => {
     loadDiscounts();
@@ -35,15 +38,27 @@ export const DiscountManagement: React.FC = () => {
     await loadDiscounts();
   };
 
-  const handleDeleteDiscount = async (id: number) => {
-    if (window.confirm('آیا از حذف این تخفیف اطمینان دارید؟')) {
-      try {
-        await discountService.deleteDiscount(id);
-        await loadDiscounts();
-      } catch (err: any) {
-        setError(err.message);
-      }
+  const handleDeleteDiscount = (discount: Discount) => {
+    setDiscountToDelete(discount);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteDiscount = async () => {
+    if (!discountToDelete) return;
+    
+    try {
+      await discountService.deleteDiscount(discountToDelete.id);
+      await loadDiscounts();
+      setShowDeleteModal(false);
+      setDiscountToDelete(null);
+    } catch (err: any) {
+      setError(err.message);
     }
+  };
+
+  const cancelDeleteDiscount = () => {
+    setShowDeleteModal(false);
+    setDiscountToDelete(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -246,7 +261,7 @@ export const DiscountManagement: React.FC = () => {
                             ویرایش
                           </button>
                           <button
-                            onClick={() => handleDeleteDiscount(discount.id)}
+                            onClick={() => handleDeleteDiscount(discount)}
                             className="text-red-600 hover:text-red-800 text-sm font-medium"
                           >
                             حذف
@@ -337,6 +352,17 @@ export const DiscountManagement: React.FC = () => {
             isOpen={showCreateModal}
             onClose={() => setShowCreateModal(false)}
             onSubmit={handleCreateDiscount}
+          />
+
+          <ConfirmationModal
+            isOpen={showDeleteModal}
+            onClose={cancelDeleteDiscount}
+            onConfirm={confirmDeleteDiscount}
+            title="حذف تخفیف"
+            message={`آیا از حذف تخفیف "${discountToDelete?.title}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`}
+            confirmText="حذف کردن"
+            cancelText="انصراف"
+            type="danger"
           />
         </div>
       </div>

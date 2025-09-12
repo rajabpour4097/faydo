@@ -7,6 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
+        night: {
+          950: '#0b0b12',
+          900: '#10101a',
+          800: '#161624',
+          700: '#1e1e30',
+          600: '#2a2a40',
+        },
+        surface: {
+          100: '#f7f7fb',
+          200: '#efeff6',
+          300: '#e6e6f0',
+          800: '#1a1a28',
+          900: '#131320',
+        },
+        mint: '#bdf6d4',
+        lilac: '#d7c7ff',
+        lavender: '#c7d2fe',
+        blush: '#ffc7dc',
+        limeSoft: '#d8f5a2',
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -90,6 +109,7 @@ export default {
         'slide-down': 'slideDown 0.3s ease-out',
         'scale-in': 'scaleIn 0.2s ease-out',
         'bounce-subtle': 'bounceSubtle 2s infinite',
+        'shine': 'shine 1.2s linear forwards',
       },
       keyframes: {
         fadeIn: {
@@ -112,6 +132,10 @@ export default {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
         },
+        shine: {
+          '0%': { left: '-100%' },
+          '100%': { left: '120%' },
+        },
       },
       spacing: {
         '18': '4.5rem',
@@ -121,6 +145,10 @@ export default {
         'xl': '1rem',
         '2xl': '1.5rem',
         '3xl': '2rem',
+      },
+      boxShadow: {
+        soft: '0 8px 30px rgba(0,0,0,0.15)',
+        glass: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 30px rgba(0,0,0,0.25)',
       },
     },
   },

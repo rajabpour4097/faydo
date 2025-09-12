@@ -4,6 +4,9 @@ import { DiscountDashboard } from '../../components/discounts/DiscountDashboard'
 import { CreateDiscountModal } from '../../components/discounts/CreateDiscountModal'
 import { DiscountCreate } from '../../types/discount'
 import discountService from '../../services/discountService'
+import { Card } from '../../components/ui/Card'
+import { SectionHeader } from '../../components/ui/SectionHeader'
+import { StatPill } from '../../components/ui/StatPill'
 
 export const BusinessDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -70,189 +73,131 @@ export const BusinessDashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
+      <div className="min-h-[calc(100vh-4rem)] dashboard-bg p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 lg:mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">داشبورد کسب‌وکار</h1>
-          <p className="text-gray-600 text-sm lg:text-base">مدیریت باشگاه مشتریان و مشاهده آمار عملکرد</p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
-          <div className="bg-white rounded-xl lg:rounded-2xl shadow-lg p-4 lg:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs lg:text-sm text-gray-600">کل مشتریان</p>
-                <p className="text-xl lg:text-2xl font-bold text-blue-600">{businessStats.totalCustomers.toLocaleString()}</p>
-                <p className="text-xs text-green-600">+{businessStats.monthlyGrowth}% این ماه</p>
-              </div>
-              <div className="text-3xl">👥</div>
-            </div>
+          {/* Header */}
+          <div className="mb-6 lg:mb-8">
+            <h1 className="text-2xl lg:text-3xl font-extrabold text-white mb-2">داشبورد کسب‌وکار</h1>
+            <p className="text-white/70 text-sm lg:text-base">مدیریت باشگاه مشتریان و مشاهده آمار عملکرد</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">درآمد ماهانه</p>
-                <p className="text-2xl font-bold text-green-600">{(businessStats.monthlyRevenue / 1000000).toFixed(1)}M</p>
-                <p className="text-xs text-green-600">تومان</p>
-              </div>
-              <div className="text-3xl">💰</div>
-            </div>
+          {/* Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+            <StatPill tone="blue" label="کل مشتریان" value={businessStats.totalCustomers.toLocaleString()} />
+            <StatPill tone="mint" label="درآمد ماهانه" value={`${(businessStats.monthlyRevenue / 1000000).toFixed(1)}M`} />
+            <StatPill tone="purple" label="امتیاز رضایت" value={`${businessStats.averageRating} (${businessStats.reviewCount})`} />
+            <StatPill tone="lilac" label="استفاده از تخفیف" value={`${businessStats.discountUsage}`} />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">امتیاز رضایت</p>
-                <p className="text-2xl font-bold text-yellow-600">{businessStats.averageRating}</p>
-                <p className="text-xs text-gray-600">{businessStats.reviewCount} نظر</p>
-              </div>
-              <div className="text-3xl">⭐</div>
-            </div>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              <DiscountDashboard />
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">استفاده از تخفیف</p>
-                <p className="text-2xl font-bold text-purple-600">{businessStats.discountUsage}</p>
-                <p className="text-xs text-gray-600">این ماه</p>
-              </div>
-              <div className="text-3xl">🎯</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Discount Dashboard */}
-            <DiscountDashboard />
-            {/* Discount Performance */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">عملکرد تخفیف‌ها</h2>
-                <button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                >
-                  افزودن تخفیف جدید +
-                </button>
-              </div>
-              <div className="space-y-4">
-                {discountPerformance.map((discount, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium text-gray-900">{discount.title}</h3>
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        discount.category === 'vip' ? 'bg-purple-100 text-purple-800' :
-                        discount.category === 'sample' ? 'bg-green-100 text-green-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {discount.percentage}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm text-gray-600">استفاده شده: {discount.usage} بار</p>
-                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: `${Math.min((discount.usage / 150) * 100, 100)}%` }}
-                        ></div>
+              <Card>
+                <SectionHeader
+                  title="عملکرد تخفیف‌ها"
+                  action={(
+                    <button onClick={() => setShowCreateModal(true)} className="text-primary-300 hover:text-primary-200 text-sm font-medium">
+                      افزودن تخفیف جدید +
+                    </button>
+                  )}
+                  className="mb-6"
+                />
+                <div className="space-y-4">
+                  {discountPerformance.map((discount, index) => (
+                    <div key={index} className="border border-white/10 rounded-xl p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-medium text-white">{discount.title}</h3>
+                        <span className={`px-3 py-1 rounded-full text-xs sm:text-sm ${
+                          discount.category === 'vip' ? 'bg-accent-500/20 text-accent-200' :
+                          discount.category === 'sample' ? 'bg-success-500/20 text-success-200' :
+                          'bg-primary-500/20 text-primary-200'
+                        }`}>
+                          {discount.percentage}
+                        </span>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Customers */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">مشتریان اخیر</h2>
-              <div className="space-y-4">
-                {recentCustomers.map((customer, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3 space-x-reverse">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-medium">{customer.name[0]}</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{customer.name}</p>
-                        <p className="text-sm text-gray-600">آخرین بازدید: {customer.lastVisit}</p>
-                      </div>
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-gray-900">{customer.totalSpent.toLocaleString()} تومان</p>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        customer.level === 'VIP' ? 'bg-purple-100 text-purple-800' :
-                        customer.level === 'نقره‌ای' ? 'bg-gray-100 text-gray-800' :
-                        'bg-orange-100 text-orange-800'
-                      }`}>
-                        {customer.level}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">اقدامات سریع</h2>
-              <div className="space-y-3">
-                <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                  📊 مشاهده گزارش‌ها
-                </button>
-                <button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                >
-                  🎯 ایجاد تخفیف جدید
-                </button>
-                <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                  📢 ارسال اطلاعیه
-                </button>
-                <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                  👥 مدیریت مشتریان
-                </button>
-              </div>
-            </div>
-
-            {/* Recent Reviews */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">نظرات اخیر</h2>
-              <div className="space-y-4">
-                {loading ? (
-                  <div className="text-center text-gray-500">در حال بارگذاری...</div>
-                ) : recentReviews.length > 0 ? (
-                  recentReviews.map((review, index) => (
-                    <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="font-medium text-gray-900">{review.customer_name}</p>
-                        <div className="flex items-center">
-                          <span className="text-yellow-400 text-sm">{'⭐'.repeat(review.rating)}</span>
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm text-white/70">استفاده شده: {discount.usage} بار</p>
+                        <div className="w-28 bg-white/10 rounded-full h-2">
+                          <div className="bg-primary-400 h-2 rounded-full" style={{ width: `${Math.min((discount.usage / 150) * 100, 100)}%` }}></div>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-1">{review.comment}</p>
-                      <p className="text-xs text-gray-500">{review.created_at}</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500">نظری ثبت نشده است</div>
-                )}
-              </div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card>
+                <SectionHeader title="مشتریان اخیر" className="mb-6" />
+                <div className="space-y-4">
+                  {recentCustomers.map((customer, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                      <div className="flex items-center space-x-3 space-x-reverse">
+                        <div className="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center">
+                          <span className="text-primary-200 font-medium">{customer.name[0]}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-white">{customer.name}</p>
+                          <p className="text-sm text-white/70">آخرین بازدید: {customer.lastVisit}</p>
+                        </div>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-white">{customer.totalSpent.toLocaleString()} تومان</p>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          customer.level === 'VIP' ? 'bg-accent-500/20 text-accent-200' :
+                          customer.level === 'نقره‌ای' ? 'bg-white/10 text-white' :
+                          'bg-warning-500/20 text-warning-200'
+                        }`}>
+                          {customer.level}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              <Card>
+                <SectionHeader title="اقدامات سریع" className="mb-6" />
+                <div className="space-y-3">
+                  <button className="w-full text-right p-3 rounded-lg border border-white/10 hover:bg-white/5 transition-colors">📊 مشاهده گزارش‌ها</button>
+                  <button onClick={() => setShowCreateModal(true)} className="w-full text-right p-3 rounded-lg border border-white/10 hover:bg-white/5 transition-colors">🎯 ایجاد تخفیف جدید</button>
+                  <button className="w-full text-right p-3 rounded-lg border border-white/10 hover:bg-white/5 transition-colors">📢 ارسال اطلاعیه</button>
+                  <button className="w-full text-right p-3 rounded-lg border border-white/10 hover:bg-white/5 transition-colors">👥 مدیریت مشتریان</button>
+                </div>
+              </Card>
+
+              <Card>
+                <SectionHeader title="نظرات اخیر" className="mb-6" />
+                <div className="space-y-4">
+                  {loading ? (
+                    <div className="text-center text-white/70">در حال بارگذاری...</div>
+                  ) : recentReviews.length > 0 ? (
+                    recentReviews.map((review, index) => (
+                      <div key={index} className="border-b border-white/10 pb-4 last:border-b-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-medium text-white">{review.customer_name}</p>
+                          <div className="flex items-center">
+                            <span className="text-yellow-300 text-sm">{'⭐'.repeat(review.rating)}</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-white/80 mb-1">{review.comment}</p>
+                        <p className="text-xs text-white/60">{review.created_at}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-white/70">نظری ثبت نشده است</div>
+                  )}
+                </div>
+              </Card>
             </div>
           </div>
         </div>
       </div>
-      </div>
-      
-      {/* Create Discount Modal */}
+
       {showCreateModal && (
         <CreateDiscountModal
           isOpen={showCreateModal}

@@ -2,14 +2,15 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.utils import timezone
 from django.db.models import Q, Avg, Count
 from django.shortcuts import get_object_or_404
 
-from .models import Discount, DiscountScore, DiscountComment, DiscountReport
+from .models import Discount, DiscountScore, DiscountComment, DiscountReport, CommentLike
 from .serializers import (
     DiscountSerializer, DiscountCreateSerializer, DiscountScoreSerializer,
-    DiscountSummarySerializer, RecentCommentSerializer
+    DiscountCommentSerializer, DiscountSummarySerializer, RecentCommentSerializer, CommentLikeSerializer
 )
 
 
@@ -112,7 +113,7 @@ class DiscountViewSet(viewsets.ModelViewSet):
         """دریافت نظرات یک تخفیف"""
         discount = self.get_object()
         comments = discount.comments.filter(is_deleted=False).order_by('-created_at')
-        serializer = DiscountCommentSerializer(comments, many=True)
+        serializer = DiscountCommentSerializer(comments, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[IsCustomerOrReadOnly])
@@ -238,3 +239,54 @@ class DiscountViewSet(viewsets.ModelViewSet):
                 {'error': 'خطا در دریافت کامنت‌ها'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class CommentLikeAPIView(APIView):
+    """لایک کردن کامنت‌ها"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, comment_id):
+        """لایک یا آنلایک کردن یک کامنت"""
+        try:
+            comment = DiscountComment.objects.get(id=comment_id, is_deleted=False)
+        except DiscountComment.DoesNotExist:
+            return Response({'error': 'نظر یافت نشد'}, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            customer = request.user.customerprofile
+        except:
+            return Response(
+                {'error': 'فقط مشتریان می‌توانند لایک کنند'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # چک کن که کاربر نتواند کامنت خودش را لایک کند
+        if comment.user == customer:
+            return Response(
+                {'error': 'شما نمی‌توانید نظر خودتان را لایک کنید'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # چک کن که قبلاً لایک کرده یا نه
+        like_obj = CommentLike.objects.filter(comment=comment, user=customer).first()
+        
+        if like_obj:
+            # آنلایک کن
+            like_obj.delete()
+            comment.likes_count = max(0, comment.likes_count - 1)
+            comment.save()
+            return Response({
+                'message': 'لایک حذف شد', 
+                'liked': False,
+                'likes_count': comment.likes_count
+            })
+        else:
+            # لایک کن
+            CommentLike.objects.create(comment=comment, user=customer)
+            comment.likes_count += 1
+            comment.save()
+            return Response({
+                'message': 'لایک شد', 
+                'liked': True,
+                'likes_count': comment.likes_count
+            })

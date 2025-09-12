@@ -59,6 +59,7 @@ class DiscountComment(BaseModel):
     discount = models.ForeignKey(Discount, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey('accounts.CustomerProfile', on_delete=models.CASCADE, related_name='discount_comments')
     comment = models.TextField()
+    likes_count = models.PositiveIntegerField(default=0)
     is_deleted = models.BooleanField(default=False)
 
     class Meta:
@@ -72,6 +73,20 @@ class DiscountComment(BaseModel):
 
     def __str__(self):
         return f"Comment by {self.user.user.username} on {self.discount.title}"
+
+
+class CommentLike(BaseModel):
+    """لایک کردن کامنت توسط کاربران"""
+    comment = models.ForeignKey(DiscountComment, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey('accounts.CustomerProfile', on_delete=models.CASCADE, related_name='comment_likes')
+
+    class Meta:
+        verbose_name = 'لایک کامنت'
+        verbose_name_plural = 'لایک‌های کامنت'
+        unique_together = ('comment', 'user')  # هر کاربر فقط یکبار می‌تواند لایک کند
+
+    def __str__(self):
+        return f"{self.user.user.username} liked comment on {self.comment.discount.title}"
     
 
 class DiscountReport(BaseModel):

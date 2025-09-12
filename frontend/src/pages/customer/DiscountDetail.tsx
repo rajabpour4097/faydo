@@ -26,6 +26,9 @@ export const DiscountDetail: React.FC = () => {
   const [newComment, setNewComment] = useState('');
   const [showReportModal, setShowReportModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [likingComment, setLikingComment] = useState<number | null>(null);
+
+  console.log('=== DiscountDetail component mounted ===');
 
   useEffect(() => {
     console.log('=== useEffect called ===');
@@ -105,6 +108,28 @@ export const DiscountDetail: React.FC = () => {
 
   const handleReport = async (reason: string) => {
     await discountService.reportDiscount(Number(id), reason);
+  };
+
+  const handleLikeComment = async (commentId: number) => {
+    try {
+      setLikingComment(commentId);
+      const result = await discountService.likeComment(commentId);
+      
+      // به‌روزرسانی state کامنت‌ها
+      setComments(prev => prev.map(comment => 
+        comment.id === commentId 
+          ? { 
+              ...comment, 
+              likes_count: result.likes_count,
+              user_liked: result.liked 
+            }
+          : comment
+      ));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLikingComment(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -317,11 +342,55 @@ export const DiscountDetail: React.FC = () => {
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h4 className="font-medium text-gray-900">{comment.user_name}</h4>
-                      <span className="text-sm text-gray-500">
-                        {formatDate(comment.created_at)}
-                      </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium text-gray-900">{comment.user_name}</h4>
+                        <span className="text-sm text-gray-500">
+                          {formatDate(comment.created_at)}
+                        </span>
+                      </div>
+                      
+                      {/* دکمه لایک */}
+                      {comment.can_like && (
+                        <button
+                          onClick={() => handleLikeComment(comment.id)}
+                          disabled={likingComment === comment.id}
+                          className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm transition-colors ${
+                            comment.user_liked
+                              ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          } ${likingComment === comment.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <svg
+                            className={`w-4 h-4 ${comment.user_liked ? 'fill-current' : 'stroke-current'}`}
+                            viewBox="0 0 24 24"
+                            fill={comment.user_liked ? 'currentColor' : 'none'}
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                            />
+                          </svg>
+                          <span>{comment.likes_count}</span>
+                        </button>
+                      )}
+                      
+                      {/* نمایش تعداد لایک برای business */}
+                      {!comment.can_like && comment.likes_count > 0 && (
+                        <div className="flex items-center space-x-1 text-sm text-gray-500">
+                          <svg className="w-4 h-4 fill-current text-red-500" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                            />
+                          </svg>
+                          <span>{comment.likes_count}</span>
+                        </div>
+                      )}
                     </div>
                     <p className="text-gray-700 leading-relaxed">{comment.comment}</p>
                   </div>

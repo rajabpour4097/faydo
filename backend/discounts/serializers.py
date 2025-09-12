@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Discount, DiscountScore, DiscountComment, DiscountReport
+from .models import Discount, DiscountScore, DiscountComment, DiscountReport, CommentLike
 from accounts.models import BusinessProfile, CustomerProfile
 
 
@@ -129,11 +129,50 @@ class DiscountScoreSerializer(serializers.ModelSerializer):
 class DiscountCommentSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.user.get_full_name', read_only=True)
     user_avatar = serializers.ImageField(source='user.user.image', read_only=True)
+    user_liked = serializers.SerializerMethodField()
+    can_like = serializers.SerializerMethodField()
 
     class Meta:
         model = DiscountComment
-        fields = ['id', 'comment', 'user_name', 'user_avatar', 'created_at']
-        read_only_fields = ['id', 'created_at', 'user']
+        fields = ['id', 'comment', 'user_name', 'user_avatar', 'likes_count', 
+                 'user_liked', 'can_like', 'created_at']
+        read_only_fields = ['id', 'created_at', 'user', 'likes_count']
+
+    def get_user_liked(self, obj):
+        """آیا کاربر فعلی این کامنت را لایک کرده؟"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            try:
+                customer = request.user.customerprofile
+                return obj.likes.filter(user=customer).exists()
+            except:
+                return False
+        return False
+
+    def get_can_like(self, obj):
+        """آیا کاربر فعلی می‌تواند این کامنت را لایک کند؟"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            try:
+                customer = request.user.customerprofile
+                # کاربر نمی‌تواند کامنت خودش را لایک کند
+                return obj.user != customer
+            except:
+                return False
+        return False
+
+    def create(self, validated_data):
+        request = self.context['request']
+        customer = request.user.customerprofile
+        validated_data['user'] = customer
+        return super().create(validated_data)
+
+
+class CommentLikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommentLike
+        fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'user', 'comment']
 
     def create(self, validated_data):
         request = self.context['request']

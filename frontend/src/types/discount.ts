@@ -38,6 +38,9 @@ export interface DiscountComment {
   comment: string;
   user_name: string;
   user_avatar?: string;
+  likes_count: number;
+  user_liked: boolean;
+  can_like: boolean;
   created_at: string;
 }
 

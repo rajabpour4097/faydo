@@ -158,6 +158,21 @@ class DiscountService {
     return response.json();
   }
 
+  // لایک/آنلایک کردن کامنت
+  async likeComment(commentId: number): Promise<{ liked: boolean; likes_count: number; message: string }> {
+    const response = await fetch(`${API_BASE_URL}/discounts/comments/${commentId}/like/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'خطا در لایک کردن نظر');
+    }
+
+    return response.json();
+  }
+
   // دریافت نظرات اخیر برای داشبورد کسب‌وکار
   async getRecentComments(): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/discounts/discounts/recent_comments/`, {

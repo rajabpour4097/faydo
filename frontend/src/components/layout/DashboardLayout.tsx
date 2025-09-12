@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { DashboardHeader } from './DashboardHeader'
@@ -18,6 +18,18 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user } = useAuth()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [sidebarOpen])
 
   const customerMenuItems: MenuItem[] = [
     {
@@ -184,15 +196,15 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen dashboard-bg">
+    <div className="min-h-screen dashboard-bg overflow-x-hidden">
       {/* Dashboard Header */}
       <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       
       <div className="flex relative">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          <div
+            className="fixed inset-0 bg-black/60 z-[60] lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -205,9 +217,23 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
 
         {/* Right Sidebar */}
-        <div className={`w-64 bg-night-900/50 backdrop-blur-xl shadow-2xl border-l border-white/10 fixed right-0 top-16 h-[calc(100vh-4rem)] z-50 overflow-y-auto transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
+        <div className={`w-64 bg-night-900/70 backdrop-blur-xl shadow-2xl border-l border-white/10 fixed right-0 top-0 lg:top-16 h-screen lg:h-[calc(100vh-4rem)] z-[80] overflow-y-auto will-change-transform transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : 'translate-x-[105%] lg:translate-x-0'
         }`}>
+
+        {/* Mobile sidebar header */}
+        <div className="lg:hidden sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-night-900/80 backdrop-blur-xl border-b border-white/10">
+          <span className="text-white/80 text-sm font-medium">منو</span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            aria-label="بستن منو"
+            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
         {/* User Info */}
         <div className="p-4 border-b border-white/10 bg-white/5">

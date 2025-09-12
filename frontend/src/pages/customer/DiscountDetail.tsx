@@ -184,7 +184,7 @@ export const DiscountDetail: React.FC = () => {
   }
 
   const content = (
-  <div className="max-w-4xl mx-auto space-y-8 text-white">
+  <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 text-white">
       {/* هدر */}
       <div className="flex items-center justify-between">
         <button
@@ -211,16 +211,30 @@ export const DiscountDetail: React.FC = () => {
         </div>
       )}
 
-      {/* اطلاعات اصلی تخفیف */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl shadow-soft p-8">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">{discount.title}</h1>
-            <p className="text-white/70 text-lg">{discount.business_name}</p>
+      {/* کاور/تصویر تخفیف (اختیاری) */}
+      {(discount as any).image || (discount as any).business_image ? (
+        <div className="rounded-2xl overflow-hidden border border-white/10 shadow-soft">
+          <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] bg-gradient-to-br from-white/5 to-white/0">
+            <img
+              src={(discount as any).image || (discount as any).business_image}
+              alt={discount.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#0b1220]/80 via-transparent to-transparent" />
           </div>
-          <div className="text-right">
-            <div className="text-4xl font-bold text-green-300 mb-2">{discount.percentage}%</div>
-            <div className="text-sm text-white/60">تخفیف</div>
+        </div>
+      ) : null}
+
+      {/* اطلاعات اصلی تخفیف */}
+      <div className="bg-white/5 border border-white/10 rounded-2xl shadow-soft p-4 sm:p-6 md:p-8 overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 truncate">{discount.title}</h1>
+            <p className="text-white/70 text-base sm:text-lg truncate">{discount.business_name}</p>
+          </div>
+          <div className="sm:text-right">
+            <div className="text-3xl md:text-4xl font-bold text-green-300 mb-1 sm:mb-2">{discount.percentage}%</div>
+            <div className="text-xs sm:text-sm text-white/60">تخفیف</div>
           </div>
         </div>
 
@@ -231,7 +245,7 @@ export const DiscountDetail: React.FC = () => {
         )}
 
         {/* زمان‌بندی */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <h3 className="text-lg font-medium text-white mb-3">مدت زمان تخفیف</h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-white/70">
@@ -249,11 +263,11 @@ export const DiscountDetail: React.FC = () => {
         </div>
 
         {/* امتیازدهی */}
-        <div className="border-t border-white/10 pt-6">
+        <div className="border-t border-white/10 pt-4 sm:pt-6">
           <h3 className="text-lg font-medium text-white mb-4">امتیازدهی</h3>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-2">
                 <StarRating rating={discount.average_score} size="lg" />
                 <div>
                   <div className="text-xl font-bold text-white">{discount.average_score}</div>
@@ -264,7 +278,7 @@ export const DiscountDetail: React.FC = () => {
             
             {discount.can_comment && (
               <div className="text-right">
-                <p className="text-sm text-white/70 mb-2">امتیاز شما:</p>
+                <p className="text-sm text-white/70 mb-1 sm:mb-2">امتیاز شما:</p>
                 <StarRating
                   rating={userRating}
                   interactive={true}
@@ -278,7 +292,7 @@ export const DiscountDetail: React.FC = () => {
       </div>
 
       {/* نظرات */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl shadow-soft p-8">
+  <div className="bg-white/5 border border-white/10 rounded-2xl shadow-soft p-4 sm:p-6 md:p-8">
         <h3 className="text-xl font-bold text-white mb-6">نظرات کاربران</h3>
 
         {/* فرم ثبت نظر جدید */}
@@ -325,13 +339,13 @@ export const DiscountDetail: React.FC = () => {
           <div className="space-y-6">
             {comments.map((comment) => (
               <div key={comment.id} className="border-b border-white/10 pb-6 last:border-b-0">
-                <div className="flex items-start space-x-4">
+                <div className="flex items-start gap-3 sm:gap-4">
                   <div className="flex-shrink-0">
                     {comment.user_avatar ? (
                       <img
                         src={comment.user_avatar}
                         alt={comment.user_name}
-                        className="w-10 h-10 rounded-full"
+                        className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
                       <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
@@ -343,7 +357,7 @@ export const DiscountDetail: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-2">
                         <h4 className="font-medium text-white">{comment.user_name}</h4>
                         <span className="text-sm text-white/60">
                           {formatDate(comment.created_at)}

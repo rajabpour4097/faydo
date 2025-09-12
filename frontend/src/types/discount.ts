@@ -7,6 +7,9 @@ export interface Discount {
   end_date: string;
   business: number;
   business_name?: string;
+  // اختیاری: تصویر/کاور تخفیف یا تصویر کسبوکار برای نمایش در جزئیات
+  image?: string;
+  business_image?: string;
   average_score: number;
   total_scores: number;
   is_active: boolean;

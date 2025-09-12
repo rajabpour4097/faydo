@@ -184,7 +184,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen dashboard-bg">
       {/* Dashboard Header */}
       <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       
@@ -192,7 +192,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -205,49 +205,49 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
 
         {/* Right Sidebar */}
-        <div className={`w-64 bg-white/95 backdrop-blur-sm shadow-2xl border-l border-gray-200 fixed right-0 top-16 h-[calc(100vh-4rem)] z-50 overflow-y-auto transform transition-transform duration-300 ease-in-out ${
+        <div className={`w-64 bg-night-900/50 backdrop-blur-xl shadow-2xl border-l border-white/10 fixed right-0 top-16 h-[calc(100vh-4rem)] z-50 overflow-y-auto transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
         }`}>
 
         {/* User Info */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
+        <div className="p-4 border-b border-white/10 bg-white/5">
           <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-gradient-to-r from-gray-300 to-gray-200 rounded-full flex items-center justify-center shadow-sm">
+            <div className="w-12 h-12 bg-gradient-to-r from-surface-600 to-surface-500 rounded-full flex items-center justify-center shadow-soft">
               {user?.avatar ? (
                 <img src={user.avatar} alt="پروفایل" className="w-full h-full rounded-full object-cover" />
               ) : (
-                <span className="text-gray-700 text-lg font-medium">
+                <span className="text-white text-lg font-medium">
                   {user?.name?.charAt(0) || user?.username?.charAt(0) || 'ک'}
                 </span>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-white truncate">
                 {user?.name || user?.username}
               </p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-xs text-white/60">{user?.email}</p>
             </div>
           </div>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 px-4 py-6">
+        <nav className="flex-1 px-4 py-6 text-white">
           <div className="mb-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4">منو اصلی</p>
+            <p className="text-xs font-semibold text-white/60 uppercase tracking-wider px-4">منو اصلی</p>
           </div>
           <div className="space-y-2">
             {menuItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
+                className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 border ${
                   isActive(item.href)
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-[1.02]'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100 hover:shadow-sm'
+                    ? 'bg-gradient-to-r from-purple-600/90 to-blue-600/90 text-white shadow-lg transform scale-[1.02] border-transparent'
+                    : 'text-white/80 hover:text-white hover:bg-white/5 hover:shadow-soft border-white/10'
                 }`}
               >
                 <span className={`ml-3 flex-shrink-0 ${
-                  isActive(item.href) ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'
+                  isActive(item.href) ? 'text-white' : 'text-white/60 group-hover:text-white'
                 }`}>
                   {item.icon}
                 </span>
@@ -255,7 +255,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 {item.badge && (
                   <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none rounded-full ${
                     isActive(item.href)
-                      ? 'bg-white bg-opacity-20 text-white'
+                      ? 'bg-white/20 text-white'
                       : 'bg-red-500 text-white'
                   }`}>
                     {item.badge}
@@ -267,18 +267,18 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </nav>
 
         {/* Profile and Logout */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className="p-4 border-t border-white/10 bg-white/5 text-white">
           <div className="space-y-2">
             <Link
               to="/profile"
-              className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
+              className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 border ${
                 location.pathname === '/profile'
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-white hover:shadow-sm'
+                  ? 'bg-gradient-to-r from-purple-600/90 to-blue-600/90 text-white shadow-lg border-transparent'
+                  : 'text-white/80 hover:text-white hover:bg-white/5 hover:shadow-soft border-white/10'
               }`}
             >
               <svg className={`ml-3 w-5 h-5 ${
-                location.pathname === '/profile' ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'
+                location.pathname === '/profile' ? 'text-white' : 'text-white/60 group-hover:text-white'
               }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -286,9 +286,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </Link>
             <Link
               to="/"
-              className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-700 hover:text-gray-900 hover:bg-white hover:shadow-sm transition-all duration-200"
+              className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-white/80 hover:text-white hover:bg-white/5 hover:shadow-soft transition-all duration-200 border border-white/10"
             >
-              <svg className="ml-3 w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="ml-3 w-5 h-5 text-white/60 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <span>بازگشت به خانه</span>

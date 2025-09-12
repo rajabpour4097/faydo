@@ -24,15 +24,15 @@ export const DiscountReportModal: React.FC<Props> = ({open,onClose,onSubmit}) =>
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white max-w-md w-full rounded-xl p-6 shadow">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-night-900/70 border border-white/10 max-w-md w-full rounded-2xl p-6 shadow-glass text-white">
         <h2 className="text-lg font-bold mb-4">گزارش تخلف تخفیف</h2>
-        {error && <div className="bg-red-100 text-red-700 text-sm p-2 rounded mb-3">{error}</div>}
+        {error && <div className="bg-red-500/10 text-red-300 border border-red-500/20 text-sm p-2 rounded mb-3">{error}</div>}
         <form onSubmit={submit} className="space-y-3">
-          <textarea className="w-full border rounded p-2 text-sm" placeholder="دلیل گزارش" value={reason} onChange={e=>setReason(e.target.value)} required />
+          <textarea className="w-full border border-white/10 bg-white/5 text-white placeholder-white/50 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" placeholder="دلیل گزارش" value={reason} onChange={e=>setReason(e.target.value)} required />
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded border">انصراف</button>
-            <button disabled={loading} className="px-4 py-2 text-sm rounded bg-red-600 text-white disabled:opacity-50">{loading?'ارسال...':'ارسال گزارش'}</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded border border-white/10 text-white/80 hover:text-white hover:bg-white/5">انصراف</button>
+            <button disabled={loading} className="px-4 py-2 text-sm rounded bg-red-600/90 hover:bg-red-600 text-white disabled:opacity-50 border border-red-500/30">{loading?'ارسال...':'ارسال گزارش'}</button>
           </div>
         </form>
       </div>

@@ -37,23 +37,23 @@ export const BusinessDiscounts: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-4 lg:p-6 min-h-[calc(100vh-4rem)] bg-gray-50">
+      <div className="p-4 lg:p-6 min-h-[calc(100vh-4rem)]">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">مدیریت تخفیف‌ها</h1>
-          <button onClick={()=>setOpenCreate(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">+ تخفیف جدید</button>
+          <h1 className="text-2xl font-bold text-white">مدیریت تخفیف‌ها</h1>
+          <button onClick={()=>setOpenCreate(true)} className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition-colors border border-white/10 shadow-soft">+ تخفیف جدید</button>
         </div>
-        {error && <div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">{error}</div>}
-        {loading ? <div>در حال بارگذاری...</div> : (
+        {error && <div className="bg-red-500/10 text-red-300 border border-red-500/20 p-2 rounded mb-4 text-sm">{error}</div>}
+        {loading ? <div className="text-white/80">در حال بارگذاری...</div> : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {discounts.map(d => (
               <div key={d.id} className="relative group">
                 <DiscountCard discount={d} onViewDetails={handleViewDetails} />
                 <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition flex gap-2">
-                  <button onClick={()=>del(d.id)} className="text-xs bg-red-600 text-white px-2 py-1 rounded">حذف</button>
+                  <button onClick={()=>del(d.id)} className="text-xs bg-red-600/90 hover:bg-red-600 text-white px-2 py-1 rounded border border-white/10 shadow-soft">حذف</button>
                 </div>
               </div>
             ))}
-            {discounts.length===0 && <div className="text-sm text-gray-600">هیچ تخفیفی ثبت نشده.</div>}
+            {discounts.length===0 && <div className="text-sm text-white/70">هیچ تخفیفی ثبت نشده.</div>}
           </div>
         )}
       </div>

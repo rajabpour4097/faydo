@@ -156,7 +156,7 @@ export const DiscountDetail: React.FC = () => {
     console.log('Rendering loading state');
     return isDashboard ? (
       <DashboardLayout>
-        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
+        <div className="min-h-[calc(100vh-4rem)] p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             <LoadingSpinner />
           </div>
@@ -172,9 +172,9 @@ export const DiscountDetail: React.FC = () => {
     console.log('Error value:', error);
     return isDashboard ? (
       <DashboardLayout>
-        <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
+        <div className="min-h-[calc(100vh-4rem)] p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center py-12 text-gray-500">تخفیف یافت نشد</div>
+            <div className="text-center py-12 text-white/70">تخفیف یافت نشد</div>
           </div>
         </div>
       </DashboardLayout>
@@ -184,12 +184,12 @@ export const DiscountDetail: React.FC = () => {
   }
 
   const content = (
-    <div className="max-w-4xl mx-auto space-y-8">
+  <div className="max-w-4xl mx-auto space-y-8 text-white">
       {/* هدر */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center space-x-2 text-white/70 hover:text-white transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -199,7 +199,7 @@ export const DiscountDetail: React.FC = () => {
 
         <button
           onClick={() => setShowReportModal(true)}
-          className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
+          className="text-red-300 hover:text-red-400 text-sm font-medium transition-colors"
         >
           گزارش تخلف
         </button>
@@ -212,29 +212,29 @@ export const DiscountDetail: React.FC = () => {
       )}
 
       {/* اطلاعات اصلی تخفیف */}
-      <div className="bg-white rounded-lg shadow-md p-8">
+      <div className="bg-white/5 border border-white/10 rounded-2xl shadow-soft p-8">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{discount.title}</h1>
-            <p className="text-gray-600 text-lg">{discount.business_name}</p>
+            <h1 className="text-3xl font-bold text-white mb-2">{discount.title}</h1>
+            <p className="text-white/70 text-lg">{discount.business_name}</p>
           </div>
           <div className="text-right">
-            <div className="text-4xl font-bold text-green-600 mb-2">{discount.percentage}%</div>
-            <div className="text-sm text-gray-500">تخفیف</div>
+            <div className="text-4xl font-bold text-green-300 mb-2">{discount.percentage}%</div>
+            <div className="text-sm text-white/60">تخفیف</div>
           </div>
         </div>
 
         {discount.description && (
           <div className="mb-6">
-            <p className="text-gray-700 leading-relaxed">{discount.description}</p>
+            <p className="text-white/80 leading-relaxed">{discount.description}</p>
           </div>
         )}
 
         {/* زمان‌بندی */}
         <div className="mb-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-3">مدت زمان تخفیف</h3>
+          <h3 className="text-lg font-medium text-white mb-3">مدت زمان تخفیف</h3>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
+            <div className="flex justify-between text-sm text-white/70">
               <span>شروع: {formatDate(discount.start_date)}</span>
               <span>پایان: {formatDate(discount.end_date)}</span>
             </div>
@@ -242,29 +242,29 @@ export const DiscountDetail: React.FC = () => {
               percentage={discount.time_remaining}
               color={getProgressColor(discount.time_remaining)}
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-white/60">
               {discount.time_remaining > 0 ? `${Math.round(discount.time_remaining)}% زمان باقی‌مانده` : 'منقضی شده'}
             </p>
           </div>
         </div>
 
         {/* امتیازدهی */}
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">امتیازدهی</h3>
+        <div className="border-t border-white/10 pt-6">
+          <h3 className="text-lg font-medium text-white mb-4">امتیازدهی</h3>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <StarRating rating={discount.average_score} size="lg" />
                 <div>
-                  <div className="text-xl font-bold text-gray-900">{discount.average_score}</div>
-                  <div className="text-sm text-gray-500">از {discount.total_scores} نظر</div>
+                  <div className="text-xl font-bold text-white">{discount.average_score}</div>
+                  <div className="text-sm text-white/60">از {discount.total_scores} نظر</div>
                 </div>
               </div>
             </div>
             
             {discount.can_comment && (
               <div className="text-right">
-                <p className="text-sm text-gray-600 mb-2">امتیاز شما:</p>
+                <p className="text-sm text-white/70 mb-2">امتیاز شما:</p>
                 <StarRating
                   rating={userRating}
                   interactive={true}
@@ -278,14 +278,14 @@ export const DiscountDetail: React.FC = () => {
       </div>
 
       {/* نظرات */}
-      <div className="bg-white rounded-lg shadow-md p-8">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">نظرات کاربران</h3>
+      <div className="bg-white/5 border border-white/10 rounded-2xl shadow-soft p-8">
+        <h3 className="text-xl font-bold text-white mb-6">نظرات کاربران</h3>
 
         {/* فرم ثبت نظر جدید */}
         {discount.can_comment && !discount.user_comment && (
           <form onSubmit={handleAddComment} className="mb-8">
             <div className="mb-4">
-              <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="comment" className="block text-sm font-medium text-white mb-2">
                 نظر شما:
               </label>
               <textarea
@@ -293,7 +293,7 @@ export const DiscountDetail: React.FC = () => {
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-white/10 bg-white/5 text-white placeholder-white/50 rounded-md focus:outline-none focus:ring-2 focus:ring-white/20"
                 placeholder="نظر خود را در مورد این تخفیف بنویسید..."
                 required
               />
@@ -301,7 +301,7 @@ export const DiscountDetail: React.FC = () => {
             <button
               type="submit"
               disabled={submitting || !newComment.trim()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition-colors disabled:opacity-50"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-6 py-2 rounded-md font-medium transition-colors disabled:opacity-50 border border-white/10"
             >
               {submitting ? 'در حال ارسال...' : 'ثبت نظر'}
             </button>
@@ -310,21 +310,21 @@ export const DiscountDetail: React.FC = () => {
 
         {/* نمایش نظر کاربر فعلی */}
         {discount.user_comment && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-            <h4 className="font-medium text-blue-900 mb-2">نظر شما:</h4>
-            <p className="text-blue-800">{discount.user_comment}</p>
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-4 mb-6">
+            <h4 className="font-medium text-blue-300 mb-2">نظر شما:</h4>
+            <p className="text-blue-200">{discount.user_comment}</p>
           </div>
         )}
 
         {/* لیست نظرات */}
         {comments.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-white/60">
             هنوز نظری ثبت نشده است
           </div>
         ) : (
           <div className="space-y-6">
             {comments.map((comment) => (
-              <div key={comment.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+              <div key={comment.id} className="border-b border-white/10 pb-6 last:border-b-0">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
                     {comment.user_avatar ? (

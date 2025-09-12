@@ -6,8 +6,8 @@ export const ProgressBar: React.FC<{percent:number}> = ({percent}) => {
   if (clamped > 66) color = 'bg-red-500'
   else if (clamped > 33) color = 'bg-blue-500'
   return (
-    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-      <div className={`${color} h-2 transition-all`} style={{width: clamped+'%'}} />
+    <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+      <div className={`${color} h-2 transition-all duration-500`} style={{width: clamped+'%'}} />
     </div>
   )
 }

@@ -74,7 +74,7 @@ export const DiscountDashboard: React.FC = () => {
             title="تخفیفات اخیر"
             action={(
               <button
-                onClick={() => navigate('/business/discounts')}
+                onClick={() => navigate('/dashboard/business/discounts')}
                 className="text-primary-300 hover:text-primary-200 text-sm font-medium transition-colors"
               >
                 مشاهده همه

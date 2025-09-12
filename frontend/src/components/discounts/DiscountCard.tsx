@@ -20,20 +20,20 @@ export const DiscountCard: React.FC<DiscountCardProps> = ({ discount, onViewDeta
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 lg:p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white/5 border border-white/10 text-white rounded-lg shadow-soft p-4 lg:p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-lg lg:text-xl font-bold text-gray-900 flex-1 ml-2">{discount.title}</h3>
-        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full whitespace-nowrap">
+        <h3 className="text-lg lg:text-xl font-bold text-white flex-1 ml-2">{discount.title}</h3>
+        <span className="bg-green-500/20 text-green-300 text-xs font-medium px-2.5 py-0.5 rounded-full whitespace-nowrap">
           {discount.percentage}% تخفیف
         </span>
       </div>
       
       {discount.description && (
-        <p className="text-gray-600 mb-4 line-clamp-2">{discount.description}</p>
+        <p className="text-white/80 mb-4 line-clamp-2">{discount.description}</p>
       )}
       
       <div className="mb-4">
-        <div className="flex justify-between text-sm text-gray-500 mb-2">
+        <div className="flex justify-between text-sm text-white/60 mb-2">
           <span>تاریخ شروع: {formatDate(discount.start_date)}</span>
           <span>تاریخ پایان: {formatDate(discount.end_date)}</span>
         </div>
@@ -41,7 +41,7 @@ export const DiscountCard: React.FC<DiscountCardProps> = ({ discount, onViewDeta
           percentage={discount.time_remaining} 
           color={getProgressColor(discount.time_remaining)}
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-white/60 mt-1">
           {discount.time_remaining > 0 ? 'زمان باقی‌مانده' : 'منقضی شده'}
         </p>
       </div>
@@ -49,14 +49,14 @@ export const DiscountCard: React.FC<DiscountCardProps> = ({ discount, onViewDeta
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <StarRating rating={discount.average_score} size="sm" />
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-white/70">
             ({discount.total_scores} نظر)
           </span>
         </div>
         
         <button
           onClick={() => onViewDetails(discount.id)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors border border-white/10"
         >
           جزئیات
         </button>

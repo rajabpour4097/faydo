@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { DashboardHeader } from './DashboardHeader'
+import { MobileBottomNav } from './MobileBottomNav'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -211,7 +212,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col lg:mr-64">
-          <main className="flex-1">
+          <main className="flex-1 pb-20 sm:pb-0">
             {children}
           </main>
         </div>
@@ -323,6 +324,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </div>
       </div>
       </div>
+      <MobileBottomNav variant="dashboard" />
     </div>
   )
 }

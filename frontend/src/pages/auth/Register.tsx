@@ -18,16 +18,22 @@ export const Register = () => {
     gender: 'male' as 'male' | 'female',
     birth_date: '',
     address: '',
-    agreeToTerms: false
+    agreeToTerms: false,
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const value =
+      e.target.type === 'checkbox'
+        ? (e.target as HTMLInputElement).checked
+        : e.target.value
     setFormData({
       ...formData,
-      [e.target.name]: value
+      [e.target.name]: value,
     })
   }
 
@@ -35,8 +41,7 @@ export const Register = () => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-
-    console.log('Form data before validation:', formData)
+    setFieldErrors({})
 
     if (formData.password !== formData.password_confirm) {
       setError('رمز عبور و تکرار آن مطابقت ندارند')
@@ -51,8 +56,6 @@ export const Register = () => {
     }
 
     try {
-      console.log('Calling register with:', formData)
-      
       let result
       if (formData.role === 'business') {
         result = await registerBusiness({
@@ -63,7 +66,7 @@ export const Register = () => {
           password_confirm: formData.password_confirm,
           name: formData.name,
           description: '',
-          address: formData.address
+          address: formData.address,
         })
       } else {
         result = await registerCustomer({
@@ -76,26 +79,20 @@ export const Register = () => {
           password_confirm: formData.password_confirm,
           gender: formData.gender,
           birth_date: formData.birth_date,
-          address: formData.address
+          address: formData.address,
         })
       }
-      
-      console.log('Register result:', result)
-      
+
       if (result.success) {
-        console.log('Registration successful, navigating to dashboard')
-        // Navigate based on user role
         if (formData.role === 'customer') {
           navigate('/dashboard/customer')
         } else {
           navigate('/dashboard/business')
         }
       } else {
-        console.error('Registration failed with error:', result.error)
         setError(result.error || 'خطا در ثبت نام')
       }
-    } catch (error) {
-      console.error('Registration error:', error)
+    } catch (err) {
       setError('خطا در ثبت نام. لطفاً دوباره تلاش کنید.')
     } finally {
       setIsLoading(false)
@@ -109,9 +106,7 @@ export const Register = () => {
           <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl flex items-center justify-center mb-6">
             <span className="text-white font-bold text-2xl">F</span>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">
-            ایجاد حساب کاربری
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-900">ایجاد حساب کاربری</h2>
           <p className="mt-2 text-sm text-gray-600">
             یا{' '}
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
@@ -123,12 +118,14 @@ export const Register = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl rounded-2xl sm:px-10">
-          {error && (
+          {(error || fieldErrors.non_field_errors) && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
+              {error ||
+                (fieldErrors.non_field_errors &&
+                  fieldErrors.non_field_errors.join('، '))}
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="role" className="block text-sm font-medium text-gray-700">
@@ -144,6 +141,9 @@ export const Register = () => {
                 <option value="customer">مشتری</option>
                 <option value="business">کسب‌وکار</option>
               </select>
+              {fieldErrors.role && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.role.join('، ')}</p>
+              )}
             </div>
 
             <div>
@@ -160,6 +160,9 @@ export const Register = () => {
                 className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="نام کاربری خود را وارد کنید"
               />
+              {fieldErrors.username && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.username.join('، ')}</p>
+              )}
             </div>
 
             {formData.role === 'customer' ? (
@@ -178,6 +181,9 @@ export const Register = () => {
                     className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="نام"
                   />
+                  {fieldErrors.first_name && (
+                    <p className="mt-1 text-xs text-red-600">{fieldErrors.first_name.join('، ')}</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
@@ -193,6 +199,9 @@ export const Register = () => {
                     className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="نام خانوادگی"
                   />
+                  {fieldErrors.last_name && (
+                    <p className="mt-1 text-xs text-red-600">{fieldErrors.last_name.join('، ')}</p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -210,6 +219,9 @@ export const Register = () => {
                   className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="نام کسب‌وکار"
                 />
+                {fieldErrors.name && (
+                  <p className="mt-1 text-xs text-red-600">{fieldErrors.name.join('، ')}</p>
+                )}
               </div>
             )}
 
@@ -227,6 +239,9 @@ export const Register = () => {
                 className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="your@email.com"
               />
+              {fieldErrors.email && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.email.join('، ')}</p>
+              )}
             </div>
 
             <div>
@@ -242,6 +257,9 @@ export const Register = () => {
                 className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="09123456789"
               />
+              {fieldErrors.phone_number && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.phone_number.join('، ')}</p>
+              )}
             </div>
 
             {formData.role === 'customer' && (
@@ -261,6 +279,9 @@ export const Register = () => {
                       <option value="male">مرد</option>
                       <option value="female">زن</option>
                     </select>
+                    {fieldErrors.gender && (
+                      <p className="mt-1 text-xs text-red-600">{fieldErrors.gender.join('، ')}</p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="birth_date" className="block text-sm font-medium text-gray-700">
@@ -274,6 +295,9 @@ export const Register = () => {
                       onChange={handleChange}
                       className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
+                    {fieldErrors.birth_date && (
+                      <p className="mt-1 text-xs text-red-600">{fieldErrors.birth_date.join('، ')}</p>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -289,6 +313,9 @@ export const Register = () => {
                     className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="آدرس محل سکونت"
                   />
+                  {fieldErrors.address && (
+                    <p className="mt-1 text-xs text-red-600">{fieldErrors.address.join('، ')}</p>
+                  )}
                 </div>
               </>
             )}
@@ -307,6 +334,9 @@ export const Register = () => {
                 className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="رمز عبور قوی انتخاب کنید"
               />
+              {fieldErrors.password && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.password.join('، ')}</p>
+              )}
             </div>
 
             <div>
@@ -323,6 +353,9 @@ export const Register = () => {
                 className="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="رمز عبور را مجدداً وارد کنید"
               />
+              {fieldErrors.password_confirm && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.password_confirm.join('، ')}</p>
+              )}
             </div>
 
             <div className="flex items-center">
@@ -336,11 +369,8 @@ export const Register = () => {
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="agreeToTerms" className="mr-2 block text-sm text-gray-900">
-                با{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-500">شرایط استفاده</a>
-                {' '}و{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-500">حریم خصوصی</a>
-                {' '}موافقم
+                با <a href="#" className="text-blue-600 hover:text-blue-500">شرایط استفاده</a> و{' '}
+                <a href="#" className="text-blue-600 hover:text-blue-500">حریم خصوصی</a> موافقم
               </label>
             </div>
 
@@ -357,8 +387,8 @@ export const Register = () => {
             {formData.role === 'customer' && (
               <div className="mt-6 p-4 bg-green-50 rounded-lg">
                 <p className="text-sm text-green-700 text-center">
-                  🎉 <strong>مزیت عضویت رایگان:</strong><br />
-                  ۳ ماه اشتراک برنزی رایگان + ۱۰۰ امتیاز هدیه!
+                  🎉 <strong>مزیت عضویت رایگان:</strong>
+                  <br /> ۳ ماه اشتراک برنزی رایگان + ۱۰۰ امتیاز هدیه!
                 </p>
               </div>
             )}

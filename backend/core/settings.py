@@ -42,19 +42,13 @@ SECRET_KEY = 'django-insecure-&9b@kd3ndf7caq=cdk^n06ajo5_kmnm&-_6%iw^!(i&1s$gu$q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['*']  # Dev: allow all for LAN testing
 
 # CORS settings for frontend connection
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000", 
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-CORS_ALLOW_CREDENTIALS = True
+# In dev, allow all origins for ease of LAN testing
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_CREDENTIALS = True
 
 
 # Application definition

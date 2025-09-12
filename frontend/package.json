@@ -10,18 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.15.0",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
-    "lucide-react": "^0.279.0",
+    "clsx": "^2.0.0",
     "framer-motion": "^10.16.4",
+    "lucide-react": "^0.279.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.45.4",
-    "recharts": "^2.8.0",
-    "clsx": "^2.0.0"
+    "react-router-dom": "^6.15.0",
+    "recharts": "^2.8.0"
   },
   "devDependencies": {
+    "@types/node": "^24.3.2",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",

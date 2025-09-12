@@ -1,5 +1,7 @@
 // API configuration and utilities
-const API_BASE_URL = 'http://localhost:8000/api'
+const API_BASE_URL =
+  (import.meta as any).env?.VITE_API_BASE_URL ||
+  `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8000/api`
 
 export interface ApiResponse<T> {
   data?: T

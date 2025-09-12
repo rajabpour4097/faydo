@@ -179,7 +179,7 @@ export const DiscountDetail: React.FC = () => {
         </div>
       </DashboardLayout>
     ) : (
-      <div className="text-center py-12 text-gray-500">تخفیف یافت نشد</div>
+  <div className="text-center py-12 text-white/70">تخفیف یافت نشد</div>
     );
   }
 
@@ -334,8 +334,8 @@ export const DiscountDetail: React.FC = () => {
                         className="w-10 h-10 rounded-full"
                       />
                     ) : (
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <span className="text-gray-600 font-medium">
+                      <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                        <span className="text-white/70 font-medium">
                           {comment.user_name.charAt(0)}
                         </span>
                       </div>
@@ -344,8 +344,8 @@ export const DiscountDetail: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-gray-900">{comment.user_name}</h4>
-                        <span className="text-sm text-gray-500">
+                        <h4 className="font-medium text-white">{comment.user_name}</h4>
+                        <span className="text-sm text-white/60">
                           {formatDate(comment.created_at)}
                         </span>
                       </div>
@@ -355,10 +355,10 @@ export const DiscountDetail: React.FC = () => {
                         <button
                           onClick={() => handleLikeComment(comment.id)}
                           disabled={likingComment === comment.id}
-                          className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm transition-colors ${
+              className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm transition-colors ${
                             comment.user_liked
-                              ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-red-500/15 text-red-300 hover:bg-red-500/20'
+                : 'bg-white/10 text-white/70 hover:bg-white/20'
                           } ${likingComment === comment.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           <svg
@@ -380,8 +380,8 @@ export const DiscountDetail: React.FC = () => {
                       
                       {/* نمایش تعداد لایک برای business */}
                       {!comment.can_like && comment.likes_count > 0 && (
-                        <div className="flex items-center space-x-1 text-sm text-gray-500">
-                          <svg className="w-4 h-4 fill-current text-red-500" viewBox="0 0 24 24">
+                        <div className="flex items-center space-x-1 text-sm text-white/60">
+                          <svg className="w-4 h-4 fill-current text-red-400" viewBox="0 0 24 24">
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -392,7 +392,7 @@ export const DiscountDetail: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <p className="text-gray-700 leading-relaxed">{comment.comment}</p>
+                    <p className="text-white/80 leading-relaxed">{comment.comment}</p>
                   </div>
                 </div>
               </div>
@@ -413,7 +413,7 @@ export const DiscountDetail: React.FC = () => {
 
   return isDashboard ? (
     <DashboardLayout>
-      <div className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-6">
+  <div className="min-h-[calc(100vh-4rem)] dashboard-bg p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {content}
         </div>

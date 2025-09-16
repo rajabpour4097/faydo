@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
 type Variant = 'public' | 'dashboard'
@@ -43,7 +43,6 @@ const Icon = {
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ variant = 'public' }) => {
   const { user } = useAuth()
-  const location = useLocation()
 
   const isDashboard = variant === 'dashboard'
   const isCustomer = user?.type === 'customer'
@@ -58,11 +57,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ variant = 'pub
   // Sides (RTL): right group then left group; center FAB rendered separately
   const rightItems = isCustomer
     ? [
-        { to: '/dashboard/customer', label: 'خانه', icon: Icon.home },
+        { to: '/dashboard/customer', label: 'خانه', icon: Icon.home, end: true },
         { to: '/dashboard/customer/discounts', label: 'تخفیفات', icon: Icon.search },
       ]
     : [
-        { to: '/dashboard/business', label: 'خانه', icon: Icon.home },
+        { to: '/dashboard/business', label: 'خانه', icon: Icon.home, end: true },
         { to: '/dashboard/business/discounts', label: 'مدیریت', icon: Icon.search },
       ]
 
@@ -92,46 +91,51 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ variant = 'pub
           <div className="flex items-end justify-between">
             {/* Right group (RTL first) */}
             <ul className="flex items-end gap-2">
-              {rightItems.map((item) => {
-                const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
-                return (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all select-none border ${
-                        active
-                          ? `${isDashboard ? 'bg-white/10 border-white/20' : 'bg-white shadow'} ${activeColor}`
-                          : `${inactiveColor} ${isDashboard ? 'hover:bg-white/5' : 'hover:bg-gray-50'} border-transparent`
-                      }`}
-                    >
-                      <span className={`${active ? activeColor : inactiveColor}`}>{item.icon(active)}</span>
-                      <span className={`text-[11px] leading-none ${active ? activeColor : inactiveColor}`}>{item.label}</span>
-                    </Link>
-                  </li>
-                )
-              })}
+              {rightItems.map((item: any) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    end={Boolean(item.end)}
+                    className={({ isActive }) =>
+                      `flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all select-none border ` +
+                      (isActive
+                        ? `${isDashboard ? 'bg-white/10 border-white/20' : 'bg-white shadow'} ${activeColor}`
+                        : `${inactiveColor} ${isDashboard ? 'hover:bg-white/5' : 'hover:bg-gray-50'} border-transparent`)
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <span className={`${isActive ? activeColor : inactiveColor}`}>{item.icon(isActive)}</span>
+                        <span className={`text-[11px] leading-none ${isActive ? activeColor : inactiveColor}`}>{item.label}</span>
+                      </>
+                    )}
+                  </NavLink>
+                </li>
+              ))}
             </ul>
 
             {/* Left group */}
             <ul className="flex items-end gap-2">
-              {leftItems.map((item) => {
-                const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
-                return (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all select-none border ${
-                        active
-                          ? `${isDashboard ? 'bg-white/10 border-white/20' : 'bg-white shadow'} ${activeColor}`
-                          : `${inactiveColor} ${isDashboard ? 'hover:bg-white/5' : 'hover:bg-gray-50'} border-transparent`
-                      }`}
-                    >
-                      <span className={`${active ? activeColor : inactiveColor}`}>{item.icon(active)}</span>
-                      <span className={`text-[11px] leading-none ${active ? activeColor : inactiveColor}`}>{item.label}</span>
-                    </Link>
-                  </li>
-                )
-              })}
+              {leftItems.map((item: any) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all select-none border ` +
+                      (isActive
+                        ? `${isDashboard ? 'bg-white/10 border-white/20' : 'bg-white shadow'} ${activeColor}`
+                        : `${inactiveColor} ${isDashboard ? 'hover:bg-white/5' : 'hover:bg-gray-50'} border-transparent`)
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <span className={`${isActive ? activeColor : inactiveColor}`}>{item.icon(isActive)}</span>
+                        <span className={`text-[11px] leading-none ${isActive ? activeColor : inactiveColor}`}>{item.label}</span>
+                      </>
+                    )}
+                  </NavLink>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

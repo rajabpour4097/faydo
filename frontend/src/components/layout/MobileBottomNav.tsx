@@ -1,5 +1,5 @@
-import React from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
 type Variant = 'public' | 'dashboard'
@@ -43,6 +43,18 @@ const Icon = {
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ variant = 'public' }) => {
   const { user } = useAuth()
+  const location = useLocation()
+  const [edgeToEdge, setEdgeToEdge] = useState(false)
+
+  // Detect standalone PWA (installed) to allow true edge-to-edge bottom
+  useEffect(() => {
+    const mm = window.matchMedia?.('(display-mode: standalone)')
+    const isStandalone = mm?.matches || (navigator as any).standalone === true
+    setEdgeToEdge(Boolean(isStandalone))
+    const onChange = (e: MediaQueryListEvent) => setEdgeToEdge(e.matches)
+    mm?.addEventListener?.('change', onChange)
+    return () => mm?.removeEventListener?.('change', onChange)
+  }, [])
 
   const isDashboard = variant === 'dashboard'
   const isCustomer = user?.type === 'customer'
@@ -62,7 +74,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ variant = 'pub
       ]
     : [
         { to: '/dashboard/business', label: 'خانه', icon: Icon.home, end: true },
-        { to: '/dashboard/business/discounts', label: 'مدیریت', icon: Icon.search },
+        { to: '/dashboard/business/discounts', label: 'تخفیفات', icon: Icon.search },
       ]
 
   const leftItems = isCustomer
@@ -81,13 +93,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ variant = 'pub
 
   return (
     <nav
-      className={`sm:hidden fixed bottom-0 inset-x-0 z-[90] ${barClasses}`}
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))' }}
+      className={`sm:hidden fixed bottom-0 inset-x-0 z-[90] w-full max-w-[100vw] rounded-b-[32px] md:rounded-b-[40px] shadow-[0_-10px_28px_rgba(0,0,0,0.25)] ${barClasses}`}
+      style={{
+        paddingBottom: edgeToEdge ? 0 : 'calc(env(safe-area-inset-bottom, 0px))',
+        paddingLeft: 'max(env(safe-area-inset-left, 0px), 0px)',
+        paddingRight: 'max(env(safe-area-inset-right, 0px), 0px)'
+      }}
       aria-label="ناوبری پایین موبایل"
     >
       <div className="relative">
         {/* Bar background */}
-        <div className="px-4 pt-2 pb-3 rounded-t-2xl">
+        <div className="px-4 pt-3 pb-4 rounded-b-[32px] md:rounded-b-[40px] max-w-[100vw] overflow-x-hidden">
           <div className="flex items-end justify-between">
             {/* Right group (RTL first) */}
             <ul className="flex items-end gap-2">
@@ -96,19 +112,25 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ variant = 'pub
                   <NavLink
                     to={item.to}
                     end={Boolean(item.end)}
-                    className={({ isActive }) =>
-                      `flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all select-none border ` +
-                      (isActive
-                        ? `${isDashboard ? 'bg-white/10 border-white/20' : 'bg-white shadow'} ${activeColor}`
-                        : `${inactiveColor} ${isDashboard ? 'hover:bg-white/5' : 'hover:bg-gray-50'} border-transparent`)
-                    }
+                    className={({ isActive }) => {
+                      const active = item.end ? (isActive && location.pathname === item.to) : isActive
+                      return (
+                        `flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all select-none border ` +
+                        (active
+                          ? `${isDashboard ? 'bg-white/10 border-white/20' : 'bg-white shadow'} ${activeColor}`
+                          : `${inactiveColor} ${isDashboard ? 'hover:bg-white/5' : 'hover:bg-gray-50'} border-transparent`)
+                      )
+                    }}
                   >
-                    {({ isActive }) => (
-                      <>
-                        <span className={`${isActive ? activeColor : inactiveColor}`}>{item.icon(isActive)}</span>
-                        <span className={`text-[11px] leading-none ${isActive ? activeColor : inactiveColor}`}>{item.label}</span>
-                      </>
-                    )}
+                    {({ isActive }) => {
+                      const active = item.end ? (isActive && location.pathname === item.to) : isActive
+                      return (
+                        <>
+                          <span className={`${active ? activeColor : inactiveColor}`}>{item.icon(active)}</span>
+                          <span className={`text-[11px] leading-none ${active ? activeColor : inactiveColor}`}>{item.label}</span>
+                        </>
+                      )
+                    }}
                   </NavLink>
                 </li>
               ))}
@@ -141,7 +163,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ variant = 'pub
         </div>
 
         {/* Center FAB */}
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+  <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10">
           <Link
             to={center.to}
             className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl border border-white/10 bg-gradient-to-br from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white ring-4 ring-black/10"

@@ -57,8 +57,14 @@ export const DiscountList: React.FC = () => {
     setFilteredDiscounts(filtered);
   }, [searchTerm, selectedCategory, discounts]);
 
-  // Get unique categories for filter
-  const categories = Array.from(new Set(discounts.map(d => d.business_name).filter(Boolean)));
+  // Get unique categories for filter (typed as string[])
+  const categories: string[] = Array.from(
+    new Set(
+      discounts
+        .map(d => d.business_name)
+        .filter((v): v is string => Boolean(v))
+    )
+  );
 
   const handleViewDetails = (discountId: number) => {
     if (isDashboard) {
@@ -166,7 +172,8 @@ export const DiscountList: React.FC = () => {
               />
             </div>
           </div>
-          <div className="w-full md:w-64">
+          {/* Desktop category select */}
+          <div className="hidden md:block md:w-64">
             <select
               className={`block w-full px-3 py-3 rounded-lg focus:outline-none focus:ring-2 ${
                 isDashboard
@@ -185,6 +192,46 @@ export const DiscountList: React.FC = () => {
             </select>
           </div>
         </div>
+        {/* Mobile category chips */}
+        {categories.length > 0 && (
+          <div className="md:hidden mt-3 -mx-2 overflow-x-auto">
+            <div className="flex gap-2 px-2 pb-1">
+              <button
+                aria-label="همه کسب‌وکارها"
+                onClick={() => setSelectedCategory('')}
+                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors ${
+                  selectedCategory === ''
+                    ? isDashboard
+                      ? 'bg-white/15 text-white border-white/20'
+                      : 'bg-blue-600 text-white border-blue-600'
+                    : isDashboard
+                      ? 'bg-white/5 text-white/80 border-white/10'
+                      : 'bg-white text-gray-700 border-gray-200'
+                }`}
+              >
+                همه
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  aria-label={`فیلتر: ${c}`}
+                  onClick={() => setSelectedCategory(c)}
+                  className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors ${
+                    selectedCategory === c
+                      ? isDashboard
+                        ? 'bg-white/15 text-white border-white/20'
+                        : 'bg-blue-600 text-white border-blue-600'
+                      : isDashboard
+                        ? 'bg-white/5 text-white/80 border-white/10'
+                        : 'bg-white text-gray-700 border-gray-200'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -207,17 +254,27 @@ export const DiscountList: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-4 sm:gap-6">
             {filteredDiscounts.map((discount) => (
-              <div key={discount.id} className={`rounded-xl p-6 transition-all ${isDashboard ? 'border border-white/10 hover:border-white/20 bg-white/5 backdrop-blur shadow-sm shadow-black/10' : 'border border-gray-200 hover:shadow-md bg-white'}`}>
+              <div
+                key={discount.id}
+                className={`rounded-xl p-4 sm:p-6 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isDashboard ? 'border border-white/10 hover:border-white/20 bg-white/5 backdrop-blur shadow-sm shadow-black/10' : 'border border-gray-200 hover:shadow-md bg-white'
+                }`}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleViewDetails(discount.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleViewDetails(discount.id) }}
+                aria-label={`مشاهده ${discount.title}`}
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-4 space-x-reverse">
                     <div className={`p-3 rounded-full ${isDashboard ? 'bg-blue-500/10' : 'bg-blue-100'}`}>
                       <Tag className={`w-6 h-6 ${isDashboard ? 'text-blue-400' : 'text-blue-600'}`} />
                     </div>
                     <div>
-                      <h3 className={`text-lg font-semibold ${isDashboard ? 'text-white' : 'text-gray-900'}`}>{discount.title}</h3>
-                      <p className={`text-sm ${isDashboard ? 'text-white/60' : 'text-gray-600'}`}>{discount.business_name}</p>
+                      <h3 className={`text-base sm:text-lg font-semibold ${isDashboard ? 'text-white' : 'text-gray-900'}`}>{discount.title}</h3>
+                      <p className={`text-xs sm:text-sm ${isDashboard ? 'text-white/60' : 'text-gray-600'} truncate max-w-[14rem] sm:max-w-none`}>{discount.business_name}</p>
                     </div>
                   </div>
                   <div className="text-left">
@@ -227,7 +284,12 @@ export const DiscountList: React.FC = () => {
                   </div>
                 </div>
                 
-                <p className={`${isDashboard ? 'text-white/80' : 'text-gray-700'} mb-4`}>{discount.description || 'تخفیف ویژه برای شما'}</p>
+                <p
+                  className={`${isDashboard ? 'text-white/80' : 'text-gray-700'} mb-3 sm:mb-4 text-sm sm:text-base`}
+                  style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                >
+                  {discount.description || 'تخفیف ویژه برای شما'}
+                </p>
                 
                 <div className={`flex items-center justify-between text-sm mb-4 ${isDashboard ? 'text-white/60' : 'text-gray-500'}`}>
                   <div className="flex items-center gap-4">
@@ -241,10 +303,9 @@ export const DiscountList: React.FC = () => {
                   <span>اعتبار تا: {new Date(discount.end_date).toLocaleDateString('fa-IR')}</span>
                 </div>
                 
-
                 <button 
                   onClick={() => handleViewDetails(discount.id)}
-                  className={`w-full text-white py-3 px-4 rounded-lg font-medium transition-colors ${isDashboard ? 'bg-gradient-to-r from-violet-500 to-blue-500 hover:from-violet-400 hover:to-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  className={`hidden sm:block w-full text-white py-3 px-4 rounded-lg font-medium transition-colors ${isDashboard ? 'bg-gradient-to-r from-violet-500 to-blue-500 hover:from-violet-400 hover:to-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
                   مشاهده جزئیات
                 </button>

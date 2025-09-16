@@ -20,16 +20,16 @@ export const DiscountCard: React.FC<DiscountCardProps> = ({ discount, onViewDeta
   };
 
   return (
-    <div className="bg-white/5 border border-white/10 text-white rounded-lg shadow-soft p-4 lg:p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white/5 border border-white/10 text-white rounded-lg shadow-soft p-4 lg:p-6 hover:shadow-lg transition-shadow overflow-hidden">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-lg lg:text-xl font-bold text-white flex-1 ml-2">{discount.title}</h3>
+        <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white flex-1 ml-2 truncate">{discount.title}</h3>
         <span className="bg-green-500/20 text-green-300 text-xs font-medium px-2.5 py-0.5 rounded-full whitespace-nowrap">
           {discount.percentage}% تخفیف
         </span>
       </div>
       
       {discount.description && (
-        <p className="text-white/80 mb-4 line-clamp-2">{discount.description}</p>
+        <p className="text-white/80 mb-4 text-sm sm:text-base line-clamp-2 break-words">{discount.description}</p>
       )}
       
       <div className="mb-4">
@@ -46,7 +46,7 @@ export const DiscountCard: React.FC<DiscountCardProps> = ({ discount, onViewDeta
         </p>
       </div>
 
-      <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-3">
         <div className="flex items-center space-x-2">
           <StarRating rating={discount.average_score} size="sm" />
           <span className="text-sm text-white/70">
@@ -56,7 +56,7 @@ export const DiscountCard: React.FC<DiscountCardProps> = ({ discount, onViewDeta
         
         <button
           onClick={() => onViewDetails(discount.id)}
-          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors border border-white/10"
+      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors border border-white/10"
         >
           جزئیات
         </button>

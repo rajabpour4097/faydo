@@ -125,144 +125,146 @@ export const DiscountManagement: React.FC = () => {
   <div className="min-h-[calc(100vh-4rem)] p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-      <div className="mb-8 flex justify-between items-start">
-            <div>
-      <h1 className="text-3xl font-bold text-white mb-2">مدیریت تخفیفات</h1>
-      <p className="text-white/70">تخفیف‌های خود را ایجاد و مدیریت کنید.</p>
+      <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+              <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">مدیریت تخفیفات</h1>
+        <p className="text-white/70 text-sm sm:text-base">تخفیف‌های خود را ایجاد و مدیریت کنید.</p>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(true)}
+        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium hover:from-purple-500 hover:to-blue-500 transition-colors border border-white/10 shadow-soft text-sm sm:text-base w-full sm:w-auto"
+              >
+                + ایجاد تخفیف جدید
+              </button>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-      className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-500 hover:to-blue-500 transition-colors border border-white/10 shadow-soft"
-            >
-              + ایجاد تخفیف جدید
-            </button>
           </div>
 
           {error && (
-    <div className="bg-red-500/10 border border-red-500/20 text-red-300 px-4 py-3 rounded-lg mb-6">
+    <div className="bg-red-500/10 border border-red-500/20 text-red-300 px-4 py-3 rounded-lg mb-4 sm:mb-6 text-sm sm:text-base">
               {error}
             </div>
           )}
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-    <div className="glass rounded-2xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-      <p className="text-sm text-white/70">کل تخفیف‌ها</p>
-      <p className="text-2xl font-bold text-lavender">{discountStats.totalDiscounts}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+    <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+      <p className="text-xs sm:text-sm text-white/70">کل تخفیف‌ها</p>
+      <p className="text-lg sm:text-2xl font-bold text-lavender">{discountStats.totalDiscounts}</p>
                 </div>
-                <div className="text-3xl">🎯</div>
+                <div className="text-xl sm:text-3xl self-end sm:self-auto">🎯</div>
               </div>
             </div>
 
-    <div className="glass rounded-2xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-      <p className="text-sm text-white/70">تخفیف‌های فعال</p>
-      <p className="text-2xl font-bold text-mint">{discountStats.activeDiscounts}</p>
+    <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+      <p className="text-xs sm:text-sm text-white/70">تخفیف‌های فعال</p>
+      <p className="text-lg sm:text-2xl font-bold text-mint">{discountStats.activeDiscounts}</p>
                 </div>
-                <div className="text-3xl">✅</div>
+                <div className="text-xl sm:text-3xl self-end sm:self-auto">✅</div>
               </div>
             </div>
 
-    <div className="glass rounded-2xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-      <p className="text-sm text-white/70">استفاده شده</p>
-      <p className="text-2xl font-bold text-lilac">{discountStats.totalUsage}</p>
+    <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+      <p className="text-xs sm:text-sm text-white/70">استفاده شده</p>
+      <p className="text-lg sm:text-2xl font-bold text-lilac">{discountStats.totalUsage}</p>
                 </div>
-                <div className="text-3xl">📊</div>
+                <div className="text-xl sm:text-3xl self-end sm:self-auto">📊</div>
               </div>
             </div>
 
-    <div className="glass rounded-2xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-      <p className="text-sm text-white/70">امتیاز میانگین</p>
-      <p className="text-2xl font-bold text-limeSoft">{discountStats.averageRating.toFixed(1)}</p>
+    <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+      <p className="text-xs sm:text-sm text-white/70">امتیاز میانگین</p>
+      <p className="text-lg sm:text-2xl font-bold text-limeSoft">{discountStats.averageRating.toFixed(1)}</p>
                 </div>
-                <div className="text-3xl">⭐</div>
+                <div className="text-xl sm:text-3xl self-end sm:self-auto">⭐</div>
               </div>
             </div>
 
-    <div className="glass rounded-2xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-      <p className="text-sm text-white/70">منقضی شده</p>
-      <p className="text-2xl font-bold text-red-300">{discountStats.expiredDiscounts}</p>
+    <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white col-span-2 sm:col-span-1">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-2 sm:mb-0">
+      <p className="text-xs sm:text-sm text-white/70">منقضی شده</p>
+      <p className="text-lg sm:text-2xl font-bold text-red-300">{discountStats.expiredDiscounts}</p>
                 </div>
-                <div className="text-3xl">⏰</div>
+                <div className="text-xl sm:text-3xl self-end sm:self-auto">⏰</div>
               </div>
             </div>
           </div>
 
           {discounts.length === 0 ? (
-            <div className="bg-white/5 border border-white/10 rounded-2xl shadow-soft p-12 text-center text-white">
-              <div className="text-6xl mb-4">🎯</div>
-              <div className="text-white/70 text-lg mb-4">هنوز تخفیفی ایجاد نکرده‌اید</div>
+            <div className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl shadow-soft p-8 sm:p-12 text-center text-white">
+              <div className="text-4xl sm:text-6xl mb-4">🎯</div>
+              <div className="text-white/70 text-base sm:text-lg mb-4">هنوز تخفیفی ایجاد نکرده‌اید</div>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-6 py-3 rounded-lg font-medium transition-colors border border-white/10"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-6 py-3 rounded-lg font-medium transition-colors border border-white/10 w-full sm:w-auto"
               >
                 ایجاد اولین تخفیف
               </button>
             </div>
           ) : (
             /* Active Discounts */
-            <div className="bg-white/5 border border-white/10 rounded-2xl shadow-soft p-6 text-white">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-white">تخفیف‌های شما</h2>
-                <div className="flex space-x-2 space-x-reverse">
-                  <button className="px-4 py-2 text-sm border border-white/10 rounded-lg hover:bg-white/5">
+            <div className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl shadow-soft p-4 sm:p-6 text-white">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-3">
+                <h2 className="text-lg sm:text-xl font-bold text-white">تخفیف‌های شما</h2>
+                <div className="flex gap-2 sm:space-x-2 sm:space-x-reverse">
+                  <button className="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm border border-white/10 rounded-lg hover:bg-white/5">
                     فیلتر
                   </button>
-                  <button className="px-4 py-2 text-sm border border-white/10 rounded-lg hover:bg-white/5">
+                  <button className="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm border border-white/10 rounded-lg hover:bg-white/5">
                     مرتب‌سازی
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {discounts.map((discount) => (
-                  <div key={discount.id} className="border border-white/10 bg-white/5 rounded-xl p-6">
-                    <div className="flex items-start justify-between mb-4">
+                  <div key={discount.id} className="border border-white/10 bg-white/5 rounded-lg sm:rounded-xl p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-3 space-x-reverse mb-2">
-                          <h3 className="text-lg font-semibold text-white">{discount.title}</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                          <h3 className="text-base sm:text-lg font-semibold text-white">{discount.title}</h3>
                           {getStatusBadge(discount)}
                         </div>
                         {discount.description && (
-                          <p className="text-white/70 mb-2">{discount.description}</p>
+                          <p className="text-white/70 mb-3 text-sm sm:text-base">{discount.description}</p>
                         )}
-                        <div className="flex items-center space-x-4 space-x-reverse text-sm text-white/60">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-white/60">
                           <span>شروع: {formatDate(discount.start_date)}</span>
-                          <span>•</span>
+                          <span className="hidden sm:inline">•</span>
                           <span>پایان: {formatDate(discount.end_date)}</span>
-                          <span>•</span>
-                          <div className="flex items-center space-x-1">
+                          <span className="hidden sm:inline">•</span>
+                          <div className="flex items-center gap-1">
                             <StarRating rating={discount.average_score} size="sm" />
                             <span>({discount.total_scores} نظر)</span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-left ml-6">
-                        <div className="bg-green-500/20 text-green-300 text-xl font-bold px-4 py-2 rounded-lg mb-4">
+                      <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-0">
+                        <div className="bg-green-500/20 text-green-300 text-lg sm:text-xl font-bold px-3 py-2 sm:px-4 rounded-lg mb-0 sm:mb-4">
                           {discount.percentage}%
                         </div>
-                        <div className="flex space-x-2 space-x-reverse">
+                        <div className="flex gap-2 sm:gap-1 sm:flex-col lg:flex-row lg:gap-2">
                           <button
                             onClick={() => setSelectedDiscount(discount)}
-                            className="text-lavender hover:text-white text-sm font-medium"
+                            className="text-lavender hover:text-white text-xs sm:text-sm font-medium px-2 py-1"
                           >
                             مشاهده
                           </button>
-                          <button className="text-white/70 hover:text-white text-sm font-medium">
+                          <button className="text-white/70 hover:text-white text-xs sm:text-sm font-medium px-2 py-1">
                             ویرایش
                           </button>
                           <button
                             onClick={() => handleDeleteDiscount(discount)}
-                            className="text-red-300 hover:text-red-400 text-sm font-medium"
+                            className="text-red-300 hover:text-red-400 text-xs sm:text-sm font-medium px-2 py-1"
                           >
                             حذف
                           </button>
@@ -272,7 +274,7 @@ export const DiscountManagement: React.FC = () => {
 
                     {/* Progress Bar for time remaining */}
                     <div className="mt-4">
-                      <div className="flex justify-between text-sm text-white/70 mb-1">
+                      <div className="flex justify-between text-xs sm:text-sm text-white/70 mb-1">
                         <span>زمان باقی‌مانده</span>
                         <span>{discount.time_remaining}%</span>
                       </div>

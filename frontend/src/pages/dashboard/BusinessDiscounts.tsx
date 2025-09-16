@@ -37,14 +37,14 @@ export const BusinessDiscounts: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-4 lg:p-6 min-h-[calc(100vh-4rem)]">
-        <div className="flex justify-between items-center mb-6">
+      <div className="p-4 lg:p-6 min-h-[calc(100vh-4rem)] overflow-x-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <h1 className="text-2xl font-bold text-white">مدیریت تخفیف‌ها</h1>
-          <button onClick={()=>setOpenCreate(true)} className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition-colors border border-white/10 shadow-soft">+ تخفیف جدید</button>
+          <button onClick={()=>setOpenCreate(true)} className="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition-colors border border-white/10 shadow-soft">+ تخفیف جدید</button>
         </div>
         {error && <div className="bg-red-500/10 text-red-300 border border-red-500/20 p-2 rounded mb-4 text-sm">{error}</div>}
         {loading ? <div className="text-white/80">در حال بارگذاری...</div> : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {discounts.map(d => (
               <div key={d.id} className="relative group">
                 <DiscountCard discount={d} onViewDetails={handleViewDetails} />

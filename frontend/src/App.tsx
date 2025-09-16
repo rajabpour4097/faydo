@@ -19,12 +19,14 @@ import { CustomerFavorites } from './pages/dashboard/CustomerFavorites'
 import { CustomerOrders } from './pages/dashboard/CustomerOrders'
 import { CustomerMessages } from './pages/dashboard/CustomerMessages'
 import { CustomerSupport } from './pages/dashboard/CustomerSupport'
+import { ScanQR } from './pages/dashboard/ScanQR'
 import { BusinessCustomers } from './pages/dashboard/BusinessCustomers'
 import { Profile } from './pages/profile/Profile'
 import { NotFound } from './pages/NotFound'
 import { DiscountList } from './pages/customer/DiscountList'
 import { DiscountDetail } from './pages/customer/DiscountDetail'
 import { DiscountManagement } from './pages/business/DiscountManagement'
+import { DiscountCreate } from './pages/business/DiscountCreate'
 
 function App() {
   return (
@@ -93,6 +95,14 @@ function App() {
             element={
               <CustomerRoute>
                 <DiscountList />
+              </CustomerRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/customer/scan" 
+            element={
+              <CustomerRoute>
+                <ScanQR />
               </CustomerRoute>
             } 
           />
@@ -183,6 +193,14 @@ function App() {
             element={
               <BusinessRoute>
                 <DiscountManagement />
+              </BusinessRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/business/discounts/create" 
+            element={
+              <BusinessRoute>
+                <DiscountCreate />
               </BusinessRoute>
             } 
           />

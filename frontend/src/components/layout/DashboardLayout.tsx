@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { ThemeToggle } from '../ui/ThemeToggle'
+// Desktop-only layout. Mobile dashboard is rendered at page level.
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -22,6 +23,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout } = useAuth()
   const { isDark } = useTheme()
 
+
   const handleLogout = async () => {
     await logout()
     navigate('/')
@@ -32,6 +34,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (!user) return []
 
     return [
+      { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
       { name: 'داشبورد', href: '/dashboard', icon: '📊' },
       { name: 'شرکای تبلیغاتی', href: '/dashboard/affiliates', icon: '🤝' },
       { name: 'برندها', href: '/dashboard/brands', icon: '🏷️' },
@@ -149,41 +152,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </div>
 
               <div className="flex items-center space-x-4">
-                {/* Search */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search Dashboard"
-                    className={`w-80 pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
-                      isDark 
-                        ? 'border-slate-600 border-opacity-30 bg-slate-700 bg-opacity-50 text-white placeholder-slate-400'
-                        : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
-                    }`}
-                  />
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                </div>
-
                 {/* Theme Toggle */}
                 <ThemeToggle />
 
-                {/* Notification */}
-                <button className={`p-2 rounded-lg transition-colors ${
-                  isDark 
-                    ? 'text-slate-400 hover:text-white hover:bg-slate-700 hover:bg-opacity-50'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}>
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
-                  </svg>
-                </button>
-
                 {/* Profile */}
-                <div className="flex items-center space-x-3">
+              <Link to="/dashboard/profile" className="flex items-center space-x-3">
                   <div className="text-right">
                     <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {user?.name || user?.username || 'کاربر'}
@@ -197,7 +170,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       {user?.name?.charAt(0) || user?.username?.charAt(0) || 'ک'}
                     </span>
                   </div>
-                  
+              </Link>
+              
                   {/* Logout button in header */}
                   <button
                     onClick={handleLogout}
@@ -215,7 +189,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
               </div>
             </div>
-          </div>
         </header>
 
         {/* Page Content */}

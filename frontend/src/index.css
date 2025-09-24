@@ -189,3 +189,71 @@ body {
   color: #94a3b8;
   border: 1px solid rgba(148, 163, 184, 0.3);
 }
+
+/* Mobile Dashboard Specific Styles */
+.mobile-header {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.mobile-service-card {
+  background: linear-gradient(135deg, var(--service-color-start) 0%, var(--service-color-end) 100%);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.mobile-service-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-doctor-card {
+  transition: all 0.3s ease;
+  border-radius: 16px;
+}
+
+.mobile-doctor-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-bottom-nav {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme mobile styles */
+.dark .mobile-header {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.dark .mobile-bottom-nav {
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .mobile-doctor-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Service card colors */
+.service-blue {
+  --service-color-start: #3b82f6;
+  --service-color-end: #1d4ed8;
+}
+
+.service-red {
+  --service-color-start: #ef4444;
+  --service-color-end: #dc2626;
+}
+
+.service-green {
+  --service-color-start: #10b981;
+  --service-color-end: #059669;
+}
+
+.service-purple {
+  --service-color-start: #8b5cf6;
+  --service-color-end: #7c3aed;
+}

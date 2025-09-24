@@ -1,10 +1,20 @@
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
+import { MobileDashboard } from './MobileDashboard'
 import { useTheme } from '../../contexts/ThemeContext'
 
 export const MainDashboard = () => {
   const { isDark } = useTheme()
+
   return (
-    <DashboardLayout>
+    <>
+      {/* Mobile */}
+      <div className="md:hidden">
+        <MobileDashboard />
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden md:block">
+        <DashboardLayout>
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-8">
@@ -312,6 +322,8 @@ export const MainDashboard = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+        </DashboardLayout>
+      </div>
+    </>
   )
 }

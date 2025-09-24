@@ -219,6 +219,60 @@ class ApiService {
     return this.request<any>('/accounts/auth/profile/')
   }
 
+  // Profile update methods
+  async updateProfile(profileData: Partial<User>): Promise<ApiResponse<User>> {
+    return this.request<User>('/accounts/auth/profile/', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    })
+  }
+
+  async uploadProfileImage(imageFile: File): Promise<ApiResponse<{ image: string }>> {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    
+    return this.request<{ image: string }>('/accounts/auth/profile/image/', {
+      method: 'POST',
+      headers: {}, // Remove Content-Type to let browser set it for FormData
+      body: formData,
+    })
+  }
+
+  // Phone verification methods
+  async sendOTP(phoneNumber: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>('/accounts/auth/send-otp/', {
+      method: 'POST',
+      body: JSON.stringify({ phone_number: phoneNumber }),
+    })
+  }
+
+  async verifyOTP(phoneNumber: string, otpCode: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>('/accounts/auth/verify-otp/', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        phone_number: phoneNumber, 
+        otp_code: otpCode 
+      }),
+    })
+  }
+
+  async updatePhoneNumber(phoneNumber: string, otpCode: string): Promise<ApiResponse<User>> {
+    return this.request<User>('/accounts/auth/profile/phone/', {
+      method: 'PUT',
+      body: JSON.stringify({ 
+        phone_number: phoneNumber, 
+        otp_code: otpCode 
+      }),
+    })
+  }
+
+  async updateBusinessProfile(businessData: { business_name?: string; description?: string; address?: string }): Promise<ApiResponse<any>> {
+    return this.request<any>('/accounts/auth/profile/business/', {
+      method: 'PUT',
+      body: JSON.stringify(businessData),
+    })
+  }
+
   async refreshToken(): Promise<boolean> {
     const refreshToken = localStorage.getItem('refresh_token')
     if (!refreshToken) return false

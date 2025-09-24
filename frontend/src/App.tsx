@@ -12,6 +12,7 @@ import { TestUsers } from './pages/TestUsers'
 
 // Dashboard Pages
 import { MainDashboard } from './pages/dashboard/MainDashboard'
+import { Profile } from './pages/dashboard/Profile'
 import { useAuth } from './contexts/AuthContext'
 
 // Dashboard Router Component
@@ -44,6 +45,7 @@ function App() {
 
             {/* Dashboard routes - no Layout wrapper as DashboardLayout handles its own layout */}
             <Route path="/dashboard" element={<DashboardRouter />} />
+            <Route path="/dashboard/profile" element={<Profile />} />
 
             {/* Test Users Page */}
             <Route path="/test-users" element={<TestUsers />} />

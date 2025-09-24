@@ -1,7 +1,15 @@
 from django.contrib import admin
 
-from accounts.models import BusinessProfile, CustomerProfile
+from accounts.models import BusinessProfile, CustomerProfile, User
 
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('id', 'username', 'email', 'role')
+    search_fields = ('username', 'email', 'role')
+    list_filter = ('role',)
+    list_per_page = 10
+    list_display_links = ('id', 'username')
 
 @admin.register(BusinessProfile)
 class BusinessProfileAdmin(admin.ModelAdmin):

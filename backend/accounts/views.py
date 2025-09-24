@@ -9,12 +9,7 @@ from .models import (
     User, ServiceCategory, Province, City, BusinessProfile, CustomerProfile,
     ITManagerProfile, ProjectManagerProfile, SupporterProfile, FinancialManagerProfile
 )
-from .serializers import (
-    UserSerializer, ServiceCategorySerializer, ProvinceSerializer, CitySerializer,
-    BusinessProfileSerializer, CustomerProfileSerializer, ITManagerProfileSerializer,
-    ProjectManagerProfileSerializer, SupporterProfileSerializer, FinancialManagerProfileSerializer,
-    CustomerRegistrationSerializer, BusinessRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
-)
+from .serializers import *
 from .sms_service import sms_service
 
 
@@ -91,33 +86,43 @@ def logout_view(request):
         return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
-    """Get current user profile with role-specific profile data"""
+    """Get or update current user profile with role-specific profile data"""
     user = request.user
-    user_data = UserProfileSerializer(user).data
     
-    # Add role-specific profile data
-    profile_data = None
-    if user.role == 'customer':
-        try:
-            customer_profile = CustomerProfile.objects.get(user=user)
-            profile_data = CustomerProfileSerializer(customer_profile).data
-        except CustomerProfile.DoesNotExist:
-            profile_data = None
-    elif user.role == 'business':
-        try:
-            business_profile = BusinessProfile.objects.get(user=user)
-            profile_data = BusinessProfileSerializer(business_profile).data
-        except BusinessProfile.DoesNotExist:
-            profile_data = None
+    if request.method == 'GET':
+        user_data = UserProfileSerializer(user).data
+        
+        # Add role-specific profile data
+        profile_data = None
+        if user.role == 'customer':
+            try:
+                customer_profile = CustomerProfile.objects.get(user=user)
+                profile_data = CustomerProfileSerializer(customer_profile).data
+            except CustomerProfile.DoesNotExist:
+                profile_data = None
+        elif user.role == 'business':
+            try:
+                business_profile = BusinessProfile.objects.get(user=user)
+                profile_data = BusinessProfileSerializer(business_profile).data
+            except BusinessProfile.DoesNotExist:
+                profile_data = None
+        
+        return Response({
+            'user': user_data,
+            'profile': profile_data,
+            'role': user.role
+        })
     
-    return Response({
-        'user': user_data,
-        'profile': profile_data,
-        'role': user.role
-    })
+    elif request.method == 'PUT':
+        # Update user profile
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -215,6 +220,76 @@ def login_with_otp_view(request):
             'success': False,
             'message': 'کاربری با این شماره یافت نشد'
         }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_profile_image_view(request):
+    """Upload profile image"""
+    if 'image' not in request.FILES:
+        return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    user = request.user
+    user.image = request.FILES['image']
+    user.save()
+    
+    return Response({
+        'message': 'Profile image uploaded successfully',
+        'image': user.image.url if user.image else None
+    })
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_phone_view(request):
+    """Update phone number with OTP verification"""
+    phone_number = request.data.get('phone_number')
+    otp_code = request.data.get('otp_code')
+    
+    if not phone_number or not otp_code:
+        return Response({'error': 'Phone number and OTP code are required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Verify OTP using the SMS service
+    result = sms_service.verify_otp(phone_number, otp_code)
+    
+    if result['success']:
+        user = request.user
+        user.phone_number = phone_number
+        user.save()
+        
+        return Response(UserProfileSerializer(user).data)
+    else:
+        return Response({'error': result['message']}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_business_profile_view(request):
+    """Update business profile data"""
+    user = request.user
+    
+    if user.role != 'business':
+        return Response({'error': 'Only business users can update business profile'}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        business_profile = BusinessProfile.objects.get(user=user)
+    except BusinessProfile.DoesNotExist:
+        return Response({'error': 'Business profile not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Update business profile fields
+    if 'business_name' in request.data:
+        business_profile.name = request.data['business_name']
+    if 'description' in request.data:
+        business_profile.description = request.data['description']
+    if 'address' in request.data:
+        business_profile.address = request.data['address']
+    
+    business_profile.save()
+    
+    return Response({
+        'message': 'Business profile updated successfully',
+        'business_profile': BusinessProfileSerializer(business_profile).data
+    })
 class BaseReadWriteViewSet(viewsets.ModelViewSet):
 	permission_classes = [permissions.AllowAny]
 

@@ -17,6 +17,7 @@ interface AuthContextType {
   registerCustomer: (userData: CustomerRegisterData) => Promise<{ success: boolean; error?: string }>
   registerBusiness: (userData: BusinessRegisterData) => Promise<{ success: boolean; error?: string }>
   logout: () => void
+  updateUser: (userData: Partial<User>) => void
   isLoading: boolean
 }
 
@@ -226,6 +227,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData }
+      setUser(updatedUser)
+      localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+    }
+  }
+
   // Check for existing session on mount
   React.useEffect(() => {
     const checkAuthStatus = async () => {
@@ -313,6 +322,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     registerCustomer,
     registerBusiness,
     logout,
+    updateUser,
     isLoading
   }
 

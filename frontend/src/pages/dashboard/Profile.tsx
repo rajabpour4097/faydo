@@ -1,0 +1,526 @@
+import { useState, useRef, useEffect } from 'react'
+import { useAuth } from '../../contexts/AuthContext'
+import { useTheme } from '../../contexts/ThemeContext'
+import { DashboardLayout } from '../../components/layout/DashboardLayout'
+import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
+import { apiService } from '../../services/api'
+
+interface EditModalProps {
+  isOpen: boolean
+  onClose: () => void
+  title: string
+  currentValue: string
+  onSave: (value: string) => void
+  isPhone?: boolean
+}
+
+const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false }: EditModalProps) => {
+  const { isDark } = useTheme()
+  const [value, setValue] = useState('')
+  const [step, setStep] = useState<'edit' | 'verify'>('edit')
+  const [verificationCode, setVerificationCode] = useState('')
+
+  // Update value when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setValue(currentValue)
+      setStep('edit')
+      setVerificationCode('')
+    }
+  }, [isOpen, currentValue])
+
+  if (!isOpen) return null
+
+  const handleSave = async () => {
+    console.log('Modal handleSave called with value:', value)
+    if (isPhone) {
+      // Send OTP for phone verification
+      try {
+        await apiService.sendOTP(value)
+        setStep('verify')
+      } catch (error) {
+        console.error('Failed to send OTP:', error)
+      }
+    } else {
+      console.log('Calling onSave with:', value)
+      onSave(value)
+      onClose()
+    }
+  }
+
+  const handleVerify = async () => {
+    try {
+      await apiService.verifyOTP(value, verificationCode)
+      onSave(value)
+      onClose()
+      setStep('edit')
+      setVerificationCode('')
+    } catch (error) {
+      console.error('Failed to verify OTP:', error)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className={`w-full max-w-md mx-4 rounded-2xl p-6 ${
+        isDark ? 'bg-slate-800' : 'bg-white'
+      }`}>
+        {step === 'edit' ? (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {title}
+              </h3>
+              <button
+                onClick={onClose}
+                className={`p-2 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                ✕
+              </button>
+            </div>
+            <input
+              type={isPhone ? 'tel' : 'text'}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              className={`w-full px-4 py-3 rounded-lg border ${
+                isDark 
+                  ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400'
+                  : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+              } focus:ring-2 focus:ring-teal-500 focus:border-transparent`}
+              placeholder={currentValue}
+            />
+            <div className="flex justify-center gap-4 mt-6">
+              <button
+                onClick={onClose}
+                className={`px-6 py-2 rounded-lg border ${
+                  isDark 
+                    ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                لغو
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
+              >
+                {isPhone ? 'ارسال کد' : 'ثبت'}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                تایید شماره موبایل
+              </h3>
+              <button
+                onClick={onClose}
+                className={`p-2 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                ✕
+              </button>
+            </div>
+            <p className={`text-sm mb-4 ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+              جهت تایید شماره موبایل ({value}) کلید زیر را بزنید
+            </p>
+            <input
+              type="text"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              className={`w-full px-4 py-3 rounded-lg border ${
+                isDark 
+                  ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400'
+                  : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+              } focus:ring-2 focus:ring-teal-500 focus:border-transparent`}
+              placeholder="کد تایید را وارد نمایید"
+            />
+            <button
+              onClick={handleVerify}
+              className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              ارسال کد
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const Field = ({ label, value, editable = false, onEdit, isPhone = false }: { 
+  label: string; 
+  value?: string; 
+  editable?: boolean; 
+  onEdit?: () => void;
+  isPhone?: boolean;
+}) => {
+  const { isDark } = useTheme()
+  return (
+    <div className={`flex items-center justify-between rounded-2xl px-4 py-4 ${
+      isDark ? 'bg-slate-800 border border-slate-700' : 'bg-gray-50'
+    }`}>
+      <div className={`text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>{label}</div>
+      <div className="flex items-center space-x-3">
+        <div className={`text-base font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          {isPhone && value ? value.replace(/(.{4})(.{3})(.{4})/, '$1$2$3') : (value || '-')}
+        </div>
+        {editable && (
+          <button
+            onClick={onEdit}
+            className={`p-2 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const DesktopProfile = () => {
+  const { user, updateUser } = useAuth()
+  const { isDark } = useTheme()
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false }
+  )
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const openEditModal = (field: string, title: string, value: string, isPhone = false) => {
+    console.log('Opening edit modal for field:', field, 'with value:', value)
+    setEditModal({ isOpen: true, field, title, value, isPhone })
+  }
+
+  const closeEditModal = () => {
+    setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false })
+  }
+
+  const handleSave = async (newValue: string) => {
+    console.log('handleSave called with:', editModal.field, '=', newValue)
+    
+    try {
+      if (editModal.field === 'phone') {
+        // Phone updates are handled in the verification flow
+        updateUser({ phone_number: newValue })
+      } else if (editModal.field === 'businessName') {
+        // For test users, update the name field
+        updateUser({ name: newValue })
+      } else if (editModal.field === 'firstName') {
+        const currentName = user?.name || ''
+        const lastName = currentName.split(' ').slice(1).join(' ')
+        updateUser({ name: `${newValue} ${lastName}`.trim() })
+      } else if (editModal.field === 'lastName') {
+        const currentName = user?.name || ''
+        const firstName = currentName.split(' ')[0]
+        updateUser({ name: `${firstName} ${newValue}`.trim() })
+      } else if (editModal.field === 'email') {
+        updateUser({ email: newValue })
+      }
+      
+      console.log('Profile updated successfully')
+      alert('پروفایل با موفقیت به‌روزرسانی شد')
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+      alert('خطا در به‌روزرسانی پروفایل')
+    }
+  }
+
+  const handleImageUpload = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      try {
+        const response = await apiService.uploadProfileImage(file)
+        if (response.data) {
+          console.log('Profile image updated:', response.data.image)
+        }
+      } catch (error) {
+        console.error('Failed to upload image:', error)
+      }
+    }
+  }
+
+  // Get current values for display
+  const getCurrentValue = (field: string) => {
+    switch (field) {
+      case 'firstName':
+        return user?.name?.split(' ')[0] || ''
+      case 'lastName':
+        return user?.name?.split(' ').slice(1).join(' ') || ''
+      case 'businessName':
+        return user?.name || ''
+      case 'email':
+        return user?.email || ''
+      case 'phone':
+        return user?.phone_number || ''
+      default:
+        return ''
+    }
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-8">
+        <div className={`rounded-2xl p-8 ${isDark ? 'bg-slate-900/30' : 'bg-white'}`}>
+          <div className="flex items-center space-x-6">
+            <div className="relative">
+              <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-3xl">👤</div>
+              <button
+                onClick={handleImageUpload}
+                className="absolute -bottom-2 -right-2 w-8 h-8 bg-teal-500 text-white rounded-full flex items-center justify-center hover:bg-teal-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+            <div>
+              <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.name}</div>
+              <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{user?.type === 'business' ? 'پروفایل کسب‌وکار' : 'پروفایل مشتری'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {user?.type === 'business' ? (
+            <Field 
+              label="نام کسب‌وکار" 
+              value={getCurrentValue('businessName')} 
+              editable 
+              onEdit={() => openEditModal('businessName', 'نام کسب‌وکار را وارد نمایید', getCurrentValue('businessName'))}
+            />
+          ) : (
+            <>
+              <Field 
+                label="نام" 
+                value={getCurrentValue('firstName')} 
+                editable 
+                onEdit={() => openEditModal('firstName', 'نام را وارد نمایید', getCurrentValue('firstName'))}
+              />
+              <Field 
+                label="نام خانوادگی" 
+                value={getCurrentValue('lastName')} 
+                editable 
+                onEdit={() => openEditModal('lastName', 'نام خانوادگی را وارد نمایید', getCurrentValue('lastName'))}
+              />
+            </>
+          )}
+          <Field 
+            label="شماره موبایل" 
+            value={getCurrentValue('phone')} 
+            editable 
+            isPhone
+            onEdit={() => openEditModal('phone', 'شماره موبایل را وارد نمایید', getCurrentValue('phone'), true)}
+          />
+          <Field 
+            label="ایمیل" 
+            value={getCurrentValue('email')} 
+            editable 
+            onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))}
+          />
+          <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
+        </div>
+        
+        <EditModal
+          isOpen={editModal.isOpen}
+          onClose={closeEditModal}
+          title={editModal.title}
+          currentValue={editModal.value}
+          onSave={handleSave}
+          isPhone={editModal.isPhone}
+        />
+      </div>
+    </DashboardLayout>
+  )
+}
+
+const MobileProfile = () => {
+  const { user, updateUser } = useAuth()
+  const { isDark } = useTheme()
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false }
+  )
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const openEditModal = (field: string, title: string, value: string, isPhone = false) => {
+    console.log('Opening edit modal for field:', field, 'with value:', value)
+    setEditModal({ isOpen: true, field, title, value, isPhone })
+  }
+
+  const closeEditModal = () => {
+    setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false })
+  }
+
+  const handleSave = async (newValue: string) => {
+    console.log('handleSave called with:', editModal.field, '=', newValue)
+    
+    try {
+      if (editModal.field === 'phone') {
+        updateUser({ phone_number: newValue })
+      } else if (editModal.field === 'businessName') {
+        updateUser({ name: newValue })
+      } else if (editModal.field === 'firstName') {
+        const currentName = user?.name || ''
+        const lastName = currentName.split(' ').slice(1).join(' ')
+        updateUser({ name: `${newValue} ${lastName}`.trim() })
+      } else if (editModal.field === 'lastName') {
+        const currentName = user?.name || ''
+        const firstName = currentName.split(' ')[0]
+        updateUser({ name: `${firstName} ${newValue}`.trim() })
+      } else if (editModal.field === 'email') {
+        updateUser({ email: newValue })
+      }
+      
+      console.log('Profile updated successfully')
+      alert('پروفایل با موفقیت به‌روزرسانی شد')
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+      alert('خطا در به‌روزرسانی پروفایل')
+    }
+  }
+
+  const handleImageUpload = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      try {
+        const response = await apiService.uploadProfileImage(file)
+        if (response.data) {
+          console.log('Profile image updated:', response.data.image)
+        }
+      } catch (error) {
+        console.error('Failed to upload image:', error)
+      }
+    }
+  }
+
+  // Get current values for display
+  const getCurrentValue = (field: string) => {
+    switch (field) {
+      case 'firstName':
+        return user?.name?.split(' ')[0] || ''
+      case 'lastName':
+        return user?.name?.split(' ').slice(1).join(' ') || ''
+      case 'businessName':
+        return user?.name || ''
+      case 'email':
+        return user?.email || ''
+      case 'phone':
+        return user?.phone_number || ''
+      default:
+        return ''
+    }
+  }
+
+  return (
+    <MobileDashboardLayout>
+      <div className="p-4 space-y-6">
+        <div className={`rounded-2xl p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-2xl">👤</div>
+              <button
+                onClick={handleImageUpload}
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center hover:bg-teal-600 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+            <div>
+              <div className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.name}</div>
+              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{user?.type === 'business' ? 'پروفایل کسب‌وکار' : 'پروفایل مشتری'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {user?.type === 'business' ? (
+            <Field 
+              label="نام کسب‌وکار" 
+              value={getCurrentValue('businessName')} 
+              editable 
+              onEdit={() => openEditModal('businessName', 'نام کسب‌وکار را وارد نمایید', getCurrentValue('businessName'))}
+            />
+          ) : (
+            <>
+              <Field 
+                label="نام" 
+                value={getCurrentValue('firstName')} 
+                editable 
+                onEdit={() => openEditModal('firstName', 'نام را وارد نمایید', getCurrentValue('firstName'))}
+              />
+              <Field 
+                label="نام خانوادگی" 
+                value={getCurrentValue('lastName')} 
+                editable 
+                onEdit={() => openEditModal('lastName', 'نام خانوادگی را وارد نمایید', getCurrentValue('lastName'))}
+              />
+            </>
+          )}
+          <Field 
+            label="شماره موبایل" 
+            value={getCurrentValue('phone')} 
+            editable 
+            isPhone
+            onEdit={() => openEditModal('phone', 'شماره موبایل را وارد نمایید', getCurrentValue('phone'), true)}
+          />
+          <Field 
+            label="ایمیل" 
+            value={getCurrentValue('email')} 
+            editable 
+            onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))}
+          />
+          <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
+        </div>
+        
+        <EditModal
+          isOpen={editModal.isOpen}
+          onClose={closeEditModal}
+          title={editModal.title}
+          currentValue={editModal.value}
+          onSave={handleSave}
+          isPhone={editModal.isPhone}
+        />
+      </div>
+    </MobileDashboardLayout>
+  )
+}
+
+export const Profile = () => {
+  return (
+    <>
+      <div className="hidden md:block">
+        <DesktopProfile />
+      </div>
+      <div className="md:hidden">
+        <MobileProfile />
+      </div>
+    </>
+  )
+}

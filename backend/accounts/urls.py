@@ -5,7 +5,8 @@ from .views import (
     UserViewSet, ServiceCategoryViewSet, ProvinceViewSet, CityViewSet,
     BusinessProfileViewSet, CustomerProfileViewSet, ITManagerProfileViewSet,
     ProjectManagerProfileViewSet, SupporterProfileViewSet, FinancialManagerProfileViewSet,
-    register_view, business_register_view, login_view, logout_view, profile_view
+    register_view, business_register_view, login_view, logout_view, profile_view,
+    send_otp_view, verify_otp_view, login_with_otp_view
 )
 
 # API Router for ViewSets
@@ -29,6 +30,11 @@ urlpatterns = [
     path('auth/logout/', logout_view, name='logout'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/profile/', profile_view, name='profile'),
+    
+    # OTP endpoints
+    path('auth/send-otp/', send_otp_view, name='send_otp'),
+    path('auth/verify-otp/', verify_otp_view, name='verify_otp'),
+    path('auth/login-with-otp/', login_with_otp_view, name='login_with_otp'),
     
     # API endpoints
     path('', include(router.urls)),

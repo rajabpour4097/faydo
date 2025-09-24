@@ -78,6 +78,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true)
     
     try {
+      // Test users for dashboard testing (without backend)
+      const testUsers: Record<string, User> = {
+        'business': {
+          id: 1,
+          name: 'رستوران گلستان',
+          email: 'business@test.com',
+          type: 'business',
+          username: 'business',
+          phone_number: '09123456789'
+        },
+        'customer': {
+          id: 2,
+          name: 'احمد محمدی',
+          email: 'customer@test.com',
+          type: 'customer',
+          username: 'customer',
+          phone_number: '09123456788'
+        },
+        'admin': {
+          id: 3,
+          name: 'مدیر سیستم',
+          email: 'admin@test.com',
+          type: 'it_manager',
+          username: 'admin',
+          phone_number: '09123456787'
+        }
+      }
+
+      // Check for test users first
+      if (testUsers[username] && password === 'test123') {
+        const testUser = testUsers[username]
+        setUser(testUser)
+        localStorage.setItem('auth_user', JSON.stringify(testUser))
+        // Store fake tokens for test
+        localStorage.setItem('access_token', 'test_access_token')
+        localStorage.setItem('refresh_token', 'test_refresh_token')
+        return { success: true, user: testUser }
+      }
+
+      // If not a test user, try real API
       const response = await apiService.login({ username, password })
       
       if (response.data) {
@@ -240,28 +280,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   localStorage.setItem('auth_user', JSON.stringify(mappedUser))
                   console.log('Session refreshed successfully')
                 } else {
-                  console.log('Profile failed after refresh, clearing session and redirecting to login')
+                  console.log('Profile failed after refresh, clearing session')
                   clearSession()
-                  // Force redirect to login
-                  setTimeout(() => {
-                    window.location.href = '/auth/login'
-                  }, 100)
                 }
               } else {
-                console.log('Token refresh failed, clearing session and redirecting to login')
+                console.log('Token refresh failed, clearing session')
                 clearSession()
-                // Force redirect to login
-                setTimeout(() => {
-                  window.location.href = '/auth/login'
-                }, 100)
               }
             } else {
-              console.log('No refresh token available, clearing session and redirecting to login')
+              console.log('No refresh token available, clearing session')
               clearSession()
-              // Force redirect to login
-              setTimeout(() => {
-                window.location.href = '/auth/login'
-              }, 100)
             }
           }
         } else {

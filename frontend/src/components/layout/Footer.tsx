@@ -34,16 +34,6 @@ export const Footer = () => {
                   تماس با ما
                 </Link>
               </li>
-              <li>
-                <Link to="/privacy" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  حریم خصوصی
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  شرایط استفاده
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -54,21 +44,6 @@ export const Footer = () => {
               <li>
                 <Link to="/businesses" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
                   کسب‌وکارها
-                </Link>
-              </li>
-              <li>
-                <Link to="/discounts" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  تخفیف‌ها
-                </Link>
-              </li>
-              <li>
-                <Link to="/membership" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  باشگاه مشتریان
-                </Link>
-              </li>
-              <li>
-                <Link to="/support" className="text-gray-300 hover:text-white transition-colors duration-200 text-sm">
-                  پشتیبانی
                 </Link>
               </li>
             </ul>

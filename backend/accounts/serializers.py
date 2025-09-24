@@ -9,41 +9,47 @@ from .models import (
 
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
     username = serializers.CharField()
-    email = serializers.EmailField()
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
+    first_name = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    last_name = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     phone_number = serializers.CharField()
-    password = serializers.CharField(write_only=True, validators=[validate_password])
-    password_confirm = serializers.CharField(write_only=True)
-    gender = serializers.ChoiceField(choices=[('male', 'مرد'), ('female', 'زن')])
-    birth_date = serializers.DateField()
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    gender = serializers.ChoiceField(choices=[('male', 'مرد'), ('female', 'زن')], required=False, allow_null=True)
+    birth_date = serializers.DateField(required=False, allow_null=True)
 
     class Meta:
         model = CustomerProfile
         fields = ['username', 'email', 'first_name', 'last_name', 'phone_number', 'password', 'password_confirm', 'gender', 'birth_date', 'address']
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError("Passwords don't match")
+        password = attrs.get('password', '')
+        password_confirm = attrs.get('password_confirm', '')
+        
+        # Only validate passwords if they are provided
+        if password or password_confirm:
+            if password != password_confirm:
+                raise serializers.ValidationError("Passwords don't match")
         return attrs
 
     def create(self, validated_data):
         # Extract user data
         user_data = {
             'username': validated_data.pop('username'),
-            'email': validated_data.pop('email'),
-            'first_name': validated_data.pop('first_name'),
-            'last_name': validated_data.pop('last_name'),
+            'email': validated_data.pop('email', ''),
+            'first_name': validated_data.pop('first_name', ''),
+            'last_name': validated_data.pop('last_name', ''),
             'phone_number': validated_data.pop('phone_number'),
             'role': 'customer'
         }
         
-        validated_data.pop('password_confirm')
-        password = validated_data.pop('password')
+        validated_data.pop('password_confirm', '')
+        password = validated_data.pop('password', '')
         
         # Create user
         user = User.objects.create_user(**user_data)
-        user.set_password(password)
+        if password:
+            user.set_password(password)
         user.save()
         
         # Create customer profile
@@ -57,11 +63,11 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
 
 class BusinessRegistrationSerializer(serializers.ModelSerializer):
     username = serializers.CharField()
-    email = serializers.EmailField()
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
     phone_number = serializers.CharField()
-    password = serializers.CharField(write_only=True, validators=[validate_password])
-    password_confirm = serializers.CharField(write_only=True)
-    name = serializers.CharField()  # Business name
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    name = serializers.CharField(required=False, allow_blank=True, allow_null=True)  # Business name
     description = serializers.CharField(required=False, default='', allow_blank=True)
     address = serializers.CharField(required=False, default='', allow_blank=True)
     business_location_latitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True, default=None)
@@ -76,25 +82,31 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError("Passwords don't match")
+        password = attrs.get('password', '')
+        password_confirm = attrs.get('password_confirm', '')
+        
+        # Only validate passwords if they are provided
+        if password or password_confirm:
+            if password != password_confirm:
+                raise serializers.ValidationError("Passwords don't match")
         return attrs
 
     def create(self, validated_data):
         # Extract user data
         user_data = {
             'username': validated_data.pop('username'),
-            'email': validated_data.pop('email'),
+            'email': validated_data.pop('email', ''),
             'phone_number': validated_data.pop('phone_number'),
             'role': 'business'
         }
         
-        validated_data.pop('password_confirm')
-        password = validated_data.pop('password')
+        validated_data.pop('password_confirm', '')
+        password = validated_data.pop('password', '')
         
         # Create user
         user = User.objects.create_user(**user_data)
-        user.set_password(password)
+        if password:
+            user.set_password(password)
         user.save()
         
         # Create business profile

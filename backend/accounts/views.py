@@ -15,6 +15,7 @@ from .serializers import (
     ProjectManagerProfileSerializer, SupporterProfileSerializer, FinancialManagerProfileSerializer,
     CustomerRegistrationSerializer, BusinessRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
 )
+from .sms_service import sms_service
 
 
 @api_view(['POST'])
@@ -117,6 +118,103 @@ def profile_view(request):
         'profile': profile_data,
         'role': user.role
     })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_otp_view(request):
+    """Send OTP code to phone number"""
+    phone_number = request.data.get('phone_number')
+    
+    if not phone_number:
+        return Response({
+            'success': False,
+            'message': 'شماره تماس الزامی است'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Validate Iranian phone number format
+    if not phone_number.startswith('09') or len(phone_number) != 11:
+        return Response({
+            'success': False,
+            'message': 'شماره تماس معتبر نیست'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    result = sms_service.send_otp(phone_number)
+    
+    if result['success']:
+        return Response({
+            'success': True,
+            'message': result['message'],
+            'otp_code': result.get('otp_code')  # Remove this in production
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'success': False,
+            'message': result['message']
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_otp_view(request):
+    """Verify OTP code"""
+    phone_number = request.data.get('phone_number')
+    otp_code = request.data.get('otp_code')
+    
+    if not phone_number or not otp_code:
+        return Response({
+            'success': False,
+            'message': 'شماره تماس و کد تایید الزامی است'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    result = sms_service.verify_otp(phone_number, otp_code)
+    
+    if result['success']:
+        return Response({
+            'success': True,
+            'message': result['message']
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'success': False,
+            'message': result['message']
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_with_otp_view(request):
+    """Login with phone number after OTP verification"""
+    phone_number = request.data.get('phone_number')
+    
+    if not phone_number:
+        return Response({
+            'success': False,
+            'message': 'شماره تماس الزامی است'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Find user by phone number
+        user = User.objects.get(phone_number=phone_number)
+        
+        # Generate tokens
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'success': True,
+            'message': 'ورود موفق',
+            'user': UserProfileSerializer(user).data,
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except User.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'کاربری با این شماره یافت نشد'
+        }, status=status.HTTP_404_NOT_FOUND)
 class BaseReadWriteViewSet(viewsets.ModelViewSet):
 	permission_classes = [permissions.AllowAny]
 

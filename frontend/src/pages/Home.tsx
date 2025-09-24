@@ -65,12 +65,20 @@ export const Home = () => {
                   </Link>
                 </>
               ) : (
-                <Link
-                  to={user?.type === 'customer' ? '/dashboard/customer' : '/dashboard/business'}
-                  className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
-                >
-                  ورود به پنل کاربری
-                </Link>
+                <>
+                  <Link
+                    to="/businesses"
+                    className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    مشاهده کسب‌وکارها
+                  </Link>
+                  <Link
+                    to="/test-users"
+                    className="border-2 border-purple-300 text-purple-700 px-8 py-4 rounded-xl font-semibold hover:border-purple-400 hover:bg-purple-50 transition-all duration-200"
+                  >
+                    🧪 تست داشبوردها
+                  </Link>
+                </>
               )}
             </div>
           </div>

@@ -186,8 +186,18 @@ const DesktopProfile = () => {
   const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
     { isOpen: false, field: '', title: '', value: '', isPhone: false }
   )
+  const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Update profile image when user changes
+  useEffect(() => {
+    if (user?.avatar && user.avatar !== profileImage) {
+      setProfileImage(user.avatar)
+    } else if (!user?.avatar && profileImage) {
+      setProfileImage(null)
+    }
+  }, [user?.avatar])
 
   const openEditModal = (field: string, title: string, value: string, isPhone = false) => {
     console.log('Opening edit modal for field:', field, 'with value:', value)
@@ -236,12 +246,65 @@ const DesktopProfile = () => {
     const file = event.target.files?.[0]
     if (file) {
       try {
-        const response = await apiService.uploadProfileImage(file)
-        if (response.data) {
-          console.log('Profile image updated:', response.data.image)
+        console.log('File selected:', file.name, file.size, file.type)
+        
+        // Check if it's a valid image file
+        if (!file.type.startsWith('image/')) {
+          alert('لطفاً یک فایل تصویری انتخاب کنید')
+          return
         }
+        
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('حجم فایل نباید بیشتر از 5 مگابایت باشد')
+          return
+        }
+        
+        // Create preview URL immediately using FileReader
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const previewUrl = e.target?.result as string
+          console.log('Preview URL created:', previewUrl)
+          setProfileImage(previewUrl)
+          
+          // For test users, update user data
+          const isTestUser = localStorage.getItem('access_token') === 'test_access_token'
+          if (isTestUser) {
+            updateUser({ avatar: previewUrl })
+            console.log('Profile image updated for test user')
+            alert('عکس پروفایل با موفقیت تغییر کرد')
+          }
+        }
+        
+        reader.onerror = () => {
+          console.error('FileReader error')
+          alert('خطا در خواندن فایل')
+        }
+        
+        reader.readAsDataURL(file)
+        
+        // For real users, upload to backend
+        const isTestUser = localStorage.getItem('access_token') === 'test_access_token'
+        if (!isTestUser) {
+          try {
+            const response = await apiService.uploadProfileImage(file)
+            if (response.data) {
+              setProfileImage(response.data.image)
+              updateUser({ avatar: response.data.image })
+              console.log('Profile image updated:', response.data.image)
+              alert('عکس پروفایل با موفقیت آپلود شد')
+            }
+          } catch (uploadError) {
+            console.error('Upload failed:', uploadError)
+            alert('خطا در آپلود عکس')
+            // Reset to previous image on error
+            setProfileImage(user?.avatar || null)
+          }
+        }
+        
       } catch (error) {
-        console.error('Failed to upload image:', error)
+        console.error('Failed to process image:', error)
+        alert('خطا در پردازش عکس')
       }
     }
   }
@@ -270,10 +333,19 @@ const DesktopProfile = () => {
         <div className={`rounded-2xl p-8 ${isDark ? 'bg-slate-900/30' : 'bg-white'}`}>
           <div className="flex items-center space-x-6">
             <div className="relative">
-              <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-3xl">👤</div>
+              {profileImage ? (
+                <img 
+                  src={profileImage} 
+                  alt="Profile" 
+                  className="w-24 h-24 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-3xl">👤</div>
+              )}
               <button
                 onClick={handleImageUpload}
                 className="absolute -bottom-2 -right-2 w-8 h-8 bg-teal-500 text-white rounded-full flex items-center justify-center hover:bg-teal-600 transition-colors"
+                title={user?.type === 'business' ? 'تغییر لوگو' : 'تغییر عکس'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -289,7 +361,9 @@ const DesktopProfile = () => {
             </div>
             <div>
               <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.name}</div>
-              <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{user?.type === 'business' ? 'پروفایل کسب‌وکار' : 'پروفایل مشتری'}</div>
+              <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                {user?.type === 'business' ? 'لوگو کسب‌وکار' : 'عکس پروفایل'}
+              </div>
             </div>
           </div>
         </div>
@@ -353,8 +427,18 @@ const MobileProfile = () => {
   const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
     { isOpen: false, field: '', title: '', value: '', isPhone: false }
   )
+  const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Update profile image when user changes
+  useEffect(() => {
+    if (user?.avatar && user.avatar !== profileImage) {
+      setProfileImage(user.avatar)
+    } else if (!user?.avatar && profileImage) {
+      setProfileImage(null)
+    }
+  }, [user?.avatar])
 
   const openEditModal = (field: string, title: string, value: string, isPhone = false) => {
     console.log('Opening edit modal for field:', field, 'with value:', value)
@@ -401,12 +485,65 @@ const MobileProfile = () => {
     const file = event.target.files?.[0]
     if (file) {
       try {
-        const response = await apiService.uploadProfileImage(file)
-        if (response.data) {
-          console.log('Profile image updated:', response.data.image)
+        console.log('File selected:', file.name, file.size, file.type)
+        
+        // Check if it's a valid image file
+        if (!file.type.startsWith('image/')) {
+          alert('لطفاً یک فایل تصویری انتخاب کنید')
+          return
         }
+        
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('حجم فایل نباید بیشتر از 5 مگابایت باشد')
+          return
+        }
+        
+        // Create preview URL immediately using FileReader
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const previewUrl = e.target?.result as string
+          console.log('Preview URL created:', previewUrl)
+          setProfileImage(previewUrl)
+          
+          // For test users, update user data
+          const isTestUser = localStorage.getItem('access_token') === 'test_access_token'
+          if (isTestUser) {
+            updateUser({ avatar: previewUrl })
+            console.log('Profile image updated for test user')
+            alert('عکس پروفایل با موفقیت تغییر کرد')
+          }
+        }
+        
+        reader.onerror = () => {
+          console.error('FileReader error')
+          alert('خطا در خواندن فایل')
+        }
+        
+        reader.readAsDataURL(file)
+        
+        // For real users, upload to backend
+        const isTestUser = localStorage.getItem('access_token') === 'test_access_token'
+        if (!isTestUser) {
+          try {
+            const response = await apiService.uploadProfileImage(file)
+            if (response.data) {
+              setProfileImage(response.data.image)
+              updateUser({ avatar: response.data.image })
+              console.log('Profile image updated:', response.data.image)
+              alert('عکس پروفایل با موفقیت آپلود شد')
+            }
+          } catch (uploadError) {
+            console.error('Upload failed:', uploadError)
+            alert('خطا در آپلود عکس')
+            // Reset to previous image on error
+            setProfileImage(user?.avatar || null)
+          }
+        }
+        
       } catch (error) {
-        console.error('Failed to upload image:', error)
+        console.error('Failed to process image:', error)
+        alert('خطا در پردازش عکس')
       }
     }
   }
@@ -435,10 +572,19 @@ const MobileProfile = () => {
         <div className={`rounded-2xl p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-2xl">👤</div>
+              {profileImage ? (
+                <img 
+                  src={profileImage} 
+                  alt="Profile" 
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-2xl">👤</div>
+              )}
               <button
                 onClick={handleImageUpload}
                 className="absolute -bottom-1 -right-1 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center hover:bg-teal-600 transition-colors"
+                title={user?.type === 'business' ? 'تغییر لوگو' : 'تغییر عکس'}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -454,7 +600,9 @@ const MobileProfile = () => {
             </div>
             <div>
               <div className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.name}</div>
-              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{user?.type === 'business' ? 'پروفایل کسب‌وکار' : 'پروفایل مشتری'}</div>
+              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                {user?.type === 'business' ? 'لوگو کسب‌وکار' : 'عکس پروفایل'}
+              </div>
             </div>
           </div>
         </div>

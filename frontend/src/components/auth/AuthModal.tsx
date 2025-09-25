@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface AuthModalProps {
@@ -16,7 +15,6 @@ interface FormData {
 }
 
 export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
-  const navigate = useNavigate()
   const { registerCustomer, registerBusiness, login } = useAuth()
   const [currentStep, setCurrentStep] = useState(1) // 1: phone, 2: otp, 3: success
   const [authMode, setAuthMode] = useState<'otp' | 'password'>('otp')
@@ -194,8 +192,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           phone_number: formData.phone_number,
           password: '',
           password_confirm: '',
-          gender: null,
-          birth_date: null,
+          gender: 'male' as 'male' | 'female',
+          birth_date: '',
           address: '',
         })
       }
@@ -322,7 +320,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       type="tel"
                       value={formData.phone_number}
                       onChange={handleChange}
-                      className="block w-full pr-10 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="block w-full pr-10 pl-2 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       placeholder="شماره موبایل"
                     />
                   </div>
@@ -406,7 +404,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   type="text"
                   value={formData.username}
                   onChange={handleChange}
-                  className="block w-full pr-10 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full pr-10 pl-2 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="شماره موبایل"
                 />
               </div>
@@ -425,7 +423,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full pr-10 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full pr-10 pl-2 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="رمز"
                 />
               </div>

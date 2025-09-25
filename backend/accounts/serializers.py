@@ -127,7 +127,17 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get('password')
 
         if username and password:
+            # First try to authenticate with username
             user = authenticate(username=username, password=password)
+            
+            # If that fails, try to authenticate with phone number
+            if not user:
+                try:
+                    user_obj = User.objects.get(phone_number=username)
+                    user = authenticate(username=user_obj.username, password=password)
+                except User.DoesNotExist:
+                    pass
+            
             if not user:
                 raise serializers.ValidationError('Invalid credentials')
             if not user.is_active:
@@ -135,7 +145,7 @@ class UserLoginSerializer(serializers.Serializer):
             attrs['user'] = user
             return attrs
         else:
-            raise serializers.ValidationError('Username and password required')
+            raise serializers.ValidationError('Username/phone number and password required')
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

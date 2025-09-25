@@ -60,7 +60,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
               <span className="text-white font-bold text-sm">🤝</span>
             </div>
             <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              AFFILIATE
+              فایدو
             </h1>
           </div>
 

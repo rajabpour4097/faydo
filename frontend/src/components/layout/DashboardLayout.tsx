@@ -73,8 +73,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <span className="text-white font-bold text-lg">🤝</span>
             </div>
             <div>
-              <div className="text-teal-500 font-bold text-sm">AFFILIATE</div>
-              <div className={`text-xs opacity-80 ${isDark ? 'text-white' : 'text-gray-700'}`}>PARTNERSHIP</div>
+              <div className="text-teal-500 font-bold text-sm mr-1">
+                فایدو 
+              </div>
+              <div className={`text-xs opacity-80 ${isDark ? 'text-white' : 'text-gray-700'} mr-1`}>
+                باشگاه مشتریان
+                </div>
             </div>
           </div>
           <button

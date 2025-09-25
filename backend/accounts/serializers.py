@@ -46,6 +46,11 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop('password_confirm', '')
         password = validated_data.pop('password', '')
         
+        # If user did not supply first/last name set friendly default for display purposes
+        if not (user_data['first_name'] or user_data['last_name']):
+            user_data['first_name'] = 'کاربر جدید'
+            user_data['last_name'] = ''
+
         # Create user
         user = User.objects.create_user(**user_data)
         if password:
@@ -110,6 +115,10 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
         user.save()
         
         # Create business profile
+        # Assign default business name if none provided
+        if not validated_data.get('name'):
+            validated_data['name'] = 'کاربر جدید'
+
         business_profile = BusinessProfile.objects.create(
             user=user,
             **validated_data
@@ -149,10 +158,30 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 'role', 'image', 'date_joined', 'last_login']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 'role', 'image', 'date_joined', 'last_login', 'display_name']
         read_only_fields = ['id', 'username', 'date_joined', 'last_login']
+
+    def get_display_name(self, obj):
+        # Prefer business name if business
+        if obj.role == 'business':
+            bp = getattr(obj, 'businessprofile', None)
+            if bp and bp.name:
+                return bp.name
+            return 'کاربر جدید'
+        name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
+        return name if name else 'کاربر جدید'
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        # Normalize null -> '' for common textual fields
+        for key in ['email', 'first_name', 'last_name', 'image']:
+            if rep.get(key) is None:
+                rep[key] = ''
+        return rep
 class ServiceCategorySerializer(serializers.ModelSerializer):
 	class Meta:
 		model = ServiceCategory
@@ -184,23 +213,44 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class BusinessProfileSerializer(serializers.ModelSerializer):
-	user = UserSerializer(read_only=True)
-	user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role='business'), source='user', write_only=True)
+    user = UserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role='business'), source='user', write_only=True)
 
-	class Meta:
-		model = BusinessProfile
-		fields = ['id', 'user', 'user_id', 'name', 'description', 'category', 'address', 'rating_avg', 'business_location_latitude', 'business_location_longitude', 'city']
-		read_only_fields = ['rating_avg']
+    class Meta:
+        model = BusinessProfile
+        fields = [
+            'id', 'user', 'user_id', 'name', 'description', 'category', 'address',
+            'rating_avg', 'business_location_latitude', 'business_location_longitude', 'city'
+        ]
+        read_only_fields = ['rating_avg']
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if not rep.get('name'):
+            rep['name'] = 'کاربر جدید'
+        for key, val in rep.items():
+            if val is None:
+                rep[key] = ''
+        return rep
 
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
-	user = UserSerializer(read_only=True)
-	user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role='customer'), source='user', write_only=True)
+    user = UserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role='customer'), source='user', write_only=True)
 
-	class Meta:
-		model = CustomerProfile
-		fields = ['id', 'user', 'user_id', 'gender', 'birth_date', 'membership_level', 'points', 'address']
-		read_only_fields = ['points']
+    class Meta:
+        model = CustomerProfile
+        fields = [
+            'id', 'user', 'user_id', 'gender', 'birth_date', 'membership_level', 'points', 'address'
+        ]
+        read_only_fields = ['points']
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        for key, val in rep.items():
+            if val is None:
+                rep[key] = ''
+        return rep
 
 
 class ITManagerProfileSerializer(serializers.ModelSerializer):

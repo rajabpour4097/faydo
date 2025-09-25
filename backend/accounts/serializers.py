@@ -1,10 +1,19 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import (
     User, ServiceCategory, Province, City, BusinessProfile, CustomerProfile,
     ITManagerProfile, ProjectManagerProfile, SupporterProfile, FinancialManagerProfile
 )
+
+
+class OptionalDateField(serializers.DateField):
+    """Custom DateField that handles empty strings gracefully"""
+    def to_internal_value(self, value):
+        if value == '' or value is None:
+            return None
+        return super().to_internal_value(value)
 
 
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
@@ -16,11 +25,20 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
     gender = serializers.ChoiceField(choices=[('male', 'مرد'), ('female', 'زن')], required=False, allow_null=True)
-    birth_date = serializers.DateField(required=False, allow_null=True)
+    birth_date = OptionalDateField(required=False, allow_null=True)
 
     class Meta:
         model = CustomerProfile
         fields = ['username', 'email', 'first_name', 'last_name', 'phone_number', 'password', 'password_confirm', 'gender', 'birth_date', 'address']
+
+    def validate_phone_number(self, value):
+        if not value:
+            raise serializers.ValidationError('شماره موبایل الزامی است')
+        if not (value.startswith('09') and len(value) == 11 and value.isdigit()):
+            raise serializers.ValidationError('فرمت شماره موبایل معتبر نیست')
+        if User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError('این شماره قبلاً ثبت شده است')
+        return value
 
     def validate(self, attrs):
         password = attrs.get('password', '')
@@ -85,6 +103,15 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
             'category': {'required': False, 'allow_null': True},
             'city': {'required': False, 'allow_null': True},
         }
+
+    def validate_phone_number(self, value):
+        if not value:
+            raise serializers.ValidationError('شماره موبایل الزامی است')
+        if not (value.startswith('09') and len(value) == 11 and value.isdigit()):
+            raise serializers.ValidationError('فرمت شماره موبایل معتبر نیست')
+        if User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError('این شماره قبلاً ثبت شده است')
+        return value
 
     def validate(self, attrs):
         password = attrs.get('password', '')

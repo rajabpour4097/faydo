@@ -35,7 +35,7 @@ class RequireCompleteProfile(permissions.BasePermission):
 
 def _serialize_user_with_absolute_image(user, request):
     """Return serialized user data ensuring image field is absolute URL if present."""
-    data = UserProfileSerializer(user).data
+    data = UserSerializer(user).data
     if user.image:
         try:
             data['image'] = request.build_absolute_uri(user.image.url)

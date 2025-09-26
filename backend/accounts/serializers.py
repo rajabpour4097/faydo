@@ -287,11 +287,33 @@ class CitySerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     isProfileComplete = serializers.ReadOnlyField()
+    display_name = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'role', 'phone_number', 'image', 'isProfileComplete']
-        read_only_fields = ['id', 'isProfileComplete']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'role', 'phone_number', 'image', 'isProfileComplete', 'display_name']
+        read_only_fields = ['id', 'isProfileComplete', 'display_name']
+
+    def get_display_name(self, obj):
+        """Replicates logic from UserProfileSerializer so front-end can rely on display_name consistently."""
+        # Business: prefer business profile name
+        if obj.role == 'business':
+            bp = getattr(obj, 'businessprofile', None)
+            if bp and bp.name:
+                return bp.name
+        # Fallback to first + last or username
+        fn = (obj.first_name or '').strip()
+        ln = (obj.last_name or '').strip()
+        full = f"{fn} {ln}".strip()
+        return full if full else obj.username
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        # Normalize possible null textual fields to empty string to avoid 'null null' concatenations on client
+        for key in ['first_name', 'last_name', 'email', 'image']:
+            if rep.get(key) is None:
+                rep[key] = ''
+        return rep
 
 
 class BusinessProfileSerializer(serializers.ModelSerializer):

@@ -308,8 +308,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               city: profile.city,
               address: profile.address
             } : undefined,
+            businessProfile: apiUser.role === 'business' && profile && 'name' in profile ? {
+              name: profile.name,
+              business_phone: profile.business_phone,
+              category: profile.category,
+              address: profile.address,
+              city: profile.city,
+              business_location_latitude: profile.business_location_latitude,
+              business_location_longitude: profile.business_location_longitude
+            } : undefined,
             isProfileComplete: apiUser.role === 'customer' ? 
-              (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
+              (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : 
+              (apiUser.role === 'business' ? 
+                (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true)
           }
           
           setUser(mappedUser)
@@ -370,8 +381,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             city: profile.city,
             address: profile.address
           } : undefined,
+          businessProfile: apiUser.role === 'business' && profile && 'name' in profile ? {
+            name: profile.name,
+            business_phone: profile.business_phone,
+            category: profile.category,
+            address: profile.address,
+            city: profile.city,
+            business_location_latitude: profile.business_location_latitude,
+            business_location_longitude: profile.business_location_longitude
+          } : undefined,
           isProfileComplete: apiUser.role === 'customer' ? 
-            (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
+            (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : 
+            (apiUser.role === 'business' ? 
+              (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true)
         }
         
         setUser(mappedUser)
@@ -416,8 +438,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 city: profile.city,
                 address: profile.address
               } : undefined,
+              businessProfile: apiUser.role === 'business' && profile && 'name' in profile ? {
+                name: profile.name,
+                business_phone: profile.business_phone,
+                category: profile.category,
+                address: profile.address,
+                city: profile.city,
+                business_location_latitude: profile.business_location_latitude,
+                business_location_longitude: profile.business_location_longitude
+              } : undefined,
               isProfileComplete: apiUser.role === 'customer' ? 
-                (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
+                (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : 
+                (apiUser.role === 'business' ? 
+                  (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true)
             }
             
             setUser(mappedUser)
@@ -454,8 +487,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       city: profile.city,
                       address: profile.address
                     } : undefined,
+                    businessProfile: apiUser.role === 'business' && profile && 'name' in profile ? {
+                      name: profile.name,
+                      business_phone: profile.business_phone,
+                      category: profile.category,
+                      address: profile.address,
+                      city: profile.city,
+                      business_location_latitude: profile.business_location_latitude,
+                      business_location_longitude: profile.business_location_longitude
+                    } : undefined,
                     isProfileComplete: apiUser.role === 'customer' ? 
-                      (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
+                      (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : 
+                      (apiUser.role === 'business' ? 
+                        (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true)
                   }
                   
                   setUser(mappedUser)

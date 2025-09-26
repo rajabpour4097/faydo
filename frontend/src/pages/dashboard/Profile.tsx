@@ -761,8 +761,9 @@ const DesktopProfile = () => {
             const response = await apiService.uploadProfileImage(file)
             if (response.data) {
               setProfileImage(response.data.image)
-              updateUser({ avatar: response.data.image })
-              console.log('Profile image updated:', response.data.image)
+              // Update local user avatar quickly (no server round-trip needed)
+              await updateUser({ avatar: response.data.image })
+              console.log('Profile image updated:', response.data.image, 'converted?', (response.data as any).converted)
               alert('عکس پروفایل با موفقیت آپلود شد')
             }
           } catch (uploadError) {

@@ -44,7 +44,12 @@ export interface BusinessProfile {
   rating_avg: number
   business_location_latitude?: number
   business_location_longitude?: number
+  business_phone?: string
+  category?: any
   city: any
+  instagram_link?: string
+  website_link?: string
+  is_profile_complete: boolean
 }
 
 export interface ProfileData {

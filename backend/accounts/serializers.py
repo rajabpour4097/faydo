@@ -64,10 +64,8 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop('password_confirm', '')
         password = validated_data.pop('password', '')
         
-        # If user did not supply first/last name set friendly default for display purposes
-        if not (user_data['first_name'] or user_data['last_name']):
-            user_data['first_name'] = 'کاربر جدید'
-            user_data['last_name'] = ''
+        # Keep first_name and last_name empty if not provided - don't set defaults
+        # The display logic will handle showing "کاربر جدید" when needed
 
         # Create user
         user = User.objects.create_user(**user_data)
@@ -209,6 +207,60 @@ class UserProfileSerializer(serializers.ModelSerializer):
             if rep.get(key) is None:
                 rep[key] = ''
         return rep
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating user profile including name handling"""
+    name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name', 'phone_number', 'name']
+        extra_kwargs = {
+            'email': {'required': False, 'allow_blank': True},
+            'first_name': {'required': False, 'allow_blank': True},
+            'last_name': {'required': False, 'allow_blank': True},
+            'phone_number': {'required': False, 'allow_blank': True},
+        }
+
+    def validate_email(self, value):
+        """Validate email format if provided"""
+        if value and value.strip():
+            # Use Django's built-in email validation
+            from django.core.validators import validate_email
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_email(value)
+            except DjangoValidationError:
+                raise serializers.ValidationError('فرمت ایمیل معتبر نیست')
+        return value
+
+    def validate_phone_number(self, value):
+        """Validate phone number format if provided"""
+        if value and value.strip():
+            # Check Iranian phone number format
+            if not (value.startswith('09') and len(value) == 11 and value.isdigit()):
+                raise serializers.ValidationError('فرمت شماره موبایل معتبر نیست')
+            # Check if phone number already exists for another user
+            if User.objects.filter(phone_number=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError('این شماره قبلاً ثبت شده است')
+        return value
+
+    def update(self, instance, validated_data):
+        # Handle name field specially
+        name = validated_data.pop('name', None)
+        if name is not None:
+            # Split name into first_name and last_name
+            name_parts = name.strip().split(' ', 1)
+            instance.first_name = name_parts[0] if name_parts else ''
+            instance.last_name = name_parts[1] if len(name_parts) > 1 else ''
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 class ServiceCategorySerializer(serializers.ModelSerializer):
 	class Meta:
 		model = ServiceCategory

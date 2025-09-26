@@ -6,7 +6,8 @@ from .views import (
     BusinessProfileViewSet, CustomerProfileViewSet, ITManagerProfileViewSet,
     ProjectManagerProfileViewSet, SupporterProfileViewSet, FinancialManagerProfileViewSet,
     register_view, business_register_view, login_view, logout_view, profile_view,
-    send_otp_view, verify_otp_view, login_with_otp_view, upload_profile_image_view, update_phone_view, update_business_profile_view
+    send_otp_view, verify_otp_view, login_with_otp_view, upload_profile_image_view, 
+    update_phone_view, update_business_profile_view, update_customer_profile_view
 )
 
 # API Router for ViewSets
@@ -40,6 +41,7 @@ urlpatterns = [
     path('auth/profile/image/', upload_profile_image_view, name='upload_profile_image'),
     path('auth/profile/phone/', update_phone_view, name='update_phone'),
     path('auth/profile/business/', update_business_profile_view, name='update_business_profile'),
+    path('auth/profile/customer/', update_customer_profile_view, name='update_customer_profile'),
     
     # API endpoints
     path('', include(router.urls)),

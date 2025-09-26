@@ -151,11 +151,11 @@ def profile_view(request):
     
     elif request.method == 'PUT':
         # Update user profile
-        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_user = serializer.save()
             # Re-serialize to ensure absolute image URL if updated
-            return Response(_serialize_user_with_absolute_image(user, request))
+            return Response(_serialize_user_with_absolute_image(updated_user, request))
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -337,6 +337,57 @@ def update_business_profile_view(request):
     return Response({
         'message': 'Business profile updated successfully',
         'business_profile': BusinessProfileSerializer(business_profile).data
+    })
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_customer_profile_view(request):
+    """Update customer profile data"""
+    user = request.user
+    
+    if user.role != 'customer':
+        return Response({'error': 'Only customer users can update customer profile'}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        customer_profile = CustomerProfile.objects.get(user=user)
+    except CustomerProfile.DoesNotExist:
+        return Response({'error': 'Customer profile not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Update customer profile fields
+    if 'gender' in request.data:
+        customer_profile.gender = request.data['gender']
+    if 'birth_date' in request.data:
+        customer_profile.birth_date = request.data['birth_date'] or None
+    if 'address' in request.data:
+        customer_profile.address = request.data['address']
+    if 'city_id' in request.data:
+        try:
+            city = City.objects.get(id=request.data['city_id'])
+            customer_profile.city = city
+        except City.DoesNotExist:
+            pass
+    elif 'city' in request.data and isinstance(request.data['city'], dict):
+        # Handle city name-based update (would need proper city lookup)
+        city_name = request.data['city'].get('name')
+        if city_name:
+            try:
+                city = City.objects.filter(name__icontains=city_name).first()
+                if city:
+                    customer_profile.city = city
+            except:
+                pass
+    
+    customer_profile.save()
+    
+    # Return updated profile data
+    user_data = _serialize_user_with_absolute_image(user, request)
+    profile_data = CustomerProfileSerializer(customer_profile).data
+    
+    return Response({
+        'user': user_data,
+        'profile': profile_data,
+        'role': user.role
     })
 class BaseReadWriteViewSet(viewsets.ModelViewSet):
 	permission_classes = [permissions.AllowAny]

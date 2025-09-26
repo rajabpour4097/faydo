@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from accounts.models import BusinessProfile, CustomerProfile, User
+from accounts.models import BusinessProfile, CustomerProfile, ServiceCategory, User
 
 
 @admin.register(User)
@@ -27,4 +27,8 @@ class CustomerProfileAdmin(admin.ModelAdmin):
     def get_full_name(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"
     get_full_name.short_description = 'نام کامل'
- 
+
+@admin.register(ServiceCategory)
+class ServiceCategoryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'description')
+    search_fields = ('name',) 

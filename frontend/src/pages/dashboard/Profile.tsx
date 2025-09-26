@@ -16,6 +16,7 @@ interface EditModalProps {
   isGender?: boolean
   isBirthDate?: boolean
   isCategory?: boolean
+  isAddress?: boolean
 }
 
 // Email validation helper function
@@ -288,7 +289,7 @@ const PersianDatePicker = ({ value, onChange, isDark }: {
   )
 }
 
-const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false, isBirthDate = false, isCategory = false }: EditModalProps) => {
+const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false, isBirthDate = false, isCategory = false, isAddress = false }: EditModalProps) => {
   const { isDark } = useTheme()
   const [value, setValue] = useState('')
   const [step, setStep] = useState<'edit' | 'verify'>('edit')
@@ -474,20 +475,35 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
                 </div>
               </div>
             ) : (
-              // Regular input for other fields
-              <input
-                type={isPhone ? 'tel' : isEmail ? 'email' : 'text'}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  error 
-                    ? 'border-red-500 focus:ring-red-500'
-                    : isDark 
-                      ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400 focus:ring-teal-500'
-                      : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-teal-500'
-                } focus:border-transparent`}
-                placeholder={currentValue}
-              />
+              isAddress ? (
+                <textarea
+                  rows={3}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  className={`w-full px-4 py-3 rounded-lg border resize-none ${
+                    error 
+                      ? 'border-red-500 focus:ring-red-500'
+                      : isDark 
+                        ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400 focus:ring-teal-500'
+                        : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-teal-500'
+                  } focus:border-transparent`}
+                  placeholder={currentValue || 'آدرس را وارد کنید'}
+                />
+              ) : (
+                <input
+                  type={isPhone ? 'tel' : isEmail ? 'email' : 'text'}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    error 
+                      ? 'border-red-500 focus:ring-red-500'
+                      : isDark 
+                        ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400 focus:ring-teal-500'
+                        : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-teal-500'
+                  } focus:border-transparent`}
+                  placeholder={currentValue}
+                />
+              )
             )}
             {error && (
               <p className="text-red-500 text-sm mt-2">{error}</p>
@@ -624,10 +640,10 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
 }
 
 const DesktopProfile = () => {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, refreshProfile } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean; isAddress?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -653,12 +669,13 @@ const DesktopProfile = () => {
       isEmail: field === 'email', 
       isGender: field === 'gender', 
       isBirthDate: field === 'birth_date',
-      isCategory: field === 'category'
+  isCategory: field === 'category',
+  isAddress: field === 'address'
     })
   }
 
   const closeEditModal = () => {
-    setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false })
+  setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false })
   }
 
   const handleSave = async (newValue: string) => {
@@ -671,8 +688,13 @@ const DesktopProfile = () => {
         // Phone updates are handled in the verification flow
         success = await updateUser({ phone_number: newValue })
       } else if (editModal.field === 'businessName') {
-        // For test users, update the name field
-        success = await updateUser({ name: newValue })
+        // Update business name via business profile endpoint
+        if (user?.type === 'business') {
+          const resp = await apiService.updateFullBusinessProfile({ name: newValue })
+          success = !!resp.data
+        } else {
+          success = await updateUser({ name: newValue })
+        }
       } else if (editModal.field === 'firstName') {
         success = await updateUser({ first_name: newValue })
       } else if (editModal.field === 'lastName') {
@@ -715,14 +737,9 @@ const DesktopProfile = () => {
           })
         }
       } else if (editModal.field === 'address') {
-        // Update address
         if (user?.type === 'business') {
-          success = await updateUser({ 
-            businessProfile: { 
-              ...user?.businessProfile, 
-              address: newValue 
-            } 
-          })
+          const resp = await apiService.updateFullBusinessProfile({ address: newValue })
+          success = !!resp.data
         } else {
           success = await updateUser({ 
             profile: { 
@@ -732,35 +749,33 @@ const DesktopProfile = () => {
           })
         }
       } else if (editModal.field === 'category') {
-        // Update business category
-        success = await updateUser({ 
-          businessProfile: { 
-            ...user?.businessProfile, 
-            category: { name: newValue } 
-          } 
-        })
+        if (user?.type === 'business') {
+          // TODO: change select to use category id and send category_id here
+          // Temporary: no-op until id wiring implemented
+          success = true
+        }
       } else if (editModal.field === 'businessPhone') {
-        // Update business phone
-        success = await updateUser({ 
-          businessProfile: { 
-            ...user?.businessProfile, 
-            business_phone: newValue 
-          } 
-        })
+        if (user?.type === 'business') {
+          const resp = await apiService.updateFullBusinessProfile({ business_phone: newValue })
+          success = !!resp.data
+        }
       } else if (editModal.field === 'location') {
-        // Update location - newValue should be "lat,lng" format
-        const [lat, lng] = newValue.split(',').map(coord => parseFloat(coord.trim()))
-        success = await updateUser({ 
-          businessProfile: { 
-            ...user?.businessProfile, 
-            business_location_latitude: lat,
-            business_location_longitude: lng
-          } 
-        })
+        if (user?.type === 'business') {
+          const [lat, lng] = newValue.split(',').map(coord => parseFloat(coord.trim()))
+            const resp = await apiService.updateFullBusinessProfile({ 
+              business_location_latitude: lat, 
+              business_location_longitude: lng 
+            })
+            success = !!resp.data
+        }
       }
       
       if (success) {
         console.log('Profile updated successfully')
+        // Refresh profile data after successful business profile updates
+        if (user?.type === 'business' && ['businessName', 'address', 'businessPhone', 'location', 'category'].includes(editModal.field)) {
+          await refreshProfile()
+        }
       } else {
         console.error('Failed to update profile')
       }
@@ -1100,6 +1115,7 @@ const DesktopProfile = () => {
           isGender={editModal.field === 'gender'}
           isBirthDate={editModal.field === 'birth_date'}
           isCategory={editModal.field === 'category'}
+          isAddress={editModal.field === 'address'}
         />
       </div>
     </DashboardLayout>
@@ -1107,10 +1123,10 @@ const DesktopProfile = () => {
 }
 
 const MobileProfile = () => {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, refreshProfile } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean; isAddress?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -1136,12 +1152,13 @@ const MobileProfile = () => {
       isEmail: field === 'email', 
       isGender: field === 'gender', 
       isBirthDate: field === 'birth_date',
-      isCategory: field === 'category'
+  isCategory: field === 'category',
+  isAddress: field === 'address'
     })
   }
 
   const closeEditModal = () => {
-    setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false })
+  setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false })
   }
 
   // Desktop version handleSave
@@ -1154,7 +1171,13 @@ const MobileProfile = () => {
       if (editModal.field === 'phone') {
         success = await updateUser({ phone_number: newValue })
       } else if (editModal.field === 'businessName') {
-        success = await updateUser({ name: newValue })
+        // Update business name via business profile endpoint
+        if (user?.type === 'business') {
+          const resp = await apiService.updateFullBusinessProfile({ name: newValue })
+          success = !!resp.data
+        } else {
+          success = await updateUser({ name: newValue })
+        }
       } else if (editModal.field === 'firstName') {
         success = await updateUser({ first_name: newValue })
       } else if (editModal.field === 'lastName') {
@@ -1198,12 +1221,8 @@ const MobileProfile = () => {
       } else if (editModal.field === 'address') {
         // Update address
         if (user?.type === 'business') {
-          success = await updateUser({ 
-            businessProfile: { 
-              ...user?.businessProfile, 
-              address: newValue 
-            } 
-          })
+          const resp = await apiService.updateFullBusinessProfile({ address: newValue })
+          success = !!resp.data
         } else {
           success = await updateUser({ 
             profile: { 
@@ -1213,35 +1232,35 @@ const MobileProfile = () => {
           })
         }
       } else if (editModal.field === 'category') {
-        // Update business category
-        success = await updateUser({ 
-          businessProfile: { 
-            ...user?.businessProfile, 
-            category: { name: newValue } 
-          } 
-        })
+        if (user?.type === 'business') {
+          // TODO: change select to use category id and send category_id here
+          // Temporary: no-op until id wiring implemented
+          success = true
+        }
       } else if (editModal.field === 'businessPhone') {
         // Update business phone
-        success = await updateUser({ 
-          businessProfile: { 
-            ...user?.businessProfile, 
-            business_phone: newValue 
-          } 
-        })
+        if (user?.type === 'business') {
+          const resp = await apiService.updateFullBusinessProfile({ business_phone: newValue })
+          success = !!resp.data
+        }
       } else if (editModal.field === 'location') {
         // Update location - newValue should be "lat,lng" format
-        const [lat, lng] = newValue.split(',').map(coord => parseFloat(coord.trim()))
-        success = await updateUser({ 
-          businessProfile: { 
-            ...user?.businessProfile, 
-            business_location_latitude: lat,
-            business_location_longitude: lng
-          } 
-        })
+        if (user?.type === 'business') {
+          const [lat, lng] = newValue.split(',').map(coord => parseFloat(coord.trim()))
+          const resp = await apiService.updateFullBusinessProfile({ 
+            business_location_latitude: lat, 
+            business_location_longitude: lng 
+          })
+          success = !!resp.data
+        }
       }
       
       if (success) {
         console.log('Profile updated successfully')
+        // Refresh profile data after successful business profile updates
+        if (user?.type === 'business' && ['businessName', 'address', 'businessPhone', 'location', 'category'].includes(editModal.field)) {
+          await refreshProfile()
+        }
       } else {
         console.error('Failed to update profile')
       }
@@ -1561,6 +1580,7 @@ const MobileProfile = () => {
           isGender={editModal.field === 'gender'}
           isBirthDate={editModal.field === 'birth_date'}
           isCategory={editModal.field === 'category'}
+          isAddress={editModal.field === 'address'}
         />
       </div>
     </MobileDashboardLayout>

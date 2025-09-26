@@ -329,6 +329,23 @@ class ApiService {
     })
   }
 
+  async updateFullBusinessProfile(data: {
+    name?: string
+    business_name?: string
+    description?: string
+    address?: string
+    business_phone?: string
+    category_id?: number
+    city_id?: number
+    business_location_latitude?: number
+    business_location_longitude?: number
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>('/accounts/auth/profile/business/', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
   async updateCustomerProfile(customerData: { 
     gender?: string; 
     birth_date?: string; 

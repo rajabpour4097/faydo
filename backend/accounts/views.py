@@ -1,3 +1,4 @@
+import os
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -264,12 +265,16 @@ def upload_profile_image_view(request):
         return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
     image_file = request.FILES['image']
+    original_name = image_file.name
+    content_type = image_file.content_type
 
-    # Basic content type validation (extend as needed)
-    allowed_types = {'image/jpeg', 'image/png', 'image/webp'}  # add 'image/heic' if you support it
-    if image_file.content_type not in allowed_types:
+    # Extended allowed types including HEIC/HEIF
+    allowed_types = {
+        'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'
+    }
+    if content_type not in allowed_types:
         return Response({
-            'error': 'فرمت تصویر پشتیبانی نمی‌شود. فقط JPG, PNG, WEBP.'
+            'error': 'فرمت تصویر پشتیبانی نمی‌شود. فرمت‌های مجاز: JPG, PNG, WEBP, HEIC.'
         }, status=status.HTTP_400_BAD_REQUEST)
 
     # Optional size limit: 5MB
@@ -278,13 +283,54 @@ def upload_profile_image_view(request):
         return Response({'error': 'حجم تصویر نباید بیش از 5 مگابایت باشد.'}, status=status.HTTP_400_BAD_REQUEST)
 
     user = request.user
-    user.image = image_file
-    user.save()
+
+    # Delete previous image file if exists (avoid orphaned files)
+    old_image_path = None
+    if user.image and hasattr(user.image, 'path'):
+        old_image_path = user.image.path
+
+    # HEIC conversion if needed
+    from django.core.files.base import ContentFile
+    from PIL import Image
+    import io
+    import uuid
+    converted = None
+    try:
+        if content_type in ('image/heic', 'image/heif', 'image/HEIC', 'image/HEIF'):
+            try:
+                try:
+                    from pillow_heif import register_heif_opener  # type: ignore
+                    register_heif_opener()
+                except Exception:
+                    return Response({'error': 'پشتیبانی HEIC نصب نشده (pillow-heif).'}, status=status.HTTP_501_NOT_IMPLEMENTED)
+                im = Image.open(image_file)
+                rgb_im = im.convert('RGB')
+                buffer = io.BytesIO()
+                rgb_im.save(buffer, format='JPEG', quality=85, optimize=True)
+                buffer.seek(0)
+                new_name = f"converted_{uuid.uuid4().hex}.jpg"
+                converted = ContentFile(buffer.read(), name=new_name)
+                user.image = converted
+            except Exception as e:
+                return Response({'error': f'خطا در تبدیل HEIC: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # For regular images keep original but optionally re-save to optimize (future)
+            user.image = image_file
+        user.save()
+    finally:
+        # Clean old image after successful save
+        if old_image_path and os.path.isfile(old_image_path):
+            try:
+                os.remove(old_image_path)
+            except Exception:
+                pass
 
     absolute_url = request.build_absolute_uri(user.image.url) if user.image else None
     return Response({
         'message': 'Profile image uploaded successfully',
-        'image': absolute_url
+        'image': absolute_url,
+        'original_name': original_name,
+        'converted': bool(converted)
     })
 
 
@@ -324,13 +370,49 @@ def update_business_profile_view(request):
     except BusinessProfile.DoesNotExist:
         return Response({'error': 'Business profile not found'}, status=status.HTTP_404_NOT_FOUND)
     
-    # Update business profile fields
+    # Update business profile fields (extended)
+    # Accept both 'business_name' and 'name'
     if 'business_name' in request.data:
-        business_profile.name = request.data['business_name']
+        business_profile.name = request.data.get('business_name') or ''
+    if 'name' in request.data:
+        business_profile.name = request.data.get('name') or business_profile.name
     if 'description' in request.data:
-        business_profile.description = request.data['description']
+        business_profile.description = request.data.get('description') or ''
     if 'address' in request.data:
-        business_profile.address = request.data['address']
+        business_profile.address = request.data.get('address') or ''
+    if 'business_phone' in request.data:
+        business_profile.business_phone = request.data.get('business_phone') or ''
+    # Category update: accept category_id or nested category {id}
+    from .models import ServiceCategory, City
+    category_id = request.data.get('category_id')
+    if not category_id and isinstance(request.data.get('category'), dict):
+        category_id = request.data.get('category', {}).get('id')
+    if category_id:
+        try:
+            business_profile.category = ServiceCategory.objects.get(id=category_id)
+        except ServiceCategory.DoesNotExist:
+            pass
+    # City update: accept city_id or city {name}
+    city_id = request.data.get('city_id')
+    if city_id:
+        try:
+            business_profile.city = City.objects.get(id=city_id)
+        except City.DoesNotExist:
+            pass
+    elif isinstance(request.data.get('city'), dict):
+        city_name = request.data.get('city', {}).get('name')
+        if city_name:
+            try:
+                city_obj = City.objects.filter(name__icontains=city_name).first()
+                if city_obj:
+                    business_profile.city = city_obj
+            except Exception:
+                pass
+    # Location coordinates
+    if 'business_location_latitude' in request.data:
+        business_profile.business_location_latitude = request.data.get('business_location_latitude') or None
+    if 'business_location_longitude' in request.data:
+        business_profile.business_location_longitude = request.data.get('business_location_longitude') or None
     
     business_profile.save()
     

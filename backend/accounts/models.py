@@ -19,6 +19,11 @@ class ServiceCategory(BaseModel):
     description = models.TextField(blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='subcategories')
 
+    class Meta:
+        verbose_name = 'دسته‌بندی خدمات'
+        verbose_name_plural = 'دسته‌بندی‌های خدمات'
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 

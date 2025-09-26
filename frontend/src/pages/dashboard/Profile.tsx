@@ -316,9 +316,9 @@ const DesktopProfile = () => {
   const getCurrentValue = (field: string) => {
     switch (field) {
       case 'firstName':
-        return user?.name?.split(' ')[0] || ''
+        return user?.first_name || ''
       case 'lastName':
-        return user?.name?.split(' ').slice(1).join(' ') || ''
+        return user?.last_name || ''
       case 'businessName':
         return user?.name || ''
       case 'email':
@@ -577,9 +577,9 @@ const MobileProfile = () => {
   const getCurrentValue = (field: string) => {
     switch (field) {
       case 'firstName':
-        return user?.name?.split(' ')[0] || ''
+        return user?.first_name || ''
       case 'lastName':
-        return user?.name?.split(' ').slice(1).join(' ') || ''
+        return user?.last_name || ''
       case 'businessName':
         return user?.name || ''
       case 'email':

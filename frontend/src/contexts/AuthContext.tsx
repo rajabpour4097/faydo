@@ -11,6 +11,8 @@ interface User {
   phone_number: string
   display_name?: string
   isProfileComplete?: boolean
+  first_name?: string
+  last_name?: string
 }
 
 interface AuthContextType {
@@ -133,12 +135,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const apiUser = response.data.user
         const mappedUser: User = {
           id: apiUser.id,
-          name: `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
+          name: apiUser.display_name || `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
           email: apiUser.email,
           type: apiUser.role,
           avatar: apiUser.image,
           username: apiUser.username,
-          phone_number: apiUser.phone_number
+          phone_number: apiUser.phone_number,
+          display_name: apiUser.display_name,
+          first_name: apiUser.first_name,
+          last_name: apiUser.last_name
         }
         
         setUser(mappedUser)
@@ -167,12 +172,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const apiUser = response.data.user
         const mappedUser: User = {
           id: apiUser.id,
-          name: `${userData.first_name} ${userData.last_name}`.trim() || apiUser.username,
+          name: apiUser.display_name || `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
           email: apiUser.email,
           type: apiUser.role,
           avatar: apiUser.image,
           username: apiUser.username,
-          phone_number: apiUser.phone_number
+          phone_number: apiUser.phone_number,
+          display_name: apiUser.display_name,
+          first_name: apiUser.first_name,
+          last_name: apiUser.last_name
         }
         
         setUser(mappedUser)
@@ -202,12 +210,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const apiUser = response.data.user
         const mappedUser: User = {
           id: apiUser.id,
-          name: userData.name || apiUser.username,
+          name: apiUser.display_name || userData.name || apiUser.username,
           email: apiUser.email,
           type: apiUser.role,
           avatar: apiUser.image,
           username: apiUser.username,
-          phone_number: apiUser.phone_number
+          phone_number: apiUser.phone_number,
+          display_name: apiUser.display_name,
+          first_name: apiUser.first_name,
+          last_name: apiUser.last_name
         }
         
         setUser(mappedUser)
@@ -259,6 +270,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           username: apiUser.username,
           phone_number: normalizePhone(apiUser.phone_number),
           display_name: apiUser.display_name,
+          first_name: apiUser.first_name,
+          last_name: apiUser.last_name,
           isProfileComplete: apiUser.role === 'customer' ? 
             (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
         }
@@ -297,6 +310,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               username: apiUser.username,
               phone_number: normalizePhone(apiUser.phone_number),
               display_name: apiUser.display_name,
+              first_name: apiUser.first_name,
+              last_name: apiUser.last_name,
               isProfileComplete: apiUser.role === 'customer' ? 
                 (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
             }
@@ -327,6 +342,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     username: apiUser.username,
                     phone_number: normalizePhone(apiUser.phone_number),
                     display_name: apiUser.display_name,
+                    first_name: apiUser.first_name,
+                    last_name: apiUser.last_name,
                     isProfileComplete: apiUser.role === 'customer' ? 
                       (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
                   }

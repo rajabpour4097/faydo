@@ -148,6 +148,17 @@ class CustomerProfile(models.Model):
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
 
+    def is_profile_complete(self):
+        """Check if required profile fields are completed"""
+        user = self.user
+        return bool(
+            user.first_name and user.first_name.strip() and
+            user.last_name and user.last_name.strip() and
+            self.gender and
+            self.birth_date and
+            self.city
+        )
+
 
 class ITManagerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'it_manager'})

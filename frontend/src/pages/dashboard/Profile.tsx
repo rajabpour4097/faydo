@@ -181,7 +181,7 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false }: {
 }
 
 const DesktopProfile = () => {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, refreshProfile } = useAuth()
   const { isDark } = useTheme()
   const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
     { isOpen: false, field: '', title: '', value: '', isPhone: false }
@@ -229,6 +229,9 @@ const DesktopProfile = () => {
       } else if (editModal.field === 'email') {
         updateUser({ email: newValue })
       }
+      
+      // Refresh profile data to update completion status
+      await refreshProfile()
       
       console.log('Profile updated successfully')
       alert('پروفایل با موفقیت به‌روزرسانی شد')
@@ -330,6 +333,25 @@ const DesktopProfile = () => {
   return (
     <DashboardLayout>
       <div className="space-y-8">
+        {/* Profile Completion Status for Customer Users */}
+        {user?.type === 'customer' && user?.isProfileComplete === false && (
+          <div className={`rounded-2xl p-6 border-2 ${isDark ? 'bg-amber-900/20 border-amber-500 text-amber-200' : 'bg-amber-50 border-amber-300 text-amber-800'}`}>
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1">تکمیل پروفایل ضروری است</h3>
+                <p className="text-sm opacity-90">
+                  برای دسترسی به بخش‌های داشبورد، لطفاً ابتدا اطلاعات پروفایل خود را کامل کنید: نام، نام خانوادگی، جنسیت، تاریخ تولد و شهر.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className={`rounded-2xl p-8 ${isDark ? 'bg-slate-900/30' : 'bg-white'}`}>
           <div className="flex items-center space-x-6">
             <div className="relative">
@@ -422,7 +444,7 @@ const DesktopProfile = () => {
 }
 
 const MobileProfile = () => {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, refreshProfile } = useAuth()
   const { isDark } = useTheme()
   const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
     { isOpen: false, field: '', title: '', value: '', isPhone: false }
@@ -468,6 +490,9 @@ const MobileProfile = () => {
       } else if (editModal.field === 'email') {
         updateUser({ email: newValue })
       }
+      
+      // Refresh profile data to update completion status
+      await refreshProfile()
       
       console.log('Profile updated successfully')
       alert('پروفایل با موفقیت به‌روزرسانی شد')
@@ -569,6 +594,25 @@ const MobileProfile = () => {
   return (
     <MobileDashboardLayout>
       <div className="p-4 space-y-6">
+        {/* Profile Completion Status for Customer Users */}
+        {user?.type === 'customer' && user?.isProfileComplete === false && (
+          <div className={`rounded-2xl p-4 border-2 ${isDark ? 'bg-amber-900/20 border-amber-500 text-amber-200' : 'bg-amber-50 border-amber-300 text-amber-800'}`}>
+            <div className="flex items-start space-x-3 rtl:space-x-reverse">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold mb-1">تکمیل پروفایل ضروری</h3>
+                <p className="text-sm opacity-90">
+                  برای دسترسی به داشبورد، ابتدا پروفایل خود را کامل کنید.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className={`rounded-2xl p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <div className="flex items-center space-x-4">
             <div className="relative">

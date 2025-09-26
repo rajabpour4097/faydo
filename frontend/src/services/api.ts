@@ -20,6 +20,37 @@ export interface User {
   image?: string
   date_joined: string
   last_login?: string
+  display_name?: string
+}
+
+export interface CustomerProfile {
+  id: number
+  user: User
+  gender: 'male' | 'female' | ''
+  birth_date: string
+  membership_level: 'bronze' | 'silver' | 'vip'
+  points: number
+  address: string
+  city: any
+  is_profile_complete: boolean
+}
+
+export interface BusinessProfile {
+  id: number
+  user: User
+  name: string
+  description: string
+  address: string
+  rating_avg: number
+  business_location_latitude?: number
+  business_location_longitude?: number
+  city: any
+}
+
+export interface ProfileData {
+  user: User
+  profile: CustomerProfile | BusinessProfile | null
+  role: string
 }
 
 export interface AuthTokens {
@@ -215,8 +246,8 @@ class ApiService {
     return response
   }
 
-  async getProfile(): Promise<ApiResponse<any>> {
-    return this.request<any>('/accounts/auth/profile/')
+  async getProfile(): Promise<ApiResponse<ProfileData>> {
+    return this.request<ProfileData>('/accounts/auth/profile/')
   }
 
   // Profile update methods

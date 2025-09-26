@@ -12,6 +12,27 @@ from .models import (
 from .serializers import *
 
 
+class RequireCompleteProfile(permissions.BasePermission):
+    """
+    Custom permission that requires customer users to have complete profiles
+    """
+    message = 'Profile must be completed before accessing this resource.'
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Only apply to customers
+        if request.user.role != 'customer':
+            return True
+            
+        try:
+            customer_profile = CustomerProfile.objects.get(user=request.user)
+            return customer_profile.is_profile_complete()
+        except CustomerProfile.DoesNotExist:
+            return False
+
+
 def _serialize_user_with_absolute_image(user, request):
     """Return serialized user data ensuring image field is absolute URL if present."""
     data = UserProfileSerializer(user).data
@@ -111,7 +132,7 @@ def profile_view(request):
         profile_data = None
         if user.role == 'customer':
             try:
-                customer_profile = CustomerProfile.objects.get(user=user)
+                customer_profile = CustomerProfile.objects.select_related('city').get(user=user)
                 profile_data = CustomerProfileSerializer(customer_profile).data
             except CustomerProfile.DoesNotExist:
                 profile_data = None

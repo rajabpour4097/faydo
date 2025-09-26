@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { Layout } from './components/layout/Layout'
+import { ProfileGuard } from './components/ProfileGuard'
 
 // Pages to keep
 import { Home } from './pages/Home'
@@ -23,8 +24,12 @@ const DashboardRouter = () => {
     return <Layout><Home /></Layout>
   }
 
-  // All users get the same main dashboard design
-  return <MainDashboard />
+  // All users get the same main dashboard design, but customers need completed profiles
+  return (
+    <ProfileGuard>
+      <MainDashboard />
+    </ProfileGuard>
+  )
 }
 
 function App() {

@@ -264,13 +264,14 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
 class CustomerProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role='customer'), source='user', write_only=True)
+    is_profile_complete = serializers.ReadOnlyField()
 
     class Meta:
         model = CustomerProfile
         fields = [
-            'id', 'user', 'user_id', 'gender', 'birth_date', 'membership_level', 'points', 'address'
+            'id', 'user', 'user_id', 'gender', 'birth_date', 'membership_level', 'points', 'address', 'city', 'is_profile_complete'
         ]
-        read_only_fields = ['points']
+        read_only_fields = ['points', 'is_profile_complete']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)

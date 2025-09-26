@@ -9,6 +9,8 @@ interface User {
   avatar?: string
   username: string
   phone_number: string
+  display_name?: string
+  isProfileComplete?: boolean
 }
 
 interface AuthContextType {
@@ -18,6 +20,7 @@ interface AuthContextType {
   registerBusiness: (userData: BusinessRegisterData) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   updateUser: (userData: Partial<User>) => void
+  refreshProfile: () => Promise<void>
   isLoading: boolean
 }
 
@@ -67,6 +70,11 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true) // Start with true to check auth on mount
+
+  // Helper function to normalize phone number display
+  const normalizePhone = (phone: string): string => {
+    return phone || ''
+  }
 
   const clearSession = () => {
     localStorage.removeItem('auth_user')
@@ -235,6 +243,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  const refreshProfile = async () => {
+    try {
+      const response = await apiService.getProfile()
+      if (response.data) {
+        const apiUser = response.data.user
+        const profile = response.data.profile
+        
+        const mappedUser: User = {
+          id: apiUser.id,
+          name: apiUser.display_name || `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
+          email: apiUser.email,
+          type: apiUser.role,
+          avatar: apiUser.image,
+          username: apiUser.username,
+          phone_number: normalizePhone(apiUser.phone_number),
+          display_name: apiUser.display_name,
+          isProfileComplete: apiUser.role === 'customer' ? 
+            (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
+        }
+        
+        setUser(mappedUser)
+        localStorage.setItem('auth_user', JSON.stringify(mappedUser))
+      }
+    } catch (error) {
+      console.error('Error refreshing profile:', error)
+    }
+  }
+
   // Check for existing session on mount
   React.useEffect(() => {
     const checkAuthStatus = async () => {
@@ -250,14 +286,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (response.data) {
             // Token is valid, update user data from server
             const apiUser = response.data.user
+            const profile = response.data.profile
+            
             const mappedUser: User = {
               id: apiUser.id,
-              name: `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
+              name: apiUser.display_name || `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
               email: apiUser.email,
               type: apiUser.role,
               avatar: apiUser.image,
               username: apiUser.username,
-              phone_number: apiUser.phone_number
+              phone_number: normalizePhone(apiUser.phone_number),
+              display_name: apiUser.display_name,
+              isProfileComplete: apiUser.role === 'customer' ? 
+                (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
             }
             
             setUser(mappedUser)
@@ -275,14 +316,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 const retryResponse = await apiService.getProfile()
                 if (retryResponse.data) {
                   const apiUser = retryResponse.data.user
+                  const profile = retryResponse.data.profile
+                  
                   const mappedUser: User = {
                     id: apiUser.id,
-                    name: `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
+                    name: apiUser.display_name || `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
                     email: apiUser.email,
                     type: apiUser.role,
                     avatar: apiUser.image,
                     username: apiUser.username,
-                    phone_number: apiUser.phone_number
+                    phone_number: normalizePhone(apiUser.phone_number),
+                    display_name: apiUser.display_name,
+                    isProfileComplete: apiUser.role === 'customer' ? 
+                      (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
                   }
                   
                   setUser(mappedUser)
@@ -323,6 +369,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     registerBusiness,
     logout,
     updateUser,
+    refreshProfile,
     isLoading
   }
 

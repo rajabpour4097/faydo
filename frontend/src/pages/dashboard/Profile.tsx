@@ -228,6 +228,39 @@ const DesktopProfile = () => {
         updateUser({ name: `${firstName} ${newValue}`.trim() })
       } else if (editModal.field === 'email') {
         updateUser({ email: newValue })
+      } else if (editModal.field === 'gender') {
+        // Update gender - will need API call to backend
+        const genderValue = newValue === 'مرد' ? 'male' : newValue === 'زن' ? 'female' : newValue
+        updateUser({ 
+          profile: { 
+            ...user?.profile, 
+            gender: genderValue as 'male' | 'female' | '' 
+          } 
+        })
+      } else if (editModal.field === 'birth_date') {
+        // Update birth date
+        updateUser({ 
+          profile: { 
+            ...user?.profile, 
+            birth_date: newValue 
+          } 
+        })
+      } else if (editModal.field === 'city') {
+        // Update city - will need proper city selection
+        updateUser({ 
+          profile: { 
+            ...user?.profile, 
+            city: { name: newValue } 
+          } 
+        })
+      } else if (editModal.field === 'address') {
+        // Update address
+        updateUser({ 
+          profile: { 
+            ...user?.profile, 
+            address: newValue 
+          } 
+        })
       }
       
       // Refresh profile data to update completion status
@@ -527,6 +560,39 @@ const MobileProfile = () => {
         updateUser({ name: `${firstName} ${newValue}`.trim() })
       } else if (editModal.field === 'email') {
         updateUser({ email: newValue })
+      } else if (editModal.field === 'gender') {
+        // Update gender - will need API call to backend
+        const genderValue = newValue === 'مرد' ? 'male' : newValue === 'زن' ? 'female' : newValue
+        updateUser({ 
+          profile: { 
+            ...user?.profile, 
+            gender: genderValue as 'male' | 'female' | '' 
+          } 
+        })
+      } else if (editModal.field === 'birth_date') {
+        // Update birth date
+        updateUser({ 
+          profile: { 
+            ...user?.profile, 
+            birth_date: newValue 
+          } 
+        })
+      } else if (editModal.field === 'city') {
+        // Update city - will need proper city selection
+        updateUser({ 
+          profile: { 
+            ...user?.profile, 
+            city: { name: newValue } 
+          } 
+        })
+      } else if (editModal.field === 'address') {
+        // Update address
+        updateUser({ 
+          profile: { 
+            ...user?.profile, 
+            address: newValue 
+          } 
+        })
       }
       
       // Refresh profile data to update completion status
@@ -735,6 +801,36 @@ const MobileProfile = () => {
             onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))}
           />
           <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
+          
+          {/* Customer Profile Fields */}
+          {user?.type === 'customer' && (
+            <>
+              <Field 
+                label="جنسیت" 
+                value={getCurrentValue('gender')} 
+                editable 
+                onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))}
+              />
+              <Field 
+                label="تاریخ تولد" 
+                value={getCurrentValue('birth_date')} 
+                editable 
+                onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))}
+              />
+              <Field 
+                label="شهر" 
+                value={getCurrentValue('city')} 
+                editable 
+                onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))}
+              />
+              <Field 
+                label="آدرس" 
+                value={getCurrentValue('address')} 
+                editable 
+                onEdit={() => openEditModal('address', 'آدرس خود را وارد کنید', getCurrentValue('address'))}
+              />
+            </>
+          )}
         </div>
         
         <EditModal

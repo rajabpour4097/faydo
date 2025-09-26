@@ -13,6 +13,12 @@ interface User {
   isProfileComplete?: boolean
   first_name?: string
   last_name?: string
+  profile?: {
+    gender?: 'male' | 'female' | ''
+    birth_date?: string
+    city?: any
+    address?: string
+  }
 }
 
 interface AuthContextType {
@@ -272,6 +278,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           display_name: apiUser.display_name,
           first_name: apiUser.first_name,
           last_name: apiUser.last_name,
+          profile: apiUser.role === 'customer' && profile && 'gender' in profile ? {
+            gender: profile.gender,
+            birth_date: profile.birth_date,
+            city: profile.city,
+            address: profile.address
+          } : undefined,
           isProfileComplete: apiUser.role === 'customer' ? 
             (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
         }
@@ -312,6 +324,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               display_name: apiUser.display_name,
               first_name: apiUser.first_name,
               last_name: apiUser.last_name,
+              profile: apiUser.role === 'customer' && profile && 'gender' in profile ? {
+                gender: profile.gender,
+                birth_date: profile.birth_date,
+                city: profile.city,
+                address: profile.address
+              } : undefined,
               isProfileComplete: apiUser.role === 'customer' ? 
                 (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
             }
@@ -344,6 +362,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     display_name: apiUser.display_name,
                     first_name: apiUser.first_name,
                     last_name: apiUser.last_name,
+                    profile: apiUser.role === 'customer' && profile && 'gender' in profile ? {
+                      gender: profile.gender,
+                      birth_date: profile.birth_date,
+                      city: profile.city,
+                      address: profile.address
+                    } : undefined,
                     isProfileComplete: apiUser.role === 'customer' ? 
                       (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
                   }

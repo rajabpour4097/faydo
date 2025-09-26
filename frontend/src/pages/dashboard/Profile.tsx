@@ -325,6 +325,14 @@ const DesktopProfile = () => {
         return user?.email || ''
       case 'phone':
         return user?.phone_number || ''
+      case 'gender':
+        return user?.profile?.gender === 'male' ? 'مرد' : user?.profile?.gender === 'female' ? 'زن' : ''
+      case 'birth_date':
+        return user?.profile?.birth_date || ''
+      case 'city':
+        return user?.profile?.city?.name || ''
+      case 'address':
+        return user?.profile?.address || ''
       default:
         return ''
     }
@@ -428,6 +436,36 @@ const DesktopProfile = () => {
             onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))}
           />
           <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
+          
+          {/* Customer Profile Fields */}
+          {user?.type === 'customer' && (
+            <>
+              <Field 
+                label="جنسیت" 
+                value={getCurrentValue('gender')} 
+                editable 
+                onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))}
+              />
+              <Field 
+                label="تاریخ تولد" 
+                value={getCurrentValue('birth_date')} 
+                editable 
+                onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))}
+              />
+              <Field 
+                label="شهر" 
+                value={getCurrentValue('city')} 
+                editable 
+                onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))}
+              />
+              <Field 
+                label="آدرس" 
+                value={getCurrentValue('address')} 
+                editable 
+                onEdit={() => openEditModal('address', 'آدرس خود را وارد کنید', getCurrentValue('address'))}
+              />
+            </>
+          )}
         </div>
         
         <EditModal
@@ -586,6 +624,14 @@ const MobileProfile = () => {
         return user?.email || ''
       case 'phone':
         return user?.phone_number || ''
+      case 'gender':
+        return user?.profile?.gender === 'male' ? 'مرد' : user?.profile?.gender === 'female' ? 'زن' : ''
+      case 'birth_date':
+        return user?.profile?.birth_date || ''
+      case 'city':
+        return user?.profile?.city?.name || ''
+      case 'address':
+        return user?.profile?.address || ''
       default:
         return ''
     }

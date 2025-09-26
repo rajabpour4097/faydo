@@ -175,22 +175,40 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
   )
 }
 
-const Field = ({ label, value, editable = false, onEdit, isPhone = false }: { 
+const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequired = false }: { 
   label: string; 
   value?: string; 
   editable?: boolean; 
   onEdit?: () => void;
   isPhone?: boolean;
+  isRequired?: boolean;
 }) => {
   const { isDark } = useTheme()
+  
+  // Check if required field is empty
+  const isEmpty = isRequired && (!value || value.trim() === '')
+  
   return (
     <div className={`flex items-center justify-between rounded-2xl px-4 py-4 ${
-      isDark ? 'bg-slate-800 border border-slate-700' : 'bg-gray-50'
+      isEmpty 
+        ? (isDark ? 'bg-red-900/20 border-2 border-red-500/50' : 'bg-red-50 border-2 border-red-300')
+        : (isDark ? 'bg-slate-800 border border-slate-700' : 'bg-gray-50')
     }`}>
-      <div className={`text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>{label}</div>
+      <div className={`text-sm ${
+        isEmpty 
+          ? (isDark ? 'text-red-400' : 'text-red-600') 
+          : (isDark ? 'text-slate-300' : 'text-gray-600')
+      }`}>
+        {label}
+        {isEmpty && <span className="text-red-500 mr-1">*</span>}
+      </div>
       <div className="flex items-center space-x-3">
-        <div className={`text-base font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          {isPhone && value ? value.replace(/(.{4})(.{3})(.{4})/, '$1$2$3') : (value || '-')}
+        <div className={`text-base font-medium ${
+          isEmpty 
+            ? (isDark ? 'text-red-400' : 'text-red-600') 
+            : (isDark ? 'text-white' : 'text-gray-900')
+        }`}>
+          {isPhone && value ? value.replace(/(.{4})(.{3})(.{4})/, '$1$2$3') : (value || (isEmpty ? 'ضروری است' : '-'))}
         </div>
         {editable && (
           <button
@@ -469,12 +487,14 @@ const DesktopProfile = () => {
                 label="نام" 
                 value={getCurrentValue('firstName')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('firstName', 'نام را وارد نمایید', getCurrentValue('firstName'))}
               />
               <Field 
                 label="نام خانوادگی" 
                 value={getCurrentValue('lastName')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('lastName', 'نام خانوادگی را وارد نمایید', getCurrentValue('lastName'))}
               />
             </>
@@ -494,25 +514,28 @@ const DesktopProfile = () => {
           />
           <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
           
-          {/* Customer Profile Fields */}
+          {/* Customer Profile Fields - Desktop */}
           {user?.type === 'customer' && (
             <>
               <Field 
                 label="جنسیت" 
                 value={getCurrentValue('gender')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))}
               />
               <Field 
                 label="تاریخ تولد" 
                 value={getCurrentValue('birth_date')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))}
               />
               <Field 
                 label="شهر" 
                 value={getCurrentValue('city')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))}
               />
               <Field 
@@ -799,12 +822,14 @@ const MobileProfile = () => {
                 label="نام" 
                 value={getCurrentValue('firstName')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('firstName', 'نام را وارد نمایید', getCurrentValue('firstName'))}
               />
               <Field 
                 label="نام خانوادگی" 
                 value={getCurrentValue('lastName')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('lastName', 'نام خانوادگی را وارد نمایید', getCurrentValue('lastName'))}
               />
             </>
@@ -824,25 +849,28 @@ const MobileProfile = () => {
           />
           <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
           
-          {/* Customer Profile Fields */}
+          {/* Customer Profile Fields - Mobile */}
           {user?.type === 'customer' && (
             <>
               <Field 
                 label="جنسیت" 
                 value={getCurrentValue('gender')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))}
               />
               <Field 
                 label="تاریخ تولد" 
                 value={getCurrentValue('birth_date')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))}
               />
               <Field 
                 label="شهر" 
                 value={getCurrentValue('city')} 
                 editable 
+                isRequired={true}
                 onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))}
               />
               <Field 

@@ -319,23 +319,30 @@ class UserSerializer(serializers.ModelSerializer):
 class BusinessProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role='business'), source='user', write_only=True)
+    # Provide nested read-only representation for category & city while allowing write via *_id
+    category = ServiceCategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(queryset=ServiceCategory.objects.all(), source='category', write_only=True, required=False, allow_null=True)
+    city = CitySerializer(read_only=True)
+    city_id = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), source='city', write_only=True, required=False, allow_null=True)
     is_profile_complete = serializers.ReadOnlyField()
 
     class Meta:
         model = BusinessProfile
         fields = [
-            'id', 'user', 'user_id', 'name', 'description', 'category', 'address',
-            'rating_avg', 'business_location_latitude', 'business_location_longitude', 'city',
+            'id', 'user', 'user_id', 'name', 'description', 'category', 'category_id', 'address',
+            'rating_avg', 'business_location_latitude', 'business_location_longitude', 'city', 'city_id',
             'business_phone', 'instagram_link', 'website_link', 'is_profile_complete'
         ]
-        read_only_fields = ['rating_avg', 'is_profile_complete']
+        read_only_fields = ['rating_avg', 'is_profile_complete', 'category', 'city']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         if not rep.get('name'):
             rep['name'] = 'کاربر جدید'
-        for key, val in rep.items():
-            if val is None:
+        # Only normalize simple nullable scalar fields; keep nested dicts intact
+        scalar_nullables = ['description', 'address', 'business_location_latitude', 'business_location_longitude', 'business_phone', 'instagram_link', 'website_link']
+        for key in scalar_nullables:
+            if rep.get(key) is None:
                 rep[key] = ''
         return rep
 

@@ -337,7 +337,13 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
         // For birth date, use the Gregorian date as is
         setValue(currentValue || '')
       } else if (isCategory) {
-        setValue(currentValue || '')
+        // For category, if currentValue is set and we have categories loaded, find the ID
+        if (currentValue && categories.length > 0) {
+          const matchingCategory = categories.find(c => c.name === currentValue)
+          setValue(matchingCategory ? matchingCategory.id.toString() : '')
+        } else {
+          setValue('')
+        }
       } else {
         setValue(currentValue)
       }
@@ -345,7 +351,7 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
       setVerificationCode('')
       setError('')
     }
-  }, [isOpen, currentValue, isGender, isBirthDate])
+  }, [isOpen, currentValue, isGender, isBirthDate, isCategory, categories])
 
   if (!isOpen) return null
 
@@ -432,7 +438,7 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
                   >
                     <option value="">انتخاب دسته‌بندی</option>
                     {categories.map(c => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
+                      <option key={c.id} value={c.id.toString()}>{c.name}</option>
                     ))}
                   </select>
                 )}
@@ -750,9 +756,14 @@ const DesktopProfile = () => {
         }
       } else if (editModal.field === 'category') {
         if (user?.type === 'business') {
-          // TODO: change select to use category id and send category_id here
-          // Temporary: no-op until id wiring implemented
-          success = true
+          // newValue is now category ID
+          const categoryId = parseInt(newValue)
+          if (categoryId) {
+            const resp = await apiService.updateFullBusinessProfile({ category_id: categoryId })
+            success = !!resp.data
+          } else {
+            success = true // Allow clearing category
+          }
         }
       } else if (editModal.field === 'businessPhone') {
         if (user?.type === 'business') {
@@ -1233,9 +1244,14 @@ const MobileProfile = () => {
         }
       } else if (editModal.field === 'category') {
         if (user?.type === 'business') {
-          // TODO: change select to use category id and send category_id here
-          // Temporary: no-op until id wiring implemented
-          success = true
+          // newValue is now category ID  
+          const categoryId = parseInt(newValue)
+          if (categoryId) {
+            const resp = await apiService.updateFullBusinessProfile({ category_id: categoryId })
+            success = !!resp.data
+          } else {
+            success = true // Allow clearing category
+          }
         }
       } else if (editModal.field === 'businessPhone') {
         // Update business phone

@@ -36,12 +36,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return [
       { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
       { name: 'داشبورد', href: '/dashboard', icon: '📊' },
-      { name: 'شرکای تبلیغاتی', href: '/dashboard/affiliates', icon: '🤝' },
-      { name: 'برندها', href: '/dashboard/brands', icon: '🏷️' },
-      { name: 'مشتریان', href: '/dashboard/clients', icon: '👥' },
-      { name: 'عملکرد', href: '/dashboard/performance', icon: '📈' },
-      { name: 'یادداشت‌ها و فایل‌ها', href: '/dashboard/notes', icon: '📋' },
-      { name: 'آپلودها', href: '/dashboard/uploads', icon: '📤' },
       { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
     ]
   }

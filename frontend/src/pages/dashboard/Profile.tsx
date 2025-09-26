@@ -13,6 +13,7 @@ interface EditModalProps {
   onSave: (value: string) => void
   isPhone?: boolean
   isEmail?: boolean
+  isGender?: boolean
 }
 
 // Email validation helper function
@@ -21,7 +22,7 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email)
 }
 
-const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false }: EditModalProps) => {
+const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false }: EditModalProps) => {
   const { isDark } = useTheme()
   const [value, setValue] = useState('')
   const [step, setStep] = useState<'edit' | 'verify'>('edit')
@@ -31,12 +32,23 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
   // Update value when modal opens
   useEffect(() => {
     if (isOpen) {
-      setValue(currentValue)
+      // For gender field, convert Persian to English for internal handling
+      if (isGender) {
+        if (currentValue === 'مرد') {
+          setValue('male')
+        } else if (currentValue === 'زن') {
+          setValue('female')
+        } else {
+          setValue('')  // Empty for first-time selection
+        }
+      } else {
+        setValue(currentValue)
+      }
       setStep('edit')
       setVerificationCode('')
       setError('')
     }
-  }, [isOpen, currentValue])
+  }, [isOpen, currentValue, isGender])
 
   if (!isOpen) return null
 
@@ -100,19 +112,58 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
                 ✕
               </button>
             </div>
-            <input
-              type={isPhone ? 'tel' : isEmail ? 'email' : 'text'}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className={`w-full px-4 py-3 rounded-lg border ${
-                error 
-                  ? 'border-red-500 focus:ring-red-500'
-                  : isDark 
-                    ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400 focus:ring-teal-500'
-                    : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-teal-500'
-              } focus:border-transparent`}
-              placeholder={currentValue}
-            />
+            {isGender ? (
+              // Gender selection with radio buttons
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <label className={`flex items-center space-x-3 space-x-reverse p-3 rounded-lg border cursor-pointer transition-colors ${
+                    value === 'male' 
+                      ? (isDark ? 'border-blue-500 bg-blue-900/20' : 'border-blue-500 bg-blue-50')
+                      : (isDark ? 'border-slate-600 hover:border-slate-500' : 'border-gray-300 hover:border-gray-400')
+                  }`}>
+                    <input
+                      type="radio"
+                      name="gender"
+                      value="male"
+                      checked={value === 'male'}
+                      onChange={(e) => setValue(e.target.value)}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>مرد</span>
+                  </label>
+                  <label className={`flex items-center space-x-3 space-x-reverse p-3 rounded-lg border cursor-pointer transition-colors ${
+                    value === 'female' 
+                      ? (isDark ? 'border-blue-500 bg-blue-900/20' : 'border-blue-500 bg-blue-50')
+                      : (isDark ? 'border-slate-600 hover:border-slate-500' : 'border-gray-300 hover:border-gray-400')
+                  }`}>
+                    <input
+                      type="radio"
+                      name="gender"
+                      value="female"
+                      checked={value === 'female'}
+                      onChange={(e) => setValue(e.target.value)}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>زن</span>
+                  </label>
+                </div>
+              </div>
+            ) : (
+              // Regular input for other fields
+              <input
+                type={isPhone ? 'tel' : isEmail ? 'email' : 'text'}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  error 
+                    ? 'border-red-500 focus:ring-red-500'
+                    : isDark 
+                      ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400 focus:ring-teal-500'
+                      : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-teal-500'
+                } focus:border-transparent`}
+                placeholder={currentValue}
+              />
+            )}
             {error && (
               <p className="text-red-500 text-sm mt-2">{error}</p>
             )}
@@ -228,8 +279,8 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
 const DesktopProfile = () => {
   const { user, updateUser } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -556,6 +607,7 @@ const DesktopProfile = () => {
           onSave={handleSave}
           isPhone={editModal.isPhone}
           isEmail={editModal.field === 'email'}
+          isGender={editModal.field === 'gender'}
         />
       </div>
     </DashboardLayout>
@@ -565,8 +617,8 @@ const DesktopProfile = () => {
 const MobileProfile = () => {
   const { user, updateUser } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -590,6 +642,7 @@ const MobileProfile = () => {
     setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false })
   }
 
+  // Desktop version handleSave
   const handleSave = async (newValue: string) => {
     console.log('handleSave called with:', editModal.field, '=', newValue)
     
@@ -607,12 +660,11 @@ const MobileProfile = () => {
       } else if (editModal.field === 'email') {
         success = await updateUser({ email: newValue })
       } else if (editModal.field === 'gender') {
-        // Update gender - convert to backend format
-        const genderValue = newValue === 'مرد' ? 'male' : newValue === 'زن' ? 'female' : newValue
+        // Update gender - value is already in backend format (male/female)
         success = await updateUser({ 
           profile: { 
             ...user?.profile, 
-            gender: genderValue as 'male' | 'female' | '' 
+            gender: newValue as 'male' | 'female' | '' 
           } 
         })
       } else if (editModal.field === 'birth_date') {
@@ -891,6 +943,7 @@ const MobileProfile = () => {
           onSave={handleSave}
           isPhone={editModal.isPhone}
           isEmail={editModal.field === 'email'}
+          isGender={editModal.field === 'gender'}
         />
       </div>
     </MobileDashboardLayout>

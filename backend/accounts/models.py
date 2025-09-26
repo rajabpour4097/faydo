@@ -81,6 +81,21 @@ class User(AbstractUser):
         else:
             self.password = ''
     
+    @property
+    def isProfileComplete(self):
+        """Check if user's profile is complete based on their role"""
+        if self.role == 'customer':
+            try:
+                return self.customerprofile.is_profile_complete()
+            except:
+                return False
+        elif self.role == 'business':
+            try:
+                return self.businessprofile.is_profile_complete()
+            except:
+                return False
+        return True  # For other roles, assume profile is complete
+    
 
 class BusinessProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'business'})
@@ -132,6 +147,18 @@ class BusinessProfile(models.Model):
         """Get working hours for a specific weekday (0=Saturday, 6=Friday)"""
         return self.working_hours.filter(weekday=weekday, is_closed=False).order_by('start_time')
 
+    def is_profile_complete(self):
+        """Check if required profile fields are completed"""
+        return bool(
+            self.name and self.name.strip() and
+            self.category and
+            self.address and self.address.strip() and
+            self.business_location_latitude and
+            self.business_location_longitude and
+            self.city and
+            self.business_phone and self.business_phone.strip()
+        )
+
 class CustomerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'customer'})
     gender = models.CharField(max_length=10, choices=[('male','مرد'),('female','زن')], blank=True, null=True)
@@ -155,8 +182,7 @@ class CustomerProfile(models.Model):
             user.first_name and user.first_name.strip() and
             user.last_name and user.last_name.strip() and
             self.gender and
-            self.birth_date and
-            self.city
+            self.birth_date
         )
 
 

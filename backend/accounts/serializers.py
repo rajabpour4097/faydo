@@ -215,12 +215,13 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'phone_number', 'name']
+        fields = ['email', 'first_name', 'last_name', 'phone_number', 'name', 'image']
         extra_kwargs = {
             'email': {'required': False, 'allow_blank': True},
             'first_name': {'required': False, 'allow_blank': True},
             'last_name': {'required': False, 'allow_blank': True},
             'phone_number': {'required': False, 'allow_blank': True},
+            'image': {'required': False},
         }
 
     def validate_email(self, value):
@@ -285,23 +286,27 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = User
-		fields = ['id', 'username', 'first_name', 'last_name', 'email', 'role', 'phone_number', 'image']
-		read_only_fields = ['id']
+    isProfileComplete = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'role', 'phone_number', 'image', 'isProfileComplete']
+        read_only_fields = ['id', 'isProfileComplete']
 
 
 class BusinessProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role='business'), source='user', write_only=True)
+    is_profile_complete = serializers.ReadOnlyField()
 
     class Meta:
         model = BusinessProfile
         fields = [
             'id', 'user', 'user_id', 'name', 'description', 'category', 'address',
-            'rating_avg', 'business_location_latitude', 'business_location_longitude', 'city'
+            'rating_avg', 'business_location_latitude', 'business_location_longitude', 'city',
+            'business_phone', 'instagram_link', 'website_link', 'is_profile_complete'
         ]
-        read_only_fields = ['rating_avg']
+        read_only_fields = ['rating_avg', 'is_profile_complete']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)

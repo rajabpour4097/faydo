@@ -265,6 +265,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!user) return false
     
     try {
+      // If only updating avatar, just update local state without API call
+      if (Object.keys(userData).length === 1 && userData.avatar) {
+        const updatedUser: User = {
+          ...user,
+          avatar: userData.avatar
+        }
+        setUser(updatedUser)
+        localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+        return true
+      }
+
       // If updating profile fields for customer, use the customer profile endpoint
       if (user.type === 'customer' && userData.profile) {
         const profileData = {
@@ -320,6 +331,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             phone_number: updatedApiUser.phone_number,
             name: updatedApiUser.display_name || `${updatedApiUser.first_name} ${updatedApiUser.last_name}`.trim() || updatedApiUser.username,
             display_name: updatedApiUser.display_name,
+            avatar: updatedApiUser.image, // Add image field update
             ...userData
           }
           setUser(updatedUser)

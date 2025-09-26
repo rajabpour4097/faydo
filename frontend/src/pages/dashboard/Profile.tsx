@@ -15,6 +15,7 @@ interface EditModalProps {
   isEmail?: boolean
   isGender?: boolean
   isBirthDate?: boolean
+  isCategory?: boolean
 }
 
 // Email validation helper function
@@ -287,12 +288,37 @@ const PersianDatePicker = ({ value, onChange, isDark }: {
   )
 }
 
-const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false, isBirthDate = false }: EditModalProps) => {
+const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false, isBirthDate = false, isCategory = false }: EditModalProps) => {
   const { isDark } = useTheme()
   const [value, setValue] = useState('')
   const [step, setStep] = useState<'edit' | 'verify'>('edit')
   const [verificationCode, setVerificationCode] = useState('')
   const [error, setError] = useState('')
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
+  const [catLoading, setCatLoading] = useState(false)
+  const [catError, setCatError] = useState('')
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      if (isCategory && isOpen) {
+        setCatLoading(true)
+        setCatError('')
+        try {
+          const resp = await apiService.getServiceCategories()
+          if (resp.data) {
+            setCategories(resp.data.map(c => ({ id: (c as any).id, name: (c as any).name })))
+          } else if (resp.error) {
+            setCatError(resp.error)
+          }
+        } catch (e) {
+          setCatError('خطا در دریافت دسته‌بندی‌ها')
+        } finally {
+          setCatLoading(false)
+        }
+      }
+    }
+    loadCategories()
+  }, [isCategory, isOpen])
 
   // Update value when modal opens
   useEffect(() => {
@@ -308,6 +334,8 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
         }
       } else if (isBirthDate) {
         // For birth date, use the Gregorian date as is
+        setValue(currentValue || '')
+      } else if (isCategory) {
         setValue(currentValue || '')
       } else {
         setValue(currentValue)
@@ -387,6 +415,28 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
                 onChange={setValue}
                 isDark={isDark}
               />
+            ) : isCategory ? (
+              <div className="space-y-3">
+                {catLoading && <div className="text-sm text-slate-400">در حال بارگذاری ...</div>}
+                {catError && <div className="text-sm text-red-500">{catError}</div>}
+                {!catLoading && !catError && (
+                  <select
+                    className={`w-full p-3 rounded-lg border text-sm focus:outline-none ${
+                      isDark
+                        ? 'bg-slate-700 border-slate-600 text-white focus:ring-2 focus:ring-purple-500'
+                        : 'bg-white border-gray-300 text-gray-800 focus:ring-2 focus:ring-purple-500'
+                    }`}
+                    value={value}
+                    onChange={e => setValue(e.target.value)}
+                  >
+                    <option value="">انتخاب دسته‌بندی</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                )}
+                <p className="text-xs text-slate-400">یک دسته‌بندی خدمات برای کسب‌وکار انتخاب کنید.</p>
+              </div>
             ) : isGender ? (
               // Gender selection with radio buttons
               <div className="space-y-3">
@@ -576,8 +626,8 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
 const DesktopProfile = () => {
   const { user, updateUser } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -594,11 +644,21 @@ const DesktopProfile = () => {
 
   const openEditModal = (field: string, title: string, value: string, isPhone = false) => {
     console.log('Opening edit modal for field:', field, 'with value:', value)
-    setEditModal({ isOpen: true, field, title, value, isPhone })
+    setEditModal({ 
+      isOpen: true, 
+      field, 
+      title, 
+      value, 
+      isPhone, 
+      isEmail: field === 'email', 
+      isGender: field === 'gender', 
+      isBirthDate: field === 'birth_date',
+      isCategory: field === 'category'
+    })
   }
 
   const closeEditModal = () => {
-    setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false })
+    setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false })
   }
 
   const handleSave = async (newValue: string) => {
@@ -1039,6 +1099,7 @@ const DesktopProfile = () => {
           isEmail={editModal.field === 'email'}
           isGender={editModal.field === 'gender'}
           isBirthDate={editModal.field === 'birth_date'}
+          isCategory={editModal.field === 'category'}
         />
       </div>
     </DashboardLayout>
@@ -1048,8 +1109,8 @@ const DesktopProfile = () => {
 const MobileProfile = () => {
   const { user, updateUser } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -1066,11 +1127,21 @@ const MobileProfile = () => {
 
   const openEditModal = (field: string, title: string, value: string, isPhone = false) => {
     console.log('Opening edit modal for field:', field, 'with value:', value)
-    setEditModal({ isOpen: true, field, title, value, isPhone })
+    setEditModal({ 
+      isOpen: true, 
+      field, 
+      title, 
+      value, 
+      isPhone, 
+      isEmail: field === 'email', 
+      isGender: field === 'gender', 
+      isBirthDate: field === 'birth_date',
+      isCategory: field === 'category'
+    })
   }
 
   const closeEditModal = () => {
-    setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false })
+    setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false })
   }
 
   // Desktop version handleSave
@@ -1489,6 +1560,7 @@ const MobileProfile = () => {
           isEmail={editModal.field === 'email'}
           isGender={editModal.field === 'gender'}
           isBirthDate={editModal.field === 'birth_date'}
+          isCategory={editModal.field === 'category'}
         />
       </div>
     </MobileDashboardLayout>

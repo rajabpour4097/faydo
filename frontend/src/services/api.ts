@@ -52,6 +52,13 @@ export interface BusinessProfile {
   is_profile_complete: boolean
 }
 
+export interface ServiceCategoryItem {
+  id: number
+  name: string
+  description?: string
+  parent?: number | null
+}
+
 export interface ProfileData {
   user: User
   profile: CustomerProfile | BusinessProfile | null
@@ -272,6 +279,19 @@ class ApiService {
       headers: {}, // Remove Content-Type to let browser set it for FormData
       body: formData,
     })
+  }
+
+  async getServiceCategories(): Promise<ApiResponse<ServiceCategoryItem[]>> {
+    const resp = await this.request<any>('/accounts/service-categories/')
+    if (resp.data) {
+      // Handle paginated {results: [...]} or direct array
+      if (Array.isArray(resp.data)) {
+        return { data: resp.data as ServiceCategoryItem[] }
+      } else if (Array.isArray(resp.data.results)) {
+        return { data: resp.data.results as ServiceCategoryItem[] }
+      }
+    }
+    return resp
   }
 
   // Phone verification methods

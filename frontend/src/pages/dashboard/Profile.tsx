@@ -629,7 +629,8 @@ const DesktopProfile = () => {
           } 
         })
       } else if (editModal.field === 'birth_date') {
-        // Update birth date
+        // Update birth date - newValue is already in Gregorian format from Persian date picker
+        console.log('Saving birth_date as Gregorian (Mobile):', newValue)
         success = await updateUser({ 
           profile: { 
             ...user?.profile, 
@@ -977,7 +978,8 @@ const MobileProfile = () => {
           } 
         })
       } else if (editModal.field === 'birth_date') {
-        // Update birth date
+        // Update birth date - newValue is already in Gregorian format from Persian date picker
+        console.log('Saving birth_date as Gregorian (Desktop):', newValue)
         success = await updateUser({ 
           profile: { 
             ...user?.profile, 

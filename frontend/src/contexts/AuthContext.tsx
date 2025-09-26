@@ -19,6 +19,15 @@ interface User {
     city?: any
     address?: string
   }
+  businessProfile?: {
+    name?: string
+    business_phone?: string
+    category?: any
+    address?: string
+    city?: any
+    business_location_latitude?: number
+    business_location_longitude?: number
+  }
 }
 
 interface AuthContextType {

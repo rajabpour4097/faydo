@@ -639,18 +639,62 @@ const DesktopProfile = () => {
         })
       } else if (editModal.field === 'city') {
         // Update city - will need proper city selection
-        success = await updateUser({ 
-          profile: { 
-            ...user?.profile, 
-            city: { name: newValue } 
-          } 
-        })
+        if (user?.type === 'business') {
+          success = await updateUser({ 
+            businessProfile: { 
+              ...user?.businessProfile, 
+              city: { name: newValue } 
+            } 
+          })
+        } else {
+          success = await updateUser({ 
+            profile: { 
+              ...user?.profile, 
+              city: { name: newValue } 
+            } 
+          })
+        }
       } else if (editModal.field === 'address') {
         // Update address
+        if (user?.type === 'business') {
+          success = await updateUser({ 
+            businessProfile: { 
+              ...user?.businessProfile, 
+              address: newValue 
+            } 
+          })
+        } else {
+          success = await updateUser({ 
+            profile: { 
+              ...user?.profile, 
+              address: newValue 
+            } 
+          })
+        }
+      } else if (editModal.field === 'category') {
+        // Update business category
         success = await updateUser({ 
-          profile: { 
-            ...user?.profile, 
-            address: newValue 
+          businessProfile: { 
+            ...user?.businessProfile, 
+            category: { name: newValue } 
+          } 
+        })
+      } else if (editModal.field === 'businessPhone') {
+        // Update business phone
+        success = await updateUser({ 
+          businessProfile: { 
+            ...user?.businessProfile, 
+            business_phone: newValue 
+          } 
+        })
+      } else if (editModal.field === 'location') {
+        // Update location - newValue should be "lat,lng" format
+        const [lat, lng] = newValue.split(',').map(coord => parseFloat(coord.trim()))
+        success = await updateUser({ 
+          businessProfile: { 
+            ...user?.businessProfile, 
+            business_location_latitude: lat,
+            business_location_longitude: lng
           } 
         })
       }
@@ -765,9 +809,24 @@ const DesktopProfile = () => {
         }
         return ''
       case 'city':
+        if (user?.type === 'business') {
+          return user?.businessProfile?.city?.name || ''
+        }
         return user?.profile?.city?.name || ''
       case 'address':
+        if (user?.type === 'business') {
+          return user?.businessProfile?.address || ''
+        }
         return user?.profile?.address || ''
+      case 'category':
+        return user?.businessProfile?.category?.name || ''
+      case 'businessPhone':
+        return user?.businessProfile?.business_phone || ''
+      case 'location':
+        if (user?.businessProfile?.business_location_latitude && user?.businessProfile?.business_location_longitude) {
+          return `${user.businessProfile.business_location_latitude}, ${user.businessProfile.business_location_longitude}`
+        }
+        return ''
       default:
         return ''
     }
@@ -789,6 +848,25 @@ const DesktopProfile = () => {
                 <h3 className="text-lg font-semibold mb-1">تکمیل پروفایل ضروری است</h3>
                 <p className="text-sm opacity-90">
                   برای دسترسی به بخش‌های داشبورد، لطفاً ابتدا اطلاعات پروفایل خود را کامل کنید: نام، نام خانوادگی، جنسیت، تاریخ تولد و شهر.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Profile Completion Status for Business Users */}
+        {user?.type === 'business' && user?.isProfileComplete === false && (
+          <div className={`rounded-2xl p-6 border-2 ${isDark ? 'bg-amber-900/20 border-amber-500 text-amber-200' : 'bg-amber-50 border-amber-300 text-amber-800'}`}>
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1">تکمیل پروفایل کسب‌وکار ضروری است</h3>
+                <p className="text-sm opacity-90">
+                  برای دسترسی به بخش‌های داشبورد، لطفاً ابتدا اطلاعات کسب‌وکار خود را کامل کنید: نام کسب‌وکار، دسته‌بندی، آدرس، موقعیت مکانی، شهر و شماره تلفن کسب‌وکار.
                 </p>
               </div>
             </div>
@@ -839,6 +917,7 @@ const DesktopProfile = () => {
               label="نام کسب‌وکار" 
               value={getCurrentValue('businessName')} 
               editable 
+              isRequired={true}
               onEdit={() => openEditModal('businessName', 'نام کسب‌وکار را وارد نمایید', getCurrentValue('businessName'))}
             />
           ) : (
@@ -873,6 +952,47 @@ const DesktopProfile = () => {
             onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))}
           />
           <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
+          
+          {/* Business Profile Fields - Desktop */}
+          {user?.type === 'business' && (
+            <>
+              <Field 
+                label="دسته‌بندی کسب‌وکار" 
+                value={getCurrentValue('category')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('category', 'دسته‌بندی کسب‌وکار را انتخاب نمایید', getCurrentValue('category'))}
+              />
+              <Field 
+                label="آدرس" 
+                value={getCurrentValue('address')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))}
+              />
+              <Field 
+                label="شهر" 
+                value={getCurrentValue('city')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('city', 'شهر کسب‌وکار را انتخاب نمایید', getCurrentValue('city'))}
+              />
+              <Field 
+                label="شماره تلفن کسب‌وکار" 
+                value={getCurrentValue('businessPhone')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید', getCurrentValue('businessPhone'))}
+              />
+              <Field 
+                label="موقعیت مکانی" 
+                value={getCurrentValue('location')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))}
+              />
+            </>
+          )}
           
           {/* Customer Profile Fields - Desktop */}
           {user?.type === 'customer' && (
@@ -988,18 +1108,62 @@ const MobileProfile = () => {
         })
       } else if (editModal.field === 'city') {
         // Update city - will need proper city selection
-        success = await updateUser({ 
-          profile: { 
-            ...user?.profile, 
-            city: { name: newValue } 
-          } 
-        })
+        if (user?.type === 'business') {
+          success = await updateUser({ 
+            businessProfile: { 
+              ...user?.businessProfile, 
+              city: { name: newValue } 
+            } 
+          })
+        } else {
+          success = await updateUser({ 
+            profile: { 
+              ...user?.profile, 
+              city: { name: newValue } 
+            } 
+          })
+        }
       } else if (editModal.field === 'address') {
         // Update address
+        if (user?.type === 'business') {
+          success = await updateUser({ 
+            businessProfile: { 
+              ...user?.businessProfile, 
+              address: newValue 
+            } 
+          })
+        } else {
+          success = await updateUser({ 
+            profile: { 
+              ...user?.profile, 
+              address: newValue 
+            } 
+          })
+        }
+      } else if (editModal.field === 'category') {
+        // Update business category
         success = await updateUser({ 
-          profile: { 
-            ...user?.profile, 
-            address: newValue 
+          businessProfile: { 
+            ...user?.businessProfile, 
+            category: { name: newValue } 
+          } 
+        })
+      } else if (editModal.field === 'businessPhone') {
+        // Update business phone
+        success = await updateUser({ 
+          businessProfile: { 
+            ...user?.businessProfile, 
+            business_phone: newValue 
+          } 
+        })
+      } else if (editModal.field === 'location') {
+        // Update location - newValue should be "lat,lng" format
+        const [lat, lng] = newValue.split(',').map(coord => parseFloat(coord.trim()))
+        success = await updateUser({ 
+          businessProfile: { 
+            ...user?.businessProfile, 
+            business_location_latitude: lat,
+            business_location_longitude: lng
           } 
         })
       }
@@ -1093,7 +1257,7 @@ const MobileProfile = () => {
       case 'lastName':
         return user?.last_name || ''
       case 'businessName':
-        return user?.name || ''
+        return user?.businessProfile?.name || user?.name || ''
       case 'email':
         return user?.email || ''
       case 'phone':
@@ -1114,9 +1278,24 @@ const MobileProfile = () => {
         }
         return ''
       case 'city':
+        if (user?.type === 'business') {
+          return user?.businessProfile?.city?.name || ''
+        }
         return user?.profile?.city?.name || ''
       case 'address':
+        if (user?.type === 'business') {
+          return user?.businessProfile?.address || ''
+        }
         return user?.profile?.address || ''
+      case 'category':
+        return user?.businessProfile?.category?.name || ''
+      case 'businessPhone':
+        return user?.businessProfile?.business_phone || ''
+      case 'location':
+        if (user?.businessProfile?.business_location_latitude && user?.businessProfile?.business_location_longitude) {
+          return `${user.businessProfile.business_location_latitude}, ${user.businessProfile.business_location_longitude}`
+        }
+        return ''
       default:
         return ''
     }
@@ -1188,6 +1367,7 @@ const MobileProfile = () => {
               label="نام کسب‌وکار" 
               value={getCurrentValue('businessName')} 
               editable 
+              isRequired={true}
               onEdit={() => openEditModal('businessName', 'نام کسب‌وکار را وارد نمایید', getCurrentValue('businessName'))}
             />
           ) : (
@@ -1222,6 +1402,47 @@ const MobileProfile = () => {
             onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))}
           />
           <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
+          
+          {/* Business Profile Fields - Mobile */}
+          {user?.type === 'business' && (
+            <>
+              <Field 
+                label="دسته‌بندی کسب‌وکار" 
+                value={getCurrentValue('category')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('category', 'دسته‌بندی کسب‌وکار را انتخاب نمایید', getCurrentValue('category'))}
+              />
+              <Field 
+                label="آدرس" 
+                value={getCurrentValue('address')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))}
+              />
+              <Field 
+                label="شهر" 
+                value={getCurrentValue('city')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('city', 'شهر کسب‌وکار را انتخاب نمایید', getCurrentValue('city'))}
+              />
+              <Field 
+                label="شماره تلفن کسب‌وکار" 
+                value={getCurrentValue('businessPhone')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید', getCurrentValue('businessPhone'))}
+              />
+              <Field 
+                label="موقعیت مکانی" 
+                value={getCurrentValue('location')} 
+                editable 
+                isRequired={true}
+                onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))}
+              />
+            </>
+          )}
           
           {/* Customer Profile Fields - Mobile */}
           {user?.type === 'customer' && (

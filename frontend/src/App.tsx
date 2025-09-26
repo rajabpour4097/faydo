@@ -24,11 +24,21 @@ const DashboardRouter = () => {
     return <Layout><Home /></Layout>
   }
 
-  // All users get the same main dashboard design, but customers need completed profiles
+  // All dashboard routes need profile completion except the profile page itself
   return (
-    <ProfileGuard>
-      <MainDashboard />
-    </ProfileGuard>
+    <Routes>
+      <Route path="profile" element={<Profile />} />
+      <Route path="" element={
+        <ProfileGuard>
+          <MainDashboard />
+        </ProfileGuard>
+      } />
+      <Route path="*" element={
+        <ProfileGuard>
+          <MainDashboard />
+        </ProfileGuard>
+      } />
+    </Routes>
   )
 }
 
@@ -49,8 +59,7 @@ function App() {
             <Route path="/register" element={<Navigate to="/" replace />} />
 
             {/* Dashboard routes - no Layout wrapper as DashboardLayout handles its own layout */}
-            <Route path="/dashboard" element={<DashboardRouter />} />
-            <Route path="/dashboard/profile" element={<Profile />} />
+            <Route path="/dashboard/*" element={<DashboardRouter />} />
 
             {/* Test Users Page */}
             <Route path="/test-users" element={<TestUsers />} />

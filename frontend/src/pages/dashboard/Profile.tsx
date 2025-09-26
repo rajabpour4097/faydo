@@ -12,13 +12,21 @@ interface EditModalProps {
   currentValue: string
   onSave: (value: string) => void
   isPhone?: boolean
+  isEmail?: boolean
 }
 
-const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false }: EditModalProps) => {
+// Email validation helper function
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false }: EditModalProps) => {
   const { isDark } = useTheme()
   const [value, setValue] = useState('')
   const [step, setStep] = useState<'edit' | 'verify'>('edit')
   const [verificationCode, setVerificationCode] = useState('')
+  const [error, setError] = useState('')
 
   // Update value when modal opens
   useEffect(() => {
@@ -26,6 +34,7 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
       setValue(currentValue)
       setStep('edit')
       setVerificationCode('')
+      setError('')
     }
   }, [isOpen, currentValue])
 
@@ -33,6 +42,18 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
 
   const handleSave = async () => {
     console.log('Modal handleSave called with value:', value)
+    
+    // Clear previous errors
+    setError('')
+    
+    // Validate email if it's an email field
+    if (isEmail && value.trim()) {
+      if (!isValidEmail(value)) {
+        setError('فرمت ایمیل معتبر نیست')
+        return
+      }
+    }
+    
     if (isPhone) {
       // Send OTP for phone verification
       try {
@@ -40,6 +61,7 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
         setStep('verify')
       } catch (error) {
         console.error('Failed to send OTP:', error)
+        setError('خطا در ارسال کد تایید')
       }
     } else {
       console.log('Calling onSave with:', value)
@@ -79,16 +101,21 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
               </button>
             </div>
             <input
-              type={isPhone ? 'tel' : 'text'}
+              type={isPhone ? 'tel' : isEmail ? 'email' : 'text'}
               value={value}
               onChange={(e) => setValue(e.target.value)}
               className={`w-full px-4 py-3 rounded-lg border ${
-                isDark 
-                  ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400'
-                  : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
-              } focus:ring-2 focus:ring-teal-500 focus:border-transparent`}
+                error 
+                  ? 'border-red-500 focus:ring-red-500'
+                  : isDark 
+                    ? 'border-slate-600 bg-slate-700 text-white placeholder-slate-400 focus:ring-teal-500'
+                    : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-teal-500'
+              } focus:border-transparent`}
               placeholder={currentValue}
             />
+            {error && (
+              <p className="text-red-500 text-sm mt-2">{error}</p>
+            )}
             <div className="flex justify-center gap-4 mt-6">
               <button
                 onClick={onClose}
@@ -181,10 +208,10 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false }: {
 }
 
 const DesktopProfile = () => {
-  const { user, updateUser, refreshProfile } = useAuth()
+  const { user, updateUser } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -212,26 +239,24 @@ const DesktopProfile = () => {
     console.log('handleSave called with:', editModal.field, '=', newValue)
     
     try {
+      let success = false
+      
       if (editModal.field === 'phone') {
         // Phone updates are handled in the verification flow
-        updateUser({ phone_number: newValue })
+        success = await updateUser({ phone_number: newValue })
       } else if (editModal.field === 'businessName') {
         // For test users, update the name field
-        updateUser({ name: newValue })
+        success = await updateUser({ name: newValue })
       } else if (editModal.field === 'firstName') {
-        const currentName = user?.name || ''
-        const lastName = currentName.split(' ').slice(1).join(' ')
-        updateUser({ name: `${newValue} ${lastName}`.trim() })
+        success = await updateUser({ first_name: newValue })
       } else if (editModal.field === 'lastName') {
-        const currentName = user?.name || ''
-        const firstName = currentName.split(' ')[0]
-        updateUser({ name: `${firstName} ${newValue}`.trim() })
+        success = await updateUser({ last_name: newValue })
       } else if (editModal.field === 'email') {
-        updateUser({ email: newValue })
+        success = await updateUser({ email: newValue })
       } else if (editModal.field === 'gender') {
-        // Update gender - will need API call to backend
+        // Update gender - convert to backend format
         const genderValue = newValue === 'مرد' ? 'male' : newValue === 'زن' ? 'female' : newValue
-        updateUser({ 
+        success = await updateUser({ 
           profile: { 
             ...user?.profile, 
             gender: genderValue as 'male' | 'female' | '' 
@@ -239,7 +264,7 @@ const DesktopProfile = () => {
         })
       } else if (editModal.field === 'birth_date') {
         // Update birth date
-        updateUser({ 
+        success = await updateUser({ 
           profile: { 
             ...user?.profile, 
             birth_date: newValue 
@@ -247,7 +272,7 @@ const DesktopProfile = () => {
         })
       } else if (editModal.field === 'city') {
         // Update city - will need proper city selection
-        updateUser({ 
+        success = await updateUser({ 
           profile: { 
             ...user?.profile, 
             city: { name: newValue } 
@@ -255,7 +280,7 @@ const DesktopProfile = () => {
         })
       } else if (editModal.field === 'address') {
         // Update address
-        updateUser({ 
+        success = await updateUser({ 
           profile: { 
             ...user?.profile, 
             address: newValue 
@@ -263,14 +288,13 @@ const DesktopProfile = () => {
         })
       }
       
-      // Refresh profile data to update completion status
-      await refreshProfile()
-      
-      console.log('Profile updated successfully')
-      alert('پروفایل با موفقیت به‌روزرسانی شد')
+      if (success) {
+        console.log('Profile updated successfully')
+      } else {
+        console.error('Failed to update profile')
+      }
     } catch (error) {
       console.error('Failed to update profile:', error)
-      alert('خطا در به‌روزرسانی پروفایل')
     }
   }
 
@@ -508,6 +532,7 @@ const DesktopProfile = () => {
           currentValue={editModal.value}
           onSave={handleSave}
           isPhone={editModal.isPhone}
+          isEmail={editModal.field === 'email'}
         />
       </div>
     </DashboardLayout>
@@ -515,7 +540,7 @@ const DesktopProfile = () => {
 }
 
 const MobileProfile = () => {
-  const { user, updateUser, refreshProfile } = useAuth()
+  const { user, updateUser } = useAuth()
   const { isDark } = useTheme()
   const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean }>(
     { isOpen: false, field: '', title: '', value: '', isPhone: false }
@@ -546,24 +571,22 @@ const MobileProfile = () => {
     console.log('handleSave called with:', editModal.field, '=', newValue)
     
     try {
+      let success = false
+      
       if (editModal.field === 'phone') {
-        updateUser({ phone_number: newValue })
+        success = await updateUser({ phone_number: newValue })
       } else if (editModal.field === 'businessName') {
-        updateUser({ name: newValue })
+        success = await updateUser({ name: newValue })
       } else if (editModal.field === 'firstName') {
-        const currentName = user?.name || ''
-        const lastName = currentName.split(' ').slice(1).join(' ')
-        updateUser({ name: `${newValue} ${lastName}`.trim() })
+        success = await updateUser({ first_name: newValue })
       } else if (editModal.field === 'lastName') {
-        const currentName = user?.name || ''
-        const firstName = currentName.split(' ')[0]
-        updateUser({ name: `${firstName} ${newValue}`.trim() })
+        success = await updateUser({ last_name: newValue })
       } else if (editModal.field === 'email') {
-        updateUser({ email: newValue })
+        success = await updateUser({ email: newValue })
       } else if (editModal.field === 'gender') {
-        // Update gender - will need API call to backend
+        // Update gender - convert to backend format
         const genderValue = newValue === 'مرد' ? 'male' : newValue === 'زن' ? 'female' : newValue
-        updateUser({ 
+        success = await updateUser({ 
           profile: { 
             ...user?.profile, 
             gender: genderValue as 'male' | 'female' | '' 
@@ -571,7 +594,7 @@ const MobileProfile = () => {
         })
       } else if (editModal.field === 'birth_date') {
         // Update birth date
-        updateUser({ 
+        success = await updateUser({ 
           profile: { 
             ...user?.profile, 
             birth_date: newValue 
@@ -579,7 +602,7 @@ const MobileProfile = () => {
         })
       } else if (editModal.field === 'city') {
         // Update city - will need proper city selection
-        updateUser({ 
+        success = await updateUser({ 
           profile: { 
             ...user?.profile, 
             city: { name: newValue } 
@@ -587,7 +610,7 @@ const MobileProfile = () => {
         })
       } else if (editModal.field === 'address') {
         // Update address
-        updateUser({ 
+        success = await updateUser({ 
           profile: { 
             ...user?.profile, 
             address: newValue 
@@ -595,14 +618,13 @@ const MobileProfile = () => {
         })
       }
       
-      // Refresh profile data to update completion status
-      await refreshProfile()
-      
-      console.log('Profile updated successfully')
-      alert('پروفایل با موفقیت به‌روزرسانی شد')
+      if (success) {
+        console.log('Profile updated successfully')
+      } else {
+        console.error('Failed to update profile')
+      }
     } catch (error) {
       console.error('Failed to update profile:', error)
-      alert('خطا در به‌روزرسانی پروفایل')
     }
   }
 
@@ -840,6 +862,7 @@ const MobileProfile = () => {
           currentValue={editModal.value}
           onSave={handleSave}
           isPhone={editModal.isPhone}
+          isEmail={editModal.field === 'email'}
         />
       </div>
     </MobileDashboardLayout>

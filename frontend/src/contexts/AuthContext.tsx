@@ -27,7 +27,7 @@ interface AuthContextType {
   registerCustomer: (userData: CustomerRegisterData) => Promise<{ success: boolean; error?: string }>
   registerBusiness: (userData: BusinessRegisterData) => Promise<{ success: boolean; error?: string }>
   logout: () => void
-  updateUser: (userData: Partial<User>) => void
+  updateUser: (userData: Partial<User>) => Promise<boolean>
   refreshProfile: () => Promise<void>
   isLoading: boolean
 }
@@ -252,11 +252,76 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  const updateUser = (userData: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...userData }
-      setUser(updatedUser)
-      localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+  const updateUser = async (userData: Partial<User>): Promise<boolean> => {
+    if (!user) return false
+    
+    try {
+      // If updating profile fields for customer, use the customer profile endpoint
+      if (user.type === 'customer' && userData.profile) {
+        const profileData = {
+          gender: userData.profile.gender,
+          birth_date: userData.profile.birth_date,
+          address: userData.profile.address,
+          city: userData.profile.city
+        }
+        
+        const response = await apiService.updateCustomerProfile(profileData)
+        if (response.data) {
+          // Update user with full response data
+          const apiUser = response.data.user
+          const profile = response.data.profile
+          
+          const mappedUser: User = {
+            id: apiUser.id,
+            name: apiUser.display_name || `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
+            email: apiUser.email,
+            type: apiUser.role,
+            avatar: apiUser.image,
+            username: apiUser.username,
+            phone_number: normalizePhone(apiUser.phone_number),
+            display_name: apiUser.display_name,
+            first_name: apiUser.first_name,
+            last_name: apiUser.last_name,
+            profile: apiUser.role === 'customer' && profile && 'gender' in profile ? {
+              gender: profile.gender,
+              birth_date: profile.birth_date,
+              city: profile.city,
+              address: profile.address
+            } : undefined,
+            isProfileComplete: apiUser.role === 'customer' ? 
+              (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true
+          }
+          
+          setUser(mappedUser)
+          localStorage.setItem('auth_user', JSON.stringify(mappedUser))
+          return true
+        }
+        return false
+      } else {
+        // Update regular user fields
+        const response = await apiService.updateProfile(userData)
+        if (response.data) {
+          // Update user with response data to get updated name
+          const updatedApiUser = response.data
+          const updatedUser: User = {
+            ...user,
+            first_name: updatedApiUser.first_name,
+            last_name: updatedApiUser.last_name,
+            email: updatedApiUser.email,
+            phone_number: updatedApiUser.phone_number,
+            name: updatedApiUser.display_name || `${updatedApiUser.first_name} ${updatedApiUser.last_name}`.trim() || updatedApiUser.username,
+            display_name: updatedApiUser.display_name,
+            ...userData
+          }
+          setUser(updatedUser)
+          localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+          return true
+        }
+        return false
+      }
+    } catch (error) {
+      console.error('Error updating user:', error)
+      return false
     }
   }
 

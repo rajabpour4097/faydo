@@ -304,6 +304,19 @@ class ApiService {
     })
   }
 
+  async updateCustomerProfile(customerData: { 
+    gender?: string; 
+    birth_date?: string; 
+    address?: string; 
+    city_id?: number;
+    city?: { name: string } 
+  }): Promise<ApiResponse<ProfileData>> {
+    return this.request<ProfileData>('/accounts/auth/profile/customer/', {
+      method: 'PUT',
+      body: JSON.stringify(customerData),
+    })
+  }
+
   async refreshToken(): Promise<boolean> {
     const refreshToken = localStorage.getItem('refresh_token')
     if (!refreshToken) return false

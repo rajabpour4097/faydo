@@ -721,13 +721,14 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
   )
 }
 
-const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequired = false }: { 
+const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequired = false, valueLeftMargin = false }: { 
   label: string; 
   value?: string; 
   editable?: boolean; 
   onEdit?: () => void;
   isPhone?: boolean;
   isRequired?: boolean;
+  valueLeftMargin?: boolean;
 }) => {
   const { isDark } = useTheme()
   
@@ -749,7 +750,7 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
         {isEmpty && <span className="text-red-500 mr-1">*</span>}
       </div>
       <div className="flex items-center space-x-3">
-        <div className={`text-base font-medium ${
+        <div className={`text-base font-medium ${valueLeftMargin ? 'mr-4' : ''} ${
           isEmpty 
             ? (isDark ? 'text-red-400' : 'text-red-600') 
             : (isDark ? 'text-white' : 'text-gray-900')
@@ -1159,7 +1160,7 @@ const DesktopProfile = () => {
             editable 
             onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))}
           />
-          <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
+          <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} valueLeftMargin={true} />
           
           {/* Business Profile Fields - Desktop */}
           {user?.type === 'business' && (
@@ -1625,7 +1626,7 @@ const MobileProfile = () => {
             editable 
             onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))}
           />
-          <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} />
+          <Field label="نوع کاربر" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} valueLeftMargin={true} />
           
           {/* Business Profile Fields - Mobile */}
           {user?.type === 'business' && (

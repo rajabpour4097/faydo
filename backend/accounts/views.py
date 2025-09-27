@@ -6,10 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth import login
-from .models import (
-    User, ServiceCategory, Province, City, BusinessProfile, CustomerProfile,
-    ITManagerProfile, ProjectManagerProfile, SupporterProfile, FinancialManagerProfile
-)
+from .models import *
 from .serializers import *
 
 

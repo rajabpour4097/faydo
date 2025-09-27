@@ -4,6 +4,7 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { apiService } from '../../services/api'
+import moment from 'moment-jalaali'
 
 interface EditModalProps {
   isOpen: boolean
@@ -34,67 +35,73 @@ const persianMonths = [
 
 const persianDays = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']
 
-// Convert Gregorian to Persian date
+// Convert Gregorian to Persian date using moment-jalaali
 const gregorianToPersian = (gregorianDate: Date): { year: number; month: number; day: number } => {
   try {
     // Validate input date
     if (!gregorianDate || isNaN(gregorianDate.getTime())) {
       console.warn('Invalid date provided to gregorianToPersian:', gregorianDate)
-      // Return a safe default Persian date
-      return { year: 1403, month: 7, day: 5 }
+      // Return current Persian date as default
+      const now = moment()
+      return { 
+        year: now.jYear(), 
+        month: now.jMonth() + 1, 
+        day: now.jDate() 
+      }
     }
     
     // Additional validation for reasonable year range
     const year = gregorianDate.getFullYear()
     if (year < 1900 || year > 2100) {
       console.warn('Date year out of reasonable range:', year)
-      // Return a safe default Persian date
-      return { year: 1403, month: 7, day: 5 }
+      // Return current Persian date as default
+      const now = moment()
+      return { 
+        year: now.jYear(), 
+        month: now.jMonth() + 1, 
+        day: now.jDate() 
+      }
     }
     
-    // For now, return current Persian date to avoid NaN issues
-    // This is a temporary solution until we implement proper conversion
-    const now = new Date()
-    
-    // Simple approximation based on current date
-    const currentYear = now.getFullYear()
-    const persianYear = currentYear - 621 // Approximate conversion
-    const currentMonth = now.getMonth() + 1
-    const currentDay = now.getDate()
-    
-    // Adjust to reasonable Persian date ranges
-    const safePersianYear = Math.max(1300, Math.min(1450, persianYear))
-    const safePersianMonth = Math.max(1, Math.min(12, currentMonth > 3 ? currentMonth - 3 : currentMonth + 9))
-    const safePersianDay = Math.max(1, Math.min(29, currentDay))
-    
+    // Convert using moment-jalaali
+    const momentDate = moment(gregorianDate)
     return { 
-      year: safePersianYear, 
-      month: safePersianMonth, 
-      day: safePersianDay 
+      year: momentDate.jYear(), 
+      month: momentDate.jMonth() + 1, 
+      day: momentDate.jDate() 
     }
     
   } catch (error) {
     console.error('Error in gregorianToPersian:', error)
-    return { year: 1403, month: 7, day: 5 }
+    // Return current Persian date as fallback
+    const now = moment()
+    return { 
+      year: now.jYear(), 
+      month: now.jMonth() + 1, 
+      day: now.jDate() 
+    }
   }
 }
 
-// Manual Gregorian to Persian conversion (more accurate)
-// Convert Persian to Gregorian date  
+// Convert Persian to Gregorian date using moment-jalaali
 const persianToGregorian = (year: number, month: number, day: number): string => {
   try {
-    // Approximate conversion - for production use a proper library
-    // This is a simplified conversion
-    const baseGregorian = 621
-    const baseYear = year + baseGregorian
-    const monthOffset = month <= 6 ? (month - 1) * 31 : 186 + (month - 7) * 30
-    const dayOfYear = monthOffset + day - 1
+    // Validate input values
+    if (!year || !month || !day || year < 1300 || year > 1500 || month < 1 || month > 12 || day < 1 || day > 31) {
+      console.warn('Invalid Persian date values:', { year, month, day })
+      return new Date().toISOString().split('T')[0]
+    }
     
-    const gregorianYear = baseYear
-    const date = new Date(gregorianYear, 2, 21) // Start from Persian new year (around March 21)
-    date.setDate(date.getDate() + dayOfYear)
+    // Convert using moment-jalaali
+    const persianMoment = moment(`${year}/${month}/${day}`, 'jYYYY/jMM/jDD')
     
-    return date.toISOString().split('T')[0]
+    // Validate the converted date
+    if (!persianMoment.isValid()) {
+      console.warn('Invalid Persian date conversion:', { year, month, day })
+      return new Date().toISOString().split('T')[0]
+    }
+    
+    return persianMoment.format('YYYY-MM-DD')
   } catch (error) {
     console.error('Error in persianToGregorian:', error)
     return new Date().toISOString().split('T')[0]
@@ -154,26 +161,26 @@ const PersianDatePicker = ({ value, onChange, isDark }: {
   }
   
   const getDaysInMonth = (year: number, month: number) => {
-    // Persian months have different day counts
-    if (month <= 6) return 31  // First 6 months have 31 days
-    if (month <= 11) return 30  // Next 5 months have 30 days
-    // Esfand (month 12) - check for leap year
-    return isLeapYear(year) ? 30 : 29
-  }
-  
-  const isLeapYear = (year: number) => {
-    // Simplified Persian leap year calculation
-    const breaks = [128, 29, 33, 37, 41, 45, 49, 53, 57, 61, 65, 69, 73, 77, 81, 85, 89, 93, 97, 101, 105, 109, 113, 117, 121, 125]
-    let jp = breaks[0]
-    let jump = 0
-    for (let j = 1; j < breaks.length; j++) {
-      const jm = breaks[j]
-      jump = jm - jp
-      if (year < jm) break
-      jp = jm
+    try {
+      // Use moment-jalaali to get accurate days in month
+      const persianMoment = moment(`${year}/${month}/1`, 'jYYYY/jMM/jDD')
+      if (!persianMoment.isValid()) {
+        // Fallback to simple calculation
+        if (month <= 6) return 31
+        if (month <= 11) return 30
+        return 29 // Esfand
+      }
+      
+      // Get the last day of the month by going to the last day of the month
+      const lastDay = persianMoment.clone().endOf('jMonth').jDate()
+      return lastDay
+    } catch (error) {
+      console.error('Error getting days in month:', error)
+      // Fallback to simple calculation
+      if (month <= 6) return 31
+      if (month <= 11) return 30
+      return 29 // Esfand
     }
-    const n = year - jp
-    return (jump - n) < 6 ? ((n - jump + 38 + 682) % 128) <= 29 : ((n - jump + 39 + 682) % 128) <= 29
   }
   
   const renderCalendar = () => {

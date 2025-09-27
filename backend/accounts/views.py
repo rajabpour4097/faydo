@@ -471,6 +471,49 @@ def update_customer_profile_view(request):
         'profile': profile_data,
         'role': user.role
     })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_cities_by_province_view(request, province_id):
+    """Get all cities for a specific province"""
+    try:
+        province = Province.objects.get(id=province_id)
+        cities = City.objects.filter(province=province).order_by('name')
+        serializer = CitySerializer(cities, many=True)
+        return Response({
+            'province': ProvinceSerializer(province).data,
+            'cities': serializer.data
+        })
+    except Province.DoesNotExist:
+        return Response({'error': 'Province not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_all_provinces_view(request):
+    """Get all provinces with their cities"""
+    provinces = Province.objects.prefetch_related('cities').all().order_by('name')
+    serializer = ProvinceSerializer(provinces, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_all_cities_view(request):
+    """Get all cities grouped by province"""
+    provinces = Province.objects.prefetch_related('cities').all().order_by('name')
+    result = []
+    
+    for province in provinces:
+        cities = CitySerializer(province.cities.all().order_by('name'), many=True).data
+        result.append({
+            'id': province.id,
+            'name': province.name,
+            'cities': cities
+        })
+    
+    return Response(result)
 class BaseReadWriteViewSet(viewsets.ModelViewSet):
 	permission_classes = [permissions.AllowAny]
 

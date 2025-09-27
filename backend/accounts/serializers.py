@@ -26,10 +26,11 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
     gender = serializers.ChoiceField(choices=[('male', 'مرد'), ('female', 'زن')], required=False, allow_null=True)
     birth_date = OptionalDateField(required=False, allow_null=True)
+    city_id = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), source='city', required=False, allow_null=True)
 
     class Meta:
         model = CustomerProfile
-        fields = ['username', 'email', 'first_name', 'last_name', 'phone_number', 'password', 'password_confirm', 'gender', 'birth_date', 'address']
+        fields = ['username', 'email', 'first_name', 'last_name', 'phone_number', 'password', 'password_confirm', 'gender', 'birth_date', 'address', 'city_id']
 
     def validate_phone_number(self, value):
         if not value:
@@ -350,14 +351,17 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
 class CustomerProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role='customer'), source='user', write_only=True)
+    # Provide nested read-only representation for city while allowing write via city_id
+    city = CitySerializer(read_only=True)
+    city_id = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), source='city', write_only=True, required=False, allow_null=True)
     is_profile_complete = serializers.ReadOnlyField()
 
     class Meta:
         model = CustomerProfile
         fields = [
-            'id', 'user', 'user_id', 'gender', 'birth_date', 'membership_level', 'points', 'address', 'city', 'is_profile_complete'
+            'id', 'user', 'user_id', 'gender', 'birth_date', 'membership_level', 'points', 'address', 'city', 'city_id', 'is_profile_complete'
         ]
-        read_only_fields = ['points', 'is_profile_complete']
+        read_only_fields = ['points', 'is_profile_complete', 'city']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)

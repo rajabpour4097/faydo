@@ -17,6 +17,7 @@ interface EditModalProps {
   isBirthDate?: boolean
   isCategory?: boolean
   isAddress?: boolean
+  isCity?: boolean
 }
 
 // Email validation helper function
@@ -289,7 +290,7 @@ const PersianDatePicker = ({ value, onChange, isDark }: {
   )
 }
 
-const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false, isBirthDate = false, isCategory = false, isAddress = false }: EditModalProps) => {
+const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false, isBirthDate = false, isCategory = false, isAddress = false, isCity = false }: EditModalProps) => {
   const { isDark } = useTheme()
   const [value, setValue] = useState('')
   const [step, setStep] = useState<'edit' | 'verify'>('edit')
@@ -298,6 +299,11 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
   const [catLoading, setCatLoading] = useState(false)
   const [catError, setCatError] = useState('')
+  const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([])
+  const [cities, setCities] = useState<{ id: number; name: string; province: { id: number; name: string } }[]>([])
+  const [selectedProvince, setSelectedProvince] = useState('')
+  const [cityLoading, setCityLoading] = useState(false)
+  const [cityError, setCityError] = useState('')
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -320,6 +326,55 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
     }
     loadCategories()
   }, [isCategory, isOpen])
+
+  useEffect(() => {
+    const loadProvinces = async () => {
+      if (isCity && isOpen) {
+        setCityLoading(true)
+        setCityError('')
+        try {
+          const resp = await apiService.getProvinces()
+          if (resp.data) {
+            setProvinces(resp.data.map(p => ({ id: p.id, name: p.name })))
+          } else if (resp.error) {
+            setCityError(resp.error)
+          }
+        } catch (e) {
+          setCityError('خطا در دریافت استان‌ها')
+        } finally {
+          setCityLoading(false)
+        }
+      }
+    }
+    loadProvinces()
+  }, [isCity, isOpen])
+
+  useEffect(() => {
+    const loadCities = async () => {
+      if (isCity && selectedProvince && isOpen) {
+        setCityLoading(true)
+        setCityError('')
+        try {
+          const provinceId = parseInt(selectedProvince)
+          const resp = await apiService.getCitiesByProvince(provinceId)
+          if (resp.data) {
+            setCities(resp.data.cities.map(c => ({ 
+              id: c.id, 
+              name: c.name, 
+              province: c.province 
+            })))
+          } else if (resp.error) {
+            setCityError(resp.error)
+          }
+        } catch (e) {
+          setCityError('خطا در دریافت شهرها')
+        } finally {
+          setCityLoading(false)
+        }
+      }
+    }
+    loadCities()
+  }, [isCity, selectedProvince, isOpen])
 
   // Update value when modal opens
   useEffect(() => {
@@ -344,6 +399,11 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
         } else {
           setValue('')
         }
+      } else if (isCity) {
+        // For city, reset province and city selections
+        setSelectedProvince('')
+        setValue('')
+        setCities([])
       } else {
         setValue(currentValue)
       }
@@ -351,7 +411,7 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
       setVerificationCode('')
       setError('')
     }
-  }, [isOpen, currentValue, isGender, isBirthDate, isCategory, categories])
+  }, [isOpen, currentValue, isGender, isBirthDate, isCategory, categories, isCity])
 
   if (!isOpen) return null
 
@@ -365,6 +425,18 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
     if (isEmail && value.trim()) {
       if (!isValidEmail(value)) {
         setError('فرمت ایمیل معتبر نیست')
+        return
+      }
+    }
+    
+    // Validate city selection
+    if (isCity) {
+      if (!selectedProvince) {
+        setError('لطفا استان را انتخاب کنید')
+        return
+      }
+      if (!value) {
+        setError('لطفا شهر را انتخاب کنید')
         return
       }
     }
@@ -443,6 +515,60 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
                   </select>
                 )}
                 <p className="text-xs text-slate-400">یک دسته‌بندی خدمات برای کسب‌وکار انتخاب کنید.</p>
+              </div>
+            ) : isCity ? (
+              // City selection with province and city dropdowns
+              <div className="space-y-3">
+                {cityLoading && <div className="text-sm text-slate-400">در حال بارگذاری ...</div>}
+                {cityError && <div className="text-sm text-red-500">{cityError}</div>}
+                {!cityLoading && !cityError && (
+                  <>
+                    <div>
+                      <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-700'}`}>
+                        استان
+                      </label>
+                      <select
+                        className={`w-full p-3 rounded-lg border text-sm focus:outline-none ${
+                          isDark
+                            ? 'bg-slate-700 border-slate-600 text-white focus:ring-2 focus:ring-purple-500'
+                            : 'bg-white border-gray-300 text-gray-800 focus:ring-2 focus:ring-purple-500'
+                        }`}
+                        value={selectedProvince}
+                        onChange={e => {
+                          setSelectedProvince(e.target.value)
+                          setValue('') // Reset city selection when province changes
+                        }}
+                      >
+                        <option value="">انتخاب استان</option>
+                        {provinces.map(p => (
+                          <option key={p.id} value={p.id.toString()}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedProvince && (
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-700'}`}>
+                          شهر
+                        </label>
+                        <select
+                          className={`w-full p-3 rounded-lg border text-sm focus:outline-none ${
+                            isDark
+                              ? 'bg-slate-700 border-slate-600 text-white focus:ring-2 focus:ring-purple-500'
+                              : 'bg-white border-gray-300 text-gray-800 focus:ring-2 focus:ring-purple-500'
+                          }`}
+                          value={value}
+                          onChange={e => setValue(e.target.value)}
+                        >
+                          <option value="">انتخاب شهر</option>
+                          {cities.map(c => (
+                            <option key={c.id} value={c.id.toString()}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+                <p className="text-xs text-slate-400">ابتدا استان و سپس شهر خود را انتخاب کنید.</p>
               </div>
             ) : isGender ? (
               // Gender selection with radio buttons
@@ -726,21 +852,14 @@ const DesktopProfile = () => {
           } 
         })
       } else if (editModal.field === 'city') {
-        // Update city - will need proper city selection
+        // Update city using city_id
+        const cityId = parseInt(newValue)
         if (user?.type === 'business') {
-          success = await updateUser({ 
-            businessProfile: { 
-              ...user?.businessProfile, 
-              city: { name: newValue } 
-            } 
-          })
+          const resp = await apiService.updateFullBusinessProfile({ city_id: cityId })
+          success = !!resp.data
         } else {
-          success = await updateUser({ 
-            profile: { 
-              ...user?.profile, 
-              city: { name: newValue } 
-            } 
-          })
+          const resp = await apiService.updateCustomerProfile({ city_id: cityId })
+          success = !!resp.data
         }
       } else if (editModal.field === 'address') {
         if (user?.type === 'business') {
@@ -783,8 +902,10 @@ const DesktopProfile = () => {
       
       if (success) {
         console.log('Profile updated successfully')
-        // Refresh profile data after successful business profile updates
-        if (user?.type === 'business' && ['businessName', 'address', 'businessPhone', 'location', 'category'].includes(editModal.field)) {
+        // Refresh profile data after successful updates
+        if (user?.type === 'business' && ['businessName', 'address', 'businessPhone', 'location', 'category', 'city'].includes(editModal.field)) {
+          await refreshProfile()
+        } else if (user?.type === 'customer' && ['city'].includes(editModal.field)) {
           await refreshProfile()
         }
       } else {
@@ -1127,6 +1248,7 @@ const DesktopProfile = () => {
           isBirthDate={editModal.field === 'birth_date'}
           isCategory={editModal.field === 'category'}
           isAddress={editModal.field === 'address'}
+          isCity={editModal.field === 'city'}
         />
       </div>
     </DashboardLayout>
@@ -1213,21 +1335,14 @@ const MobileProfile = () => {
           } 
         })
       } else if (editModal.field === 'city') {
-        // Update city - will need proper city selection
+        // Update city using city_id
+        const cityId = parseInt(newValue)
         if (user?.type === 'business') {
-          success = await updateUser({ 
-            businessProfile: { 
-              ...user?.businessProfile, 
-              city: { name: newValue } 
-            } 
-          })
+          const resp = await apiService.updateFullBusinessProfile({ city_id: cityId })
+          success = !!resp.data
         } else {
-          success = await updateUser({ 
-            profile: { 
-              ...user?.profile, 
-              city: { name: newValue } 
-            } 
-          })
+          const resp = await apiService.updateCustomerProfile({ city_id: cityId })
+          success = !!resp.data
         }
       } else if (editModal.field === 'address') {
         // Update address
@@ -1273,8 +1388,10 @@ const MobileProfile = () => {
       
       if (success) {
         console.log('Profile updated successfully')
-        // Refresh profile data after successful business profile updates
-        if (user?.type === 'business' && ['businessName', 'address', 'businessPhone', 'location', 'category'].includes(editModal.field)) {
+        // Refresh profile data after successful updates
+        if (user?.type === 'business' && ['businessName', 'address', 'businessPhone', 'location', 'category', 'city'].includes(editModal.field)) {
+          await refreshProfile()
+        } else if (user?.type === 'customer' && ['city'].includes(editModal.field)) {
           await refreshProfile()
         }
       } else {
@@ -1597,6 +1714,7 @@ const MobileProfile = () => {
           isBirthDate={editModal.field === 'birth_date'}
           isCategory={editModal.field === 'category'}
           isAddress={editModal.field === 'address'}
+          isCity={editModal.field === 'city'}
         />
       </div>
     </MobileDashboardLayout>

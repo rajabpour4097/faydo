@@ -32,6 +32,7 @@ export interface CustomerProfile {
   points: number
   address: string
   city: any
+  city_id?: number
   is_profile_complete: boolean
 }
 
@@ -57,6 +58,17 @@ export interface ServiceCategoryItem {
   name: string
   description?: string
   parent?: number | null
+}
+
+export interface Province {
+  id: number
+  name: string
+}
+
+export interface City {
+  id: number
+  name: string
+  province: Province
 }
 
 export interface ProfileData {
@@ -292,6 +304,26 @@ class ApiService {
       }
     }
     return resp
+  }
+
+  async getProvinces(): Promise<ApiResponse<Province[]>> {
+    const resp = await this.request<any>('/accounts/locations/provinces/')
+    if (resp.data) {
+      if (Array.isArray(resp.data)) {
+        return { data: resp.data as Province[] }
+      } else if (Array.isArray(resp.data.results)) {
+        return { data: resp.data.results as Province[] }
+      }
+    }
+    return resp
+  }
+
+  async getCitiesByProvince(provinceId: number): Promise<ApiResponse<{ province: Province; cities: City[] }>> {
+    return this.request<{ province: Province; cities: City[] }>(`/accounts/locations/provinces/${provinceId}/cities/`)
+  }
+
+  async getAllCities(): Promise<ApiResponse<{ id: number; name: string; cities: City[] }[]>> {
+    return this.request<{ id: number; name: string; cities: City[] }[]>('/accounts/locations/cities/')
   }
 
   // Phone verification methods

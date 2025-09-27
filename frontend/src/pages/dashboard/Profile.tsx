@@ -258,7 +258,7 @@ const PersianDatePicker = ({ value, onChange, isDark }: {
       {showYearPicker && (
         <div className="mb-4 max-h-32 overflow-y-auto">
           <div className="grid grid-cols-3 gap-2">
-            {Array.from({ length: 50 }, (_, i) => 1370 + i).map(year => (
+            {Array.from({ length: 50 }, (_, i) => 1330 + i).map(year => (
               <button
                 key={year}
                 onClick={() => {

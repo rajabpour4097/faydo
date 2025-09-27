@@ -5,6 +5,7 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { apiService } from '../../services/api'
 import moment from 'moment-jalaali'
+import { LocationPicker } from '../../components/LocationPicker'
 
 interface EditModalProps {
   isOpen: boolean
@@ -19,6 +20,7 @@ interface EditModalProps {
   isCategory?: boolean
   isAddress?: boolean
   isCity?: boolean
+  isLocation?: boolean
 }
 
 // Email validation helper function
@@ -297,7 +299,7 @@ const PersianDatePicker = ({ value, onChange, isDark }: {
   )
 }
 
-const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false, isBirthDate = false, isCategory = false, isAddress = false, isCity = false }: EditModalProps) => {
+const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = false, isEmail = false, isGender = false, isBirthDate = false, isCategory = false, isAddress = false, isCity = false, isLocation = false }: EditModalProps) => {
   const { isDark } = useTheme()
   const [value, setValue] = useState('')
   const [step, setStep] = useState<'edit' | 'verify'>('edit')
@@ -311,6 +313,7 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
   const [selectedProvince, setSelectedProvince] = useState('')
   const [cityLoading, setCityLoading] = useState(false)
   const [cityError, setCityError] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -411,6 +414,21 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
         setSelectedProvince('')
         setValue('')
         setCities([])
+      } else if (isLocation) {
+        // For location, parse current value if it exists
+        if (currentValue && currentValue.includes(',')) {
+          const [lat, lng] = currentValue.split(',').map(coord => parseFloat(coord.trim()))
+          if (!isNaN(lat) && !isNaN(lng)) {
+            setSelectedLocation({ lat, lng })
+            setValue(currentValue)
+          } else {
+            setSelectedLocation(null)
+            setValue('')
+          }
+        } else {
+          setSelectedLocation(null)
+          setValue('')
+        }
       } else {
         setValue(currentValue)
       }
@@ -418,7 +436,7 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
       setVerificationCode('')
       setError('')
     }
-  }, [isOpen, currentValue, isGender, isBirthDate, isCategory, categories, isCity])
+  }, [isOpen, currentValue, isGender, isBirthDate, isCategory, categories, isCity, isLocation])
 
   if (!isOpen) return null
 
@@ -444,6 +462,14 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
       }
       if (!value) {
         setError('لطفا شهر را انتخاب کنید')
+        return
+      }
+    }
+    
+    // Validate location selection
+    if (isLocation) {
+      if (!selectedLocation) {
+        setError('لطفا موقعیت مکانی را روی نقشه انتخاب کنید')
         return
       }
     }
@@ -576,6 +602,20 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
                   </>
                 )}
                 <p className="text-xs text-slate-400">ابتدا استان و سپس شهر خود را انتخاب کنید.</p>
+              </div>
+            ) : isLocation ? (
+              // Location picker with map
+              <div className="space-y-3">
+                <LocationPicker
+                  initialLat={selectedLocation?.lat || 35.6892}
+                  initialLng={selectedLocation?.lng || 51.3890}
+                  onLocationSelect={(lat, lng) => {
+                    setSelectedLocation({ lat, lng })
+                    setValue(`${lat}, ${lng}`)
+                  }}
+                  isDark={isDark}
+                />
+                <p className="text-xs text-slate-400">روی نقشه کلیک کنید تا موقعیت کسب‌وکار خود را انتخاب کنید.</p>
               </div>
             ) : isGender ? (
               // Gender selection with radio buttons
@@ -782,8 +822,8 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
 const DesktopProfile = () => {
   const { user, updateUser, refreshProfile } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean; isAddress?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean; isAddress?: boolean; isLocation?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false, isLocation: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -810,12 +850,13 @@ const DesktopProfile = () => {
       isGender: field === 'gender', 
       isBirthDate: field === 'birth_date',
   isCategory: field === 'category',
-  isAddress: field === 'address'
+  isAddress: field === 'address',
+  isLocation: field === 'location'
     })
   }
 
   const closeEditModal = () => {
-  setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false })
+  setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false, isLocation: false })
   }
 
   const handleSave = async (newValue: string) => {
@@ -1257,6 +1298,7 @@ const DesktopProfile = () => {
           isCategory={editModal.field === 'category'}
           isAddress={editModal.field === 'address'}
           isCity={editModal.field === 'city'}
+          isLocation={editModal.field === 'location'}
         />
       </div>
     </DashboardLayout>
@@ -1266,8 +1308,8 @@ const DesktopProfile = () => {
 const MobileProfile = () => {
   const { user, updateUser, refreshProfile } = useAuth()
   const { isDark } = useTheme()
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean; isAddress?: boolean }>(
-    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false }
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean; isAddress?: boolean; isLocation?: boolean }>(
+    { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false, isLocation: false }
   )
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
@@ -1294,12 +1336,13 @@ const MobileProfile = () => {
       isGender: field === 'gender', 
       isBirthDate: field === 'birth_date',
   isCategory: field === 'category',
-  isAddress: field === 'address'
+  isAddress: field === 'address',
+  isLocation: field === 'location'
     })
   }
 
   const closeEditModal = () => {
-  setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false })
+  setEditModal({ isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false, isLocation: false })
   }
 
   // Desktop version handleSave
@@ -1723,6 +1766,7 @@ const MobileProfile = () => {
           isCategory={editModal.field === 'category'}
           isAddress={editModal.field === 'address'}
           isCity={editModal.field === 'city'}
+          isLocation={editModal.field === 'location'}
         />
       </div>
     </MobileDashboardLayout>

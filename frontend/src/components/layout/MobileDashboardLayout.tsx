@@ -20,6 +20,7 @@ interface BottomNavItem {
 
 export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -61,20 +62,74 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   return (
     <div className={`min-h-screen font-persian ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`} style={{ direction: 'rtl' }}>
       {/* Mobile Header */}
-      <header className={`mobile-header sticky top-0 z-50 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'} border-b`}>
+      <header className={`mobile-header sticky top-0 z-50 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'} border-b`} style={{ direction: 'ltr' }}>
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Menu Button */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className={`p-2 rounded-lg ${isDark ? 'text-white hover:bg-slate-700' : 'text-gray-700 hover:bg-gray-100'}`}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          {/* User Avatar/Logo - سمت چپ */}
+          <div className="relative order-1">
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center space-x-2 p-1 rounded-lg hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+            >
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user.name || 'کاربر'} 
+                  className="w-8 h-8 rounded-full object-cover border-2 border-teal-500"
+                />
+              ) : user?.type === 'business' ? (
+                <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-sm">🏢</span>
+                </div>
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-sm">
+                    {user?.name?.charAt(0) || user?.username?.charAt(0) || 'ک'}
+                  </span>
+                </div>
+              )}
+            </button>
 
-          {/* App Title - desktop branding */}
-          <div className="flex items-center space-x-2">
+            {/* User Dropdown Menu */}
+            {userMenuOpen && (
+              <div className="absolute top-12 left-0 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-2 z-50">
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-slate-700">
+                  <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {user?.name || user?.username || 'کاربر'}
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                    {user?.phone_number || 'شماره تماس'}
+                  </p>
+                </div>
+                
+                <Link
+                  to="/dashboard/profile"
+                  className={`flex items-center px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700 ${
+                    isDark ? 'text-slate-300' : 'text-gray-700'
+                  }`}
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  <span className="ml-3">👤</span>
+                  پروفایل
+                </Link>
+                
+                <button
+                  onClick={() => {
+                    setUserMenuOpen(false)
+                    handleLogout()
+                  }}
+                  className={`w-full flex items-center px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900 dark:hover:bg-opacity-20 ${
+                    isDark ? 'text-red-400' : 'text-red-600'
+                  }`}
+                >
+                  <span className="ml-3">🚪</span>
+                  خروج
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* App Title - وسط */}
+          <div className="flex items-center space-x-2 order-2">
             <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">🤝</span>
             </div>
@@ -83,11 +138,13 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
             </h1>
           </div>
 
-          {/* Notification Bell */}
-          <button className={`p-2 rounded-lg ${isDark ? 'text-white hover:bg-slate-700' : 'text-gray-700 hover:bg-gray-100'}`}>
+          {/* Menu Button - سمت راست */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className={`p-2 rounded-lg order-3 ${isDark ? 'text-white hover:bg-slate-700' : 'text-gray-700 hover:bg-gray-100'}`}
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
@@ -98,6 +155,14 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
         <div 
           className="fixed inset-0 z-40 bg-black bg-opacity-50"
           onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* User Menu Overlay */}
+      {userMenuOpen && (
+        <div 
+          className="fixed inset-0 z-30"
+          onClick={() => setUserMenuOpen(false)}
         />
       )}
 

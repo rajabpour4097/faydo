@@ -29,10 +29,20 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     navigate('/')
   }
 
-  // Affiliate Partnership sidebar items
+  // Sidebar items based on user type
   const getSidebarItems = (): SidebarItem[] => {
     if (!user) return []
 
+    // Business users get different sidebar items
+    if (user.type === 'business') {
+      return [
+        { name: 'داشبورد', href: '/dashboard', icon: '📊' },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
+        { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
+      ]
+    }
+
+    // Default items for other user types (customer, admin, etc.)
     return [
       { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
       { name: 'داشبورد', href: '/dashboard', icon: '📊' },

@@ -30,12 +30,29 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
 
   // Removed unused serviceItems - services are defined in MobileDashboard component
 
-  const bottomNavItems: BottomNavItem[] = [
-    { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
-    { name: 'داشبورد', href: '/dashboard', icon: '🏠' },
-    { name: 'شرکا', href: '/dashboard/affiliates', icon: '🤝' },
-    { name: 'برندها', href: '/dashboard/brands', icon: '🏷️' },
-  ]
+  const getBottomNavItems = (): BottomNavItem[] => {
+    if (!user) return []
+
+    // Business users get different bottom nav items
+    if (user.type === 'business') {
+      return [
+        { name: 'داشبورد', href: '/dashboard', icon: '🏠' },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
+        { name: 'شرکا', href: '/dashboard/affiliates', icon: '🤝' },
+        { name: 'برندها', href: '/dashboard/brands', icon: '🏷️' },
+      ]
+    }
+
+    // Default items for other user types
+    return [
+      { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
+      { name: 'داشبورد', href: '/dashboard', icon: '🏠' },
+      { name: 'شرکا', href: '/dashboard/affiliates', icon: '🤝' },
+      { name: 'برندها', href: '/dashboard/brands', icon: '🏷️' },
+    ]
+  }
+
+  const bottomNavItems = getBottomNavItems()
 
   const isActive = (path: string) => location.pathname === path
 
@@ -121,35 +138,38 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
         {/* Sidebar Menu */}
         <nav className="flex-1 px-4 py-6">
           <div className="space-y-2">
-            <Link
-              to="/dashboard"
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                isActive('/dashboard')
-                  ? 'bg-teal-500 text-white'
-                  : isDark 
-                    ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-              }`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <span className="text-lg ml-3">📊</span>
-              <span>داشبورد</span>
-            </Link>
-            
-            <Link
-              to="/dashboard/settings"
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                isActive('/dashboard/settings')
-                  ? 'bg-teal-500 text-white'
-                  : isDark 
-                    ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-              }`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <span className="text-lg ml-3">⚙️</span>
-              <span>تنظیمات</span>
-            </Link>
+            {(() => {
+              // Get sidebar items based on user type
+              const sidebarItems = user?.type === 'business' 
+                ? [
+                    { name: 'داشبورد', href: '/dashboard', icon: '📊' },
+                    { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
+                    { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
+                  ]
+                : [
+                    { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
+                    { name: 'داشبورد', href: '/dashboard', icon: '📊' },
+                    { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
+                  ]
+
+              return sidebarItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-teal-500 text-white'
+                      : isDark 
+                        ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="text-lg ml-3">{item.icon}</span>
+                  <span>{item.name}</span>
+                </Link>
+              ))
+            })()}
           </div>
         </nav>
 

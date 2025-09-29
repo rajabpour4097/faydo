@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
+import { CustomIcon } from '../ui/CustomIcon'
 import { ThemeToggle } from '../ui/ThemeToggle'
 
 interface MobileDashboardLayoutProps {
@@ -14,6 +15,7 @@ interface BottomNavItem {
   name: string
   href: string
   icon: string
+  iconType?: 'emoji' | 'image' | 'base64' | 'url'
 }
 
 export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) => {
@@ -36,20 +38,20 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
     // Business users get different bottom nav items
     if (user.type === 'business') {
       return [
-        { name: 'داشبورد', href: '/dashboard', icon: '🏠' },
-        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
-        { name: 'شرکا', href: '/dashboard/affiliates', icon: '🤝' },
-        { name: 'برندها', href: '/dashboard/brands', icon: '🏷️' },
+        { name: 'داشبورد', href: '/dashboard', icon: '🏠', iconType: 'emoji' },
+        { name: 'شرکا', href: '/dashboard/affiliates', icon: '/src/assets/images/club-icon.png', iconType: 'image' },
+        { name: 'برندها', href: '/dashboard/brands', icon: '🏷️', iconType: 'emoji' },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
       ]
     }
 
     // Default items for other user types
-    return [
-      { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
-      { name: 'داشبورد', href: '/dashboard', icon: '🏠' },
-      { name: 'شرکا', href: '/dashboard/affiliates', icon: '🤝' },
-      { name: 'برندها', href: '/dashboard/brands', icon: '🏷️' },
-    ]
+      return [
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
+        { name: 'باشگاه ها', href: '/dashboard/clubs', icon: '/src/assets/images/club-icon.png', iconType: 'image' },
+        { name: 'اکسپلور', href: '/dashboard/explore', icon: '/src/assets/images/explore.png', iconType: 'image'},
+        { name: 'داشبورد', href: '/dashboard', icon: '🏠', iconType: 'emoji' },
+      ]
   }
 
   const bottomNavItems = getBottomNavItems()
@@ -142,14 +144,14 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
               // Get sidebar items based on user type
               const sidebarItems = user?.type === 'business' 
                 ? [
-                    { name: 'داشبورد', href: '/dashboard', icon: '📊' },
-                    { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
-                    { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
+                    { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' },
+                    { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
+                    { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️', iconType: 'emoji' },
                   ]
                 : [
-                    { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
-                    { name: 'داشبورد', href: '/dashboard', icon: '📊' },
-                    { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
+                    { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
+                    { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' },
+                    { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️', iconType: 'emoji' },
                   ]
 
               return sidebarItems.map((item) => (
@@ -165,7 +167,14 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <span className="text-lg ml-3">{item.icon}</span>
+                  <div className="ml-3">
+                    <CustomIcon 
+                      type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'} 
+                      value={item.icon} 
+                      alt={item.name}
+                      className="w-5 h-5"
+                    />
+                  </div>
                   <span>{item.name}</span>
                 </Link>
               ))
@@ -218,7 +227,14 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                     : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <span className="text-xl mb-1">{item.icon}</span>
+              <div className="mb-1">
+                <CustomIcon 
+                  type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'} 
+                  value={item.icon} 
+                  alt={item.name}
+                  className="w-6 h-6"
+                />
+              </div>
               <span className="text-xs">{item.name}</span>
             </Link>
           ))}

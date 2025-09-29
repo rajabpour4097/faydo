@@ -21,6 +21,7 @@ interface BottomNavItem {
 export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [forceCloseThemeMenu, setForceCloseThemeMenu] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -29,6 +30,14 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   const handleLogout = async () => {
     await logout()
     navigate('/')
+  }
+
+  const closeSidebar = () => {
+    setSidebarOpen(false)
+    // Force close theme menu when sidebar closes
+    setForceCloseThemeMenu(true)
+    // Reset the force close flag after a short delay
+    setTimeout(() => setForceCloseThemeMenu(false), 100)
   }
 
   // Removed unused serviceItems - services are defined in MobileDashboard component
@@ -154,7 +163,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       {sidebarOpen && (
         <div 
           className="fixed inset-0 z-40 bg-black bg-opacity-50"
-          onClick={() => setSidebarOpen(false)}
+          onClick={closeSidebar}
         />
       )}
 
@@ -193,7 +202,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
             </div>
           </div>
           <button
-            onClick={() => setSidebarOpen(false)}
+            onClick={closeSidebar}
             className={`p-2 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,7 +240,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                         ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
                         : 'text-gray-700 hover:bg-gray-100'
                   }`}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={closeSidebar}
                 >
                   <div className="ml-3">
                     <CustomIcon 
@@ -253,7 +262,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
           {/* Theme Toggle */}
           <div className="flex items-center justify-between mb-4">
             <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>حالت تاریک</span>
-            <ThemeToggle />
+            <ThemeToggle forceClose={forceCloseThemeMenu} />
           </div>
           
           {/* Logout Button */}

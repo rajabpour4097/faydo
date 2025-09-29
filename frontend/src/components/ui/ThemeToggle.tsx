@@ -1,9 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 
-export const ThemeToggle = () => {
+interface ThemeToggleProps {
+  forceClose?: boolean
+}
+
+export const ThemeToggle = ({ forceClose = false }: ThemeToggleProps) => {
   const { theme, setTheme, isDark } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Close menu when forceClose is true
+  useEffect(() => {
+    if (forceClose) {
+      setIsOpen(false)
+    }
+  }, [forceClose])
 
   const themes = [
     { value: 'light', label: 'روشن', icon: '☀️' },

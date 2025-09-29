@@ -167,7 +167,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       )}
 
       {/* Mobile Sidebar */}
-      <div className={`fixed inset-y-0 right-0 z-50 w-80 transform ${
+      <div className={`fixed inset-y-0 right-0 z-50 w-68 transform ${
         sidebarOpen ? 'translate-x-0' : 'translate-x-full'
       } transition-transform duration-300 ease-in-out ${
         isDark ? 'bg-slate-800' : 'bg-white'

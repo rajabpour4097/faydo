@@ -40,7 +40,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
     if (user.type === 'business') {
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '🏠', iconType: 'emoji' },
-        { name: 'شرکا', href: '/dashboard/affiliates', icon: '/src/assets/images/club-icon.png', iconType: 'image' },
+        { name: 'مدیریت پکیج ها', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
         { name: 'برندها', href: '/dashboard/brands', icon: '🏷️', iconType: 'emoji' },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
       ]
@@ -210,6 +210,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
               const sidebarItems = user?.type === 'business' 
                 ? [
                     { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' },
+                    { name: 'مدیریت پکیج ها', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
                     { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
                     { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️', iconType: 'emoji' },
                   ]

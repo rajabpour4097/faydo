@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { AuthModal } from '../components/auth/AuthModal'
 
 export const Home = () => {
   const { user } = useAuth()
   const isAuthenticated = !!user
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   const features = [
     {
@@ -51,12 +54,12 @@ export const Home = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {!isAuthenticated ? (
                 <>
-                  <Link
-                    to="/register"
+                  <button
+                    onClick={() => setIsAuthModalOpen(true)}
                     className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
                   >
                     شروع کنید - رایگان
-                  </Link>
+                  </button>
                   <Link
                     to="/businesses"
                     className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:border-gray-400 hover:bg-gray-50 transition-all duration-200"
@@ -195,15 +198,21 @@ export const Home = () => {
             همین الان عضو شوید و از تخفیف‌های ویژه و امتیازات باشگاه مشتریان بهره‌مند شوید
           </p>
           {!isAuthenticated && (
-            <Link
-              to="/register"
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
               className="inline-block bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg hover:shadow-xl"
             >
               عضویت رایگان
-            </Link>
+            </button>
           )}
         </div>
       </section>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </div>
   )
 }

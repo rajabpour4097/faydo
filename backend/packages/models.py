@@ -55,6 +55,7 @@ class Package(BaseModel):
     is_active = models.BooleanField(default=False)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
+    is_complete = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "پکیج"

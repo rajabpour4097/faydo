@@ -14,6 +14,7 @@ import { TestUsers } from './pages/TestUsers'
 // Dashboard Pages
 import { MainDashboard } from './pages/dashboard/MainDashboard'
 import { Profile } from './pages/dashboard/Profile'
+import { PackageManagement } from './pages/dashboard/PackageManagement'
 import { useAuth } from './contexts/AuthContext'
 
 // Dashboard Router Component
@@ -28,6 +29,11 @@ const DashboardRouter = () => {
   return (
     <Routes>
       <Route path="profile" element={<Profile />} />
+      <Route path="packages" element={
+        <ProfileGuard>
+          <PackageManagement />
+        </ProfileGuard>
+      } />
       <Route path="" element={
         <ProfileGuard>
           <MainDashboard />

@@ -82,6 +82,98 @@ export interface AuthTokens {
   refresh: string
 }
 
+// Package related interfaces
+export interface Package {
+  id: number
+  business_name: string
+  is_active: boolean
+  start_date?: string
+  end_date?: string
+  status: 'pending' | 'approved' | 'rejected'
+  status_display: string
+  is_complete: boolean
+  created_at: string
+  modified_at: string
+  discount_all?: DiscountAll
+  specific_discount?: SpecificDiscount
+  elite_gift?: EliteGift
+  experiences?: VipExperience[]
+}
+
+export interface DiscountAll {
+  id: number
+  percentage: number
+  score: number
+  comments: Comment[]
+  created_at: string
+  modified_at: string
+}
+
+export interface SpecificDiscount {
+  id: number
+  percentage: number
+  title?: string
+  description?: string
+  score: number
+  comments: Comment[]
+  created_at: string
+  modified_at: string
+}
+
+export interface EliteGift {
+  id: number
+  amount?: number
+  count?: number
+  gift: string
+  score: number
+  comments: Comment[]
+  created_at: string
+  modified_at: string
+}
+
+export interface VipExperienceCategory {
+  id: number
+  vip_type: 'VIP' | 'VIP+'
+  category_name: string
+  name: string
+  description?: string
+  created_at: string
+  modified_at: string
+}
+
+export interface VipExperience {
+  id: number
+  vip_experience_category: VipExperienceCategory
+  vip_experience_category_id: number
+  score: number
+  comments: Comment[]
+  created_at: string
+  modified_at: string
+}
+
+export interface Comment {
+  id: number
+  text: string
+  user_name: string
+  user_last_name: string
+  created_at: string
+  likes_count: number
+  is_liked: boolean
+}
+
+export interface PackageCreateRequest {
+  business: number
+  is_active?: boolean
+  start_date?: string
+  end_date?: string
+  status?: 'pending' | 'approved' | 'rejected'
+  is_complete?: boolean
+  discount_all?: Partial<DiscountAll>
+  specific_discount?: Partial<SpecificDiscount>
+  elite_gift?: Partial<EliteGift>
+  experiences?: Partial<VipExperience>[]
+}
+
 export interface LoginRequest {
   username: string
   password: string
@@ -428,6 +520,102 @@ class ApiService {
   // Check if user is authenticated
   isAuthenticated(): boolean {
     return !!this.accessToken
+  }
+
+  // Package management methods
+  async getPackages(): Promise<ApiResponse<Package[]>> {
+    const resp = await this.request<any>('/packages/packages/')
+    if (resp.data) {
+      if (Array.isArray(resp.data)) {
+        return { data: resp.data as Package[] }
+      } else if (Array.isArray(resp.data.results)) {
+        return { data: resp.data.results as Package[] }
+      }
+    }
+    return resp
+  }
+
+  async getPackage(id: number): Promise<ApiResponse<Package>> {
+    return this.request<Package>(`/packages/packages/${id}/`)
+  }
+
+  async createPackage(packageData: PackageCreateRequest): Promise<ApiResponse<Package>> {
+    return this.request<Package>('/packages/packages/', {
+      method: 'POST',
+      body: JSON.stringify(packageData),
+    })
+  }
+
+  async updatePackage(id: number, packageData: Partial<PackageCreateRequest>): Promise<ApiResponse<Package>> {
+    return this.request<Package>(`/packages/packages/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(packageData),
+    })
+  }
+
+  async deletePackage(id: number): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/packages/packages/${id}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async togglePackageActive(id: number): Promise<ApiResponse<{ id: number; is_active: boolean; message: string }>> {
+    return this.request<{ id: number; is_active: boolean; message: string }>(`/packages/packages/${id}/toggle_active/`, {
+      method: 'POST',
+    })
+  }
+
+  async approvePackage(id: number): Promise<ApiResponse<{ id: number; status: string; message: string }>> {
+    return this.request<{ id: number; status: string; message: string }>(`/packages/packages/${id}/approve/`, {
+      method: 'POST',
+    })
+  }
+
+  async rejectPackage(id: number): Promise<ApiResponse<{ id: number; status: string; message: string }>> {
+    return this.request<{ id: number; status: string; message: string }>(`/packages/packages/${id}/reject/`, {
+      method: 'POST',
+    })
+  }
+
+  async getVipExperienceCategories(): Promise<ApiResponse<VipExperienceCategory[]>> {
+    const resp = await this.request<any>('/packages/vip-experience-categories/')
+    if (resp.data) {
+      if (Array.isArray(resp.data)) {
+        return { data: resp.data as VipExperienceCategory[] }
+      } else if (Array.isArray(resp.data.results)) {
+        return { data: resp.data.results as VipExperienceCategory[] }
+      }
+    }
+    return resp
+  }
+
+  async getComments(contentTypeId: number, objectId: number): Promise<ApiResponse<Comment[]>> {
+    const resp = await this.request<any>(`/packages/comments/?content_type_id=${contentTypeId}&object_id=${objectId}`)
+    if (resp.data) {
+      if (Array.isArray(resp.data)) {
+        return { data: resp.data as Comment[] }
+      } else if (Array.isArray(resp.data.results)) {
+        return { data: resp.data.results as Comment[] }
+      }
+    }
+    return resp
+  }
+
+  async createComment(text: string, contentTypeId: number, objectId: number): Promise<ApiResponse<Comment>> {
+    return this.request<Comment>('/packages/comments/', {
+      method: 'POST',
+      body: JSON.stringify({
+        text,
+        content_type: contentTypeId,
+        object_id: objectId,
+      }),
+    })
+  }
+
+  async likeComment(commentId: number): Promise<ApiResponse<{ is_liked: boolean; likes_count: number; message: string }>> {
+    return this.request<{ is_liked: boolean; likes_count: number; message: string }>(`/packages/comments/${commentId}/like/`, {
+      method: 'POST',
+    })
   }
 }
 

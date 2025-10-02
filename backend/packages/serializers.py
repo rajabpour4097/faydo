@@ -1,0 +1,219 @@
+from rest_framework import serializers
+from .models import (
+    Package, DiscountAll, SpecificDiscount, EliteGift, 
+    VipExperienceCategory, VipExperience, Comment, CommentLike
+)
+from accounts.models import BusinessProfile
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.user.first_name', read_only=True)
+    user_last_name = serializers.CharField(source='user.user.last_name', read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Comment
+        fields = ['id', 'text', 'user_name', 'user_last_name', 'created_at', 'likes_count', 'is_liked']
+        read_only_fields = ['id', 'created_at']
+    
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            try:
+                customer_profile = request.user.customerprofile
+                return obj.likes.filter(user=customer_profile).exists()
+            except:
+                return False
+        return False
+
+
+class DiscountAllSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = DiscountAll
+        fields = ['id', 'percentage', 'score', 'comments', 'created_at', 'modified_at']
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class SpecificDiscountSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = SpecificDiscount
+        fields = ['id', 'percentage', 'title', 'description', 'score', 'comments', 'created_at', 'modified_at']
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class EliteGiftSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = EliteGift
+        fields = ['id', 'amount', 'count', 'gift', 'score', 'comments', 'created_at', 'modified_at']
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class VipExperienceCategorySerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    
+    class Meta:
+        model = VipExperienceCategory
+        fields = ['id', 'vip_type', 'category_name', 'name', 'description', 'created_at', 'modified_at']
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class VipExperienceSerializer(serializers.ModelSerializer):
+    vip_experience_category = VipExperienceCategorySerializer(read_only=True)
+    vip_experience_category_id = serializers.IntegerField(write_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = VipExperience
+        fields = ['id', 'vip_experience_category', 'vip_experience_category_id', 'score', 'comments', 'created_at', 'modified_at']
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class PackageListSerializer(serializers.ModelSerializer):
+    business_name = serializers.CharField(source='business.name', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = Package
+        fields = [
+            'id', 'business_name', 'is_active', 'start_date', 'end_date', 
+            'status', 'status_display', 'is_complete', 'created_at', 'modified_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class PackageDetailSerializer(serializers.ModelSerializer):
+    business_name = serializers.CharField(source='business.name', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    discount_all = DiscountAllSerializer(read_only=True)
+    specific_discount = SpecificDiscountSerializer(read_only=True)
+    elite_gift = EliteGiftSerializer(read_only=True)
+    experiences = VipExperienceSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Package
+        fields = [
+            'id', 'business_name', 'is_active', 'start_date', 'end_date', 
+            'status', 'status_display', 'is_complete', 'created_at', 'modified_at',
+            'discount_all', 'specific_discount', 'elite_gift', 'experiences'
+        ]
+        read_only_fields = ['id', 'created_at', 'modified_at']
+
+
+class PackageCreateUpdateSerializer(serializers.ModelSerializer):
+    discount_all = DiscountAllSerializer(required=False)
+    specific_discount = SpecificDiscountSerializer(required=False)
+    elite_gift = EliteGiftSerializer(required=False)
+    experiences = VipExperienceSerializer(many=True, required=False)
+    
+    class Meta:
+        model = Package
+        fields = [
+            'id', 'business', 'is_active', 'start_date', 'end_date', 
+            'status', 'is_complete', 'discount_all', 'specific_discount', 
+            'elite_gift', 'experiences'
+        ]
+        read_only_fields = ['id']
+    
+    def create(self, validated_data):
+        discount_all_data = validated_data.pop('discount_all', None)
+        specific_discount_data = validated_data.pop('specific_discount', None)
+        elite_gift_data = validated_data.pop('elite_gift', None)
+        experiences_data = validated_data.pop('experiences', [])
+        
+        package = Package.objects.create(**validated_data)
+        
+        if discount_all_data:
+            DiscountAll.objects.create(package=package, **discount_all_data)
+        
+        if specific_discount_data:
+            SpecificDiscount.objects.create(package=package, **specific_discount_data)
+        
+        if elite_gift_data:
+            EliteGift.objects.create(package=package, **elite_gift_data)
+        
+        for experience_data in experiences_data:
+            vip_experience_category_id = experience_data.pop('vip_experience_category_id')
+            VipExperience.objects.create(
+                package=package,
+                vip_experience_category_id=vip_experience_category_id,
+                **experience_data
+            )
+        
+        return package
+    
+    def update(self, instance, validated_data):
+        discount_all_data = validated_data.pop('discount_all', None)
+        specific_discount_data = validated_data.pop('specific_discount', None)
+        elite_gift_data = validated_data.pop('elite_gift', None)
+        experiences_data = validated_data.pop('experiences', None)
+        
+        # Update package fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update related objects
+        if discount_all_data:
+            if hasattr(instance, 'discount_all'):
+                for attr, value in discount_all_data.items():
+                    setattr(instance.discount_all, attr, value)
+                instance.discount_all.save()
+            else:
+                DiscountAll.objects.create(package=instance, **discount_all_data)
+        
+        if specific_discount_data:
+            if hasattr(instance, 'specific_discount'):
+                for attr, value in specific_discount_data.items():
+                    setattr(instance.specific_discount, attr, value)
+                instance.specific_discount.save()
+            else:
+                SpecificDiscount.objects.create(package=instance, **specific_discount_data)
+        
+        if elite_gift_data:
+            if hasattr(instance, 'elite_gift'):
+                for attr, value in elite_gift_data.items():
+                    setattr(instance.elite_gift, attr, value)
+                instance.elite_gift.save()
+            else:
+                EliteGift.objects.create(package=instance, **elite_gift_data)
+        
+        if experiences_data is not None:
+            # Delete existing experiences
+            instance.experiences.all().delete()
+            # Create new experiences
+            for experience_data in experiences_data:
+                vip_experience_category_id = experience_data.pop('vip_experience_category_id')
+                VipExperience.objects.create(
+                    package=instance,
+                    vip_experience_category_id=vip_experience_category_id,
+                    **experience_data
+                )
+        
+        return instance
+
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['text', 'content_type', 'object_id']
+    
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            try:
+                customer_profile = request.user.customerprofile
+                validated_data['user'] = customer_profile
+                return super().create(validated_data)
+            except:
+                raise serializers.ValidationError("User profile not found")
+        raise serializers.ValidationError("User not authenticated")

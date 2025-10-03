@@ -327,9 +327,6 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                     <thead className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'}`}>
                       <tr>
                         <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                          نام پکیج
-                        </th>
-                        <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
                           وضعیت
                         </th>
                         <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
@@ -356,35 +353,12 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                           onClick={() => !pkg.is_complete && handleEditPackage(pkg.id)}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10">
-                                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                  </svg>
-                                </div>
-                              </div>
-                              <div className="mr-4">
-                                <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                  {pkg.business_name}
-                                </div>
-                                <div className="flex items-center space-x-2 space-x-reverse">
-                                  <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                                    پکیج تبلیغاتی
-                                  </div>
-                                  <div className={`w-2 h-2 rounded-full ${pkg.is_complete ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                  <span className={`text-xs ${pkg.is_complete ? 'text-green-600' : 'text-gray-500'}`}>
-                                    {pkg.is_complete ? 'کامل' : 'ناقص'}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center space-x-2 space-x-reverse">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(pkg.status)}`}>
-                                {getStatusText(pkg.status)}
-                              </span>
+                              {pkg.status === 'draft' && (
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(pkg.status)}`}>
+                                  {getStatusText(pkg.status)}
+                                </span>
+                              )}
                               {pkg.is_active && (
                                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
                                   فعال
@@ -633,26 +607,13 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                 }`}
                 onClick={() => !pkg.is_complete && onEditPackage && onEditPackage(pkg.id)}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {pkg.business_name}
-                      </div>
-                      <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                        پکیج تبلیغاتی
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(pkg.status)}`}>
-                      {getStatusText(pkg.status)}
-                    </span>
+                    {pkg.status === 'draft' && (
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(pkg.status)}`}>
+                        {getStatusText(pkg.status)}
+                      </span>
+                    )}
                     {pkg.is_active && (
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
                         فعال
@@ -736,38 +697,35 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    {pkg.status === 'draft' && (
-                      <span className="text-blue-600 text-sm">
-                        کلیک کنید تا ویرایش کنید
-                      </span>
-                    )}
-                    {pkg.status === 'pending' && (
-                      <span className="text-orange-600 text-sm">
-                        در حال بررسی
-                      </span>
-                    )}
-                    {pkg.status === 'approved' && (
-                      <span className="text-green-600 text-sm">
-                        تایید شده
-                      </span>
-                    )}
-                    {pkg.status === 'rejected' && (
-                      <span className="text-red-600 text-sm">
-                        نیاز به ویرایش
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* نشانگر تکمیل پکیج */}
-                  <div className="flex items-center space-x-1 space-x-reverse">
-                    <div className={`w-2 h-2 rounded-full ${pkg.is_complete ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <span className={`text-xs ${pkg.is_complete ? 'text-green-600' : 'text-gray-500'}`}>
-                      {pkg.is_complete ? 'کامل' : 'ناقص'}
+                {/* پیام‌های راهنما */}
+                {pkg.status === 'draft' && (
+                  <div className="text-center">
+                    <span className="text-blue-600 text-sm">
+                      کلیک کنید تا ویرایش کنید
                     </span>
                   </div>
-                </div>
+                )}
+                {pkg.status === 'pending' && (
+                  <div className="text-center">
+                    <span className="text-orange-600 text-sm">
+                      در حال بررسی
+                    </span>
+                  </div>
+                )}
+                {pkg.status === 'approved' && (
+                  <div className="text-center">
+                    <span className="text-green-600 text-sm">
+                      تایید شده
+                    </span>
+                  </div>
+                )}
+                {pkg.status === 'rejected' && (
+                  <div className="text-center">
+                    <span className="text-red-600 text-sm">
+                      نیاز به ویرایش
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -514,6 +514,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     showSpecificDiscount: false,
     
     // Step 2: هدیه
+    giftType: 'amount', // 'amount' or 'count'
     giftAmount: '',
     giftCount: '',
     giftDescription: '',
@@ -613,8 +614,8 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
             } : undefined,
         elite_gift: formData.giftDescription ? {
           gift: formData.giftDescription,
-          amount: formData.giftAmount ? parseFloat(formData.giftAmount) : undefined,
-          count: formData.giftCount ? parseInt(formData.giftCount) : undefined,
+          amount: formData.giftType === 'amount' && formData.giftAmount ? parseFloat(formData.giftAmount) : undefined,
+          count: formData.giftType === 'count' && formData.giftCount ? parseInt(formData.giftCount) : undefined,
           score: 1
         } : undefined,
       }
@@ -725,30 +726,64 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
         return (
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                مبلغ کل خرید
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                شرط دریافت هدیه
               </label>
-              <input
-                type="number"
-                value={formData.giftAmount}
-                onChange={(e) => handleInputChange('giftAmount', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="مثال: 1000000"
-              />
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="giftType"
+                    value="amount"
+                    checked={formData.giftType === 'amount'}
+                    onChange={(e) => handleInputChange('giftType', e.target.value)}
+                    className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <span className="text-xs font-medium text-gray-700">جمع مبلغ خرید</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="giftType"
+                    value="count"
+                    checked={formData.giftType === 'count'}
+                    onChange={(e) => handleInputChange('giftType', e.target.value)}
+                    className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <span className="text-xs font-medium text-gray-700">تعداد مراجعه</span>
+                </label>
+              </div>
             </div>
             
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                تعداد خرید
-              </label>
-              <input
-                type="number"
-                value={formData.giftCount}
-                onChange={(e) => handleInputChange('giftCount', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="مثال: 5"
-              />
-            </div>
+            {formData.giftType === 'amount' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  مبلغ کل خرید
+                </label>
+                <input
+                  type="number"
+                  value={formData.giftAmount}
+                  onChange={(e) => handleInputChange('giftAmount', e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="مثال: 1000000"
+                />
+              </div>
+            )}
+            
+            {formData.giftType === 'count' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  تعداد خرید
+                </label>
+                <input
+                  type="number"
+                  value={formData.giftCount}
+                  onChange={(e) => handleInputChange('giftCount', e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="مثال: 5"
+                />
+              </div>
+            )}
             
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -836,7 +871,10 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                       <p>تخفیف اختصاصی: {formData.specificTitle} ({formData.specificPercentage}%)</p>
                     )}
                     {formData.giftDescription && (
-                      <p>هدیه: {formData.giftDescription}</p>
+                      <p>هدیه: {formData.giftDescription} 
+                        {formData.giftType === 'amount' && formData.giftAmount && ` (مبلغ: ${formData.giftAmount})`}
+                        {formData.giftType === 'count' && formData.giftCount && ` (تعداد: ${formData.giftCount})`}
+                      </p>
                     )}
                     {formData.oneStarFeatures.length > 0 && (
                       <p>ویژگی‌های VIP: {formData.oneStarFeatures.join(', ')}</p>

@@ -43,10 +43,19 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       ]
     }
 
-    // Default items for other user types (customer, admin, etc.)
+    // Customer users get explore option
+    if (user.type === 'customer') {
+      return [
+        { name: 'داشبورد', href: '/dashboard', icon: '📊' },
+        { name: 'اکتشاف', href: '/dashboard/explore', icon: '🔍' },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
+        { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
+      ]
+    }
+
+    // Default items for other user types (admin, etc.)
     return [
       { name: 'داشبورد', href: '/dashboard', icon: '📊' },
-      { name: 'اکتشاف', href: '/dashboard/explore', icon: '🔍' },
       { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
       { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
     ]

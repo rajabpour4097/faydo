@@ -36,6 +36,8 @@ class PackageViewSet(viewsets.ModelViewSet):
                 return Package.objects.none()
         elif user.role in ['admin', 'it_manager', 'project_manager']:
             return Package.objects.all()
+        elif user.role == 'customer':
+            return Package.objects.filter(is_active=True, status='approved', is_complete=True)
         else:
             return Package.objects.none()
     

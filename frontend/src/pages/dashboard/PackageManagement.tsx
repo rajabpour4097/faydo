@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { apiService, Package, VipExperienceCategory } from '../../services/api'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
@@ -10,6 +11,7 @@ interface PackageManagementProps {}
 export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const { isDark } = useTheme()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -20,6 +22,15 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const [vipExperiences, setVipExperiences] = useState<VipExperienceCategory[]>([])
   const [viewingPackage, setViewingPackage] = useState<Package | null>(null)
   const [showPackageDetails, setShowPackageDetails] = useState(false)
+
+  // Check if user is business
+  useEffect(() => {
+    if (user && user.type !== 'business') {
+      // Redirect non-business users to dashboard
+      navigate('/dashboard')
+      return
+    }
+  }, [user, navigate])
 
   useEffect(() => {
     console.log('PackageManagement mounted, user:', user) // Debug log
@@ -249,6 +260,72 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
       default:
         return status
     }
+  }
+
+  // Show loading if user is not loaded yet
+  if (!user) {
+    return (
+      <>
+        {/* Mobile */}
+        <div className="md:hidden">
+          <MobileDashboardLayout>
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          </MobileDashboardLayout>
+        </div>
+
+        {/* Desktop */}
+        <div className="hidden md:block">
+          <DashboardLayout>
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          </DashboardLayout>
+        </div>
+      </>
+    )
+  }
+
+  // Show access denied if user is not business
+  if (user.type !== 'business') {
+    return (
+      <>
+        {/* Mobile */}
+        <div className="md:hidden">
+          <MobileDashboardLayout>
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🚫</div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  دسترسی محدود
+                </h1>
+                <p className="text-gray-600 dark:text-slate-400">
+                  این صفحه فقط برای کسب‌وکارها قابل دسترسی است
+                </p>
+              </div>
+            </div>
+          </MobileDashboardLayout>
+        </div>
+
+        {/* Desktop */}
+        <div className="hidden md:block">
+          <DashboardLayout>
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🚫</div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  دسترسی محدود
+                </h1>
+                <p className="text-gray-600 dark:text-slate-400">
+                  این صفحه فقط برای کسب‌وکارها قابل دسترسی است
+                </p>
+              </div>
+            </div>
+          </DashboardLayout>
+        </div>
+      </>
+    )
   }
 
   if (loading) {

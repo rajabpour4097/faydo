@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { apiService, Package } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 interface ExploreProps {}
 
@@ -16,6 +18,8 @@ interface FilterState {
 }
 
 export const Explore: React.FC<ExploreProps> = () => {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [packages, setPackages] = useState<Package[]>([])
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
   // const [categories] = useState<BusinessCategory[]>([])
@@ -26,6 +30,45 @@ export const Explore: React.FC<ExploreProps> = () => {
     sortBy: '',
     search: ''
   })
+
+  // Check if user is customer
+  useEffect(() => {
+    if (user && user.type !== 'customer') {
+      // Redirect non-customer users to dashboard
+      navigate('/dashboard')
+      return
+    }
+  }, [user, navigate])
+
+  // Show loading if user is not loaded yet
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  // Show access denied if user is not customer
+  if (user.type !== 'customer') {
+    return (
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🚫</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              دسترسی محدود
+            </h1>
+            <p className="text-gray-600 dark:text-slate-400">
+              این صفحه فقط برای مشتریان قابل دسترسی است
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   useEffect(() => {
     console.log('🔍 Explore component mounted')
@@ -217,17 +260,6 @@ export const Explore: React.FC<ExploreProps> = () => {
             {error}
           </div>
         )}
-
-          {/* Debug Info */}
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 px-4 py-3 rounded-lg mb-6">
-            <div className="text-sm">
-              <strong>Debug Info:</strong>
-              <br />• Total packages: {packages.length}
-              <br />• Filtered packages: {filteredPackages.length}
-              <br />• Loading: {loading ? 'Yes' : 'No'}
-              <br />• Error: {error || 'None'}
-            </div>
-          </div>
 
           {/* Results Count - Mobile */}
           <div className="md:hidden flex justify-between items-center mb-4">

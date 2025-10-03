@@ -58,6 +58,17 @@ class PackageViewSet(viewsets.ModelViewSet):
         if user.role == 'business':
             try:
                 business_profile = user.businessprofile
+                
+                # Creation guardrails: block if there is a draft package
+                draft_exists = Package.objects.filter(
+                    business=business_profile, status='draft'
+                ).exists()
+                if draft_exists:
+                    raise Response(
+                        {"error": "شما پکیج پیش‌نویس دارید و نمی‌توانید پکیج جدید بسازید."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                
                 # Creation guardrails: block if there is a pending package under review
                 pending_exists = Package.objects.filter(
                     business=business_profile, status='pending', is_complete=True

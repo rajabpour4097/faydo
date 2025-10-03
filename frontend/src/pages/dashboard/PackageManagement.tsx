@@ -37,12 +37,23 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
         
         // بررسی شرط ایجاد پکیج جدید
         const hasActivePackage = response.data.some(pkg => pkg.is_active)
-        const hasDraftPackage = response.data.some(pkg => pkg.status === 'pending' && !pkg.is_complete)
+        const hasDraftPackage = response.data.some(pkg => pkg.status === 'draft')
         const hasPendingPackage = response.data.some(pkg => pkg.status === 'pending' && pkg.is_complete)
         
-        // اگر پکیج فعال دارد، بررسی کن که آیا کمتر از ۱۰ روز مانده
         let canCreate = true
-        if (hasActivePackage) {
+        
+        // اگر پکیج draft دارد، نمی‌تواند پکیج جدید بسازد
+        if (hasDraftPackage) {
+          canCreate = false
+        }
+        
+        // اگر پکیج pending (در حال بررسی) دارد، نمی‌تواند پکیج جدید بسازد
+        if (hasPendingPackage) {
+          canCreate = false
+        }
+        
+        // اگر پکیج فعال دارد، بررسی کن که آیا کمتر از ۱۰ روز مانده
+        if (hasActivePackage && canCreate) {
           const activePackage = response.data.find(pkg => pkg.is_active)
           if (activePackage && activePackage.end_date) {
             const endDate = new Date(activePackage.end_date)
@@ -50,11 +61,6 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
             const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
             canCreate = daysLeft <= 10
           }
-        }
-        
-        // اگر پکیج draft یا pending دارد، نمی‌تواند پکیج جدید بسازد
-        if (hasDraftPackage || hasPendingPackage) {
-          canCreate = false
         }
         
         setCanCreatePackage(canCreate)
@@ -66,44 +72,16 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
     }
   }
 
-  const handleDeletePackage = async (packageId: number) => {
-    if (!window.confirm('آیا از حذف این پکیج اطمینان دارید؟')) {
-      return
-    }
-
-    try {
-      const response = await apiService.deletePackage(packageId)
-      
-      if (response.error) {
-        setError(response.error)
-      } else {
-        setPackages(packages.filter(pkg => pkg.id !== packageId))
-      }
-    } catch (err) {
-      setError('خطا در حذف پکیج')
-    }
-  }
-
-  const handleToggleActive = async (packageId: number) => {
-    try {
-      const response = await apiService.togglePackageActive(packageId)
-      
-      if (response.error) {
-        setError(response.error)
-      } else if (response.data) {
-        setPackages(packages.map(pkg => 
-          pkg.id === packageId 
-            ? { ...pkg, is_active: response.data!.is_active }
-            : pkg
-        ))
-      }
-    } catch (err) {
-      setError('خطا در تغییر وضعیت پکیج')
-    }
-  }
 
   const handleCreatePackage = async () => {
     console.log('=== BUTTON CLICKED: handleCreatePackage called ===')
+    
+    // بررسی شرایط قبل از ایجاد پکیج
+    if (!canCreatePackage) {
+      console.log('Cannot create package: conditions not met')
+      setError('شما نمی‌توانید پکیج جدید ایجاد کنید. لطفاً ابتدا پکیج موجود را تکمیل کنید.')
+      return
+    }
     
     try {
       setLoading(true)
@@ -227,8 +205,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
         <MobilePackageManagement
           packages={packages}
           error={error}
-          onDeletePackage={handleDeletePackage}
-          onToggleActive={handleToggleActive}
+          onEditPackage={handleEditPackage}
           onCreatePackage={handleCreatePackage}
           getStatusColor={getStatusColor}
           getStatusText={getStatusText}
@@ -278,7 +255,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
                     : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 }`}
-                title={!canCreatePackage ? 'شما پکیج فعال یا در حال بررسی دارید' : ''}
+                title={!canCreatePackage ? 'شما پکیج پیش‌نویس یا در حال بررسی دارید' : ''}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -379,28 +356,26 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex items-center space-x-2 space-x-reverse">
-                              <button
-                                onClick={() => handleToggleActive(pkg.id)}
-                                className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                                  pkg.is_active
-                                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                                }`}
-                              >
-                                {pkg.is_active ? 'غیرفعال' : 'فعال'}
-                              </button>
-                              <button
-                                onClick={() => {/* TODO: Implement edit */}}
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                ویرایش
-                              </button>
-                              <button
-                                onClick={() => handleDeletePackage(pkg.id)}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                حذف
-                              </button>
+                              {pkg.status === 'draft' && (
+                                <span className="text-blue-600 text-sm">
+                                  کلیک کنید تا ویرایش کنید
+                                </span>
+                              )}
+                              {pkg.status === 'pending' && (
+                                <span className="text-orange-600 text-sm">
+                                  در حال بررسی
+                                </span>
+                              )}
+                              {pkg.status === 'approved' && (
+                                <span className="text-green-600 text-sm">
+                                  تایید شده
+                                </span>
+                              )}
+                              {pkg.status === 'rejected' && (
+                                <span className="text-red-600 text-sm">
+                                  نیاز به ویرایش
+                                </span>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -437,8 +412,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
 interface MobilePackageManagementProps {
   packages: Package[]
   error: string | null
-  onDeletePackage: (id: number) => void
-  onToggleActive: (id: number) => void
+  onEditPackage: (id: number) => void
   onCreatePackage: () => void
   getStatusColor: (status: string) => string
   getStatusText: (status: string) => string
@@ -447,8 +421,7 @@ interface MobilePackageManagementProps {
 const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
   packages,
   error,
-  onDeletePackage,
-  onToggleActive,
+  onEditPackage,
   onCreatePackage,
   getStatusColor,
   getStatusText
@@ -533,7 +506,13 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
         ) : (
           <div className="space-y-4">
             {packages.map((pkg) => (
-              <div key={pkg.id} className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-2xl p-4 shadow-sm`}>
+              <div 
+                key={pkg.id} 
+                className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-2xl p-4 shadow-sm ${
+                  !pkg.is_complete ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
+                }`}
+                onClick={() => !pkg.is_complete && onEditPackage && onEditPackage(pkg.id)}
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -573,29 +552,27 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    <button
-                      onClick={() => onToggleActive(pkg.id)}
-                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                        pkg.is_active
-                          ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
-                      }`}
-                    >
-                      {pkg.is_active ? 'غیرفعال' : 'فعال'}
-                    </button>
-                    <button
-                      onClick={() => {/* TODO: Implement edit */}}
-                      className="text-blue-600 hover:text-blue-900 text-sm"
-                    >
-                      ویرایش
-                    </button>
+                    {pkg.status === 'draft' && (
+                      <span className="text-blue-600 text-sm">
+                        کلیک کنید تا ویرایش کنید
+                      </span>
+                    )}
+                    {pkg.status === 'pending' && (
+                      <span className="text-orange-600 text-sm">
+                        در حال بررسی
+                      </span>
+                    )}
+                    {pkg.status === 'approved' && (
+                      <span className="text-green-600 text-sm">
+                        تایید شده
+                      </span>
+                    )}
+                    {pkg.status === 'rejected' && (
+                      <span className="text-red-600 text-sm">
+                        نیاز به ویرایش
+                      </span>
+                    )}
                   </div>
-                  <button
-                    onClick={() => onDeletePackage(pkg.id)}
-                    className="text-red-600 hover:text-red-900 text-sm"
-                  >
-                    حذف
-                  </button>
                 </div>
               </div>
             ))}

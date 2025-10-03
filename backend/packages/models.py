@@ -55,7 +55,16 @@ class Package(BaseModel):
     is_active = models.BooleanField(default=False)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
-    status = models.CharField(max_length=10, choices=[('draft', 'پیش‌نویس'),('pending', 'درحال بررسی'),('approved', 'تایید شده'),('rejected', 'نیاز به ویرایش')], default='draft')
+    status = models.CharField(max_length=10, 
+                              choices=[('draft', 'پیش‌نویس'),
+                                       ('pending', 'درحال بررسی'),
+                                       ('approved', 'تایید شده'),
+                                       ('rejected', 'نیاز به ویرایش'),
+                                       ('canceled', 'لغو شده'),
+                                       ('expired', 'منقضی شده')
+                                       ], 
+                              default='draft'
+                              )
     is_complete = models.BooleanField(default=False)
 
     class Meta:

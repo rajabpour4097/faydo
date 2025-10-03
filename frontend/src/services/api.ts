@@ -106,6 +106,12 @@ export interface Package {
   specific_discount?: SpecificDiscount
   elite_gift?: EliteGift
   experiences?: VipExperience[]
+  // فیلدهای جدید از PackageListSerializer
+  discount_percentage?: number
+  elite_gift_title?: string
+  elite_gift_amount?: number
+  vip_experiences_count?: number
+  days_remaining?: number
 }
 
 export interface DiscountAll {

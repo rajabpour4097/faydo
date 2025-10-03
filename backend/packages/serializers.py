@@ -82,13 +82,64 @@ class PackageListSerializer(serializers.ModelSerializer):
     business_name = serializers.CharField(source='business.name', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     
+    # اطلاعات تخفیف کلی
+    discount_percentage = serializers.SerializerMethodField()
+    
+    # اطلاعات هدیه ویژه
+    elite_gift_title = serializers.SerializerMethodField()
+    elite_gift_amount = serializers.SerializerMethodField()
+    
+    # تعداد تجربیات VIP
+    vip_experiences_count = serializers.SerializerMethodField()
+    
+    # روزهای باقی‌مانده تا پایان پکیج
+    days_remaining = serializers.SerializerMethodField()
+    
     class Meta:
         model = Package
         fields = [
             'id', 'business_name', 'is_active', 'start_date', 'end_date', 
-            'status', 'status_display', 'is_complete', 'created_at', 'modified_at'
+            'status', 'status_display', 'is_complete', 'created_at', 'modified_at',
+            'discount_percentage', 'elite_gift_title', 'elite_gift_amount',
+            'vip_experiences_count', 'days_remaining'
         ]
         read_only_fields = ['id', 'created_at', 'modified_at']
+    
+    def get_discount_percentage(self, obj):
+        """درصد تخفیف کلی"""
+        try:
+            return obj.discount_all.percentage if hasattr(obj, 'discount_all') else None
+        except:
+            return None
+    
+    def get_elite_gift_title(self, obj):
+        """عنوان هدیه ویژه"""
+        try:
+            return obj.elite_gift.gift if hasattr(obj, 'elite_gift') else None
+        except:
+            return None
+    
+    def get_elite_gift_amount(self, obj):
+        """مبلغ هدیه ویژه"""
+        try:
+            return obj.elite_gift.amount if hasattr(obj, 'elite_gift') else None
+        except:
+            return None
+    
+    def get_vip_experiences_count(self, obj):
+        """تعداد تجربیات VIP"""
+        return obj.experiences.count()
+    
+    def get_days_remaining(self, obj):
+        """روزهای باقی‌مانده تا پایان پکیج"""
+        if obj.end_date and obj.is_active:
+            from django.utils import timezone
+            today = timezone.now().date()
+            if obj.end_date > today:
+                return (obj.end_date - today).days
+            else:
+                return 0
+        return None
 
 
 class PackageDetailSerializer(serializers.ModelSerializer):

@@ -333,10 +333,13 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                           وضعیت
                         </th>
                         <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                          تاریخ ایجاد
+                          تاریخ شروع/پایان
                         </th>
                         <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                          آخرین ویرایش
+                          تخفیف/هدیه
+                        </th>
+                        <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                          تجربیات VIP
                         </th>
                         <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
                           عملیات
@@ -365,8 +368,14 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                                 <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                   {pkg.business_name}
                                 </div>
-                                <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                                  پکیج تبلیغاتی
+                                <div className="flex items-center space-x-2 space-x-reverse">
+                                  <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                                    پکیج تبلیغاتی
+                                  </div>
+                                  <div className={`w-2 h-2 rounded-full ${pkg.is_complete ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                  <span className={`text-xs ${pkg.is_complete ? 'text-green-600' : 'text-gray-500'}`}>
+                                    {pkg.is_complete ? 'کامل' : 'ناقص'}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -381,13 +390,70 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                                   فعال
                                 </span>
                               )}
+                              {pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  pkg.days_remaining > 7 ? 'text-green-700 bg-green-100' : 
+                                  pkg.days_remaining > 0 ? 'text-orange-700 bg-orange-100' : 'text-red-700 bg-red-100'
+                                }`}>
+                                  {pkg.days_remaining > 0 ? `${pkg.days_remaining} روز` : 'منقضی'}
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                            {new Date(pkg.created_at).toLocaleDateString('fa-IR')}
+                            <div className="space-y-1">
+                              {pkg.start_date && (
+                                <div className="flex items-center">
+                                  <svg className="w-3 h-3 ml-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  {new Date(pkg.start_date).toLocaleDateString('fa-IR')}
+                                </div>
+                              )}
+                              {pkg.end_date && (
+                                <div className="flex items-center">
+                                  <svg className="w-3 h-3 ml-1 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  {new Date(pkg.end_date).toLocaleDateString('fa-IR')}
+                                </div>
+                              )}
+                            </div>
                           </td>
                           <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                            {new Date(pkg.modified_at).toLocaleDateString('fa-IR')}
+                            <div className="space-y-1">
+                              {pkg.discount_percentage && (
+                                <div className="flex items-center">
+                                  <div className="w-4 h-4 bg-red-100 rounded flex items-center justify-center ml-1">
+                                    <svg className="w-2 h-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+                                    </svg>
+                                  </div>
+                                  <span className="text-red-600 font-medium">%{pkg.discount_percentage}</span>
+                                </div>
+                              )}
+                              {pkg.elite_gift_title && (
+                                <div className="flex items-center">
+                                  <div className="w-4 h-4 bg-purple-100 rounded flex items-center justify-center ml-1">
+                                    <svg className="w-2 h-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                                    </svg>
+                                  </div>
+                                  <span className="text-purple-600 truncate max-w-20" title={pkg.elite_gift_title}>
+                                    {pkg.elite_gift_title}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                            <div className="flex items-center">
+                              <svg className="w-4 h-4 ml-1 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                              </svg>
+                              <span className="font-medium">{pkg.vip_experiences_count}</span>
+                              <span className="mr-1">تجربه</span>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex items-center space-x-2 space-x-reverse">
@@ -595,12 +661,78 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between text-sm mb-3">
-                  <div className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                    ایجاد: {new Date(pkg.created_at).toLocaleDateString('fa-IR')}
+                {/* اطلاعات پکیج */}
+                <div className="space-y-3 mb-4">
+                  {/* تاریخ‌ها */}
+                  {(pkg.start_date || pkg.end_date) && (
+                    <div className="flex items-center justify-between text-sm">
+                      {pkg.start_date && (
+                        <div className={`flex items-center ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          شروع: {new Date(pkg.start_date).toLocaleDateString('fa-IR')}
+                        </div>
+                      )}
+                      {pkg.end_date && (
+                        <div className={`flex items-center ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          پایان: {new Date(pkg.end_date).toLocaleDateString('fa-IR')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* اطلاعات تخفیف و هدیه */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {pkg.discount_percentage && (
+                      <div className={`flex items-center ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center ml-2">
+                          <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="font-medium">تخفیف</div>
+                          <div className="text-red-600 font-bold">%{pkg.discount_percentage}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {pkg.elite_gift_title && (
+                      <div className={`flex items-center ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center ml-2">
+                          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="font-medium">هدیه</div>
+                          <div className="text-purple-600 text-xs truncate">{pkg.elite_gift_title}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                    ویرایش: {new Date(pkg.modified_at).toLocaleDateString('fa-IR')}
+
+                  {/* تعداد تجربیات VIP و روزهای باقی‌مانده */}
+                  <div className="flex items-center justify-between text-sm">
+                    <div className={`flex items-center ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                      {pkg.vip_experiences_count} تجربه VIP
+                    </div>
+                    
+                    {pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
+                      <div className={`flex items-center ${pkg.days_remaining > 7 ? 'text-green-600' : pkg.days_remaining > 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {pkg.days_remaining > 0 ? `${pkg.days_remaining} روز باقی‌مانده` : 'منقضی شده'}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -626,6 +758,14 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                         نیاز به ویرایش
                       </span>
                     )}
+                  </div>
+                  
+                  {/* نشانگر تکمیل پکیج */}
+                  <div className="flex items-center space-x-1 space-x-reverse">
+                    <div className={`w-2 h-2 rounded-full ${pkg.is_complete ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className={`text-xs ${pkg.is_complete ? 'text-green-600' : 'text-gray-500'}`}>
+                      {pkg.is_complete ? 'کامل' : 'ناقص'}
+                    </span>
                   </div>
                 </div>
               </div>

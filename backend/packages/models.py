@@ -55,6 +55,7 @@ class Package(BaseModel):
     is_active = models.BooleanField(default=False)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=10, choices=[('draft', 'پیش‌نویس'),('pending', 'درحال بررسی'),('approved', 'تایید شده'),('rejected', 'نیاز به ویرایش')], default='draft')
     is_complete = models.BooleanField(default=False)
 
     class Meta:
@@ -63,6 +64,27 @@ class Package(BaseModel):
 
     def __str__(self):
         return self.business.name
+    
+    def check_completion(self):
+        """
+        بررسی کامل بودن پکیج:
+        - باید DiscountAll داشته باشد
+        - باید EliteGift داشته باشد  
+        - باید حداقل یک VipExperience داشته باشد
+        - باید start_date و end_date پر شده باشد
+        """
+        has_discount_all = hasattr(self, 'discount_all')
+        has_elite_gift = hasattr(self, 'elite_gift')
+        has_vip_experiences = self.experiences.exists()
+        has_dates = self.start_date and self.end_date
+        
+        return has_discount_all and has_elite_gift and has_vip_experiences and has_dates
+    
+    def save(self, *args, **kwargs):
+        # بررسی کامل بودن قبل از ذخیره
+        if self.pk:
+            self.is_complete = self.check_completion()
+        super().save(*args, **kwargs)
 
 #Discount for products or services
 class DiscountAll(BaseModel):

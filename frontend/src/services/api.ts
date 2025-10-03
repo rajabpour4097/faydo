@@ -89,7 +89,7 @@ export interface Package {
   is_active: boolean
   start_date?: string
   end_date?: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'draft' | 'pending' | 'approved' | 'rejected'
   status_display: string
   is_complete: boolean
   created_at: string
@@ -166,7 +166,7 @@ export interface PackageCreateRequest {
   is_active?: boolean
   start_date?: string
   end_date?: string
-  status?: 'pending' | 'approved' | 'rejected'
+  status?: 'draft' | 'pending' | 'approved' | 'rejected'
   is_complete?: boolean
   discount_all?: Partial<DiscountAll>
   specific_discount?: Partial<SpecificDiscount>
@@ -540,10 +540,17 @@ class ApiService {
   }
 
   async createPackage(packageData: PackageCreateRequest): Promise<ApiResponse<Package>> {
-    return this.request<Package>('/packages/packages/', {
+    console.log('API: Creating package with data:', packageData)
+    console.log('API: Current access token:', this.accessToken)
+    console.log('API: Is authenticated:', this.isAuthenticated())
+    
+    const response = await this.request<Package>('/packages/packages/', {
       method: 'POST',
       body: JSON.stringify(packageData),
     })
+    
+    console.log('API: Create package response:', response)
+    return response
   }
 
   async updatePackage(id: number, packageData: Partial<PackageCreateRequest>): Promise<ApiResponse<Package>> {
@@ -616,6 +623,64 @@ class ApiService {
     return this.request<{ is_liked: boolean; likes_count: number; message: string }>(`/packages/comments/${commentId}/like/`, {
       method: 'POST',
     })
+  }
+
+  // Stepwise package creation methods
+  async savePackageDiscounts(packageId: number, discountAll: { percentage: number }, specificDiscount?: { title: string; description?: string; percentage: number }, removeSpecific?: boolean): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/packages/packages/${packageId}/discounts/`, {
+      method: 'POST',
+      body: JSON.stringify({
+        discount_all: discountAll,
+        specific_discount: specificDiscount,
+        remove_specific: removeSpecific || false,
+      }),
+    })
+  }
+
+  async savePackageLoyalGift(packageId: number, gift: string, amount?: number, count?: number): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/packages/packages/${packageId}/loyal_gift/`, {
+      method: 'POST',
+      body: JSON.stringify({
+        gift,
+        amount,
+        count,
+      }),
+    })
+  }
+
+  async savePackageVip(packageId: number, experienceIds: number[]): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/packages/packages/${packageId}/vip/`, {
+      method: 'POST',
+      body: JSON.stringify({
+        experience_ids: experienceIds,
+      }),
+    })
+  }
+
+  async finalizePackage(packageId: number, durationMonths: number, agree: boolean): Promise<ApiResponse<{ message: string; id: number; start_date: string; end_date: string; status: string }>> {
+    return this.request<{ message: string; id: number; start_date: string; end_date: string; status: string }>(`/packages/packages/${packageId}/finalize/`, {
+      method: 'POST',
+      body: JSON.stringify({
+        duration_months: durationMonths,
+        agree,
+      }),
+    })
+  }
+
+  async getPackageStatus(packageId: number): Promise<ApiResponse<{
+    id: number;
+    is_complete: boolean;
+    status: string;
+    has_discount_all: boolean;
+    has_elite_gift: boolean;
+    has_vip_experiences: boolean;
+    has_dates: boolean;
+    discount_all: number | null;
+    specific_discount: { title: string; percentage: number; description: string } | null;
+    elite_gift: { gift: string; amount: number | null; count: number | null } | null;
+    vip_experiences: { id: number; name: string; vip_type: string }[];
+  }>> {
+    return this.request(`/packages/packages/${packageId}/status/`)
   }
 }
 

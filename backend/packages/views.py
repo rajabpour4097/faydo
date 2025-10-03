@@ -2,6 +2,8 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from .models import (
     Package, DiscountAll, SpecificDiscount, EliteGift, 
@@ -56,7 +58,32 @@ class PackageViewSet(viewsets.ModelViewSet):
         if user.role == 'business':
             try:
                 business_profile = user.businessprofile
-                serializer.save(business=business_profile)
+                # Creation guardrails: block if there is a pending package under review
+                pending_exists = Package.objects.filter(
+                    business=business_profile, status='pending', is_complete=True
+                ).exists()
+                if pending_exists:
+                    raise Response(
+                        {"error": "پکیج در حال بررسی دارید و نمی‌توانید پکیج جدید بسازید."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Allow creating a new package if no active package OR active package ends within 10 days
+                active_pkg = (
+                    Package.objects.filter(business=business_profile, is_active=True)
+                    .order_by('-end_date')
+                    .first()
+                )
+                if active_pkg and active_pkg.end_date:
+                    days_left = (active_pkg.end_date - timezone.now().date()).days
+                    if days_left > 10:
+                        raise Response(
+                            {"error": "پکیج فعالی دارید و بیش از ۱۰ روز تا پایان آن مانده است."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                # ایجاد پکیج ناتمام (is_complete=False)
+                serializer.save(business=business_profile, is_complete=False, status='draft')
             except BusinessProfile.DoesNotExist:
                 raise Response(
                     {"error": "Business profile not found"}, 
@@ -135,7 +162,12 @@ class PackageViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
-        package.is_active = not package.is_active
+        # If activating, deactivate other active packages for the same business
+        if not package.is_active:
+            Package.objects.filter(business=package.business, is_active=True).exclude(id=package.id).update(is_active=False)
+            package.is_active = True
+        else:
+            package.is_active = False
         package.save()
         
         return Response({
@@ -184,6 +216,205 @@ class PackageViewSet(viewsets.ModelViewSet):
             'id': package.id,
             'status': package.status,
             'message': 'Package rejected successfully'
+        })
+
+    @action(detail=True, methods=['post'])
+    def discounts(self, request, pk=None):
+        """
+        Create or update discounts for step 1 (mandatory DiscountAll, optional SpecificDiscount).
+        Payload example:
+        {
+          "discount_all": {"percentage": 15},
+          "specific_discount": {"title": "...", "description": "...", "percentage": 25},
+          "remove_specific": false
+        }
+        """
+        package = self.get_object()
+
+        discount_all_data = request.data.get('discount_all')
+        specific_data = request.data.get('specific_discount')
+        remove_specific = request.data.get('remove_specific', False)
+
+        # Validate mandatory DiscountAll
+        if not discount_all_data or 'percentage' not in discount_all_data:
+            return Response({"error": "درصد تخفیف کلی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Upsert DiscountAll
+        if hasattr(package, 'discount_all'):
+            package.discount_all.percentage = discount_all_data['percentage']
+            package.discount_all.save()
+        else:
+            DiscountAll.objects.create(package=package, percentage=discount_all_data['percentage'])
+        
+        # بررسی کامل بودن پکیج
+        package.save()  # این کار check_completion را فراخوانی می‌کند
+
+        # Handle SpecificDiscount removal
+        if remove_specific:
+            if hasattr(package, 'specific_discount'):
+                package.specific_discount.delete()
+        else:
+            if specific_data and (specific_data.get('title')):
+                # Validate percentage presence and greater than DiscountAll
+                if 'percentage' not in specific_data:
+                    return Response({"error": "درصد تخفیف اختصاصی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+                try:
+                    all_percent = float(package.discount_all.percentage)
+                    spec_percent = float(specific_data['percentage'])
+                except Exception:
+                    return Response({"error": "مقادیر درصد نامعتبر است."}, status=status.HTTP_400_BAD_REQUEST)
+                if spec_percent <= all_percent:
+                    return Response({"error": "درصد تخفیف اختصاصی باید از تخفیف کلی بیشتر باشد."}, status=status.HTTP_400_BAD_REQUEST)
+
+                if hasattr(package, 'specific_discount'):
+                    sd = package.specific_discount
+                    sd.title = specific_data.get('title')
+                    sd.description = specific_data.get('description')
+                    sd.percentage = spec_percent
+                    sd.save()
+                else:
+                    SpecificDiscount.objects.create(
+                        package=package,
+                        title=specific_data.get('title'),
+                        description=specific_data.get('description'),
+                        percentage=spec_percent,
+                    )
+
+        return Response({"message": "تخفیفات با موفقیت ذخیره شد."})
+
+    @action(detail=True, methods=['post'])
+    def loyal_gift(self, request, pk=None):
+        """
+        Create or update EliteGift for step 2 (mandatory to choose one method and gift text)
+        Payload example:
+        {"gift": "کارت هدیه", "amount": 1000000}  or  {"gift": "...", "count": 5}
+        """
+        package = self.get_object()
+        gift = request.data.get('gift')
+        amount = request.data.get('amount')
+        count = request.data.get('count')
+
+        if not gift:
+            return Response({"error": "فیلد هدیه الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+        if not amount and not count:
+            return Response({"error": "باید یکی از فیلدهای مبلغ یا تعداد را وارد کنید."}, status=status.HTTP_400_BAD_REQUEST)
+
+        payload = {"gift": gift}
+        if amount:
+            payload["amount"] = amount
+            payload["count"] = None
+        if count:
+            payload["count"] = count
+            if "amount" in payload:
+                payload.pop("amount", None)
+
+        if hasattr(package, 'elite_gift'):
+            eg = package.elite_gift
+            for k, v in payload.items():
+                setattr(eg, k, v)
+            eg.save()
+        else:
+            EliteGift.objects.create(package=package, **payload)
+
+        # بررسی کامل بودن پکیج
+        package.save()
+
+        return Response({"message": "هدیه مشتریان وفادار ذخیره شد."})
+
+    @action(detail=True, methods=['post'])
+    def vip(self, request, pk=None):
+        """
+        Save VIP experiences for step 3.
+        Payload example: {"experience_ids": [1,2,3]}
+        Must include at least one experience with vip_type = 'VIP'.
+        """
+        package = self.get_object()
+        ids = request.data.get('experience_ids', [])
+        if not isinstance(ids, list) or len(ids) == 0:
+            return Response({"error": "حداقل یک گزینه VIP باید انتخاب شود."}, status=status.HTTP_400_BAD_REQUEST)
+
+        categories = VipExperienceCategory.objects.filter(id__in=ids)
+        if not categories.filter(vip_type='VIP').exists():
+            return Response({"error": "حداقل یک گزینه از گروه VIP الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Replace selections
+        package.experiences.all().delete()
+        for c in categories:
+            VipExperience.objects.create(package=package, vip_experience_category=c)
+
+        # بررسی کامل بودن پکیج
+        package.save()
+
+        return Response({"message": "گزینه‌های VIP ذخیره شد."})
+
+    @action(detail=True, methods=['post'])
+    def finalize(self, request, pk=None):
+        """
+        Finalize package: set duration (months) and agree flag, then mark complete and pending.
+        Payload example: {"duration_months": 3, "agree": true}
+        """
+        package = self.get_object()
+        duration_months = int(request.data.get('duration_months', 0))
+        agree = bool(request.data.get('agree', False))
+
+        if not agree:
+            return Response({"error": "پذیرش قوانین الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+        if duration_months not in [3, 6, 9, 12]:
+            return Response({"error": "مدت زمان نامعتبر است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        start = timezone.now().date()
+        # approximate month addition by days (30) to avoid external libs
+        end = start + timedelta(days=duration_months * 30)
+
+        package.start_date = start
+        package.end_date = end
+        package.is_complete = True
+        package.is_active = False
+        package.status = 'pending'
+        package.save()
+
+        return Response({
+            "message": "پکیج ثبت شد و در انتظار بررسی است.",
+            "id": package.id,
+            "start_date": package.start_date,
+            "end_date": package.end_date,
+            "status": package.status,
+        })
+
+    @action(detail=True, methods=['get'])
+    def status(self, request, pk=None):
+        """
+        دریافت وضعیت پکیج و مراحل تکمیل شده
+        """
+        package = self.get_object()
+        
+        return Response({
+            "id": package.id,
+            "is_complete": package.is_complete,
+            "status": package.status,
+            "has_discount_all": hasattr(package, 'discount_all'),
+            "has_elite_gift": hasattr(package, 'elite_gift'),
+            "has_vip_experiences": package.experiences.exists(),
+            "has_dates": bool(package.start_date and package.end_date),
+            "discount_all": package.discount_all.percentage if hasattr(package, 'discount_all') else None,
+            "specific_discount": {
+                "title": package.specific_discount.title,
+                "percentage": package.specific_discount.percentage,
+                "description": package.specific_discount.description
+            } if hasattr(package, 'specific_discount') else None,
+            "elite_gift": {
+                "gift": package.elite_gift.gift,
+                "amount": package.elite_gift.amount,
+                "count": package.elite_gift.count
+            } if hasattr(package, 'elite_gift') else None,
+            "vip_experiences": [
+                {
+                    "id": exp.vip_experience_category.id,
+                    "name": exp.vip_experience_category.name,
+                    "vip_type": exp.vip_experience_category.vip_type
+                }
+                for exp in package.experiences.all()
+            ]
         })
 
 

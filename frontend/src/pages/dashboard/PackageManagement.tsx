@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useAuth } from '../../contexts/AuthContext'
 import { apiService, Package } from '../../services/api'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
@@ -8,14 +9,20 @@ interface PackageManagementProps {}
 
 export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const { isDark } = useTheme()
+  const { user } = useAuth()
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [canCreatePackage, setCanCreatePackage] = useState(true)
+  const [editingPackageId, setEditingPackageId] = useState<number | undefined>(undefined)
 
   useEffect(() => {
+    console.log('PackageManagement mounted, user:', user) // Debug log
+    console.log('Local storage access token:', localStorage.getItem('access_token') ? 'Exists' : 'Missing')
+    console.log('Local storage refresh token:', localStorage.getItem('refresh_token') ? 'Exists' : 'Missing')
     loadPackages()
-  }, [])
+  }, [user])
 
   const loadPackages = async () => {
     try {
@@ -27,6 +34,30 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
         setError(response.error)
       } else if (response.data) {
         setPackages(response.data)
+        
+        // بررسی شرط ایجاد پکیج جدید
+        const hasActivePackage = response.data.some(pkg => pkg.is_active)
+        const hasDraftPackage = response.data.some(pkg => pkg.status === 'pending' && !pkg.is_complete)
+        const hasPendingPackage = response.data.some(pkg => pkg.status === 'pending' && pkg.is_complete)
+        
+        // اگر پکیج فعال دارد، بررسی کن که آیا کمتر از ۱۰ روز مانده
+        let canCreate = true
+        if (hasActivePackage) {
+          const activePackage = response.data.find(pkg => pkg.is_active)
+          if (activePackage && activePackage.end_date) {
+            const endDate = new Date(activePackage.end_date)
+            const today = new Date()
+            const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+            canCreate = daysLeft <= 10
+          }
+        }
+        
+        // اگر پکیج draft یا pending دارد، نمی‌تواند پکیج جدید بسازد
+        if (hasDraftPackage || hasPendingPackage) {
+          canCreate = false
+        }
+        
+        setCanCreatePackage(canCreate)
       }
     } catch (err) {
       setError('خطا در بارگذاری پکیج‌ها')
@@ -71,8 +102,74 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
     }
   }
 
+  const handleCreatePackage = async () => {
+    console.log('=== BUTTON CLICKED: handleCreatePackage called ===')
+    
+    try {
+      setLoading(true)
+      setError(null)
+      
+      console.log('=== DEBUG: Starting package creation ===')
+      console.log('User:', user)
+      console.log('User role:', (user as any)?.role)
+      console.log('User business profile:', (user as any)?.businessProfile)
+      console.log('API service authenticated:', apiService.isAuthenticated())
+      
+      // Skip user validation for testing
+      const packageData = {
+        business: 9, // Use known business ID for testing
+        is_active: false,
+        is_complete: false,
+        status: 'draft' as const,
+      }
+      
+      // Check if we have a valid token
+      const token = localStorage.getItem('access_token')
+      console.log('Local storage token:', token ? token.substring(0, 50) + '...' : 'No token')
+      
+      if (!token) {
+        setError('شما وارد نشده‌اید. لطفاً ابتدا وارد شوید.')
+        return
+      }
+
+      console.log('Creating package with data:', packageData)
+      
+      const response = await apiService.createPackage(packageData)
+      console.log('API response:', response)
+      console.log('Response error:', response.error)
+      console.log('Response data:', response.data)
+      
+      if (response.error) {
+        console.error('API Error:', response.error)
+        setError(response.error)
+      } else if (response.data) {
+        console.log('Package created successfully with ID:', response.data.id)
+        // پکیج ایجاد شد، حالا modal را با ID پکیج باز کن
+        setEditingPackageId(response.data.id)
+        setShowCreateModal(true)
+        // لیست پکیج‌ها را به‌روزرسانی کن
+        loadPackages()
+      } else {
+        console.error('No data in response')
+        setError('پاسخ نامعتبر از سرور')
+      }
+    } catch (err) {
+      console.error('Exception in handleCreatePackage:', err)
+      setError('خطا در ایجاد پکیج: ' + (err as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEditPackage = (packageId: number) => {
+    setEditingPackageId(packageId)
+    setShowCreateModal(true)
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'draft':
+        return 'text-blue-600 bg-blue-100'
       case 'approved':
         return 'text-green-600 bg-green-100'
       case 'pending':
@@ -86,6 +183,8 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case 'draft':
+        return 'پیش‌نویس'
       case 'approved':
         return 'تایید شده'
       case 'pending':
@@ -130,7 +229,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
           error={error}
           onDeletePackage={handleDeletePackage}
           onToggleActive={handleToggleActive}
-          onCreatePackage={() => setShowCreateModal(true)}
+          onCreatePackage={handleCreatePackage}
           getStatusColor={getStatusColor}
           getStatusText={getStatusText}
         />
@@ -172,8 +271,14 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
               </div>
               
               <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
+                onClick={handleCreatePackage}
+                disabled={!canCreatePackage || loading}
+                className={`px-6 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors ${
+                  canCreatePackage && !loading
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                }`}
+                title={!canCreatePackage ? 'شما پکیج فعال یا در حال بررسی دارید' : ''}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -228,7 +333,13 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                     </thead>
                     <tbody className={`${isDark ? 'bg-slate-800' : 'bg-white'} divide-y ${isDark ? 'divide-slate-600' : 'divide-gray-200'}`}>
                       {packages.map((pkg) => (
-                        <tr key={pkg.id} className={`${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'}`}>
+                        <tr 
+                          key={pkg.id} 
+                          className={`${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'} ${
+                            !pkg.is_complete ? 'cursor-pointer' : ''
+                          }`}
+                          onClick={() => !pkg.is_complete && handleEditPackage(pkg.id)}
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10">
@@ -304,15 +415,20 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
       </div>
 
       {/* Create Package Modal */}
-      {showCreateModal && (
-        <CreatePackageModal
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={() => {
-            setShowCreateModal(false)
-            loadPackages()
-          }}
-        />
-      )}
+        {showCreateModal && (
+          <CreatePackageModal
+            onClose={() => {
+              setShowCreateModal(false)
+              setEditingPackageId(undefined)
+            }}
+            onSuccess={() => {
+              setShowCreateModal(false)
+              setEditingPackageId(undefined)
+              loadPackages()
+            }}
+            editingPackageId={editingPackageId}
+          />
+        )}
     </>
   )
 }
@@ -497,13 +613,16 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
 interface CreatePackageModalProps {
   onClose: () => void
   onSuccess: () => void
+  editingPackageId?: number
 }
 
-const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSuccess }) => {
+const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSuccess, editingPackageId }) => {
   const { isDark } = useTheme()
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [packageId] = useState<number | null>(editingPackageId || null)
+  // const [isEditing] = useState(!!editingPackageId)
   
   const [formData, setFormData] = useState({
     // Step 1: تخفیف
@@ -526,6 +645,70 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     // Step 4: تایید
     duration: '',
   })
+
+  // بارگذاری داده‌های پکیج موجود
+  useEffect(() => {
+    if (editingPackageId) {
+      loadPackageData(editingPackageId)
+    }
+  }, [editingPackageId])
+
+  const loadPackageData = async (pkgId: number) => {
+    try {
+      setLoading(true)
+      const response = await apiService.getPackageStatus(pkgId)
+      
+      if (response.data) {
+        const data = response.data
+        
+        // بارگذاری تخفیفات
+        if (data.discount_all) {
+          setFormData(prev => ({
+            ...prev,
+            globalDiscountPercentage: data.discount_all!.toString()
+          }))
+        }
+        
+        if (data.specific_discount) {
+          setFormData(prev => ({
+            ...prev,
+            showSpecificDiscount: true,
+            specificTitle: data.specific_discount!.title,
+            specificDescription: data.specific_discount!.description || '',
+            specificPercentage: data.specific_discount!.percentage.toString()
+          }))
+        }
+        
+        // بارگذاری هدیه
+        if (data.elite_gift) {
+          const gift = data.elite_gift!
+          setFormData(prev => ({
+            ...prev,
+            giftDescription: gift.gift,
+            giftType: gift.amount ? 'amount' : 'count',
+            giftAmount: gift.amount ? gift.amount.toString() : '',
+            giftCount: gift.count ? gift.count.toString() : ''
+          }))
+        }
+        
+        // بارگذاری VIP
+        if (data.vip_experiences && data.vip_experiences.length > 0) {
+          const oneStar = data.vip_experiences.filter(v => v.vip_type === 'VIP').map(v => v.id.toString())
+          const twoStar = data.vip_experiences.filter(v => v.vip_type === 'VIP+').map(v => v.id.toString())
+          
+          setFormData(prev => ({
+            ...prev,
+            oneStarFeatures: oneStar,
+            twoStarFeatures: twoStar
+          }))
+        }
+      }
+    } catch (err) {
+      setError('خطا در بارگذاری داده‌های پکیج')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const steps = [
     { id: 1, title: 'تخفیف', icon: '💰' },
@@ -559,9 +742,61 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     }))
   }
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep < 4) {
-      setCurrentStep(currentStep + 1)
+      // ذخیره مرحله فعلی
+      let saved = false
+      switch (currentStep) {
+        case 1:
+          // اعتبارسنجی تخفیف کلی
+          if (!formData.globalDiscountPercentage) {
+            setError('درصد تخفیف کلی الزامی است.')
+            return
+          }
+          // اعتبارسنجی تخفیف اختصاصی
+          if (formData.showSpecificDiscount && formData.specificTitle && !formData.specificPercentage) {
+            setError('درصد تخفیف اختصاصی الزامی است.')
+            return
+          }
+          if (formData.showSpecificDiscount && formData.specificTitle && formData.specificPercentage) {
+            const globalPercent = parseFloat(formData.globalDiscountPercentage)
+            const specificPercent = parseFloat(formData.specificPercentage)
+            if (specificPercent <= globalPercent) {
+              setError('درصد تخفیف اختصاصی باید از تخفیف کلی بیشتر باشد.')
+              return
+            }
+          }
+          saved = await saveDiscounts()
+          break
+        case 2:
+          // اعتبارسنجی هدیه
+          if (!formData.giftDescription) {
+            setError('فیلد هدیه الزامی است.')
+            return
+          }
+          if (formData.giftType === 'amount' && !formData.giftAmount) {
+            setError('مبلغ کل خرید الزامی است.')
+            return
+          }
+          if (formData.giftType === 'count' && !formData.giftCount) {
+            setError('تعداد خرید الزامی است.')
+            return
+          }
+          saved = await saveLoyalGift()
+          break
+        case 3:
+          // اعتبارسنجی VIP
+          if (formData.oneStarFeatures.length === 0) {
+            setError('حداقل یک گزینه از گروه VIP الزامی است.')
+            return
+          }
+          saved = await saveVip()
+          break
+      }
+      
+      if (saved) {
+        setCurrentStep(currentStep + 1)
+      }
     }
   }
 
@@ -571,64 +806,129 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     }
   }
 
-  const handleSubmit = async () => {
+
+  // ذخیره مرحله تخفیفات
+  const saveDiscounts = async () => {
+    if (!packageId) return false
+    
     try {
       setLoading(true)
       setError(null)
       
-      // Calculate dates based on duration
-      const startDate = new Date()
-      const endDate = new Date()
+      const discountAll = { percentage: parseFloat(formData.globalDiscountPercentage) }
+      const specificDiscount = formData.showSpecificDiscount && formData.specificTitle ? {
+        title: formData.specificTitle,
+        description: formData.specificDescription,
+        percentage: parseFloat(formData.specificPercentage)
+      } : undefined
       
-      switch (formData.duration) {
-        case '3months':
-          endDate.setMonth(endDate.getMonth() + 3)
-          break
-        case '6months':
-          endDate.setMonth(endDate.getMonth() + 6)
-          break
-        case '9months':
-          endDate.setMonth(endDate.getMonth() + 9)
-          break
-        case '12months':
-          endDate.setMonth(endDate.getMonth() + 12)
-          break
-      }
-
-      const packageData = {
-        business: 1, // This should come from the user's business profile
-        start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0],
-        status: 'pending' as const,
-        is_complete: false,
-        is_active: false,
-        discount_all: formData.globalDiscountPercentage ? {
-          percentage: parseFloat(formData.globalDiscountPercentage),
-          score: 1
-        } : undefined,
-            specific_discount: formData.showSpecificDiscount && formData.specificTitle ? {
-              title: formData.specificTitle,
-              description: formData.specificDescription,
-              percentage: parseFloat(formData.specificPercentage),
-              score: 1
-            } : undefined,
-        elite_gift: formData.giftDescription ? {
-          gift: formData.giftDescription,
-          amount: formData.giftType === 'amount' && formData.giftAmount ? parseFloat(formData.giftAmount) : undefined,
-          count: formData.giftType === 'count' && formData.giftCount ? parseInt(formData.giftCount) : undefined,
-          score: 1
-        } : undefined,
-      }
-
-      const response = await apiService.createPackage(packageData)
+      const response = await apiService.savePackageDiscounts(
+        packageId, 
+        discountAll, 
+        specificDiscount, 
+        !formData.showSpecificDiscount
+      )
       
       if (response.error) {
         setError(response.error)
+        return false
+      }
+      return true
+    } catch (err) {
+      setError('خطا در ذخیره تخفیفات')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ذخیره مرحله هدیه
+  const saveLoyalGift = async () => {
+    if (!packageId) return false
+    
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const amount = formData.giftType === 'amount' && formData.giftAmount ? parseFloat(formData.giftAmount) : undefined
+      const count = formData.giftType === 'count' && formData.giftCount ? parseInt(formData.giftCount) : undefined
+      
+      const response = await apiService.savePackageLoyalGift(
+        packageId,
+        formData.giftDescription,
+        amount,
+        count
+      )
+      
+      if (response.error) {
+        setError(response.error)
+        return false
+      }
+      return true
+    } catch (err) {
+      setError('خطا در ذخیره هدیه')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ذخیره مرحله VIP
+  const saveVip = async () => {
+    if (!packageId) return false
+    
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const allSelectedIds = [...formData.oneStarFeatures, ...formData.twoStarFeatures].map(id => parseInt(id))
+      
+      const response = await apiService.savePackageVip(packageId, allSelectedIds)
+      
+      if (response.error) {
+        setError(response.error)
+        return false
+      }
+      return true
+    } catch (err) {
+      setError('خطا در ذخیره VIP')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // تکمیل پکیج
+  const finalizePackage = async () => {
+    if (!packageId) return false
+    
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const durationMap: { [key: string]: number } = {
+        '3months': 3,
+        '6months': 6,
+        '9months': 9,
+        '12months': 12
+      }
+      
+      const response = await apiService.finalizePackage(
+        packageId,
+        durationMap[formData.duration],
+        true
+      )
+      
+      if (response.error) {
+        setError(response.error)
+        return false
       } else {
         onSuccess()
+        return true
       }
     } catch (err) {
-      setError('خطا در ایجاد پکیج')
+      setError('خطا در تکمیل پکیج')
+      return false
     } finally {
       setLoading(false)
     }
@@ -1039,22 +1339,23 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
               انصراف
             </button>
             
-            {currentStep < 4 ? (
-              <button
-                onClick={nextStep}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
-              >
-                بعدی
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !formData.duration}
-                className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
-              >
-                {loading ? 'در حال ایجاد...' : 'ایجاد پکیج'}
-              </button>
-            )}
+                {currentStep < 4 ? (
+                  <button
+                    onClick={nextStep}
+                    disabled={loading}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+                  >
+                    {loading ? 'در حال ذخیره...' : 'بعدی'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={finalizePackage}
+                    disabled={loading || !formData.duration}
+                    className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+                  >
+                    {loading ? 'در حال تکمیل...' : 'تکمیل پکیج'}
+                  </button>
+                )}
           </div>
         </div>
       </div>

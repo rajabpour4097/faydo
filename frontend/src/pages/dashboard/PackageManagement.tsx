@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
 import { apiService, Package } from '../../services/api'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
@@ -8,7 +7,6 @@ import { useTheme } from '../../contexts/ThemeContext'
 interface PackageManagementProps {}
 
 export const PackageManagement: React.FC<PackageManagementProps> = () => {
-  const { user } = useAuth()
   const { isDark } = useTheme()
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
@@ -502,29 +500,125 @@ interface CreatePackageModalProps {
 }
 
 const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSuccess }) => {
-  const [formData, setFormData] = useState({
-    start_date: '',
-    end_date: '',
-    is_active: false,
-  })
+  const { isDark } = useTheme()
+  const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  
+  const [formData, setFormData] = useState({
+    // Step 1: تخفیف
+    globalDiscountPercentage: '',
+    specificTitle: '',
+    specificDescription: '',
+    specificPercentage: '',
     
+    // Step 2: هدیه
+    giftAmount: '',
+    giftCount: '',
+    giftDescription: '',
+    
+    // Step 3: VIP
+    oneStarFeatures: [] as string[],
+    twoStarFeatures: [] as string[],
+    
+    // Step 4: تایید
+    duration: '',
+  })
+
+  const steps = [
+    { id: 1, title: 'تخفیف', icon: '💰' },
+    { id: 2, title: 'هدیه', icon: '🎁' },
+    { id: 3, title: 'VIP', icon: '⭐' },
+    { id: 4, title: 'تایید', icon: '✅' },
+  ]
+
+  const vipOptions = {
+    oneStar: ['تخفیف ویژه', 'اولویت خدمات', 'اطلاع‌رسانی ویژه'],
+    twoStar: ['محصولات انحصاری', 'پشتیبانی 24/7', 'ارسال رایگان']
+  }
+
+  const durationOptions = [
+    { value: '3months', label: '3 ماهه' },
+    { value: '6months', label: '6 ماهه' },
+    { value: '9months', label: '9 ماهه' },
+    { value: '12months', label: '12 ماهه' }
+  ]
+
+  const handleInputChange = (name: string, value: any) => {
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleCheckboxChange = (name: string, value: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked 
+        ? [...prev[name as keyof typeof prev] as string[], value]
+        : (prev[name as keyof typeof prev] as string[]).filter(item => item !== value)
+    }))
+  }
+
+  const nextStep = () => {
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const handleSubmit = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      // For now, we'll create a basic package
-      // In a real implementation, you'd need to get the business ID from the user's profile
-      const response = await apiService.createPackage({
+      // Calculate dates based on duration
+      const startDate = new Date()
+      const endDate = new Date()
+      
+      switch (formData.duration) {
+        case '3months':
+          endDate.setMonth(endDate.getMonth() + 3)
+          break
+        case '6months':
+          endDate.setMonth(endDate.getMonth() + 6)
+          break
+        case '9months':
+          endDate.setMonth(endDate.getMonth() + 9)
+          break
+        case '12months':
+          endDate.setMonth(endDate.getMonth() + 12)
+          break
+      }
+
+      const packageData = {
         business: 1, // This should come from the user's business profile
-        ...formData,
-        status: 'pending',
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        status: 'pending' as const,
         is_complete: false,
-      })
+        is_active: false,
+        discount_all: formData.globalDiscountPercentage ? {
+          percentage: parseFloat(formData.globalDiscountPercentage),
+          score: 1
+        } : undefined,
+        specific_discount: formData.specificTitle ? {
+          title: formData.specificTitle,
+          description: formData.specificDescription,
+          percentage: parseFloat(formData.specificPercentage),
+          score: 1
+        } : undefined,
+        elite_gift: formData.giftDescription ? {
+          gift: formData.giftDescription,
+          amount: formData.giftAmount ? parseFloat(formData.giftAmount) : undefined,
+          count: formData.giftCount ? parseInt(formData.giftCount) : undefined,
+          score: 1
+        } : undefined,
+      }
+
+      const response = await apiService.createPackage(packageData)
       
       if (response.error) {
         setError(response.error)
@@ -538,81 +632,324 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     }
   }
 
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                تخفیف کلی (%)
+              </label>
+              <input
+                type="number"
+                value={formData.globalDiscountPercentage}
+                onChange={(e) => handleInputChange('globalDiscountPercentage', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: 20"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                عنوان تخفیف اختصاصی
+              </label>
+              <input
+                type="text"
+                value={formData.specificTitle}
+                onChange={(e) => handleInputChange('specificTitle', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: تخفیف ویژه محصولات جدید"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                توضیحات تخفیف
+              </label>
+              <textarea
+                value={formData.specificDescription}
+                onChange={(e) => handleInputChange('specificDescription', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={2}
+                placeholder="توضیحات بیشتر در مورد تخفیف..."
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                درصد تخفیف اختصاصی
+              </label>
+              <input
+                type="number"
+                value={formData.specificPercentage}
+                onChange={(e) => handleInputChange('specificPercentage', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: 30"
+              />
+            </div>
+          </div>
+        )
+
+      case 2:
+        return (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                مبلغ کل خرید
+              </label>
+              <input
+                type="number"
+                value={formData.giftAmount}
+                onChange={(e) => handleInputChange('giftAmount', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: 1000000"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                تعداد خرید
+              </label>
+              <input
+                type="number"
+                value={formData.giftCount}
+                onChange={(e) => handleInputChange('giftCount', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: 5"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                هدیه
+              </label>
+              <input
+                type="text"
+                value={formData.giftDescription}
+                onChange={(e) => handleInputChange('giftDescription', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: کارت هدیه 100 هزار تومانی"
+              />
+            </div>
+          </div>
+        )
+
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">VIP</h3>
+              <div className="space-y-2">
+                {vipOptions.oneStar.map((option) => (
+                  <label key={option} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.oneStarFeatures.includes(option)}
+                      onChange={(e) => handleCheckboxChange('oneStarFeatures', option, e.target.checked)}
+                      className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-xs font-medium text-gray-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">VIP+</h3>
+              <div className="space-y-2">
+                {vipOptions.twoStar.map((option) => (
+                  <label key={option} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.twoStarFeatures.includes(option)}
+                      onChange={(e) => handleCheckboxChange('twoStarFeatures', option, e.target.checked)}
+                      className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-xs font-medium text-gray-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+
+      case 4:
+        return (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                مدت زمان طرح
+              </label>
+              <select
+                value={formData.duration}
+                onChange={(e) => handleInputChange('duration', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">انتخاب کنید...</option>
+                {durationOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Summary */}
+            <div className="bg-gray-50 rounded-lg p-3">
+              <h3 className="text-sm font-medium text-gray-900 mb-2">خلاصه پکیج</h3>
+              <div className="space-y-1 text-xs text-gray-600">
+                {formData.globalDiscountPercentage && (
+                  <p>تخفیف کلی: {formData.globalDiscountPercentage}%</p>
+                )}
+                {formData.specificTitle && (
+                  <p>تخفیف اختصاصی: {formData.specificTitle} ({formData.specificPercentage}%)</p>
+                )}
+                {formData.giftDescription && (
+                  <p>هدیه: {formData.giftDescription}</p>
+                )}
+                {formData.oneStarFeatures.length > 0 && (
+                  <p>ویژگی‌های VIP: {formData.oneStarFeatures.join(', ')}</p>
+                )}
+                {formData.twoStarFeatures.length > 0 && (
+                  <p>ویژگی‌های VIP+: {formData.twoStarFeatures.join(', ')}</p>
+                )}
+                {formData.duration && (
+                  <p>مدت زمان: {durationOptions.find(opt => opt.value === formData.duration)?.label}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">ایجاد پکیج جدید</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
+      <div className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-lg w-full max-w-lg max-h-[95vh] overflow-y-auto`}>
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+          <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            ایجاد پکیج جدید
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className={`${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
+        {/* Progress Steps */}
+        <div className="p-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex flex-col items-center">
+                <div className={`text-xs font-medium mb-1 ${
+                  currentStep >= step.id 
+                    ? isDark ? 'text-white' : 'text-gray-900' 
+                    : isDark ? 'text-slate-400' : 'text-gray-500'
+                }`}>
+                  {step.title}
+                </div>
+                <div className={`flex items-center justify-center w-7 h-7 rounded-full ${
+                  currentStep >= step.id 
+                    ? 'bg-blue-600 text-white' 
+                    : isDark 
+                      ? 'bg-slate-700 text-slate-400' 
+                      : 'bg-gray-200 text-gray-500'
+                }`}>
+                  {currentStep > step.id ? (
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : currentStep === step.id ? (
+                    <span className="text-xs font-bold">{step.id}</span>
+                  ) : (
+                    <span className="text-xs">{step.icon}</span>
+                  )}
+                </div>
+                {index < steps.length - 1 && (
+                  <div className={`w-20 h-0.5 mx-2 mt-3.5 ${
+                    currentStep > step.id 
+                      ? 'bg-blue-600' 
+                      : isDark ? 'bg-slate-600' : 'bg-gray-300'
+                  }`} />
+                )}
+                {index === steps.length - 1 && currentStep >= step.id && (
+                  <div className={`w-8 h-0.5 mx-2 mt-3.5 ${
+                    currentStep > step.id 
+                      ? 'bg-blue-600' 
+                      : isDark ? 'bg-slate-600' : 'bg-gray-300'
+                  }`} />
+                )}
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              تاریخ شروع
-            </label>
-            <input
-              type="date"
-              value={formData.start_date}
-              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        {/* Content */}
+        <div className="p-4">
+          {error && (
+            <div className="mb-3 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              تاریخ پایان
-            </label>
-            <input
-              type="date"
-              value={formData.end_date}
-              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {renderStepContent()}
+        </div>
 
-          <div className="mb-6">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <span className="text-sm font-medium text-gray-700">فعال</span>
-            </label>
-          </div>
-
-          <div className="flex justify-end space-x-3 space-x-reverse">
+        {/* Footer */}
+        <div className="flex justify-between items-center p-4 border-t border-gray-200">
+          <button
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className={`px-3 py-2 rounded-lg transition-colors text-sm ${
+              currentStep === 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : isDark
+                  ? 'bg-slate-700 text-white hover:bg-slate-600'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            قبلی
+          </button>
+          
+          <div className="flex space-x-2 space-x-reverse">
             <button
-              type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className={`px-3 py-2 rounded-lg transition-colors text-sm ${
+                isDark
+                  ? 'bg-slate-700 text-white hover:bg-slate-600'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
             >
               انصراف
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
-            >
-              {loading ? 'در حال ایجاد...' : 'ایجاد پکیج'}
-            </button>
+            
+            {currentStep < 4 ? (
+              <button
+                onClick={nextStep}
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+              >
+                بعدی
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !formData.duration}
+                className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+              >
+                {loading ? 'در حال ایجاد...' : 'ایجاد پکیج'}
+              </button>
+            )}
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )

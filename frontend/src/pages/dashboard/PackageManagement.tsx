@@ -511,6 +511,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     specificTitle: '',
     specificDescription: '',
     specificPercentage: '',
+    showSpecificDiscount: false,
     
     // Step 2: هدیه
     giftAmount: '',
@@ -604,12 +605,12 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
           percentage: parseFloat(formData.globalDiscountPercentage),
           score: 1
         } : undefined,
-        specific_discount: formData.specificTitle ? {
-          title: formData.specificTitle,
-          description: formData.specificDescription,
-          percentage: parseFloat(formData.specificPercentage),
-          score: 1
-        } : undefined,
+            specific_discount: formData.showSpecificDiscount && formData.specificTitle ? {
+              title: formData.specificTitle,
+              description: formData.specificDescription,
+              percentage: parseFloat(formData.specificPercentage),
+              score: 1
+            } : undefined,
         elite_gift: formData.giftDescription ? {
           gift: formData.giftDescription,
           amount: formData.giftAmount ? parseFloat(formData.giftAmount) : undefined,
@@ -650,44 +651,73 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
               />
             </div>
             
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                عنوان تخفیف اختصاصی
-              </label>
-              <input
-                type="text"
-                value={formData.specificTitle}
-                onChange={(e) => handleInputChange('specificTitle', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="مثال: تخفیف ویژه محصولات جدید"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                توضیحات تخفیف
-              </label>
-              <textarea
-                value={formData.specificDescription}
-                onChange={(e) => handleInputChange('specificDescription', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={2}
-                placeholder="توضیحات بیشتر در مورد تخفیف..."
-              />
-            </div>
-            
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                درصد تخفیف اختصاصی
-              </label>
-              <input
-                type="number"
-                value={formData.specificPercentage}
-                onChange={(e) => handleInputChange('specificPercentage', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="مثال: 30"
-              />
-            </div>
+            {!formData.showSpecificDiscount ? (
+              <button
+                onClick={() => handleInputChange('showSpecificDiscount', true)}
+                className="w-full flex items-center justify-center space-x-2 space-x-reverse px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="text-sm font-medium">ایجاد تخفیف اختصاصی</span>
+              </button>
+            ) : (
+              <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-900">تخفیف اختصاصی</h3>
+                  <button
+                    onClick={() => {
+                      handleInputChange('showSpecificDiscount', false)
+                      handleInputChange('specificTitle', '')
+                      handleInputChange('specificDescription', '')
+                      handleInputChange('specificPercentage', '')
+                    }}
+                    className="text-red-600 hover:text-red-800 text-sm"
+                  >
+                    حذف تخفیف اختصاصی ✕
+                  </button>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    عنوان تخفیف اختصاصی
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.specificTitle}
+                    onChange={(e) => handleInputChange('specificTitle', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="مثال: تخفیف ویژه محصولات جدید"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    توضیحات تخفیف
+                  </label>
+                  <textarea
+                    value={formData.specificDescription}
+                    onChange={(e) => handleInputChange('specificDescription', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={2}
+                    placeholder="توضیحات بیشتر در مورد تخفیف..."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    درصد تخفیف اختصاصی
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.specificPercentage}
+                    onChange={(e) => handleInputChange('specificPercentage', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="مثال: 30"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )
 
@@ -798,26 +828,26 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
             {/* Summary */}
             <div className="bg-gray-50 rounded-lg p-3">
               <h3 className="text-sm font-medium text-gray-900 mb-2">خلاصه پکیج</h3>
-              <div className="space-y-1 text-xs text-gray-600">
-                {formData.globalDiscountPercentage && (
-                  <p>تخفیف کلی: {formData.globalDiscountPercentage}%</p>
-                )}
-                {formData.specificTitle && (
-                  <p>تخفیف اختصاصی: {formData.specificTitle} ({formData.specificPercentage}%)</p>
-                )}
-                {formData.giftDescription && (
-                  <p>هدیه: {formData.giftDescription}</p>
-                )}
-                {formData.oneStarFeatures.length > 0 && (
-                  <p>ویژگی‌های VIP: {formData.oneStarFeatures.join(', ')}</p>
-                )}
-                {formData.twoStarFeatures.length > 0 && (
-                  <p>ویژگی‌های VIP+: {formData.twoStarFeatures.join(', ')}</p>
-                )}
-                {formData.duration && (
-                  <p>مدت زمان: {durationOptions.find(opt => opt.value === formData.duration)?.label}</p>
-                )}
-              </div>
+                  <div className="space-y-1 text-xs text-gray-600">
+                    {formData.globalDiscountPercentage && (
+                      <p>تخفیف کلی: {formData.globalDiscountPercentage}%</p>
+                    )}
+                    {formData.showSpecificDiscount && formData.specificTitle && (
+                      <p>تخفیف اختصاصی: {formData.specificTitle} ({formData.specificPercentage}%)</p>
+                    )}
+                    {formData.giftDescription && (
+                      <p>هدیه: {formData.giftDescription}</p>
+                    )}
+                    {formData.oneStarFeatures.length > 0 && (
+                      <p>ویژگی‌های VIP: {formData.oneStarFeatures.join(', ')}</p>
+                    )}
+                    {formData.twoStarFeatures.length > 0 && (
+                      <p>ویژگی‌های VIP+: {formData.twoStarFeatures.join(', ')}</p>
+                    )}
+                    {formData.duration && (
+                      <p>مدت زمان: {durationOptions.find(opt => opt.value === formData.duration)?.label}</p>
+                    )}
+                  </div>
             </div>
           </div>
         )

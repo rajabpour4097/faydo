@@ -284,8 +284,8 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
               </div>
             )}
 
-            {/* Action Bar */}
-            <div className="mb-6 flex justify-between items-center">
+            {/* Stats Bar */}
+            <div className="mb-6">
               <div className="flex items-center space-x-4 space-x-reverse">
                 <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                   تعداد کل: {packages.length}
@@ -297,22 +297,6 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                   تایید شده: {packages.filter(pkg => pkg.status === 'approved').length}
                 </span>
               </div>
-              
-              <button
-                onClick={handleCreatePackage}
-                disabled={!canCreatePackage || loading}
-                className={`px-6 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors ${
-                  canCreatePackage && !loading
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                }`}
-                title={!canCreatePackage ? 'شما پکیج پیش‌نویس یا در حال بررسی دارید' : ''}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>ایجاد پکیج جدید</span>
-              </button>
             </div>
 
             {/* Packages List */}
@@ -438,6 +422,34 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
             )}
           </div>
         </DashboardLayout>
+
+        {/* Floating Action Button - فقط زمانی که پکیج وجود دارد */}
+        {packages.length > 0 && (
+          <button
+            onClick={handleCreatePackage}
+            disabled={!canCreatePackage || loading}
+            className={`fixed bottom-8 right-6 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-40 ${
+              canCreatePackage && !loading
+                ? 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-110 shadow-blue-500/25'
+                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+            }`}
+            title={
+              !canCreatePackage 
+                ? (packageBlockReason === 'draft' 
+                    ? 'شما پکیج پیش‌نویس دارید' 
+                    : packageBlockReason === 'pending'
+                    ? 'شما پکیج در حال بررسی دارید'
+                    : packageBlockReason === 'active'
+                    ? 'پکیج فعال شما بیش از ۱۰ روز باقی‌مانده دارد'
+                    : 'امکان ایجاد پکیج جدید وجود ندارد')
+                : 'ایجاد پکیج جدید'
+            }
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Create Package Modal */}
@@ -523,16 +535,6 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
           </div>
         </div>
 
-        {/* Create Package Button */}
-        <button
-          onClick={onCreatePackage}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl flex items-center justify-center space-x-2 space-x-reverse transition-colors"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="text-lg font-medium">ایجاد پکیج جدید</span>
-        </button>
 
         {/* Packages List */}
         {packages.length === 0 ? (
@@ -634,6 +636,18 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
         {/* Bottom Spacing for Navigation */}
         <div className="h-4"></div>
       </div>
+
+      {/* Floating Action Button - فقط زمانی که پکیج وجود دارد */}
+      {packages.length > 0 && (
+        <button
+          onClick={onCreatePackage}
+          className="fixed bottom-24 right-4 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-40 hover:scale-110 shadow-blue-500/25"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      )}
     </MobileDashboardLayout>
   )
 }

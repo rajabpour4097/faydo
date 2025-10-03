@@ -199,4 +199,4 @@ class VipExperience(BaseModel):
         verbose_name_plural = "انتخاب‌های VIP"
 
     def __str__(self):
-        return f"{self.package} - {self.vip_level}"
+        return f"{self.package} - {self.vip_experience_category}"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { apiService, Package } from '../../services/api'
+import { apiService, Package, VipExperienceCategory } from '../../services/api'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -16,12 +16,14 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [canCreatePackage, setCanCreatePackage] = useState(true)
   const [editingPackageId, setEditingPackageId] = useState<number | undefined>(undefined)
+  const [vipExperiences, setVipExperiences] = useState<VipExperienceCategory[]>([])
 
   useEffect(() => {
     console.log('PackageManagement mounted, user:', user) // Debug log
     console.log('Local storage access token:', localStorage.getItem('access_token') ? 'Exists' : 'Missing')
     console.log('Local storage refresh token:', localStorage.getItem('refresh_token') ? 'Exists' : 'Missing')
     loadPackages()
+    loadVipExperiences()
   }, [user])
 
   const loadPackages = async () => {
@@ -72,6 +74,27 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
     }
   }
 
+  const loadVipExperiences = async () => {
+    try {
+      console.log('Loading VIP experiences...')
+      const response = await apiService.getVipExperienceCategories()
+      console.log('VIP experiences response:', response)
+      
+      if (response.error) {
+        console.error('Error loading VIP experiences:', response.error)
+        setVipExperiences([]) // Set empty array on error
+      } else if (response.data) {
+        console.log('VIP experiences loaded:', response.data)
+        setVipExperiences(response.data)
+      } else {
+        console.log('No data in VIP experiences response')
+        setVipExperiences([])
+      }
+    } catch (err) {
+      console.error('Exception loading VIP experiences:', err)
+      setVipExperiences([]) // Set empty array on exception
+    }
+  }
 
   const handleCreatePackage = async () => {
     console.log('=== BUTTON CLICKED: handleCreatePackage called ===')
@@ -402,6 +425,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
               loadPackages()
             }}
             editingPackageId={editingPackageId}
+            vipExperiences={vipExperiences}
           />
         )}
     </>
@@ -591,9 +615,10 @@ interface CreatePackageModalProps {
   onClose: () => void
   onSuccess: () => void
   editingPackageId?: number
+  vipExperiences: VipExperienceCategory[]
 }
 
-const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSuccess, editingPackageId }) => {
+const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSuccess, editingPackageId, vipExperiences }) => {
   const { isDark } = useTheme()
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -694,10 +719,6 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     { id: 4, title: 'تایید', icon: '✅' },
   ]
 
-  const vipOptions = {
-    oneStar: ['تخفیف ویژه', 'اولویت خدمات', 'اطلاع‌رسانی ویژه'],
-    twoStar: ['محصولات انحصاری', 'پشتیبانی 24/7', 'ارسال رایگان']
-  }
 
   const durationOptions = [
     { value: '3months', label: '3 ماهه' },
@@ -895,7 +916,9 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
       setLoading(true)
       setError(null)
       
-      const allSelectedIds = [...formData.oneStarFeatures, ...formData.twoStarFeatures].map(id => parseInt(id))
+      const allSelectedIds = [...formData.oneStarFeatures, ...formData.twoStarFeatures]
+        .map(id => parseInt(id))
+        .filter(id => !isNaN(id))
       
       const response = await apiService.savePackageVip(packageId, allSelectedIds)
       
@@ -1149,34 +1172,58 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-3">VIP</h3>
               <div className="space-y-2">
-                {vipOptions.oneStar.map((option) => (
-                  <label key={option} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.oneStarFeatures.includes(option)}
-                      onChange={(e) => handleCheckboxChange('oneStarFeatures', option, e.target.checked)}
-                      className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-xs font-medium text-gray-700">{option}</span>
-                  </label>
-                ))}
+                {vipExperiences && vipExperiences.length > 0 ? (
+                  vipExperiences.filter(exp => exp.vip_type === 'VIP').map((experience) => (
+                    <label key={experience.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.oneStarFeatures.includes(experience.id.toString())}
+                        onChange={(e) => handleCheckboxChange('oneStarFeatures', experience.id.toString(), e.target.checked)}
+                        className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-700">{experience.name}</span>
+                        {experience.description && (
+                          <span className="text-xs text-gray-500">{experience.description}</span>
+                        )}
+                      </div>
+                    </label>
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-500">در حال بارگذاری...</p>
+                )}
+                {vipExperiences && vipExperiences.filter(exp => exp.vip_type === 'VIP').length === 0 && (
+                  <p className="text-xs text-gray-500">هیچ گزینه VIP برای دسته‌بندی کسب و کار شما تعریف نشده است.</p>
+                )}
               </div>
             </div>
             
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-3">VIP+</h3>
               <div className="space-y-2">
-                {vipOptions.twoStar.map((option) => (
-                  <label key={option} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.twoStarFeatures.includes(option)}
-                      onChange={(e) => handleCheckboxChange('twoStarFeatures', option, e.target.checked)}
-                      className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-xs font-medium text-gray-700">{option}</span>
-                  </label>
-                ))}
+                {vipExperiences && vipExperiences.length > 0 ? (
+                  vipExperiences.filter(exp => exp.vip_type === 'VIP+').map((experience) => (
+                    <label key={experience.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.twoStarFeatures.includes(experience.id.toString())}
+                        onChange={(e) => handleCheckboxChange('twoStarFeatures', experience.id.toString(), e.target.checked)}
+                        className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-gray-700">{experience.name}</span>
+                        {experience.description && (
+                          <span className="text-xs text-gray-500">{experience.description}</span>
+                        )}
+                      </div>
+                    </label>
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-500">در حال بارگذاری...</p>
+                )}
+                {vipExperiences && vipExperiences.filter(exp => exp.vip_type === 'VIP+').length === 0 && (
+                  <p className="text-xs text-gray-500">هیچ گزینه VIP+ برای دسته‌بندی کسب و کار شما تعریف نشده است.</p>
+                )}
               </div>
             </div>
           </div>
@@ -1226,10 +1273,16 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                       </p>
                     )}
                     {formData.oneStarFeatures.length > 0 && (
-                      <p>ویژگی‌های VIP: {formData.oneStarFeatures.join(', ')}</p>
+                      <p>ویژگی‌های VIP: {formData.oneStarFeatures.map(id => {
+                        const exp = vipExperiences?.find(e => e.id.toString() === id)
+                        return exp ? exp.name : id
+                      }).join(', ')}</p>
                     )}
                     {formData.twoStarFeatures.length > 0 && (
-                      <p>ویژگی‌های VIP+: {formData.twoStarFeatures.join(', ')}</p>
+                      <p>ویژگی‌های VIP+: {formData.twoStarFeatures.map(id => {
+                        const exp = vipExperiences?.find(e => e.id.toString() === id)
+                        return exp ? exp.name : id
+                      }).join(', ')}</p>
                     )}
                     {formData.duration && (
                       <p>مدت زمان: {durationOptions.find(opt => opt.value === formData.duration)?.label}</p>

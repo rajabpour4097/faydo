@@ -83,6 +83,14 @@ export interface AuthTokens {
 }
 
 // Package related interfaces
+export interface VipExperienceCategory {
+  id: number
+  vip_type: 'VIP' | 'VIP+'
+  category: number
+  name: string
+  description?: string
+}
+
 export interface Package {
   id: number
   business_name: string
@@ -584,17 +592,6 @@ class ApiService {
     })
   }
 
-  async getVipExperienceCategories(): Promise<ApiResponse<VipExperienceCategory[]>> {
-    const resp = await this.request<any>('/packages/vip-experience-categories/')
-    if (resp.data) {
-      if (Array.isArray(resp.data)) {
-        return { data: resp.data as VipExperienceCategory[] }
-      } else if (Array.isArray(resp.data.results)) {
-        return { data: resp.data.results as VipExperienceCategory[] }
-      }
-    }
-    return resp
-  }
 
   async getComments(contentTypeId: number, objectId: number): Promise<ApiResponse<Comment[]>> {
     const resp = await this.request<any>(`/packages/comments/?content_type_id=${contentTypeId}&object_id=${objectId}`)
@@ -681,6 +678,17 @@ class ApiService {
     vip_experiences: { id: number; name: string; vip_type: string }[];
   }>> {
     return this.request(`/packages/packages/${packageId}/status/`)
+  }
+
+  async getVipExperienceCategories(): Promise<ApiResponse<VipExperienceCategory[]>> {
+    const response = await this.request<any>('/packages/vip-experiences/')
+    
+    // Handle paginated response
+    if (response.data && response.data.results) {
+      return { ...response, data: response.data.results }
+    }
+    
+    return response
   }
 }
 

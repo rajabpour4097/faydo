@@ -76,14 +76,17 @@ class Package(BaseModel):
         has_discount_all = hasattr(self, 'discount_all')
         has_elite_gift = hasattr(self, 'elite_gift')
         has_vip_experiences = self.experiences.exists()
-        has_dates = self.start_date and self.end_date
+        has_dates = bool(self.start_date and self.end_date)
         
-        return has_discount_all and has_elite_gift and has_vip_experiences and has_dates
+        return bool(has_discount_all and has_elite_gift and has_vip_experiences and has_dates)
     
     def save(self, *args, **kwargs):
         # بررسی کامل بودن قبل از ذخیره
         if self.pk:
             self.is_complete = self.check_completion()
+        else:
+            # برای packages جدید، is_complete را False تنظیم کن
+            self.is_complete = False
         super().save(*args, **kwargs)
 
 #Discount for products or services
@@ -178,7 +181,7 @@ class VipExperienceCategory(BaseModel):
         verbose_name_plural = "دسته‌بندی‌های VIP"
 
     def __str__(self):
-        return f"{self.get_star_level_display()} - {self.name}"
+        return f"{self.name} - {self.vip_type}"
 
 #Choose VIP Experience by business in every packages
 class VipExperience(BaseModel):

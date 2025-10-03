@@ -15,10 +15,10 @@ class PackageAdmin(admin.ModelAdmin):
 
 @admin.register(VipExperienceCategory)
 class VipExperienceCategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'vip_type', 'category', 'name', 'description')
-    search_fields = ('name', 'description')
+    list_display = ('id', 'vip_type', 'category', 'name')
+    search_fields = ('name',)
     list_filter = ('vip_type', 'category')
     list_per_page = 10
     list_display_links = ('id', 'vip_type')
-    list_editable = ('name', 'description')
+    list_editable = ('name',)
     list_filter = ('vip_type', 'category')

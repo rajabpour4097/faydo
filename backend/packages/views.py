@@ -431,11 +431,33 @@ class PackageViewSet(viewsets.ModelViewSet):
 
 class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for reading VIP experience categories
+    ViewSet for reading VIP experience categories filtered by business category
     """
-    queryset = VipExperienceCategory.objects.all()
     serializer_class = VipExperienceCategorySerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        """
+        Filter VIP experiences based on business category
+        """
+        user = self.request.user
+        
+        if user.role == 'business':
+            try:
+                business_profile = user.businessprofile
+                # Get business category
+                business_category = business_profile.category
+                if business_category:
+                    return VipExperienceCategory.objects.filter(category=business_category).order_by('id')
+                else:
+                    return VipExperienceCategory.objects.none()
+            except BusinessProfile.DoesNotExist:
+                return VipExperienceCategory.objects.none()
+        elif user.role in ['admin', 'it_manager', 'project_manager']:
+            # Admin users can see all VIP experiences
+            return VipExperienceCategory.objects.all().order_by('id')
+        else:
+            return VipExperienceCategory.objects.none()
 
 
 class CommentViewSet(viewsets.ModelViewSet):

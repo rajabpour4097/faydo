@@ -784,6 +784,43 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
   }
 
 
+  // حذف تخفیف اختصاصی
+  const removeSpecificDiscount = async () => {
+    if (!packageId) return false
+    
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const discountAll = { percentage: parseFloat(formData.globalDiscountPercentage) }
+      
+      const response = await apiService.savePackageDiscounts(
+        packageId, 
+        discountAll, 
+        undefined, 
+        true // remove_specific = true
+      )
+      
+      if (response.error) {
+        setError(response.error)
+        return false
+      }
+      
+      // پاک کردن فیلدهای frontend
+      handleInputChange('showSpecificDiscount', false)
+      handleInputChange('specificTitle', '')
+      handleInputChange('specificDescription', '')
+      handleInputChange('specificPercentage', '')
+      
+      return true
+    } catch (err) {
+      setError('خطا در حذف تخفیف اختصاصی')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // ذخیره مرحله تخفیفات
   const saveDiscounts = async () => {
     if (!packageId) return false
@@ -965,15 +1002,11 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-medium text-gray-900">تخفیف اختصاصی</h3>
                   <button
-                    onClick={() => {
-                      handleInputChange('showSpecificDiscount', false)
-                      handleInputChange('specificTitle', '')
-                      handleInputChange('specificDescription', '')
-                      handleInputChange('specificPercentage', '')
-                    }}
-                    className="text-red-600 hover:text-red-800 text-sm"
+                    onClick={removeSpecificDiscount}
+                    disabled={loading}
+                    className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
                   >
-                    حذف تخفیف اختصاصی ✕
+                    {loading ? 'در حال حذف...' : 'حذف تخفیف اختصاصی ✕'}
                   </button>
                 </div>
                 

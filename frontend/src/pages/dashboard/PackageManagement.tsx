@@ -18,6 +18,8 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const [packageBlockReason, setPackageBlockReason] = useState<string>('')
   const [editingPackageId, setEditingPackageId] = useState<number | undefined>(undefined)
   const [vipExperiences, setVipExperiences] = useState<VipExperienceCategory[]>([])
+  const [viewingPackage, setViewingPackage] = useState<Package | null>(null)
+  const [showPackageDetails, setShowPackageDetails] = useState(false)
 
   useEffect(() => {
     console.log('PackageManagement mounted, user:', user) // Debug log
@@ -195,6 +197,30 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
     setShowCreateModal(true)
   }
 
+  const handleViewPackage = async (pkg: Package) => {
+    try {
+      // دریافت جزئیات کامل پکیج از API
+      const response = await apiService.getPackage(pkg.id)
+      if (response.data) {
+        setViewingPackage(response.data)
+        setShowPackageDetails(true)
+      } else {
+        setError(response.error || 'خطا در دریافت جزئیات پکیج')
+      }
+    } catch (error) {
+      console.error('Error fetching package details:', error)
+      setError('خطا در دریافت جزئیات پکیج')
+    }
+  }
+
+  const handlePackageClick = (pkg: Package) => {
+    if (pkg.status === 'draft' && !pkg.is_complete) {
+      handleEditPackage(pkg.id)
+    } else if (['pending', 'approved', 'rejected'].includes(pkg.status)) {
+      handleViewPackage(pkg)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
@@ -256,8 +282,8 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
         <MobilePackageManagement
           packages={packages}
           error={error}
-          onEditPackage={handleEditPackage}
           onCreatePackage={handleCreatePackage}
+          onPackageClick={handlePackageClick}
           getStatusColor={getStatusColor}
           getStatusText={getStatusText}
         />
@@ -348,9 +374,9 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                         <tr 
                           key={pkg.id} 
                           className={`${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'} ${
-                            !pkg.is_complete ? 'cursor-pointer' : ''
+                            (pkg.status === 'draft' && !pkg.is_complete) || ['pending', 'approved', 'rejected'].includes(pkg.status) ? 'cursor-pointer' : ''
                           }`}
-                          onClick={() => !pkg.is_complete && handleEditPackage(pkg.id)}
+                          onClick={() => handlePackageClick(pkg)}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center space-x-2 space-x-reverse">
@@ -508,6 +534,16 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
             vipExperiences={vipExperiences}
           />
         )}
+
+        {showPackageDetails && viewingPackage && (
+          <PackageDetailsModal
+            package={viewingPackage}
+            onClose={() => {
+              setShowPackageDetails(false)
+              setViewingPackage(null)
+            }}
+          />
+        )}
     </>
   )
 }
@@ -516,8 +552,8 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
 interface MobilePackageManagementProps {
   packages: Package[]
   error: string | null
-  onEditPackage: (id: number) => void
   onCreatePackage: () => void
+  onPackageClick: (pkg: Package) => void
   getStatusColor: (status: string) => string
   getStatusText: (status: string) => string
 }
@@ -525,8 +561,8 @@ interface MobilePackageManagementProps {
 const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
   packages,
   error,
-  onEditPackage,
   onCreatePackage,
+  onPackageClick,
   getStatusColor,
   getStatusText
 }) => {
@@ -603,9 +639,9 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
               <div 
                 key={pkg.id} 
                 className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-2xl p-4 shadow-sm ${
-                  !pkg.is_complete ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
+                  (pkg.status === 'draft' && !pkg.is_complete) || ['pending', 'approved', 'rejected'].includes(pkg.status) ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
                 }`}
-                onClick={() => !pkg.is_complete && onEditPackage && onEditPackage(pkg.id)}
+                onClick={() => onPackageClick(pkg)}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2 space-x-reverse">
@@ -1560,6 +1596,327 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                   </button>
                 )}
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Package Details Modal Component
+interface PackageDetailsModalProps {
+  package: Package
+  onClose: () => void
+}
+
+const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg, onClose }) => {
+  const { isDark } = useTheme()
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return 'text-blue-600 bg-blue-100'
+      case 'approved':
+        return 'text-green-600 bg-green-100'
+      case 'pending':
+        return 'text-yellow-600 bg-yellow-100'
+      case 'rejected':
+        return 'text-red-600 bg-red-100'
+      default:
+        return 'text-gray-600 bg-gray-100'
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return 'پیش‌نویس'
+      case 'approved':
+        return 'تایید شده'
+      case 'pending':
+        return 'در حال بررسی'
+      case 'rejected':
+        return 'نیاز به ویرایش'
+      default:
+        return status
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden`}>
+        {/* Header */}
+        <div className={`${isDark ? 'bg-slate-700 border-slate-600' : 'bg-gray-50 border-gray-200'} px-6 py-4 border-b flex items-center justify-between`}>
+          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            جزئیات پکیج تبلیغاتی
+          </h2>
+          <button
+            onClick={onClose}
+            className={`${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+          <div className="p-6 space-y-6">
+            {/* وضعیت و اطلاعات کلی */}
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
+              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+                اطلاعات کلی
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                    وضعیت پکیج
+                  </label>
+                  <div className="mt-1">
+                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(pkg.status)}`}>
+                      {getStatusText(pkg.status)}
+                    </span>
+                    {pkg.is_active && (
+                      <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full text-green-600 bg-green-100 mr-2">
+                        فعال
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                    وضعیت تکمیل
+                  </label>
+                  <div className="mt-1">
+                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                      pkg.is_complete ? 'text-green-600 bg-green-100' : 'text-gray-600 bg-gray-100'
+                    }`}>
+                      {pkg.is_complete ? 'کامل' : 'ناقص'}
+                    </span>
+                  </div>
+                </div>
+                {pkg.start_date && (
+                  <div>
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      تاریخ شروع
+                    </label>
+                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      {new Date(pkg.start_date).toLocaleDateString('fa-IR')}
+                    </p>
+                  </div>
+                )}
+                {pkg.end_date && (
+                  <div>
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      تاریخ پایان
+                    </label>
+                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      {new Date(pkg.end_date).toLocaleDateString('fa-IR')}
+                    </p>
+                  </div>
+                )}
+                {pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
+                  <div>
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      روزهای باقی‌مانده
+                    </label>
+                    <p className={`mt-1 font-medium ${
+                      pkg.days_remaining > 7 ? 'text-green-600' : 
+                      pkg.days_remaining > 0 ? 'text-orange-600' : 'text-red-600'
+                    }`}>
+                      {pkg.days_remaining > 0 ? `${pkg.days_remaining} روز` : 'منقضی شده'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* تخفیف کلی */}
+            {pkg.discount_all && (
+              <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
+                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                  <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center ml-2">
+                    <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </div>
+                  تخفیف روی تمام محصولات
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      درصد تخفیف
+                    </label>
+                    <p className={`mt-1 text-2xl font-bold text-red-600`}>
+                      %{pkg.discount_all.percentage}
+                    </p>
+                  </div>
+                  <div>
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      امتیاز
+                    </label>
+                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      {pkg.discount_all.score} از 5
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* تخفیف ویژه */}
+            {pkg.specific_discount && (
+              <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
+                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center ml-2">
+                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </div>
+                  تخفیف ویژه
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      عنوان
+                    </label>
+                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      {pkg.specific_discount.title}
+                    </p>
+                  </div>
+                  <div>
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      درصد تخفیف
+                    </label>
+                    <p className={`mt-1 text-xl font-bold text-orange-600`}>
+                      %{pkg.specific_discount.percentage}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      توضیحات
+                    </label>
+                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      {pkg.specific_discount.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* هدیه ویژه */}
+            {pkg.elite_gift && (
+              <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
+                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center ml-2">
+                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
+                  </div>
+                  هدیه ویژه
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      عنوان هدیه
+                    </label>
+                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      {pkg.elite_gift.gift}
+                    </p>
+                  </div>
+                  {pkg.elite_gift.amount && (
+                    <div>
+                      <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                        مبلغ
+                      </label>
+                      <p className={`mt-1 text-lg font-bold text-purple-600`}>
+                        {pkg.elite_gift.amount.toLocaleString()} تومان
+                      </p>
+                    </div>
+                  )}
+                  {pkg.elite_gift.count && (
+                    <div>
+                      <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                        تعداد
+                      </label>
+                      <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                        {pkg.elite_gift.count} عدد
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* تجربیات VIP */}
+            {pkg.experiences && pkg.experiences.length > 0 && (
+              <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
+                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center ml-2">
+                    <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  </div>
+                  تجربیات VIP ({pkg.experiences.length} تجربه)
+                </h3>
+                <div className="space-y-3">
+                  {pkg.experiences.map((experience, index) => (
+                    <div key={index} className={`${isDark ? 'bg-slate-600' : 'bg-white'} rounded-lg p-3 border ${isDark ? 'border-slate-500' : 'border-gray-200'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            {experience.vip_experience_category?.name}
+                          </h4>
+                          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                            {experience.vip_experience_category?.description}
+                          </p>
+                        </div>
+                        <div className="text-left">
+                          <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                            امتیاز: {experience.score}/5
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* تاریخ‌های ایجاد و ویرایش */}
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
+              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+                اطلاعات زمانی
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                    تاریخ ایجاد
+                  </label>
+                  <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                    {new Date(pkg.created_at).toLocaleDateString('fa-IR')} - {new Date(pkg.created_at).toLocaleTimeString('fa-IR')}
+                  </p>
+                </div>
+                <div>
+                  <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                    آخرین ویرایش
+                  </label>
+                  <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                    {new Date(pkg.modified_at).toLocaleDateString('fa-IR')} - {new Date(pkg.modified_at).toLocaleTimeString('fa-IR')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className={`${isDark ? 'bg-slate-700 border-slate-600' : 'bg-gray-50 border-gray-200'} px-6 py-4 border-t flex justify-end`}>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          >
+            بستن
+          </button>
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@ import { Businesses } from './pages/Businesses'
 import { About } from './pages/About'
 import { Contact } from './pages/Contact'
 import { TestUsers } from './pages/TestUsers'
+import { Explore } from './pages/Explore'
 
 // Dashboard Pages
 import { MainDashboard } from './pages/dashboard/MainDashboard'
@@ -32,6 +33,11 @@ const DashboardRouter = () => {
       <Route path="packages" element={
         <ProfileGuard>
           <PackageManagement />
+        </ProfileGuard>
+      } />
+      <Route path="explore" element={
+        <ProfileGuard>
+          <Explore />
         </ProfileGuard>
       } />
       <Route path="" element={

@@ -549,6 +549,19 @@ class ApiService {
     return resp
   }
 
+  async getPublicPackages(): Promise<ApiResponse<Package[]>> {
+    // دریافت پکیج‌های عمومی (فعال و تایید شده) برای صفحه اکتشاف
+    const resp = await this.request<any>('/packages/packages/public/')
+    if (resp.data) {
+      if (Array.isArray(resp.data)) {
+        return { data: resp.data as Package[] }
+      } else if (Array.isArray(resp.data.results)) {
+        return { data: resp.data.results as Package[] }
+      }
+    }
+    return resp
+  }
+
   async getPackage(id: number): Promise<ApiResponse<Package>> {
     return this.request<Package>(`/packages/packages/${id}/`)
   }

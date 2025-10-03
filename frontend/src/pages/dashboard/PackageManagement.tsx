@@ -15,6 +15,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const [error, setError] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [canCreatePackage, setCanCreatePackage] = useState(true)
+  const [packageBlockReason, setPackageBlockReason] = useState<string>('')
   const [editingPackageId, setEditingPackageId] = useState<number | undefined>(undefined)
   const [vipExperiences, setVipExperiences] = useState<VipExperienceCategory[]>([])
 
@@ -43,15 +44,18 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
         const hasPendingPackage = response.data.some(pkg => pkg.status === 'pending' && pkg.is_complete)
         
         let canCreate = true
+        let blockReason = ''
         
         // اگر پکیج draft دارد، نمی‌تواند پکیج جدید بسازد
         if (hasDraftPackage) {
           canCreate = false
+          blockReason = 'draft'
         }
         
         // اگر پکیج pending (در حال بررسی) دارد، نمی‌تواند پکیج جدید بسازد
         if (hasPendingPackage) {
           canCreate = false
+          blockReason = 'pending'
         }
         
         // اگر پکیج فعال دارد، بررسی کن که آیا کمتر از ۱۰ روز مانده
@@ -61,11 +65,19 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
             const endDate = new Date(activePackage.end_date)
             const today = new Date()
             const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-            canCreate = daysLeft <= 10
+            if (daysLeft > 10) {
+              canCreate = false
+              blockReason = 'active'
+            }
           }
         }
         
         setCanCreatePackage(canCreate)
+        
+        // ذخیره دلیل عدم امکان ایجاد پکیج
+        if (!canCreate) {
+          setPackageBlockReason(blockReason)
+        }
       }
     } catch (err) {
       setError('خطا در بارگذاری پکیج‌ها')
@@ -101,8 +113,24 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
     
     // بررسی شرایط قبل از ایجاد پکیج
     if (!canCreatePackage) {
-      console.log('Cannot create package: conditions not met')
-      setError('شما نمی‌توانید پکیج جدید ایجاد کنید. لطفاً ابتدا پکیج موجود را تکمیل کنید.')
+      console.log('Cannot create package: conditions not met, reason:', packageBlockReason)
+      
+      let errorMessage = ''
+      switch (packageBlockReason) {
+        case 'draft':
+          errorMessage = 'شما پکیج پیش‌نویس دارید و نمی‌توانید پکیج جدید بسازید. لطفاً ابتدا پکیج موجود را تکمیل کنید.'
+          break
+        case 'pending':
+          errorMessage = 'شما یک پکیج در حال بررسی دارید و نمی‌توانید پکیج جدید بسازید.'
+          break
+        case 'active':
+          errorMessage = 'پکیج فعالی دارید و بیش از ۱۰ روز تا پایان آن مانده است.'
+          break
+        default:
+          errorMessage = 'شما نمی‌توانید پکیج جدید ایجاد کنید. لطفاً ابتدا پکیج موجود را تکمیل کنید.'
+      }
+      
+      setError(errorMessage)
       return
     }
     

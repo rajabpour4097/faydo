@@ -634,11 +634,32 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     }
   }
 
+  const getStepDescription = (stepId: number) => {
+    switch (stepId) {
+      case 1:
+        return "در این بخش می‌توانید تخفیف کلی یا تخفیف اختصاصی برای کسب‌وکار خود تعیین کنید."
+      case 2:
+        return "در این بخش می‌توانید هدایای ویژه برای مشتریان خود تعریف کنید."
+      case 3:
+        return "در این بخش می‌توانید ویژگی‌های VIP و امتیازات ویژه را انتخاب کنید."
+      case 4:
+        return "در این بخش مدت زمان طرح و خلاصه‌ای از پکیج خود را مشاهده کنید."
+      default:
+        return ""
+    }
+  }
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
           <div className="space-y-3">
+            {/* راهنمایی مرحله */}
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-lg p-3 border border-gray-200`}>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                {getStepDescription(currentStep)}
+              </p>
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 تخفیف کلی (%)
@@ -725,6 +746,12 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
       case 2:
         return (
           <div className="space-y-3">
+            {/* راهنمایی مرحله */}
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-lg p-3 border border-gray-200`}>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                {getStepDescription(currentStep)}
+              </p>
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">
                 شرط دریافت هدیه
@@ -803,6 +830,12 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
       case 3:
         return (
           <div className="space-y-4">
+            {/* راهنمایی مرحله */}
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-lg p-3 border border-gray-200`}>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                {getStepDescription(currentStep)}
+              </p>
+            </div>
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-3">VIP</h3>
               <div className="space-y-2">
@@ -842,6 +875,12 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
       case 4:
         return (
           <div className="space-y-3">
+            {/* راهنمایی مرحله */}
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-lg p-3 border border-gray-200`}>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                {getStepDescription(currentStep)}
+              </p>
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 مدت زمان طرح

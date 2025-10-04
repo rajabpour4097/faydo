@@ -49,7 +49,7 @@ export const MainDashboard = () => {
       <>
         {/* Mobile Empty Dashboard */}
         <div className="md:hidden">
-          <EmptyDashboard />
+          <MobileDashboard />
         </div>
 
         {/* Desktop Empty Dashboard */}

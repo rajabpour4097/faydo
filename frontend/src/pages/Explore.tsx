@@ -313,13 +313,29 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       onClick={handleCardClick}
     >
       {/* Business Image/Logo */}
-      <div className="relative h-56 bg-gradient-to-br from-blue-500 to-purple-600 group-hover:from-blue-600 group-hover:to-purple-700 transition-all duration-300">
-        {/* Placeholder for business image */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+      <div className="relative h-56 overflow-hidden">
+        {pkg.business_logo ? (
+          <img 
+            src={pkg.business_logo} 
+            alt={pkg.business_name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              // اگر عکس لود نشد، fallback به gradient
+              e.currentTarget.style.display = 'none'
+              e.currentTarget.nextElementSibling?.classList.remove('hidden')
+            }}
+          />
+        ) : null}
+        
+        {/* Fallback gradient background */}
+        <div className={`absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 group-hover:from-blue-600 group-hover:to-purple-700 transition-all duration-300 ${pkg.business_image ? 'hidden' : ''}`}>
+          {/* Placeholder for business image */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
           </div>
         </div>
         
@@ -347,17 +363,13 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       <div className="p-6">
         {/* Business Logo & Name */}
         <div className="flex items-center mb-4">
-          <div className="w-12 h-12 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-            <span className="text-sm font-bold text-gray-600 dark:text-gray-300">
-              {pkg.business_name?.charAt(0) || 'B'}
-            </span>
-          </div>
+          
           <div className="flex-1 min-w-0">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate">
               {pkg.business_name}
             </h3>
             <p className="text-sm text-gray-500 dark:text-slate-400">
-              کسب‌وکار
+              {pkg.business_category?.name || 'کسب‌وکار'}
             </p>
           </div>
           <div className="text-left">

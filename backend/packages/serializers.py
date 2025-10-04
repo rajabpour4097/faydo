@@ -82,6 +82,11 @@ class PackageListSerializer(serializers.ModelSerializer):
     business_name = serializers.CharField(source='business.name', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     
+    # اطلاعات کسب‌وکار
+    business_logo = serializers.SerializerMethodField()
+    business_image = serializers.SerializerMethodField()
+    business_category = serializers.SerializerMethodField()
+    
     # اطلاعات تخفیف کلی
     discount_percentage = serializers.SerializerMethodField()
     
@@ -100,6 +105,7 @@ class PackageListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'business_name', 'is_active', 'start_date', 'end_date', 
             'status', 'status_display', 'is_complete', 'created_at', 'modified_at',
+            'business_logo', 'business_image', 'business_category',
             'discount_percentage', 'elite_gift_title', 'elite_gift_amount',
             'vip_experiences_count', 'days_remaining'
         ]
@@ -139,6 +145,49 @@ class PackageListSerializer(serializers.ModelSerializer):
                 return (obj.end_date - today).days
             else:
                 return 0
+        return None
+    
+    def get_business_logo(self, obj):
+        """لوگوی کسب‌وکار"""
+        try:
+            business_profile = obj.business
+            if business_profile and business_profile.logo:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(business_profile.logo.url)
+                return business_profile.logo.url
+        except Exception as e:
+            print(f"Error getting business logo: {e}")
+        return None
+    
+    def get_business_image(self, obj):
+        """تصویر اصلی کسب‌وکار"""
+        try:
+            business_profile = obj.business
+            if business_profile:
+                # تصویر featured یا اولین تصویر گالری
+                featured_image = business_profile.get_featured_image()
+                if featured_image and featured_image.image:
+                    request = self.context.get('request')
+                    if request:
+                        return request.build_absolute_uri(featured_image.image.url)
+                    return featured_image.image.url
+        except Exception as e:
+            print(f"Error getting business image: {e}")
+        return None
+    
+    def get_business_category(self, obj):
+        """دسته‌بندی کسب‌وکار"""
+        try:
+            business_profile = obj.business
+            if business_profile and business_profile.category:
+                return {
+                    'id': business_profile.category.id,
+                    'name': business_profile.category.name,
+                    'icon': getattr(business_profile.category, 'icon', None)
+                }
+        except Exception as e:
+            print(f"Error getting business category: {e}")
         return None
 
 

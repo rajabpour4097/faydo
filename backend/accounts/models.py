@@ -113,6 +113,7 @@ class BusinessProfile(models.Model):
     business_location_latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     business_location_longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True)
+    logo = models.ImageField(upload_to='business_logos/', blank=True, null=True, verbose_name='لوگو')
     instagram_link = models.URLField(blank=True, null=True, verbose_name='لینک صفحه اینستاگرام')
     website_link = models.URLField(blank=True, null=True, verbose_name='لینک سایت')
 

@@ -112,6 +112,14 @@ export interface Package {
   elite_gift_amount?: number
   vip_experiences_count?: number
   days_remaining?: number
+  // فیلدهای کسب‌وکار
+  business_logo?: string
+  business_image?: string
+  business_category?: {
+    id: number
+    name: string
+    icon?: string
+  }
 }
 
 export interface DiscountAll {

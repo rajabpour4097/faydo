@@ -19,9 +19,6 @@ export const EmptyDashboard = () => {
             <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               سلام {businessName}! خوش آمدید
             </h2>
-            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-              چطور می‌تونیم کمکتون کنیم؟
-            </p>
           </div>
           <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full flex items-center justify-center">
             <span className="text-white text-2xl">👋</span>

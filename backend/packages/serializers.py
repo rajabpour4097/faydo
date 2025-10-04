@@ -93,6 +93,7 @@ class PackageListSerializer(serializers.ModelSerializer):
     # اطلاعات هدیه ویژه
     elite_gift_title = serializers.SerializerMethodField()
     elite_gift_amount = serializers.SerializerMethodField()
+    elite_gift_count = serializers.SerializerMethodField()
     
     # تعداد تجربیات VIP
     vip_experiences_count = serializers.SerializerMethodField()
@@ -106,7 +107,7 @@ class PackageListSerializer(serializers.ModelSerializer):
             'id', 'business_name', 'is_active', 'start_date', 'end_date', 
             'status', 'status_display', 'is_complete', 'created_at', 'modified_at',
             'business_logo', 'business_image', 'business_category',
-            'discount_percentage', 'elite_gift_title', 'elite_gift_amount',
+            'discount_percentage', 'elite_gift_title', 'elite_gift_amount', 'elite_gift_count',
             'vip_experiences_count', 'days_remaining'
         ]
         read_only_fields = ['id', 'created_at', 'modified_at']
@@ -129,6 +130,13 @@ class PackageListSerializer(serializers.ModelSerializer):
         """مبلغ هدیه ویژه"""
         try:
             return obj.elite_gift.amount if hasattr(obj, 'elite_gift') else None
+        except:
+            return None
+    
+    def get_elite_gift_count(self, obj):
+        """تعداد هدیه ویژه"""
+        try:
+            return obj.elite_gift.count if hasattr(obj, 'elite_gift') else None
         except:
             return None
     

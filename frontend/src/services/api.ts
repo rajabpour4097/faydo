@@ -110,6 +110,7 @@ export interface Package {
   discount_percentage?: number
   elite_gift_title?: string
   elite_gift_amount?: number
+  elite_gift_count?: number
   vip_experiences_count?: number
   days_remaining?: number
   // فیلدهای کسب‌وکار

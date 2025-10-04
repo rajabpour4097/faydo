@@ -199,7 +199,7 @@ export const Explore: React.FC<ExploreProps> = () => {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            اکتشاف
+            اکسپلور
           </h1>
           <p className="text-gray-600 dark:text-slate-400">
             بهترین پیشنهادات و تخفیف‌های ویژه را کشف کنید
@@ -384,7 +384,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
               </svg>
               <span className="text-gray-700 dark:text-slate-300">
-                {pkg.elite_gift_title}
+                {pkg.elite_gift_title} {pkg.elite_gift_count ? `با ${pkg.elite_gift_count} خرید` : `با ${pkg.elite_gift_amount} تومان خرید`}
               </span>
             </div>
           )}

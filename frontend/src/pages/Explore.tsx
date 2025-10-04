@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
+import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { apiService, Package } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -43,18 +43,18 @@ export const Explore: React.FC<ExploreProps> = () => {
   // Show loading if user is not loaded yet
   if (!user) {
     return (
-      <DashboardLayout>
+      <MobileDashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </DashboardLayout>
+      </MobileDashboardLayout>
     )
   }
 
   // Show access denied if user is not customer
   if (user.type !== 'customer') {
     return (
-      <DashboardLayout>
+      <MobileDashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="text-6xl mb-4">🚫</div>
@@ -66,7 +66,7 @@ export const Explore: React.FC<ExploreProps> = () => {
             </p>
           </div>
         </div>
-      </DashboardLayout>
+      </MobileDashboardLayout>
     )
   }
 
@@ -185,73 +185,61 @@ export const Explore: React.FC<ExploreProps> = () => {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <MobileDashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </DashboardLayout>
+      </MobileDashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout>
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  اکتشاف
-                </h1>
-                <p className="text-gray-600 dark:text-slate-400">
-                  بهترین پیشنهادات و تخفیف‌های ویژه را کشف کنید
-                </p>
-              </div>
-              <div className="hidden md:flex items-center space-x-4 space-x-reverse">
-                <div className="text-sm text-gray-500 dark:text-slate-400">
-                  {filteredPackages.length} پکیج یافت شد
-                </div>
-              </div>
-            </div>
-          </div>
+    <MobileDashboardLayout>
+      <div className="p-4 space-y-6">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            اکتشاف
+          </h1>
+          <p className="text-gray-600 dark:text-slate-400">
+            بهترین پیشنهادات و تخفیف‌های ویژه را کشف کنید
+          </p>
+        </div>
 
-          {/* Search and Filters */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Search Bar */}
-              <div className="md:col-span-2">
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="جستجو در کسب‌وکارها و پیشنهادات..."
-                    value={filters.search}
-                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                    className="w-full pr-10 pl-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400"
-                  />
-                </div>
+        {/* Search and Filters */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4">
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
-              
-              {/* Sort Dropdown */}
-              <div>
-                <select
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  value={filters.sortBy}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                >
-                  <option value="">مرتب‌سازی</option>
-                  <option value="newest">جدیدترین</option>
-                  <option value="discount_high">بیشترین تخفیف</option>
-                  <option value="discount_low">کمترین تخفیف</option>
-                </select>
-              </div>
+              <input
+                type="text"
+                placeholder="جستجو در کسب‌وکارها و پیشنهادات..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="w-full pr-10 pl-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400"
+              />
+            </div>
+            
+            {/* Sort Dropdown */}
+            <div>
+              <select
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                value={filters.sortBy}
+                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+              >
+                <option value="">مرتب‌سازی</option>
+                <option value="newest">جدیدترین</option>
+                <option value="discount_high">بیشترین تخفیف</option>
+                <option value="discount_low">کمترین تخفیف</option>
+              </select>
             </div>
           </div>
+        </div>
 
 
         {/* Error Message */}
@@ -261,38 +249,30 @@ export const Explore: React.FC<ExploreProps> = () => {
           </div>
         )}
 
-          {/* Results Count - Mobile */}
-          <div className="md:hidden flex justify-between items-center mb-4">
-            <p className="text-sm text-gray-600 dark:text-slate-400">
-              {filteredPackages.length} پکیج یافت شد
-            </p>
+        {/* Package Cards Grid */}
+        {filteredPackages.length === 0 ? (
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center shadow-sm border border-gray-200 dark:border-slate-700">
+            <div className="flex flex-col items-center">
+              <svg className="w-16 h-16 text-gray-400 dark:text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                پکیجی یافت نشد
+              </h3>
+              <p className="text-gray-600 dark:text-slate-400">
+                متأسفانه پکیجی با این مشخصات یافت نشد. لطفاً فیلترهای خود را تغییر دهید.
+              </p>
+            </div>
           </div>
-
-          {/* Package Cards Grid */}
-          {filteredPackages.length === 0 ? (
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-12 text-center shadow-sm border border-gray-200 dark:border-slate-700">
-              <div className="flex flex-col items-center">
-                <svg className="w-20 h-20 text-gray-400 dark:text-slate-400 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-3">
-                  پکیجی یافت نشد
-                </h3>
-                <p className="text-gray-600 dark:text-slate-400 max-w-md">
-                  متأسفانه پکیجی با این مشخصات یافت نشد. لطفاً فیلترهای خود را تغییر دهید.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredPackages.map((pkg) => (
-                <PackageCard key={pkg.id} package={pkg} />
-              ))}
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredPackages.map((pkg) => (
+              <PackageCard key={pkg.id} package={pkg} />
+            ))}
+          </div>
+        )}
       </div>
-    </DashboardLayout>
+    </MobileDashboardLayout>
   )
 }
 
@@ -313,7 +293,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       onClick={handleCardClick}
     >
       {/* Business Image/Logo */}
-      <div className="relative h-56 overflow-hidden">
+      <div className="relative h-48 overflow-hidden">
         {pkg.business_logo ? (
           <img 
             src={pkg.business_logo} 
@@ -360,12 +340,12 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       </div>
 
       {/* Card Content */}
-      <div className="p-6">
+      <div className="p-4">
         {/* Business Logo & Name */}
-        <div className="flex items-center mb-4">
-          
+        <div className="flex items-center mb-3">
+  
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
               {pkg.business_name}
             </h3>
             <p className="text-sm text-gray-500 dark:text-slate-400">

@@ -1,5 +1,8 @@
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
+import { EmptyDashboard } from './EmptyDashboard'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useAuth } from '../../contexts/AuthContext'
+import { usePackages } from '../../hooks/usePackages'
 import { Link } from 'react-router-dom'
 
 interface ServiceCardProps {
@@ -64,6 +67,31 @@ const ListSection = ({ title, items }: { title: string; items: ListItem[] }) => 
 
 export const MobileDashboard = () => {
   const { isDark } = useTheme()
+  const { user } = useAuth()
+  const { hasPackages, loading } = usePackages()
+
+  // Show loading state
+  if (loading) {
+    return (
+      <MobileDashboardLayout>
+        <div className="p-4 space-y-6">
+          <div className="animate-pulse">
+            <div className="h-20 bg-gray-200 rounded-2xl"></div>
+            <div className="h-32 bg-gray-200 rounded-2xl mt-4"></div>
+          </div>
+        </div>
+      </MobileDashboardLayout>
+    )
+  }
+
+  // Show empty dashboard for businesses without packages
+  if (user?.type === 'business' && !hasPackages) {
+    return (
+      <MobileDashboardLayout>
+        <EmptyDashboard />
+      </MobileDashboardLayout>
+    )
+  }
 
   // Quick actions matching desktop sections
   const services = [
@@ -102,7 +130,7 @@ export const MobileDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                سلام! خوش آمدید
+                سلام {user?.businessProfile?.name || user?.name || 'کسب‌وکار'}! خوش آمدید
               </h2>
               <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                 چطور می‌تونیم کمکتون کنیم؟

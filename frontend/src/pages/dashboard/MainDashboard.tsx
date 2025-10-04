@@ -1,9 +1,66 @@
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboard } from './MobileDashboard'
+import { EmptyDashboard } from './EmptyDashboard'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useAuth } from '../../contexts/AuthContext'
+import { usePackages } from '../../hooks/usePackages'
 
 export const MainDashboard = () => {
   const { isDark } = useTheme()
+  const { user } = useAuth()
+  const { hasPackages, loading } = usePackages()
+
+  // Show loading state
+  if (loading) {
+    return (
+      <>
+        {/* Mobile Loading */}
+        <div className="md:hidden">
+          <div className="p-4 space-y-6">
+            <div className="animate-pulse">
+              <div className="h-20 bg-gray-200 rounded-2xl"></div>
+              <div className="h-32 bg-gray-200 rounded-2xl mt-4"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Loading */}
+        <div className="hidden md:block">
+          <DashboardLayout>
+            <div className="space-y-6">
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-1/3 mb-8"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </DashboardLayout>
+        </div>
+      </>
+    )
+  }
+
+  // Show empty dashboard for businesses without packages
+  if (user?.type === 'business' && !hasPackages) {
+    return (
+      <>
+        {/* Mobile Empty Dashboard */}
+        <div className="md:hidden">
+          <EmptyDashboard />
+        </div>
+
+        {/* Desktop Empty Dashboard */}
+        <div className="hidden md:block">
+          <DashboardLayout>
+            <EmptyDashboard />
+          </DashboardLayout>
+        </div>
+      </>
+    )
+  }
 
   return (
     <>
@@ -38,6 +95,25 @@ export const MainDashboard = () => {
             }`}>
               Clients
             </button>
+          </div>
+        </div>
+
+        {/* Welcome Section */}
+        <div className={`${
+          isDark ? 'bg-slate-800' : 'bg-white'
+        } rounded-2xl p-6 shadow-sm mb-8`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                سلام {user?.businessProfile?.name || user?.name || 'کسب‌وکار'}! خوش آمدید
+              </h2>
+              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                چطور می‌تونیم کمکتون کنیم؟
+              </p>
+            </div>
+            <div className="w-20 h-20 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-3xl">👋</span>
+            </div>
           </div>
         </div>
 

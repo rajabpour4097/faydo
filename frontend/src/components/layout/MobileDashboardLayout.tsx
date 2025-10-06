@@ -48,19 +48,19 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
     // Business users get different bottom nav items
     if (user.type === 'business') {
       return [
-        { name: 'داشبورد', href: '/dashboard', icon: '🏠', iconType: 'emoji' },
+        { name: 'داشبورد', href: '/dashboard', icon: '/src/assets/images/home.png', iconType: 'image' },
         { name: 'مدیریت پکیج', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
         { name: 'برندها', href: '/dashboard/brands', icon: '🏷️', iconType: 'emoji' },
-        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' },
       ]
     }
 
     // Default items for other user types
       return [
-        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' },
         { name: 'باشگاه ها', href: '/dashboard/clubs', icon: '/src/assets/images/club-icon.png', iconType: 'image' },
         { name: 'اکسپلور', href: '/dashboard/explore', icon: '/src/assets/images/explore.png', iconType: 'image'},
-        { name: 'داشبورد', href: '/dashboard', icon: '🏠', iconType: 'emoji' },
+        { name: 'داشبورد', href: '/dashboard', icon: '/src/assets/images/home.png', iconType: 'image' },
       ]
   }
 
@@ -290,55 +290,36 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-3 left-0 right-0">
-        <div
-          className={`mx-4 rounded-2xl shadow-xl backdrop-blur border ${
-            isDark
-              ? 'bg-slate-800/95 border-slate-700'
-              : 'bg-white/95 border-gray-200'
-          }`}
-        >
-          <div className="flex items-center justify-between px-4 py-2">
-            {bottomNavItems.map((item) => {
-              const active = isActive(item.href)
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="flex flex-col items-center justify-center w-16 py-1"
-                >
-                  <div
-                    className={`mb-1 flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-200 ${
-                      active
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : isDark
-                          ? 'bg-slate-700 text-slate-300'
-                          : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    <CustomIcon
-                      type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'}
-                      value={item.icon}
-                      alt={item.name}
-                      className="w-5 h-5"
-                      active={active}
-                    />
-                  </div>
-                  <span
-                    className={`text-[11px] ${
-                      active
-                        ? 'text-blue-600'
-                        : isDark
-                          ? 'text-slate-300'
-                          : 'text-gray-600'
-                    }`}
-                  >
-                    {item.name}
-                  </span>
-                </Link>
-              )
-            })}
-          </div>
+      <nav className={`fixed bottom-0 left-0 right-0 border-t ${
+        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
+      }`}>
+        <div className="flex items-center justify-around py-2">
+          {bottomNavItems.map((item) => {
+            const active = isActive(item.href)
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="flex flex-col items-center py-1 px-3 transition-colors relative"
+              >
+                <div className="mb-1">
+                  <CustomIcon
+                    type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'}
+                    value={item.icon}
+                    alt={item.name}
+                    className="w-6 h-5"
+                    active={false}
+                  />
+                </div>
+                <span className="text-xs text-gray-500">
+                  {item.name}
+                </span>
+                {active && (
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-blue-400 rounded-full"></div>
+                )}
+              </Link>
+            )
+          })}
         </div>
       </nav>
     </div>

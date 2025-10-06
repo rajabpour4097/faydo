@@ -49,7 +49,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
     if (user.type === 'business') {
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '🏠', iconType: 'emoji' },
-        { name: 'مدیریت پکیج ها', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
+        { name: 'مدیریت پکیج', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
         { name: 'برندها', href: '/dashboard/brands', icon: '🏷️', iconType: 'emoji' },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
       ]
@@ -286,33 +286,55 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       </main>
 
       {/* Bottom Navigation */}
-      <nav className={`mobile-bottom-nav fixed bottom-0 left-0 right-0 ${
-        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
-      } border-t`}>
-        <div className="flex items-center justify-around py-2">
-          {bottomNavItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-                isActive(item.href)
-                  ? 'text-teal-500'
-                  : isDark 
-                    ? 'text-slate-400 hover:text-white'
-                    : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <div className="mb-1">
-                <CustomIcon 
-                  type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'} 
-                  value={item.icon} 
-                  alt={item.name}
-                  className="w-6 h-6"
-                />
-              </div>
-              <span className="text-xs">{item.name}</span>
-            </Link>
-          ))}
+      <nav className="fixed bottom-3 left-0 right-0">
+        <div
+          className={`mx-4 rounded-2xl shadow-xl backdrop-blur border ${
+            isDark
+              ? 'bg-slate-800/95 border-slate-700'
+              : 'bg-white/95 border-gray-200'
+          }`}
+        >
+          <div className="flex items-center justify-between px-4 py-2">
+            {bottomNavItems.map((item) => {
+              const active = isActive(item.href)
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="flex flex-col items-center justify-center w-16 py-1"
+                >
+                  <div
+                    className={`mb-1 flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-200 ${
+                      active
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : isDark
+                          ? 'bg-slate-700 text-slate-300'
+                          : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    <CustomIcon
+                      type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'}
+                      value={item.icon}
+                      alt={item.name}
+                      className="w-5 h-5"
+                      active={active}
+                    />
+                  </div>
+                  <span
+                    className={`text-[11px] ${
+                      active
+                        ? 'text-blue-600'
+                        : isDark
+                          ? 'text-slate-300'
+                          : 'text-gray-600'
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
         </div>
       </nav>
     </div>

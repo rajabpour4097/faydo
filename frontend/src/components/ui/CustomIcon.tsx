@@ -5,17 +5,26 @@ interface CustomIconProps {
   value: string
   alt?: string
   className?: string
+  active?: boolean
 }
 
 export const CustomIcon: React.FC<CustomIconProps> = ({ 
   type, 
   value, 
   alt = 'Icon', 
-  className = 'w-5 h-5' 
+  className = 'w-5 h-5',
+  active = false,
 }) => {
+  // For image-based icons we approximate tinting using CSS filters.
+  // Active: make icon white so it contrasts on colored background.
+  // Inactive: gray tone similar to the provided mock.
+  const imageFilter = active
+    ? 'invert(100%) brightness(110%)'
+    : 'grayscale(100%) brightness(85%) saturate(60%)';
+
   switch (type) {
     case 'emoji':
-      return <span className="text-lg">{value}</span>
+      return <span className={`text-lg ${active ? 'text-white' : 'text-gray-500'}`}>{value}</span>
     
     case 'image':
       return (
@@ -23,7 +32,7 @@ export const CustomIcon: React.FC<CustomIconProps> = ({
           src={value} 
           alt={alt} 
           className={className}
-          style={{ objectFit: 'contain' }}
+          style={{ objectFit: 'contain', filter: imageFilter }}
         />
       )
     
@@ -33,7 +42,7 @@ export const CustomIcon: React.FC<CustomIconProps> = ({
           src={`data:image/png;base64,${value}`} 
           alt={alt} 
           className={className}
-          style={{ objectFit: 'contain' }}
+          style={{ objectFit: 'contain', filter: imageFilter }}
         />
       )
     
@@ -43,11 +52,11 @@ export const CustomIcon: React.FC<CustomIconProps> = ({
           src={value} 
           alt={alt} 
           className={className}
-          style={{ objectFit: 'contain' }}
+          style={{ objectFit: 'contain', filter: imageFilter }}
         />
       )
     
     default:
-      return <span className="text-lg">{value}</span>
+      return <span className={`text-lg ${active ? 'text-white' : 'text-gray-500'}`}>{value}</span>
   }
 }

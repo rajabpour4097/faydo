@@ -184,11 +184,11 @@ class PackageListSerializer(serializers.ModelSerializer):
             if business_profile:
                 # تصویر featured یا اولین تصویر گالری
                 featured_image = business_profile.logo
-                if featured_image:
-                    request = self.context.get('request')
-                    if request:
-                        return request.build_absolute_uri(featured_image.image.url)
-                    return featured_image.image.url
+                # if featured_image:
+                #     request = self.context.get('request')
+                #     if request:
+                #         return request.build_absolute_uri(featured_image.image.url)
+                #     return featured_image.image.url
         except Exception as e:
             print(f"Error getting business image: {e}")
         return None

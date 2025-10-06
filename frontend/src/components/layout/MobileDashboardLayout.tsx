@@ -82,20 +82,24 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
               {user?.avatar ? (
                 <img 
                   src={user.avatar} 
-                  alt={user.name || 'کاربر'} 
+                  alt={user.name || 'کاربر'}
                   className="w-8 h-8 rounded-full object-cover border-2 border-teal-500"
+                  onError={(e) => {
+                    console.log('Avatar load error:', user.avatar)
+                    e.currentTarget.style.display = 'none'
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                  }}
                 />
-              ) : user?.type === 'business' ? (
-                <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">🏢</span>
-                </div>
-              ) : (
-                <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {user?.name?.charAt(0) || user?.username?.charAt(0) || 'ک'}
-                  </span>
-                </div>
-              )}
+              ) : null}
+             
+              <div className="flex flex-col items-start">
+                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {user?.name || user?.username || 'کاربر'}
+                </span>
+                <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                  {user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'}
+                </span>
+              </div>
             </button>
 
             {/* User Dropdown Menu */}

@@ -86,6 +86,7 @@ class PackageListSerializer(serializers.ModelSerializer):
     business_logo = serializers.SerializerMethodField()
     business_image = serializers.SerializerMethodField()
     business_category = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
     
     # اطلاعات تخفیف کلی
     discount_percentage = serializers.SerializerMethodField()
@@ -106,7 +107,7 @@ class PackageListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'business_name', 'is_active', 'start_date', 'end_date', 
             'status', 'status_display', 'is_complete', 'created_at', 'modified_at',
-            'business_logo', 'business_image', 'business_category',
+            'business_logo', 'business_image', 'business_category', 'city',
             'discount_percentage', 'elite_gift_title', 'elite_gift_amount', 'elite_gift_count',
             'vip_experiences_count', 'days_remaining'
         ]
@@ -174,8 +175,8 @@ class PackageListSerializer(serializers.ModelSerializer):
             business_profile = obj.business
             if business_profile:
                 # تصویر featured یا اولین تصویر گالری
-                featured_image = business_profile.get_featured_image()
-                if featured_image and featured_image.image:
+                featured_image = business_profile.logo
+                if featured_image:
                     request = self.context.get('request')
                     if request:
                         return request.build_absolute_uri(featured_image.image.url)
@@ -196,6 +197,19 @@ class PackageListSerializer(serializers.ModelSerializer):
                 }
         except Exception as e:
             print(f"Error getting business category: {e}")
+        return None
+
+    def get_city(self, obj):
+        """شهر کسب‌وکار"""
+        try:
+            business_profile = obj.business
+            if business_profile and business_profile.city:
+                return {
+                    'id': business_profile.city.id,
+                    'name': business_profile.city.name,
+                }
+        except Exception as e:
+            print(f"Error getting business city: {e}")
         return None
 
 

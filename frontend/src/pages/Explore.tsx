@@ -260,7 +260,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       onClick={handleCardClick}
     >
       {/* Left image: prefer business_image then logo */}
-      <div className="relative w-28 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100">
+      <div className="relative w-22 h-20 rounded-xl overflow-hidden shrink-0 bg-gray-100">
         {!imageErrored && (pkg.business_image || pkg.business_logo) ? (
           <img
             src={pkg.business_image || pkg.business_logo || ''}
@@ -280,14 +280,16 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             {pkg.business_category?.name && (
-              <div className="inline-block px-2 py-0.5 rounded-md text-[12px] bg-blue-100 text-blue-700 mb-1">
+              <div className="inline-block px-2 py-0.5 rounded-md text-[8px] bg-blue-100 text-blue-700 mb-1">
                 {pkg.business_category.name}
               </div>
             )}
-            <h3 className="text-[18px] font-bold text-gray-900 dark:text-white truncate">{pkg.business_name}</h3>
+            <h3 className="text-[14px] font-bold text-gray-900 dark:text-white truncate">{pkg.business_name}</h3>
             {(((pkg as any)?.city?.name) || pkg.status_display) && (
-              <div className="flex items-center text-gray-500 dark:text-slate-400 text-sm mt-1">
-                <svg className="w-4 h-4 ml-1" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6c0 4.418 6 10 6 10s6-5.582 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/></svg>
+              <div className="flex items-center text-gray-500 dark:text-slate-400 text-sm mt-1 text-[10px]">
+                  <svg className="w-3 h-3 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 2a6 6 0 00-6 6c0 4.418 6 10 6 10s6-5.582 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
+                  </svg>
                 {(pkg as any)?.city?.name || pkg.status_display}
               </div>
             )}
@@ -304,7 +306,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
             <svg className="w-4 h-4 ml-1 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13M12 8V6a2 2 0 112 2h-2zM5 12h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
             </svg>
-            <span className="truncate">
+            <span className="truncate" style={{ fontSize: '10px' }}>
               {pkg.elite_gift_gift}
               {typeof pkg.elite_gift_count === 'number' && (
                 <> با {pkg.elite_gift_count} بار خرید</>
@@ -319,8 +321,8 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
         <div className="mt-2">
           {typeof pkg.discount_percentage === 'number' ? (
             <>
-              <span className="text-blue-600 font-extrabold text-[20px]">%{pkg.discount_percentage}</span>
-              <span className="text-gray-500 text-sm mr-1">تخفیف</span>
+              <span className="text-blue-600 font-extrabold text-[10px]">%{pkg.discount_percentage}</span>
+              <span className="text-gray-500 text-sm mr-1" style={{fontSize: '10px'}}>تخفیف</span>
             </>
           ) : (
             <span className="text-gray-500 text-sm">بدون تخفیف</span>

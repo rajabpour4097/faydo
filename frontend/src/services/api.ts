@@ -109,6 +109,7 @@ export interface Package {
   // فیلدهای جدید از PackageListSerializer
   discount_percentage?: number
   elite_gift_title?: string
+  elite_gift_gift?: string
   elite_gift_amount?: number
   elite_gift_count?: number
   vip_experiences_count?: number

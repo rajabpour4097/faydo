@@ -302,21 +302,22 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                 to={item.href}
                 className="flex flex-col items-center py-1 px-3 transition-colors relative"
               >
+                {/* Blue indicator line above the icon */}
+                {active && (
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-blue-500 rounded-full"></div>
+                )}
                 <div className="mb-1">
                   <CustomIcon
                     type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'}
                     value={item.icon}
                     alt={item.name}
-                    className="w-6 h-5"
+                    className={`w-6 h-5 ${active ? 'text-blue-500' : ''}`}
                     active={false}
                   />
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className={`text-xs ${active ? 'text-blue-500' : 'text-gray-500'}`}>
                   {item.name}
                 </span>
-                {active && (
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-blue-400 rounded-full"></div>
-                )}
               </Link>
             )
           })}

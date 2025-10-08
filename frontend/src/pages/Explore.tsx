@@ -453,7 +453,16 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
             <span className="font-semibold">4.8</span>
           </div>
         </div>
-
+        <div className="mt-2">
+          {typeof pkg.discount_percentage === 'number' ? (
+            <>
+              <span className="text-blue-600 font-extrabold text-[12px]">%{pkg.discount_percentage}</span>
+              <span className="text-gray-500 text-sm mr-1" style={{fontSize: '12px'}}>تخفیف</span>
+            </>
+          ) : (
+            <span className="text-gray-500 text-sm">بدون تخفیف</span>
+          )}
+        </div>
         {/* Elite gift info */}
         {pkg.elite_gift_gift && (
           <div className="mt-1 flex items-center text-[13px] text-gray-700 dark:text-slate-300">
@@ -472,16 +481,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
           </div>
         )}
 
-        <div className="mt-2">
-          {typeof pkg.discount_percentage === 'number' ? (
-            <>
-              <span className="text-blue-600 font-extrabold text-[10px]">%{pkg.discount_percentage}</span>
-              <span className="text-gray-500 text-sm mr-1" style={{fontSize: '10px'}}>تخفیف</span>
-            </>
-          ) : (
-            <span className="text-gray-500 text-sm">بدون تخفیف</span>
-          )}
-        </div>
+  
       </div>
     </div>
   )

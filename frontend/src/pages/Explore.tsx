@@ -12,7 +12,7 @@ interface ExploreProps {}
 // }
 
 interface FilterState {
-  category: string
+  categories: number[]
   sortBy: 'discount_high' | 'discount_low' | 'newest' | ''
   search: string
   cities: number[]
@@ -24,12 +24,14 @@ export const Explore: React.FC<ExploreProps> = () => {
   const [packages, setPackages] = useState<Package[]>([])
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
   const [availableCities, setAvailableCities] = useState<{id: number, name: string}[]>([])
+  const [availableCategories, setAvailableCategories] = useState<{id: number, name: string}[]>([])
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
   // const [categories] = useState<BusinessCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<FilterState>({
-    category: '',
+    categories: [],
     sortBy: '',
     search: '',
     cities: []
@@ -92,16 +94,19 @@ export const Explore: React.FC<ExploreProps> = () => {
       if (!target.closest('.city-dropdown')) {
         setIsCityDropdownOpen(false)
       }
+      if (!target.closest('.category-dropdown')) {
+        setIsCategoryDropdownOpen(false)
+      }
     }
 
-    if (isCityDropdownOpen) {
+    if (isCityDropdownOpen || isCategoryDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isCityDropdownOpen])
+  }, [isCityDropdownOpen, isCategoryDropdownOpen])
 
   // Extract unique cities from packages
   const extractCitiesFromPackages = (packages: Package[]) => {
@@ -117,6 +122,22 @@ export const Explore: React.FC<ExploreProps> = () => {
     })
     
     return Array.from(cityMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'fa'))
+  }
+
+  // Extract unique categories from packages
+  const extractCategoriesFromPackages = (packages: Package[]) => {
+    const categoryMap = new Map<number, {id: number, name: string}>()
+    
+    packages.forEach(pkg => {
+      if (pkg.business_category && pkg.business_category.id && pkg.business_category.name) {
+        categoryMap.set(pkg.business_category.id, {
+          id: pkg.business_category.id,
+          name: pkg.business_category.name
+        })
+      }
+    })
+    
+    return Array.from(categoryMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'fa'))
   }
 
   const loadActivePackages = async () => {
@@ -141,6 +162,11 @@ export const Explore: React.FC<ExploreProps> = () => {
         const cities = extractCitiesFromPackages(activePackages)
         console.log('🏙️ Available cities:', cities)
         setAvailableCities(cities)
+        
+        // Extract available categories from packages
+        const categories = extractCategoriesFromPackages(activePackages)
+        console.log('📂 Available categories:', categories)
+        setAvailableCategories(categories)
       } else {
         console.error('❌ No data in response:', response)
         // برای تست، داده‌های نمونه اضافه کن
@@ -189,10 +215,10 @@ export const Explore: React.FC<ExploreProps> = () => {
     }
 
     // فیلتر بر اساس دسته‌بندی
-    if (filters.category) {
-      // این قسمت نیاز به اطلاعات دسته‌بندی کسب‌وکار در پکیج دارد
-      // فعلاً کامنت می‌کنیم
-      // filtered = filtered.filter(pkg => pkg.business_category_id === parseInt(filters.category))
+    if (filters.categories.length > 0) {
+      filtered = filtered.filter(pkg => 
+        pkg.business_category && filters.categories.includes(pkg.business_category.id)
+      )
     }
 
     // فیلتر بر اساس شهر
@@ -245,6 +271,29 @@ export const Explore: React.FC<ExploreProps> = () => {
     setFilters(prev => ({
       ...prev,
       cities: []
+    }))
+  }
+
+  const handleCategoryToggle = (categoryId: number) => {
+    setFilters(prev => ({
+      ...prev,
+      categories: prev.categories.includes(categoryId)
+        ? prev.categories.filter(id => id !== categoryId)
+        : [...prev.categories, categoryId]
+    }))
+  }
+
+  const handleSelectAllCategories = () => {
+    setFilters(prev => ({
+      ...prev,
+      categories: availableCategories.map(category => category.id)
+    }))
+  }
+
+  const handleClearAllCategories = () => {
+    setFilters(prev => ({
+      ...prev,
+      categories: []
     }))
   }
 
@@ -348,6 +397,71 @@ export const Explore: React.FC<ExploreProps> = () => {
                       />
                       <span className="mr-3 text-sm text-gray-900 dark:text-white">
                         {city.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Category Filter Dropdown */}
+        {availableCategories.length > 0 && (
+          <div className="relative category-dropdown">
+            <button
+              onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-3 py-2 flex items-center justify-between text-gray-900 dark:text-white"
+            >
+              <span className="text-sm">
+                {filters.categories.length === 0 
+                  ? 'همه دسته‌بندی‌ها' 
+                  : filters.categories.length === availableCategories.length 
+                    ? 'همه دسته‌بندی‌ها' 
+                    : `${filters.categories.length} دسته انتخاب شده`
+                }
+              </span>
+              <svg 
+                className={`w-5 h-5 text-gray-500 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {isCategoryDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-lg z-10 max-h-60 overflow-y-auto">
+                <div className="p-2">
+                  <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-slate-700 mb-2">
+                    <button
+                      onClick={handleSelectAllCategories}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      انتخاب همه
+                    </button>
+                    <button
+                      onClick={handleClearAllCategories}
+                      className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                    >
+                      پاک کردن همه
+                    </button>
+                  </div>
+                  
+                  {availableCategories.map((category) => (
+                    <label
+                      key={category.id}
+                      className="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer rounded-lg"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.categories.includes(category.id)}
+                        onChange={() => handleCategoryToggle(category.id)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <span className="mr-3 text-sm text-gray-900 dark:text-white">
+                        {category.name}
                       </span>
                     </label>
                   ))}

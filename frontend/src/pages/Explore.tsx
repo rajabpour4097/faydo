@@ -387,6 +387,17 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
     console.log('Package clicked:', pkg.id)
   }
 
+  // Determine VIP badge type
+  const getVipBadgeType = () => {
+    if (pkg.experiences && pkg.experiences.length > 0) {
+      const hasVipPlus = pkg.experiences.some(exp => 
+        exp.vip_experience_category?.vip_type === 'VIP+'
+      )
+      return hasVipPlus ? 'VIP+' : 'VIP'
+    }
+    return 'VIP' // Default to VIP if no experiences data
+  }
+
   return (
     <div
       className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-3 flex gap-3 items-start cursor-pointer"
@@ -406,6 +417,16 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
           <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600" />
         )}
         
+        {/* VIP Badge */}
+        <div className="absolute top-1 right-1">
+          <div className={`px-2 py-1 rounded-full text-[8px] font-bold text-white shadow-lg ${
+            getVipBadgeType() === 'VIP+' 
+              ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
+              : 'bg-gradient-to-r from-purple-500 to-pink-500'
+          }`}>
+            {getVipBadgeType()}
+          </div>
+        </div>
       </div>
 
       {/* Content */}

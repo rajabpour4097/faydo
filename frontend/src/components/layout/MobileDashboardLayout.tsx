@@ -57,10 +57,10 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
 
     // Default items for other user types
       return [
-        { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' },
-        { name: 'باشگاه ها', href: '/dashboard/clubs', icon: '/src/assets/images/club-icon.png', iconType: 'image' },
-        { name: 'اکسپلور', href: '/dashboard/explore', icon: '/src/assets/images/explore.png', iconType: 'image'},
         { name: 'داشبورد', href: '/dashboard', icon: '/src/assets/images/home.png', iconType: 'image' },
+        { name: 'اکسپلور', href: '/dashboard/explore', icon: '/src/assets/images/explore.png', iconType: 'image'},
+        { name: 'باشگاه ها', href: '/dashboard/clubs', icon: '/src/assets/images/club-icon.png', iconType: 'image' },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' },
       ]
   }
 

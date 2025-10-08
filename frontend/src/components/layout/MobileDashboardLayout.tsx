@@ -311,8 +311,8 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                     type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'}
                     value={item.icon}
                     alt={item.name}
-                    className={`w-6 h-5 ${active ? 'text-blue-500' : ''}`}
-                    active={false}
+                    className="w-6 h-5"
+                    active={active}
                   />
                 </div>
                 <span className={`text-xs ${active ? 'text-blue-500' : 'text-gray-500'}`}>

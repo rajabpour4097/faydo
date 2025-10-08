@@ -16,47 +16,68 @@ export const CustomIcon: React.FC<CustomIconProps> = ({
   active = false,
 }) => {
   // For image-based icons we approximate tinting using CSS filters.
-  // Active: make icon white so it contrasts on colored background.
+  // Active: make icon blue for selected state.
   // Inactive: gray tone similar to the provided mock.
   const imageFilter = active
-    ? 'invert(100%) brightness(110%)'
+    ? 'brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)'
     : 'grayscale(100%) brightness(85%) saturate(60%)';
 
   switch (type) {
     case 'emoji':
-      return <span className={`text-lg ${active ? 'text-white' : 'text-gray-500'}`}>{value}</span>
+      return <span className={`text-lg ${active ? 'text-blue-500' : 'text-gray-500'}`}>{value}</span>
     
     case 'image':
       return (
-        <img 
-          src={value} 
-          alt={alt} 
-          className={className}
-          style={{ objectFit: 'contain', filter: imageFilter }}
+        <div 
+          className={`${className} ${active ? 'bg-blue-500' : 'bg-gray-500'}`}
+          style={{
+            maskImage: `url(${value})`,
+            maskSize: 'contain',
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskImage: `url(${value})`,
+            WebkitMaskSize: 'contain',
+            WebkitMaskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center'
+          }}
         />
       )
     
     case 'base64':
       return (
-        <img 
-          src={`data:image/png;base64,${value}`} 
-          alt={alt} 
-          className={className}
-          style={{ objectFit: 'contain', filter: imageFilter }}
+        <div 
+          className={`${className} ${active ? 'bg-blue-500' : 'bg-gray-500'}`}
+          style={{
+            maskImage: `url(data:image/png;base64,${value})`,
+            maskSize: 'contain',
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskImage: `url(data:image/png;base64,${value})`,
+            WebkitMaskSize: 'contain',
+            WebkitMaskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center'
+          }}
         />
       )
     
     case 'url':
       return (
-        <img 
-          src={value} 
-          alt={alt} 
-          className={className}
-          style={{ objectFit: 'contain', filter: imageFilter }}
+        <div 
+          className={`${className} ${active ? 'bg-blue-500' : 'bg-gray-500'}`}
+          style={{
+            maskImage: `url(${value})`,
+            maskSize: 'contain',
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskImage: `url(${value})`,
+            WebkitMaskSize: 'contain',
+            WebkitMaskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center'
+          }}
         />
       )
     
     default:
-      return <span className={`text-lg ${active ? 'text-white' : 'text-gray-500'}`}>{value}</span>
+      return <span className={`text-lg ${active ? 'text-blue-500' : 'text-gray-500'}`}>{value}</span>
   }
 }

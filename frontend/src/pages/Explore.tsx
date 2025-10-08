@@ -15,6 +15,7 @@ interface FilterState {
   category: string
   sortBy: 'discount_high' | 'discount_low' | 'newest' | ''
   search: string
+  cities: number[]
 }
 
 export const Explore: React.FC<ExploreProps> = () => {
@@ -22,13 +23,16 @@ export const Explore: React.FC<ExploreProps> = () => {
   const navigate = useNavigate()
   const [packages, setPackages] = useState<Package[]>([])
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
+  const [availableCities, setAvailableCities] = useState<{id: number, name: string}[]>([])
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
   // const [categories] = useState<BusinessCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<FilterState>({
     category: '',
     sortBy: '',
-    search: ''
+    search: '',
+    cities: []
   })
 
   // Check if user is customer
@@ -81,6 +85,40 @@ export const Explore: React.FC<ExploreProps> = () => {
     applyFilters()
   }, [packages, filters])
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.city-dropdown')) {
+        setIsCityDropdownOpen(false)
+      }
+    }
+
+    if (isCityDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isCityDropdownOpen])
+
+  // Extract unique cities from packages
+  const extractCitiesFromPackages = (packages: Package[]) => {
+    const cityMap = new Map<number, {id: number, name: string}>()
+    
+    packages.forEach(pkg => {
+      if (pkg.city && pkg.city.id && pkg.city.name) {
+        cityMap.set(pkg.city.id, {
+          id: pkg.city.id,
+          name: pkg.city.name
+        })
+      }
+    })
+    
+    return Array.from(cityMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'fa'))
+  }
+
   const loadActivePackages = async () => {
     try {
       setLoading(true)
@@ -98,6 +136,11 @@ export const Explore: React.FC<ExploreProps> = () => {
         )
         console.log('✅ Active packages:', activePackages)
         setPackages(activePackages)
+        
+        // Extract available cities from packages
+        const cities = extractCitiesFromPackages(activePackages)
+        console.log('🏙️ Available cities:', cities)
+        setAvailableCities(cities)
       } else {
         console.error('❌ No data in response:', response)
         // برای تست، داده‌های نمونه اضافه کن
@@ -152,6 +195,13 @@ export const Explore: React.FC<ExploreProps> = () => {
       // filtered = filtered.filter(pkg => pkg.business_category_id === parseInt(filters.category))
     }
 
+    // فیلتر بر اساس شهر
+    if (filters.cities.length > 0) {
+      filtered = filtered.filter(pkg => 
+        pkg.city && filters.cities.includes(pkg.city.id)
+      )
+    }
+
     // مرتب‌سازی
     if (filters.sortBy) {
       switch (filters.sortBy) {
@@ -173,6 +223,29 @@ export const Explore: React.FC<ExploreProps> = () => {
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleCityToggle = (cityId: number) => {
+    setFilters(prev => ({
+      ...prev,
+      cities: prev.cities.includes(cityId)
+        ? prev.cities.filter(id => id !== cityId)
+        : [...prev.cities, cityId]
+    }))
+  }
+
+  const handleSelectAllCities = () => {
+    setFilters(prev => ({
+      ...prev,
+      cities: availableCities.map(city => city.id)
+    }))
+  }
+
+  const handleClearAllCities = () => {
+    setFilters(prev => ({
+      ...prev,
+      cities: []
+    }))
   }
 
   // const clearFilters = () => {
@@ -198,11 +271,6 @@ export const Explore: React.FC<ExploreProps> = () => {
       <div className="p-4 space-y-4" style={{ direction: 'rtl' }}>
         {/* Search Header like mock */}
         <div className="flex items-center gap-3">
-          <button className="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center bg-white dark:bg-slate-800">
-            <svg className="w-5 h-5 text-gray-700 dark:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
           <div className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-3 py-2 flex items-center gap-2">
             <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -223,6 +291,71 @@ export const Explore: React.FC<ExploreProps> = () => {
             )}
           </div>
         </div>
+
+        {/* City Filter Dropdown */}
+        {availableCities.length > 0 && (
+          <div className="relative city-dropdown">
+            <button
+              onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-3 py-2 flex items-center justify-between text-gray-900 dark:text-white"
+            >
+              <span className="text-sm">
+                {filters.cities.length === 0 
+                  ? 'همه شهرها' 
+                  : filters.cities.length === availableCities.length 
+                    ? 'همه شهرها' 
+                    : `${filters.cities.length} شهر انتخاب شده`
+                }
+              </span>
+              <svg 
+                className={`w-5 h-5 text-gray-500 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {isCityDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-lg z-10 max-h-60 overflow-y-auto">
+                <div className="p-2">
+                  <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-slate-700 mb-2">
+                    <button
+                      onClick={handleSelectAllCities}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      انتخاب همه
+                    </button>
+                    <button
+                      onClick={handleClearAllCities}
+                      className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                    >
+                      پاک کردن همه
+                    </button>
+                  </div>
+                  
+                  {availableCities.map((city) => (
+                    <label
+                      key={city.id}
+                      className="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer rounded-lg"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.cities.includes(city.id)}
+                        onChange={() => handleCityToggle(city.id)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <span className="mr-3 text-sm text-gray-900 dark:text-white">
+                        {city.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (

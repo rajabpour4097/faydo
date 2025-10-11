@@ -72,7 +72,7 @@ class Package(BaseModel):
         verbose_name_plural = "پکیج‌ها"
 
     def __str__(self):
-        return self.business.name
+        return f'{self.business.name} - {self.id}'
     
     def check_completion(self):
         """

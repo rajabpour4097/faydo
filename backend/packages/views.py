@@ -192,7 +192,7 @@ class PackageViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """
-        Approve a package (admin only)
+        Approve a package (admin only) with automatic activation logic
         """
         if self.request.user.role not in ['admin', 'it_manager', 'project_manager']:
             return Response(
@@ -202,12 +202,26 @@ class PackageViewSet(viewsets.ModelViewSet):
         
         package = self.get_object()
         package.status = 'approved'
+        
+        # بررسی منطق فعال‌سازی خودکار
+        activation_message = ""
+        
+        if package.can_activate_immediately():
+            # اگر اولین پکیج کسب‌وکار است یا پکیج فعالی وجود ندارد
+            package.activate_package()
+            activation_message = "پکیج تایید و فوراً فعال شد."
+        else:
+            # اگر پکیج فعالی وجود دارد که کمتر از ۱۰ روز به پایان آن مانده
+            package.is_active = False
+            activation_message = "پکیج تایید شد اما تا پایان پکیج فعلی فعال نخواهد شد. پس از پایان پکیج فعلی، این پکیج به صورت خودکار فعال می‌شود."
+        
         package.save()
         
         return Response({
             'id': package.id,
             'status': package.status,
-            'message': 'Package approved successfully'
+            'is_active': package.is_active,
+            'message': f'Package approved successfully. {activation_message}'
         })
     
     @action(detail=True, methods=['post'])

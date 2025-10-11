@@ -89,6 +89,105 @@ class Package(BaseModel):
         
         return bool(has_discount_all and has_elite_gift and has_vip_experiences and has_dates)
     
+    def get_active_package_for_business(self):
+        """
+        دریافت پکیج فعال کسب‌وکار
+        """
+        return Package.objects.filter(
+            business=self.business,
+            is_active=True,
+            status='approved'
+        ).first()
+    
+    def has_active_package_with_less_than_10_days(self):
+        """
+        بررسی اینکه آیا کسب‌وکار پکیج فعالی دارد که کمتر از ۱۰ روز به پایان آن مانده
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        active_package = self.get_active_package_for_business()
+        if not active_package or not active_package.end_date:
+            return False
+        
+        today = timezone.now().date()
+        days_remaining = (active_package.end_date - today).days
+        return days_remaining < 10
+    
+    def is_first_package_for_business(self):
+        """
+        بررسی اینکه آیا این اولین پکیج کسب‌وکار است
+        """
+        return not Package.objects.filter(
+            business=self.business,
+            status__in=['approved', 'pending']
+        ).exclude(id=self.id).exists()
+    
+    def can_activate_immediately(self):
+        """
+        بررسی اینکه آیا پکیج می‌تواند فوراً فعال شود
+        """
+        # اگر اولین پکیج کسب‌وکار است، می‌تواند فوراً فعال شود
+        if self.is_first_package_for_business():
+            return True
+        
+        # اگر پکیج فعالی وجود ندارد، می‌تواند فعال شود
+        if not self.get_active_package_for_business():
+            return True
+        
+        # اگر پکیج فعالی وجود دارد اما کمتر از ۱۰ روز به پایان آن مانده، نمی‌تواند فعال شود
+        return False
+    
+    def activate_package(self):
+        """
+        فعال کردن پکیج
+        """
+        self.is_active = True
+        self.save()
+    
+    def deactivate_package(self):
+        """
+        غیرفعال کردن پکیج
+        """
+        self.is_active = False
+        self.save()
+    
+    @classmethod
+    def activate_pending_packages_for_expired(cls):
+        """
+        فعال‌سازی خودکار پکیج‌های در انتظار پس از انقضای پکیج‌های فعال
+        """
+        from django.utils import timezone
+        
+        today = timezone.now().date()
+        activated_count = 0
+        
+        # پیدا کردن پکیج‌های فعالی که امروز منقضی شده‌اند
+        expired_active_packages = cls.objects.filter(
+            is_active=True,
+            status='approved',
+            end_date__lte=today
+        )
+        
+        for expired_package in expired_active_packages:
+            # غیرفعال کردن پکیج منقضی شده
+            expired_package.deactivate_package()
+            
+            # پیدا کردن پکیج بعدی در انتظار برای همان کسب‌وکار
+            next_pending_package = cls.objects.filter(
+                business=expired_package.business,
+                status='approved',
+                is_active=False,
+                is_complete=True
+            ).order_by('created_at').first()
+            
+            if next_pending_package:
+                # فعال کردن پکیج بعدی
+                next_pending_package.activate_package()
+                activated_count += 1
+        
+        return activated_count
+
     def save(self, *args, **kwargs):
         # بررسی کامل بودن قبل از ذخیره
         if self.pk:

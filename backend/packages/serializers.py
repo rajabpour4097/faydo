@@ -91,6 +91,11 @@ class PackageListSerializer(serializers.ModelSerializer):
     # اطلاعات تخفیف کلی
     discount_percentage = serializers.SerializerMethodField()
     
+    # اطلاعات تخفیف اختصاصی
+    specific_discount_title = serializers.SerializerMethodField()
+    specific_discount_percentage = serializers.SerializerMethodField()
+    specific_discount_description = serializers.SerializerMethodField()
+    
     # اطلاعات هدیه ویژه
     elite_gift_title = serializers.SerializerMethodField()
     elite_gift_gift = serializers.SerializerMethodField()
@@ -109,7 +114,8 @@ class PackageListSerializer(serializers.ModelSerializer):
             'id', 'business_name', 'is_active', 'start_date', 'end_date', 
             'status', 'status_display', 'is_complete', 'created_at', 'modified_at',
             'business_logo', 'business_image', 'business_category', 'city',
-            'discount_percentage', 'elite_gift_title', 'elite_gift_gift', 'elite_gift_amount', 'elite_gift_count',
+            'discount_percentage', 'specific_discount_title', 'specific_discount_percentage', 'specific_discount_description',
+            'elite_gift_title', 'elite_gift_gift', 'elite_gift_amount', 'elite_gift_count',
             'vip_experiences_count', 'days_remaining'
         ]
         read_only_fields = ['id', 'created_at', 'modified_at']
@@ -118,6 +124,27 @@ class PackageListSerializer(serializers.ModelSerializer):
         """درصد تخفیف کلی"""
         try:
             return obj.discount_all.percentage if hasattr(obj, 'discount_all') else None
+        except:
+            return None
+    
+    def get_specific_discount_title(self, obj):
+        """عنوان تخفیف اختصاصی"""
+        try:
+            return obj.specific_discount.title if hasattr(obj, 'specific_discount') else None
+        except:
+            return None
+    
+    def get_specific_discount_percentage(self, obj):
+        """درصد تخفیف اختصاصی"""
+        try:
+            return obj.specific_discount.percentage if hasattr(obj, 'specific_discount') else None
+        except:
+            return None
+    
+    def get_specific_discount_description(self, obj):
+        """توضیحات تخفیف اختصاصی"""
+        try:
+            return obj.specific_discount.description if hasattr(obj, 'specific_discount') else None
         except:
             return None
     

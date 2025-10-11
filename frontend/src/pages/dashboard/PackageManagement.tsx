@@ -512,6 +512,21 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                                   <span className="text-red-600 font-medium">%{pkg.discount_percentage}</span>
                                 </div>
                               )}
+                              {pkg.specific_discount_title && pkg.specific_discount_percentage && (
+                                <div className="flex items-center">
+                                  <div className="w-4 h-4 bg-orange-100 rounded flex items-center justify-center ml-1">
+                                    <svg className="w-2 h-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+                                    </svg>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-orange-600 font-medium">%{pkg.specific_discount_percentage}</span>
+                                    <span className="text-orange-500 text-xs truncate max-w-20" title={pkg.specific_discount_title}>
+                                      {pkg.specific_discount_title}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                               {pkg.elite_gift_title && (
                                 <div className="flex items-center">
                                   <div className="w-4 h-4 bg-purple-100 rounded flex items-center justify-center ml-1">
@@ -784,8 +799,23 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                           </svg>
                         </div>
                         <div>
-                          <div className="font-medium">تخفیف</div>
+                          <div className="font-medium">تخفیف کلی</div>
                           <div className="text-red-600 font-bold">%{pkg.discount_percentage}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {pkg.specific_discount_title && pkg.specific_discount_percentage && (
+                      <div className={`flex items-center ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center ml-2">
+                          <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="font-medium">تخفیف ویژه</div>
+                          <div className="text-orange-600 font-bold">%{pkg.specific_discount_percentage}</div>
+                          <div className="text-orange-500 text-xs truncate">{pkg.specific_discount_title}</div>
                         </div>
                       </div>
                     )}

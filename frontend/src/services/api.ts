@@ -108,6 +108,9 @@ export interface Package {
   experiences?: VipExperience[]
   // فیلدهای جدید از PackageListSerializer
   discount_percentage?: number
+  specific_discount_title?: string
+  specific_discount_percentage?: number
+  specific_discount_description?: string
   elite_gift_title?: string
   elite_gift_gift?: string
   elite_gift_amount?: number

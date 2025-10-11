@@ -582,6 +582,7 @@ class ApiService {
     return this.request<Package>(`/packages/packages/${id}/`)
   }
 
+
   async createPackage(packageData: PackageCreateRequest): Promise<ApiResponse<Package>> {
     console.log('API: Creating package with data:', packageData)
     console.log('API: Current access token:', this.accessToken)

@@ -744,9 +744,10 @@ interface DesktopPackageCardProps {
 const DesktopPackageCard: React.FC<DesktopPackageCardProps> = ({ package: pkg }) => {
   const [imageErrored, setImageErrored] = useState(false)
   const { isDark } = useTheme()
+  const navigate = useNavigate()
   
   const handleCardClick = () => {
-    console.log('Desktop Package clicked:', pkg.id)
+    navigate(`/dashboard/business/${pkg.id}`)
   }
 
   // Determine VIP badge type
@@ -875,9 +876,10 @@ interface PackageCardProps {
 
 const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
   const [imageErrored, setImageErrored] = useState(false)
+  const navigate = useNavigate()
+  
   const handleCardClick = () => {
-    // اینجا می‌توانیم به صفحه جزئیات پکیج هدایت کنیم
-    console.log('Package clicked:', pkg.id)
+    navigate(`/dashboard/business/${pkg.id}`)
   }
 
   // Determine VIP badge type

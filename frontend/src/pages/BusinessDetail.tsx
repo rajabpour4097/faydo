@@ -32,7 +32,7 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
   const [gallery, setGallery] = useState<BusinessGalleryImage[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'details' | 'gallery' | 'comments'>('details')
+  const [activeTab, setActiveTab] = useState<'details' | 'comments'>('details')
   const [newComment, setNewComment] = useState('')
   const [commentCategory, setCommentCategory] = useState<'discount_all' | 'specific_discount' | 'elite_gift' | 'vip_experience'>('discount_all')
 
@@ -293,7 +293,6 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
             <nav className="flex space-x-8 px-6">
               {[
                 { id: 'details', label: 'جزئیات پکیج' },
-                { id: 'gallery', label: 'گالری' },
                 { id: 'comments', label: 'نظرات کاربران' }
               ].map((tab) => (
                 <button
@@ -424,34 +423,6 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'gallery' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {gallery.map((item) => (
-                  <div key={item.id} className="group cursor-pointer">
-                    <div className="relative aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-2">
-                      <img 
-                        src={item.image_url} 
-                        alt={item.title || 'تصویر گالری'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {item.is_featured && (
-                        <div className="absolute top-2 right-2">
-                          <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                            شاخص
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {item.title && (
-                      <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                        {item.title}
-                      </p>
-                    )}
-                  </div>
-                ))}
               </div>
             )}
 
@@ -608,7 +579,6 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
             <nav className="flex space-x-4 px-4">
               {[
                 { id: 'details', label: 'جزئیات' },
-                { id: 'gallery', label: 'گالری' },
                 { id: 'comments', label: 'نظرات' }
               ].map((tab) => (
                 <button
@@ -669,34 +639,6 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-
-            {activeTab === 'gallery' && (
-              <div className="grid grid-cols-2 gap-3">
-                {gallery.map((item) => (
-                  <div key={item.id} className="group cursor-pointer">
-                    <div className="relative aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-2">
-                      <img 
-                        src={item.image_url} 
-                        alt={item.title || 'تصویر گالری'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {item.is_featured && (
-                        <div className="absolute top-1 right-1">
-                          <span className="bg-yellow-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
-                            شاخص
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {item.title && (
-                      <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                        {item.title}
-                      </p>
-                    )}
-                  </div>
-                ))}
               </div>
             )}
 

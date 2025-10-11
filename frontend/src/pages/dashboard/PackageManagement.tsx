@@ -470,11 +470,20 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                                   در حال بررسی
                                 </span>
                               )}
-                              {pkg.status === 'approved' && !pkg.is_active && (
-                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-blue-600 bg-blue-100">
-                                  در انتظار انتشار
-                                </span>
-                              )}
+                              {pkg.status === 'approved' && !pkg.is_active && (() => {
+                                const isExpired = (pkg.days_remaining !== null && pkg.days_remaining !== undefined && pkg.days_remaining <= 0) ||
+                                                (pkg.end_date && new Date(pkg.end_date) < new Date());
+                                console.log(`Package ${pkg.id}: days_remaining=${pkg.days_remaining}, end_date=${pkg.end_date}, isExpired=${isExpired}`);
+                                return (
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    isExpired
+                                      ? 'text-red-600 bg-red-100' 
+                                      : 'text-blue-600 bg-blue-100'
+                                  }`}>
+                                    {isExpired ? 'منقضی شده' : 'در انتظار انتشار'}
+                                  </span>
+                                );
+                              })()}
                               {pkg.is_active && (
                                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
                                   فعال
@@ -779,11 +788,20 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                         در حال بررسی
                       </span>
                     )}
-                    {pkg.status === 'approved' && !pkg.is_active && (
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-blue-600 bg-blue-100">
-                        در انتظار انتشار
-                      </span>
-                    )}
+                    {pkg.status === 'approved' && !pkg.is_active && (() => {
+                      const isExpired = (pkg.days_remaining !== null && pkg.days_remaining !== undefined && pkg.days_remaining <= 0) ||
+                                      (pkg.end_date && new Date(pkg.end_date) < new Date());
+                      console.log(`Mobile Package ${pkg.id}: days_remaining=${pkg.days_remaining}, end_date=${pkg.end_date}, isExpired=${isExpired}`);
+                      return (
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          isExpired
+                            ? 'text-red-600 bg-red-100' 
+                            : 'text-blue-600 bg-blue-100'
+                        }`}>
+                          {isExpired ? 'منقضی شده' : 'در انتظار انتشار'}
+                        </span>
+                      );
+                    })()}
                     {pkg.is_active && (
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
                         فعال

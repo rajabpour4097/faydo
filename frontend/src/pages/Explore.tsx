@@ -478,12 +478,69 @@ export const Explore: React.FC<ExploreProps> = () => {
           </div>
         )}
 
-        {/* List of packages like mock */}
-        <div className="space-y-4">
-          {filteredPackages.map((pkg) => (
-            <PackageCard key={pkg.id} package={pkg} />)
-          )}
-        </div>
+        {/* List of packages or empty state */}
+        {filteredPackages.length > 0 ? (
+          <div className="space-y-4">
+            {filteredPackages.map((pkg) => (
+              <PackageCard key={pkg.id} package={pkg} />)
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            {/* Empty state illustration */}
+            <div className="relative mb-8">
+              <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center">
+                <svg className="w-16 h-16 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              {/* Decorative elements */}
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-pulse"></div>
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-purple-400 rounded-full animate-pulse delay-300"></div>
+            </div>
+            
+            {/* Empty state content */}
+            <div className="text-center max-w-md">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                هیچ پکیج فعالی یافت نشد
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                در حال حاضر هیچ پکیج فعالی از کسب‌وکارها موجود نیست. 
+                لطفاً بعداً دوباره بررسی کنید یا فیلترهای جستجو را تغییر دهید.
+              </p>
+              
+              {/* Action buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  تلاش مجدد
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setFilters({
+                      categories: [],
+                      sortBy: '',
+                      search: '',
+                      cities: []
+                    })
+                  }}
+                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  پاک کردن فیلترها
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </MobileDashboardLayout>
   )

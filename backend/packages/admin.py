@@ -4,13 +4,28 @@ from .models import DiscountAll, EliteGift, Package, SpecificDiscount, VipExperi
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'business', 'is_active', 'start_date', 'end_date')
-    search_fields = ('business__name', 'is_active', 'start_date', 'end_date')
-    list_filter = ('business',  'is_active', 'start_date', 'end_date')
+    list_display = ('id', 'business', 'is_active', 'is_complete', 'start_date', 'end_date', 'status')
+    search_fields = ('business__name', 'is_active', 'is_complete', 'start_date', 'end_date')
+    list_filter = ('business', 'is_active', 'is_complete', 'start_date', 'end_date', 'status')
     list_per_page = 10
     list_display_links = ('id', 'business')
-    list_editable = ('is_active', 'start_date', 'end_date')
-    list_filter = ('business', 'is_active', 'start_date', 'end_date')
+    list_editable = ('is_active', 'is_complete', 'start_date', 'end_date')
+    
+    def save_model(self, request, obj, form, change):
+        """
+        Override save to allow manual activation/deactivation from admin
+        """
+        # علامت‌گذاری برای جلوگیری از signal automatic activation
+        obj._admin_override = True
+        super().save_model(request, obj, form, change)
+    
+    def save_related(self, request, form, formsets, change):
+        """
+        Override save_related to allow manual activation/deactivation from admin
+        """
+        # علامت‌گذاری برای جلوگیری از signal automatic activation
+        form.instance._admin_override = True
+        super().save_related(request, form, formsets, change)
 
 
 @admin.register(VipExperienceCategory)

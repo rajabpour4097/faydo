@@ -11,53 +11,46 @@ class Command(BaseCommand):
         فعال‌سازی خودکار پکیج‌های در انتظار پس از انقضای پکیج‌های فعال
         """
         today = timezone.now().date()
+        deactivated_count = 0
         activated_count = 0
         
-        # پیدا کردن پکیج‌های فعالی که امروز منقضی شده‌اند
+        self.stdout.write(f'Starting package activation check for date: {today}')
+        
+        # مرحله 1: غیرفعال کردن پکیج‌های منقضی شده
+        self.stdout.write('Step 1: Deactivating expired packages...')
         expired_active_packages = Package.objects.filter(
             is_active=True,
             status='approved',
             end_date__lte=today
         )
         
+        deactivated_package_ids = []
         for expired_package in expired_active_packages:
-            # غیرفعال کردن پکیج منقضی شده
-            expired_package.deactivate_package()
             self.stdout.write(
-                self.style.WARNING(f'Package {expired_package.id} deactivated (expired)')
+                f'Deactivating expired package {expired_package.id} for business {expired_package.business.name} (expired on {expired_package.end_date})'
             )
-            
-            # پیدا کردن پکیج بعدی در انتظار برای همان کسب‌وکار
-            next_pending_package = Package.objects.filter(
-                business=expired_package.business,
-                status='approved',
-                is_active=False,
-                is_complete=True
-            ).order_by('created_at').first()
-            
-            if next_pending_package:
-                # فعال کردن پکیج بعدی
-                next_pending_package.activate_package()
-                activated_count += 1
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f'Package {next_pending_package.id} activated automatically '
-                        f'for business {next_pending_package.business.name}'
-                    )
-                )
-            else:
-                self.stdout.write(
-                    self.style.WARNING(
-                        f'No pending package found for business {expired_package.business.name}'
-                    )
-                )
+            expired_package.deactivate_package()
+            deactivated_package_ids.append(expired_package.id)
+            deactivated_count += 1
         
-        # همچنین بررسی پکیج‌هایی که باید فعال شوند (پکیج‌های تایید شده که پکیج فعالی ندارند)
+        if deactivated_count > 0:
+            self.stdout.write(
+                self.style.SUCCESS(f'Deactivated {deactivated_count} expired packages')
+            )
+        else:
+            self.stdout.write('No expired packages found')
+        
+        # مرحله 2: فعال کردن پکیج‌های تایید شده که آماده فعال‌سازی هستند
+        self.stdout.write('Step 2: Activating approved packages...')
+        
+        # پیدا کردن کسب‌وکارهایی که پکیج فعال ندارند (به جز پکیج‌هایی که تازه غیرفعال کردیم)
         businesses_without_active_packages = Package.objects.filter(
             status='approved',
             is_active=False,
             is_complete=True
-        ).values_list('business', flat=True).distinct()
+        ).exclude(id__in=deactivated_package_ids).values_list('business', flat=True).distinct()
+        
+        self.stdout.write(f'Found {len(businesses_without_active_packages)} businesses with approved packages but no active package')
         
         for business_id in businesses_without_active_packages:
             # بررسی اینکه آیا این کسب‌وکار پکیج فعالی دارد یا نه
@@ -68,57 +61,80 @@ class Command(BaseCommand):
             )
             
             if not active_packages.exists():
-                # پیدا کردن اولین پکیج تایید شده برای فعال‌سازی
+                # پیدا کردن اولین پکیج تایید شده برای فعال‌سازی (به جز پکیج‌هایی که تازه غیرفعال کردیم)
                 package_to_activate = Package.objects.filter(
                     business_id=business_id,
                     status='approved',
                     is_active=False,
                     is_complete=True
-                ).order_by('created_at').first()
+                ).exclude(id__in=deactivated_package_ids).order_by('created_at').first()
                 
                 if package_to_activate:
-                    package_to_activate.activate_package()
-                    activated_count += 1
-                    self.stdout.write(
-                        self.style.SUCCESS(
-                            f'Package {package_to_activate.id} activated for business '
-                            f'{package_to_activate.business.name} (no active package)'
+                    # بررسی اینکه آیا تاریخ شروع پکیج رسیده یا نه
+                    if package_to_activate.start_date and package_to_activate.start_date <= today:
+                        self.stdout.write(
+                            f'Activating package {package_to_activate.id} for business {package_to_activate.business.name} (start date: {package_to_activate.start_date})'
                         )
+                        package_to_activate.activate_package()
+                        activated_count += 1
+                        self.stdout.write(
+                            self.style.SUCCESS(
+                                f'Package {package_to_activate.id} activated for business {package_to_activate.business.name}'
+                            )
+                        )
+                    else:
+                        self.stdout.write(
+                            f'Package {package_to_activate.id} for business {package_to_activate.business.name} not ready yet (start date: {package_to_activate.start_date})'
+                        )
+                else:
+                    self.stdout.write(
+                        self.style.WARNING(f'No package found to activate for business_id {business_id}')
                     )
             else:
-                # اگر پکیج فعالی وجود دارد، بررسی کن که آیا باید غیرفعال شود
-                for active_package in active_packages:
-                    # اگر پکیج فعال منقضی شده، آن را غیرفعال کن
-                    if active_package.end_date and active_package.end_date <= today:
-                        active_package.deactivate_package()
-                        self.stdout.write(
-                            self.style.WARNING(
-                                f'Package {active_package.id} deactivated (expired) for business '
-                                f'{active_package.business.name}'
-                            )
-                        )
-                        
-                        # حالا پکیج بعدی را فعال کن
-                        next_pending_package = Package.objects.filter(
-                            business_id=business_id,
-                            status='approved',
-                            is_active=False,
-                            is_complete=True
-                        ).order_by('created_at').first()
-                        
-                        if next_pending_package:
-                            next_pending_package.activate_package()
-                            activated_count += 1
-                            self.stdout.write(
-                                self.style.SUCCESS(
-                                    f'Package {next_pending_package.id} activated for business '
-                                    f'{next_pending_package.business.name} (after deactivating expired)'
-                                )
-                            )
+                self.stdout.write(f'Business {business_id} already has active packages, skipping')
         
-        if activated_count > 0:
+        # مرحله 3: بررسی پکیج‌هایی که ممکن است با تاخیر اضافه شده باشند
+        self.stdout.write('Step 3: Checking for delayed package additions...')
+        
+        # پیدا کردن پکیج‌های تایید شده که تاریخ شروعشان گذشته اما هنوز فعال نشده‌اند (به جز پکیج‌هایی که تازه غیرفعال کردیم)
+        delayed_packages = Package.objects.filter(
+            status='approved',
+            is_active=False,
+            is_complete=True,
+            start_date__lte=today
+        ).exclude(id__in=deactivated_package_ids)
+        
+        for delayed_package in delayed_packages:
+            # بررسی اینکه آیا کسب‌وکار پکیج فعالی دارد یا نه
+            has_active_package = Package.objects.filter(
+                business=delayed_package.business,
+                is_active=True,
+                status='approved'
+            ).exists()
+            
+            if not has_active_package:
+                self.stdout.write(
+                    f'Found delayed package {delayed_package.id} for business {delayed_package.business.name} (start date: {delayed_package.start_date})'
+                )
+                delayed_package.activate_package()
+                activated_count += 1
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f'Delayed package {delayed_package.id} activated for business {delayed_package.business.name}'
+                    )
+                )
+        
+        # گزارش نهایی
+        self.stdout.write('=' * 50)
+        if deactivated_count > 0 or activated_count > 0:
             self.stdout.write(
-                self.style.SUCCESS(f'Successfully activated {activated_count} packages')
+                self.style.SUCCESS(
+                    f'Command completed successfully:\n'
+                    f'- Deactivated: {deactivated_count} expired packages\n'
+                    f'- Activated: {activated_count} pending packages'
+                )
             )
         else:
-            self.stdout.write('No packages needed activation')
+            self.stdout.write('No packages needed activation or deactivation')
+        
+        self.stdout.write('=' * 50)

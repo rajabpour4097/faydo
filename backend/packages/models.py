@@ -147,14 +147,15 @@ class Package(BaseModel):
         
         # حالا این پکیج را فعال کن
         self.is_active = True
-        self.save()
+        # استفاده از update برای جلوگیری از signal recursion
+        Package.objects.filter(id=self.id).update(is_active=True)
 
     def deactivate_package(self):
         """
         غیرفعال کردن پکیج
         """
-        self.is_active = False
-        self.save()
+        # استفاده از update برای جلوگیری از signal recursion
+        Package.objects.filter(id=self.id).update(is_active=False)
     
     def deactivate_all_business_packages(self):
         """
@@ -205,7 +206,9 @@ class Package(BaseModel):
     def save(self, *args, **kwargs):
         # بررسی کامل بودن قبل از ذخیره
         if self.pk:
-            self.is_complete = self.check_completion()
+            # اگر تغییر از admin panel آمده، is_complete را دستی کنترل کن
+            if not hasattr(self, '_admin_override'):
+                self.is_complete = self.check_completion()
         else:
             # برای packages جدید، is_complete را False تنظیم کن
             self.is_complete = False

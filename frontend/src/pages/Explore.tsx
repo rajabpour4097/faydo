@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
+import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { apiService, Package } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 
 interface ExploreProps {}
 
@@ -20,6 +22,7 @@ interface FilterState {
 
 export const Explore: React.FC<ExploreProps> = () => {
   const { user } = useAuth()
+  const { isDark } = useTheme()
   const navigate = useNavigate()
   const [packages, setPackages] = useState<Package[]>([])
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
@@ -315,7 +318,179 @@ export const Explore: React.FC<ExploreProps> = () => {
     )
   }
 
-  return (
+  // Desktop Layout Component
+  const DesktopLayout = () => (
+    <DashboardLayout>
+      <div className="space-y-6" style={{ direction: 'rtl' }}>
+        {/* Desktop Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              اکتشاف پکیج‌ها
+            </h1>
+            <p className={`mt-2 text-lg ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+              پکیج‌های فعال کسب‌وکارها را کشف کنید
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {filteredPackages.length} پکیج فعال
+              </div>
+              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                از {packages.length} پکیج کل
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Search and Filters */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Search Bar */}
+          <div className="lg:col-span-2">
+            <div className={`bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-4 py-3 flex items-center gap-3`}>
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="جستجو در پکیج‌ها..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="flex-1 bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+              />
+              {filters.search && (
+                <button onClick={() => handleFilterChange('search', '')} className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* City Filter */}
+          <div className="relative">
+            {availableCities.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                  className={`w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-4 py-3 flex items-center justify-between text-right`}
+                >
+                  <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {filters.cities.length > 0 ? `${filters.cities.length} شهر انتخاب شده` : 'همه شهرها'}
+                  </span>
+                  <svg className={`w-5 h-5 text-gray-400 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isCityDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-lg z-10 max-h-60 overflow-y-auto">
+                    {availableCities.map((city) => (
+                      <label key={city.id} className="flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.cities.includes(city.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFilters(prev => ({ ...prev, cities: [...prev.cities, city.id] }))
+                            } else {
+                              setFilters(prev => ({ ...prev, cities: prev.cities.filter(id => id !== city.id) }))
+                            }
+                          }}
+                          className="ml-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>{city.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Sort Filter */}
+          <div className="relative">
+            <select
+              value={filters.sortBy}
+              onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+              className={`w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-4 py-3 appearance-none cursor-pointer text-right ${isDark ? 'text-white' : 'text-gray-900'}`}
+            >
+              <option value="">مرتب‌سازی</option>
+              <option value="discount_high">بیشترین تخفیف</option>
+              <option value="discount_low">کمترین تخفیف</option>
+              <option value="newest">جدیدترین</option>
+            </select>
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Package Grid */}
+        {filteredPackages.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredPackages.map((pkg) => (
+              <DesktopPackageCard key={pkg.id} package={pkg} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="relative mb-8">
+              <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center">
+                <svg className="w-16 h-16 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-pulse"></div>
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-purple-400 rounded-full animate-pulse delay-300"></div>
+            </div>
+            <div className="text-center max-w-md">
+              <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>
+                هیچ پکیج فعالی یافت نشد
+              </h3>
+              <p className={`text-lg ${isDark ? 'text-slate-400' : 'text-gray-600'} mb-8 leading-relaxed`}>
+                در حال حاضر هیچ پکیج فعالی از کسب‌وکارها موجود نیست. 
+                لطفاً بعداً دوباره بررسی کنید یا فیلترهای جستجو را تغییر دهید.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  تلاش مجدد
+                </button>
+                <button
+                  onClick={() => {
+                    setFilters({
+                      categories: [],
+                      sortBy: '',
+                      search: '',
+                      cities: []
+                    })
+                  }}
+                  className="px-8 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  پاک کردن فیلترها
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  )
+
+  // Mobile Layout Component
+  const MobileLayout = () => (
     <MobileDashboardLayout>
       <div className="p-4 space-y-4" style={{ direction: 'rtl' }}>
         {/* Search Header like mock */}
@@ -544,6 +719,153 @@ export const Explore: React.FC<ExploreProps> = () => {
       </div>
     </MobileDashboardLayout>
   )
+
+  // Main return with responsive layout
+  return (
+    <>
+      {/* Desktop Layout */}
+      <div className="hidden lg:block">
+        <DesktopLayout />
+      </div>
+      
+      {/* Mobile Layout */}
+      <div className="lg:hidden">
+        <MobileLayout />
+      </div>
+    </>
+  )
+}
+
+// Desktop Package Card Component
+interface DesktopPackageCardProps {
+  package: Package
+}
+
+const DesktopPackageCard: React.FC<DesktopPackageCardProps> = ({ package: pkg }) => {
+  const [imageErrored, setImageErrored] = useState(false)
+  const { isDark } = useTheme()
+  
+  const handleCardClick = () => {
+    console.log('Desktop Package clicked:', pkg.id)
+  }
+
+  // Determine VIP badge type
+  const getVipBadgeType = () => {
+    const hasVip = pkg.has_vip || false
+    const hasVipPlus = pkg.has_vip_plus || false
+    
+    if (hasVip && hasVipPlus) {
+      return '+VIP'
+    }
+    else if (hasVip && !hasVipPlus) {
+      return 'VIP'
+    }
+    else if (!hasVip && hasVipPlus) {
+      return '+VIP'
+    }
+    
+    return 'VIP'
+  }
+
+  return (
+    <div
+      className={`bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105`}
+      onClick={handleCardClick}
+    >
+      {/* Business Image and VIP Badge */}
+      <div className="relative mb-4">
+        <div className="w-full h-48 rounded-xl overflow-hidden bg-gray-100">
+          {!imageErrored && (pkg.business_image || pkg.business_logo) ? (
+            <img
+              src={pkg.business_image || pkg.business_logo || ''}
+              alt={pkg.business_name}
+              loading="lazy"
+              onError={() => setImageErrored(true)}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              <span className="text-white text-4xl">🏢</span>
+            </div>
+          )}
+        </div>
+        
+        {/* VIP Badge */}
+        <div className="absolute top-3 right-3">
+          <div className={`px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg ${
+            getVipBadgeType() === '+VIP' 
+              ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
+              : 'bg-gradient-to-r from-purple-500 to-pink-500'
+          }`}>
+            {getVipBadgeType()}
+          </div>
+        </div>
+      </div>
+
+      {/* Business Info */}
+      <div className="mb-4">
+        <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+          {pkg.business_name}
+        </h3>
+        {pkg.business_category && (
+          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+            {pkg.business_category.name}
+          </p>
+        )}
+      </div>
+
+      {/* Discount Info */}
+      <div className="space-y-3 mb-4">
+        {pkg.discount_percentage && (
+          <div className="flex items-center justify-between">
+            <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>تخفیف کلی</span>
+            <span className="text-lg font-bold text-green-600">{pkg.discount_percentage}%</span>
+          </div>
+        )}
+        
+        {pkg.specific_discount_title && pkg.specific_discount_percentage && (
+          <div className="flex items-center justify-between">
+            <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>تخفیف خاص</span>
+            <span className="text-lg font-bold text-blue-600">{pkg.specific_discount_percentage}%</span>
+          </div>
+        )}
+      </div>
+
+      {/* Elite Gift */}
+      {pkg.elite_gift_title && (
+        <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🎁</span>
+            <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {pkg.elite_gift_title}
+            </span>
+          </div>
+          {pkg.elite_gift_amount && (
+            <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+              برای {pkg.elite_gift_amount} مبلغ خرید
+            </p>
+          )}
+          {pkg.elite_gift_count && (
+            <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+              برای {pkg.elite_gift_count} خرید
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Days Remaining */}
+      {pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
+        <div className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {pkg.days_remaining > 0 ? `${pkg.days_remaining} روز باقی‌مانده` : 'منقضی شده'}
+          </span>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // Package Card Component
@@ -566,7 +888,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
     
     // اگر هم VIP و هم VIP+ دارد، VIP+ نمایش بده
     if (hasVip && hasVipPlus) {
-      return 'VIP+'
+      return '+VIP'
     }
     // اگر فقط VIP دارد، VIP نمایش بده
     else if (hasVip && !hasVipPlus) {
@@ -574,7 +896,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
     }
     // اگر فقط VIP+ دارد، VIP+ نمایش بده
     else if (!hasVip && hasVipPlus) {
-      return 'VIP+'
+      return '+VIP'
     }
     
     return 'VIP' // Default to VIP if no VIP experiences
@@ -602,7 +924,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
         {/* VIP Badge */}
         <div className="absolute top-1 right-1">
           <div className={`px-2 py-1 rounded-full text-[8px] font-bold text-white shadow-lg ${
-            getVipBadgeType() === 'VIP+' 
+            getVipBadgeType() === '+VIP' 
               ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
               : 'bg-gradient-to-r from-purple-500 to-pink-500'
           }`}>

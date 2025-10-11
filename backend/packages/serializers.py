@@ -311,9 +311,25 @@ class PackageCreateUpdateSerializer(serializers.ModelSerializer):
         
         if elite_gift_data:
             if hasattr(instance, 'elite_gift'):
-                for attr, value in elite_gift_data.items():
-                    setattr(instance.elite_gift, attr, value)
-                instance.elite_gift.save()
+                # به‌روزرسانی elite_gift با پاک کردن فیلد مخالف
+                elite_gift = instance.elite_gift
+                elite_gift.gift = elite_gift_data.get('gift', elite_gift.gift)
+                
+                # اگر amount ارسال شده، count را پاک کن و برعکس
+                if 'amount' in elite_gift_data and elite_gift_data['amount'] is not None:
+                    elite_gift.amount = elite_gift_data['amount']
+                    elite_gift.count = None
+                elif 'count' in elite_gift_data and elite_gift_data['count'] is not None:
+                    elite_gift.count = elite_gift_data['count']
+                    elite_gift.amount = None
+                else:
+                    # اگر هیچ کدام ارسال نشده، فیلدهای موجود را حفظ کن
+                    if 'amount' in elite_gift_data:
+                        elite_gift.amount = elite_gift_data['amount']
+                    if 'count' in elite_gift_data:
+                        elite_gift.count = elite_gift_data['count']
+                
+                elite_gift.save()
             else:
                 EliteGift.objects.create(package=instance, **elite_gift_data)
         

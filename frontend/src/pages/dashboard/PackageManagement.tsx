@@ -227,7 +227,10 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const handlePackageClick = (pkg: Package) => {
     if (pkg.status === 'draft' && !pkg.is_complete) {
       handleEditPackage(pkg.id)
-    } else if (['pending', 'approved', 'rejected'].includes(pkg.status)) {
+    } else if (pkg.status === 'pending') {
+      // فقط پکیج‌های در حال بررسی قابل ویرایش هستند
+      handleEditPackage(pkg.id)
+    } else if (['approved', 'rejected'].includes(pkg.status)) {
       handleViewPackage(pkg)
     }
   }
@@ -451,7 +454,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                         <tr 
                           key={pkg.id} 
                           className={`${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'} ${
-                            (pkg.status === 'draft' && !pkg.is_complete) || ['pending', 'approved', 'rejected'].includes(pkg.status) ? 'cursor-pointer' : ''
+                            (pkg.status === 'draft' && !pkg.is_complete) || pkg.status === 'pending' || ['approved', 'rejected'].includes(pkg.status) ? 'cursor-pointer' : ''
                           }`}
                           onClick={() => handlePackageClick(pkg)}
                         >
@@ -553,17 +556,17 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                               )}
                               {pkg.status === 'pending' && (
                                 <span className="text-orange-600 text-sm">
-                                  در حال بررسی
+                                  کلیک کنید تا ویرایش کنید
                                 </span>
                               )}
                               {pkg.status === 'approved' && (
                                 <span className="text-green-600 text-sm">
-                                  تایید شده
+                                  تایید شده - فقط مشاهده
                                 </span>
                               )}
                               {pkg.status === 'rejected' && (
                                 <span className="text-red-600 text-sm">
-                                  نیاز به ویرایش
+                                  نیاز به ویرایش - فقط مشاهده
                                 </span>
                               )}
                             </div>
@@ -728,7 +731,7 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
               <div 
                 key={pkg.id} 
                 className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-2xl p-4 shadow-sm ${
-                  (pkg.status === 'draft' && !pkg.is_complete) || ['pending', 'approved', 'rejected'].includes(pkg.status) ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
+                  (pkg.status === 'draft' && !pkg.is_complete) || pkg.status === 'pending' || ['approved', 'rejected'].includes(pkg.status) ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
                 }`}
                 onClick={() => onPackageClick(pkg)}
               >
@@ -843,21 +846,21 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                 {pkg.status === 'pending' && (
                   <div className="text-center">
                     <span className="text-orange-600 text-sm">
-                      در حال بررسی
+                      کلیک کنید تا ویرایش کنید
                     </span>
                   </div>
                 )}
                 {pkg.status === 'approved' && (
                   <div className="text-center">
                     <span className="text-green-600 text-sm">
-                      تایید شده
+                      تایید شده - فقط مشاهده
                     </span>
                   </div>
                 )}
                 {pkg.status === 'rejected' && (
                   <div className="text-center">
                     <span className="text-red-600 text-sm">
-                      نیاز به ویرایش
+                      نیاز به ویرایش - فقط مشاهده
                     </span>
                   </div>
                 )}
@@ -1003,7 +1006,20 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
   ]
 
   const handleInputChange = (name: string, value: any) => {
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value }
+      
+      // اگر نوع هدیه تغییر کرد، فیلد مخالف را پاک کن
+      if (name === 'giftType') {
+        if (value === 'amount') {
+          newData.giftCount = '' // پاک کردن تعداد
+        } else if (value === 'count') {
+          newData.giftAmount = '' // پاک کردن مبلغ
+        }
+      }
+      
+      return newData
+    })
   }
 
   const handleCheckboxChange = (name: string, value: string, checked: boolean) => {

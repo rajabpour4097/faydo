@@ -109,6 +109,7 @@ class PackageViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         """
         Ensure only the business owner or admin can update
+        Business users can only edit packages with 'pending' status
         """
         user = self.request.user
         package = self.get_object()
@@ -121,6 +122,14 @@ class PackageViewSet(viewsets.ModelViewSet):
                         {"error": "You can only update your own packages"}, 
                         status=status.HTTP_403_FORBIDDEN
                     )
+                
+                # کسب‌وکارها فقط می‌توانند پکیج‌های با وضعیت 'pending' را ویرایش کنند
+                if package.status != 'pending':
+                    raise Response(
+                        {"error": "فقط پکیج‌های در حال بررسی قابل ویرایش هستند"}, 
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    
             except BusinessProfile.DoesNotExist:
                 raise Response(
                     {"error": "Business profile not found"}, 
@@ -326,19 +335,20 @@ class PackageViewSet(viewsets.ModelViewSet):
         if not amount and not count:
             return Response({"error": "باید یکی از فیلدهای مبلغ یا تعداد را وارد کنید."}, status=status.HTTP_400_BAD_REQUEST)
 
-        payload = {"gift": gift}
+        # تعیین نوع هدیه و پاک کردن فیلد مخالف
         if amount:
-            payload["amount"] = amount
-            payload["count"] = None
-        if count:
-            payload["count"] = count
-            if "amount" in payload:
-                payload.pop("amount", None)
+            # اگر مبلغ انتخاب شده، تعداد را پاک کن
+            payload = {"gift": gift, "amount": amount, "count": None}
+        else:
+            # اگر تعداد انتخاب شده، مبلغ را پاک کن
+            payload = {"gift": gift, "amount": None, "count": count}
 
         if hasattr(package, 'elite_gift'):
             eg = package.elite_gift
-            for k, v in payload.items():
-                setattr(eg, k, v)
+            # به‌روزرسانی تمام فیلدها (شامل پاک کردن فیلد مخالف)
+            eg.gift = payload["gift"]
+            eg.amount = payload["amount"]
+            eg.count = payload["count"]
             eg.save()
         else:
             EliteGift.objects.create(package=package, **payload)

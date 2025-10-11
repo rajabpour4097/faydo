@@ -105,6 +105,10 @@ class PackageListSerializer(serializers.ModelSerializer):
     # تعداد تجربیات VIP
     vip_experiences_count = serializers.SerializerMethodField()
     
+    # اطلاعات نوع VIP برای نمایش badge
+    has_vip = serializers.SerializerMethodField()
+    has_vip_plus = serializers.SerializerMethodField()
+    
     # روزهای باقی‌مانده تا پایان پکیج
     days_remaining = serializers.SerializerMethodField()
     
@@ -116,7 +120,7 @@ class PackageListSerializer(serializers.ModelSerializer):
             'business_logo', 'business_image', 'business_category', 'city',
             'discount_percentage', 'specific_discount_title', 'specific_discount_percentage', 'specific_discount_description',
             'elite_gift_title', 'elite_gift_gift', 'elite_gift_amount', 'elite_gift_count',
-            'vip_experiences_count', 'days_remaining'
+            'vip_experiences_count', 'has_vip', 'has_vip_plus', 'days_remaining'
         ]
         read_only_fields = ['id', 'created_at', 'modified_at']
     
@@ -179,6 +183,14 @@ class PackageListSerializer(serializers.ModelSerializer):
     def get_vip_experiences_count(self, obj):
         """تعداد تجربیات VIP"""
         return obj.experiences.count()
+    
+    def get_has_vip(self, obj):
+        """بررسی وجود تجربیات VIP"""
+        return obj.experiences.filter(vip_experience_category__vip_type='VIP').exists()
+    
+    def get_has_vip_plus(self, obj):
+        """بررسی وجود تجربیات VIP+"""
+        return obj.experiences.filter(vip_experience_category__vip_type='VIP+').exists()
     
     def get_days_remaining(self, obj):
         """روزهای باقی‌مانده تا پایان پکیج"""

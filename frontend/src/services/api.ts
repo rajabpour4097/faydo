@@ -116,6 +116,8 @@ export interface Package {
   elite_gift_amount?: number
   elite_gift_count?: number
   vip_experiences_count?: number
+  has_vip?: boolean
+  has_vip_plus?: boolean
   days_remaining?: number
   // فیلدهای کسب‌وکار
   business_logo?: string

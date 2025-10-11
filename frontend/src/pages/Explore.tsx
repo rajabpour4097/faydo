@@ -503,13 +503,24 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
 
   // Determine VIP badge type
   const getVipBadgeType = () => {
-    if (pkg.experiences && pkg.experiences.length > 0) {
-      const hasVipPlus = pkg.experiences.some(exp => 
-        exp.vip_experience_category?.vip_type === 'VIP+'
-      )
-      return hasVipPlus ? 'VIP+' : 'VIP'
+    // استفاده از فیلدهای جدید از backend
+    const hasVip = pkg.has_vip || false
+    const hasVipPlus = pkg.has_vip_plus || false
+    
+    // اگر هم VIP و هم VIP+ دارد، VIP+ نمایش بده
+    if (hasVip && hasVipPlus) {
+      return 'VIP+'
     }
-    return 'VIP' // Default to VIP if no experiences data
+    // اگر فقط VIP دارد، VIP نمایش بده
+    else if (hasVip && !hasVipPlus) {
+      return 'VIP'
+    }
+    // اگر فقط VIP+ دارد، VIP+ نمایش بده
+    else if (!hasVip && hasVipPlus) {
+      return 'VIP+'
+    }
+    
+    return 'VIP' // Default to VIP if no VIP experiences
   }
 
   return (

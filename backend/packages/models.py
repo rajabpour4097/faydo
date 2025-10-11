@@ -142,15 +142,29 @@ class Package(BaseModel):
         """
         فعال کردن پکیج
         """
+        # ابتدا تمام پکیج‌های فعال کسب‌وکار را غیرفعال کن
+        self.deactivate_all_business_packages()
+        
+        # حالا این پکیج را فعال کن
         self.is_active = True
         self.save()
-    
+
     def deactivate_package(self):
         """
         غیرفعال کردن پکیج
         """
         self.is_active = False
         self.save()
+    
+    def deactivate_all_business_packages(self):
+        """
+        غیرفعال کردن تمام پکیج‌های فعال کسب‌وکار
+        """
+        Package.objects.filter(
+            business=self.business,
+            is_active=True,
+            status='approved'
+        ).update(is_active=False)
     
     @classmethod
     def activate_pending_packages_for_expired(cls):

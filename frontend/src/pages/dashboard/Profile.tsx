@@ -6,6 +6,7 @@ import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLa
 import { apiService } from '../../services/api'
 import moment from 'moment-jalaali'
 import { LocationPicker } from '../../components/LocationPicker'
+import { GalleryManagement } from '../../components/business/GalleryManagement'
 
 interface EditModalProps {
   isOpen: boolean
@@ -825,6 +826,7 @@ const DesktopProfile = () => {
   const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean; isAddress?: boolean; isLocation?: boolean }>(
     { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false, isLocation: false }
   )
+  const [showGalleryModal, setShowGalleryModal] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -1250,6 +1252,33 @@ const DesktopProfile = () => {
               />
             </>
           )}
+
+          {/* Business Gallery Management - Desktop */}
+          {user?.type === 'business' && (
+            <div className="md:col-span-2">
+              <div className={`rounded-2xl p-6 ${isDark ? 'bg-slate-900/30' : 'bg-white'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      مدیریت گالری تصاویر
+                    </h3>
+                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      آپلود و مدیریت تصاویر کسب‌وکار
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowGalleryModal(true)}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    مدیریت گالری
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Customer Profile Fields - Desktop */}
           {user?.type === 'customer' && (
@@ -1300,6 +1329,28 @@ const DesktopProfile = () => {
           isCity={editModal.field === 'city'}
           isLocation={editModal.field === 'location'}
         />
+
+        {/* Gallery Management Modal */}
+        {showGalleryModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className={`bg-white dark:bg-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700">
+                <h2 className="text-xl font-bold">مدیریت گالری تصاویر</h2>
+                <button
+                  onClick={() => setShowGalleryModal(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                <GalleryManagement />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )
@@ -1311,6 +1362,7 @@ const MobileProfile = () => {
   const [editModal, setEditModal] = useState<{ isOpen: boolean; field: string; title: string; value: string; isPhone?: boolean; isEmail?: boolean; isGender?: boolean; isBirthDate?: boolean; isCategory?: boolean; isAddress?: boolean; isLocation?: boolean }>(
     { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false, isLocation: false }
   )
+  const [showGalleryModal, setShowGalleryModal] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -1718,6 +1770,31 @@ const MobileProfile = () => {
               />
             </>
           )}
+
+          {/* Business Gallery Management - Mobile */}
+          {user?.type === 'business' && (
+            <div className={`rounded-2xl p-4 ${isDark ? 'bg-slate-900/30' : 'bg-white'}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    مدیریت گالری تصاویر
+                  </h3>
+                  <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                    آپلود و مدیریت تصاویر کسب‌وکار
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowGalleryModal(true)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  مدیریت
+                </button>
+              </div>
+            </div>
+          )}
           
           {/* Customer Profile Fields - Mobile */}
           {user?.type === 'customer' && (
@@ -1768,6 +1845,28 @@ const MobileProfile = () => {
           isCity={editModal.field === 'city'}
           isLocation={editModal.field === 'location'}
         />
+
+        {/* Gallery Management Modal */}
+        {showGalleryModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className={`bg-white dark:bg-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
+                <h2 className="text-lg font-bold">مدیریت گالری تصاویر</h2>
+                <button
+                  onClick={() => setShowGalleryModal(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-4 overflow-y-auto max-h-[calc(90vh-100px)]">
+                <GalleryManagement />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </MobileDashboardLayout>
   )

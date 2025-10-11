@@ -123,10 +123,8 @@ class BusinessProfile(models.Model):
     
     def __str__(self):
         return f"{self.name}"
-    
-    def get_gallery_count(self):
-        """Return number of gallery images"""
-        return self.gallery_images.count()
+
+
 
     def get_featured_image(self):
         """Return the featured gallery image or first image"""
@@ -233,7 +231,7 @@ class FinancialManagerProfile(models.Model):
 
 
 class BusinessGallery(BaseModel):
-    """Gallery images for business profiles"""
+    """Gallery images for business profiles - maximum 4 images per business"""
     business_profile = models.ForeignKey(
         BusinessProfile, 
         on_delete=models.CASCADE, 
@@ -271,6 +269,17 @@ class BusinessGallery(BaseModel):
 
     def __str__(self):
         return f"تصویر {self.business_profile.name} - {self.title or 'بدون عنوان'}"
+
+    def clean(self):
+        """Validate maximum 4 images per business"""
+        if not self.pk:  # Only for new images
+            existing_count = BusinessGallery.objects.filter(business_profile=self.business_profile).count()
+            if existing_count >= 4:
+                raise ValidationError('حداکثر 4 تصویر می‌توانید آپلود کنید.')
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         """Delete image file when model instance is deleted"""

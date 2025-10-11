@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { apiService, Package } from '../services/api'
+import { apiService, Package, BusinessGalleryImage } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 
@@ -19,11 +19,6 @@ interface Comment {
   created_at: string
 }
 
-interface BusinessGallery {
-  id: number
-  image_url: string
-  caption?: string
-}
 
 export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
   const { businessId } = useParams<{ businessId: string }>()
@@ -34,7 +29,7 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
   const [currentPackage, setCurrentPackage] = useState<Package | null>(null)
   const [packageHistory, setPackageHistory] = useState<Package[]>([])
   const [comments, setComments] = useState<Comment[]>([])
-  const [gallery, setGallery] = useState<BusinessGallery[]>([])
+  const [gallery, setGallery] = useState<BusinessGalleryImage[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'details' | 'gallery' | 'comments'>('details')
@@ -71,12 +66,48 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
         await loadComments(currentPkg)
       }
       
-      // Load gallery (mock data for now - can be extended with real API)
+      // Load gallery (for now using placeholder - in real implementation, you would get gallery by business ID)
       setGallery([
-        { id: 1, image_url: '/api/placeholder/400/300', caption: 'نمای بیرونی رستوران' },
-        { id: 2, image_url: '/api/placeholder/400/300', caption: 'سالن اصلی' },
-        { id: 3, image_url: '/api/placeholder/400/300', caption: 'آشپزخانه' },
-        { id: 4, image_url: '/api/placeholder/400/300', caption: 'محیط VIP' }
+        { 
+          id: 1, 
+          image: '/api/placeholder/400/300', 
+          image_url: '/api/placeholder/400/300', 
+          title: 'نمای بیرونی رستوران',
+          description: 'نمای زیبای بیرونی رستوران',
+          is_featured: true,
+          order: 0,
+          created_at: '2024-01-01T00:00:00Z'
+        },
+        { 
+          id: 2, 
+          image: '/api/placeholder/400/300', 
+          image_url: '/api/placeholder/400/300', 
+          title: 'سالن اصلی',
+          description: 'سالن اصلی رستوران',
+          is_featured: false,
+          order: 1,
+          created_at: '2024-01-01T00:00:00Z'
+        },
+        { 
+          id: 3, 
+          image: '/api/placeholder/400/300', 
+          image_url: '/api/placeholder/400/300', 
+          title: 'آشپزخانه',
+          description: 'آشپزخانه مدرن',
+          is_featured: false,
+          order: 2,
+          created_at: '2024-01-01T00:00:00Z'
+        },
+        { 
+          id: 4, 
+          image: '/api/placeholder/400/300', 
+          image_url: '/api/placeholder/400/300', 
+          title: 'محیط VIP',
+          description: 'محیط ویژه VIP',
+          is_featured: false,
+          order: 3,
+          created_at: '2024-01-01T00:00:00Z'
+        }
       ])
       
     } catch (err) {
@@ -262,13 +293,13 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                   <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden">
                     <img 
                       src={item.image_url} 
-                      alt={item.caption}
+                      alt={item.title || 'تصویر گالری'}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  {item.caption && (
+                  {item.title && (
                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                      {item.caption}
+                      {item.title}
                     </div>
                   )}
                 </div>
@@ -424,13 +455,13 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                     <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-2">
                       <img 
                         src={item.image_url} 
-                        alt={item.caption}
+                        alt={item.title || 'تصویر گالری'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
-                    {item.caption && (
+                    {item.title && (
                       <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                        {item.caption}
+                        {item.title}
                       </p>
                     )}
                   </div>
@@ -561,13 +592,13 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                   <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden">
                     <img 
                       src={item.image_url} 
-                      alt={item.caption}
+                      alt={item.title || 'تصویر گالری'}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  {item.caption && (
+                  {item.title && (
                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-xs">
-                      {item.caption}
+                      {item.title}
                     </div>
                   )}
                 </div>
@@ -653,13 +684,13 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                     <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-2">
                       <img 
                         src={item.image_url} 
-                        alt={item.caption}
+                        alt={item.title || 'تصویر گالری'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
-                    {item.caption && (
+                    {item.title && (
                       <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                        {item.caption}
+                        {item.title}
                       </p>
                     )}
                   </div>

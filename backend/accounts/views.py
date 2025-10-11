@@ -564,3 +564,65 @@ class FinancialManagerProfileViewSet(BaseReadWriteViewSet):
 	queryset = FinancialManagerProfile.objects.select_related('user').all()
 	serializer_class = FinancialManagerProfileSerializer
 
+
+class BusinessGalleryViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing business gallery images"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = BusinessGallerySerializer
+    queryset = BusinessGallery.objects.all()
+    
+    def get_queryset(self):
+        """Filter gallery images by business profile"""
+        user = self.request.user
+        if user.role == 'business':
+            try:
+                business_profile = user.businessprofile
+                return BusinessGallery.objects.filter(business_profile=business_profile).order_by('order', '-created_at')
+            except BusinessProfile.DoesNotExist:
+                return BusinessGallery.objects.none()
+        elif user.role in ['admin', 'it_manager', 'project_manager']:
+            return BusinessGallery.objects.all().order_by('order', '-created_at')
+        else:
+            return BusinessGallery.objects.none()
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return BusinessGalleryCreateSerializer
+        return BusinessGallerySerializer
+    
+    def perform_create(self, serializer):
+        """Set the business profile for new gallery images"""
+        user = self.request.user
+        if user.role == 'business':
+            try:
+                business_profile = user.businessprofile
+                serializer.save(business_profile=business_profile)
+            except BusinessProfile.DoesNotExist:
+                raise serializers.ValidationError('پروفایل کسب‌وکار یافت نشد')
+        else:
+            raise serializers.ValidationError('فقط کسب‌وکارها می‌توانند تصویر آپلود کنند')
+    
+    def perform_update(self, serializer):
+        """Ensure only the owner can update their gallery images"""
+        user = self.request.user
+        if user.role == 'business':
+            try:
+                business_profile = user.businessprofile
+                if serializer.instance.business_profile != business_profile:
+                    raise serializers.ValidationError('شما فقط می‌توانید تصاویر خود را ویرایش کنید')
+            except BusinessProfile.DoesNotExist:
+                raise serializers.ValidationError('پروفایل کسب‌وکار یافت نشد')
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        """Ensure only the owner can delete their gallery images"""
+        user = self.request.user
+        if user.role == 'business':
+            try:
+                business_profile = user.businessprofile
+                if instance.business_profile != business_profile:
+                    raise serializers.ValidationError('شما فقط می‌توانید تصاویر خود را حذف کنید')
+            except BusinessProfile.DoesNotExist:
+                raise serializers.ValidationError('پروفایل کسب‌وکار یافت نشد')
+        instance.delete()
+

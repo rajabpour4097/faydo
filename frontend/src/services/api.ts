@@ -191,6 +191,17 @@ export interface Comment {
   is_liked: boolean
 }
 
+export interface BusinessGalleryImage {
+  id: number
+  image: string
+  image_url: string
+  title?: string
+  description?: string
+  is_featured: boolean
+  order: number
+  created_at: string
+}
+
 export interface PackageCreateRequest {
   business: number
   is_active?: boolean
@@ -655,6 +666,42 @@ class ApiService {
   async likeComment(commentId: number): Promise<ApiResponse<{ is_liked: boolean; likes_count: number; message: string }>> {
     return this.request<{ is_liked: boolean; likes_count: number; message: string }>(`/packages/comments/${commentId}/like/`, {
       method: 'POST',
+    })
+  }
+
+  // Business Gallery management methods
+  async getBusinessGallery(): Promise<ApiResponse<BusinessGalleryImage[]>> {
+    const resp = await this.request<any>('/accounts/business-gallery/')
+    if (resp.data) {
+      if (Array.isArray(resp.data)) {
+        return { data: resp.data as BusinessGalleryImage[] }
+      } else if (Array.isArray(resp.data.results)) {
+        return { data: resp.data.results as BusinessGalleryImage[] }
+      }
+    }
+    return resp
+  }
+
+  async createGalleryImage(imageData: FormData): Promise<ApiResponse<BusinessGalleryImage>> {
+    return this.request<BusinessGalleryImage>('/accounts/business-gallery/', {
+      method: 'POST',
+      body: imageData,
+      headers: {
+        // Don't set Content-Type, let browser set it with boundary for FormData
+      }
+    })
+  }
+
+  async updateGalleryImage(id: number, imageData: Partial<BusinessGalleryImage>): Promise<ApiResponse<BusinessGalleryImage>> {
+    return this.request<BusinessGalleryImage>(`/accounts/business-gallery/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(imageData)
+    })
+  }
+
+  async deleteGalleryImage(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/accounts/business-gallery/${id}/`, {
+      method: 'DELETE'
     })
   }
 

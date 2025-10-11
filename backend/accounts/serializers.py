@@ -4,7 +4,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import (
     User, ServiceCategory, Province, City, BusinessProfile, CustomerProfile,
-    ITManagerProfile, ProjectManagerProfile, SupporterProfile, FinancialManagerProfile
+    ITManagerProfile, ProjectManagerProfile, SupporterProfile, FinancialManagerProfile,
+    BusinessGallery
 )
 
 
@@ -405,3 +406,39 @@ class FinancialManagerProfileSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = FinancialManagerProfile
 		fields = ['id', 'user', 'user_id', 'is_financial_manager']
+
+
+class BusinessGallerySerializer(serializers.ModelSerializer):
+    """Serializer for business gallery images"""
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = BusinessGallery
+        fields = ['id', 'image', 'image_url', 'title', 'description', 'is_featured', 'order', 'created_at']
+        read_only_fields = ['id', 'created_at']
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+
+class BusinessGalleryCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating business gallery images"""
+    
+    class Meta:
+        model = BusinessGallery
+        fields = ['image', 'title', 'description', 'is_featured', 'order']
+    
+    def validate(self, attrs):
+        business_profile = self.context.get('business_profile')
+        if business_profile:
+            # Check if this is a new image (not updating existing)
+            if not self.instance:
+                existing_count = BusinessGallery.objects.filter(business_profile=business_profile).count()
+                if existing_count >= 4:
+                    raise serializers.ValidationError('حداکثر 4 تصویر می‌توانید آپلود کنید.')
+        return attrs

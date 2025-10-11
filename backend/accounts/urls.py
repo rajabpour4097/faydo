@@ -5,7 +5,7 @@ from .views import (
     UserViewSet, ServiceCategoryViewSet, ProvinceViewSet, CityViewSet,
     BusinessProfileViewSet, CustomerProfileViewSet, ITManagerProfileViewSet,
     ProjectManagerProfileViewSet, SupporterProfileViewSet, FinancialManagerProfileViewSet,
-    register_view, business_register_view, login_view, logout_view, profile_view,
+    BusinessGalleryViewSet, register_view, business_register_view, login_view, logout_view, profile_view,
     send_otp_view, verify_otp_view, login_with_otp_view, upload_profile_image_view, 
     update_phone_view, update_business_profile_view, update_customer_profile_view,
     get_cities_by_province_view, get_all_provinces_view, get_all_cities_view
@@ -23,6 +23,7 @@ router.register(r'it-managers', ITManagerProfileViewSet)
 router.register(r'project-managers', ProjectManagerProfileViewSet)
 router.register(r'supporters', SupporterProfileViewSet)
 router.register(r'financial-managers', FinancialManagerProfileViewSet)
+router.register(r'business-gallery', BusinessGalleryViewSet)
 
 urlpatterns = [
     # Authentication endpoints

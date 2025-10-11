@@ -399,7 +399,15 @@ class PackageViewSet(viewsets.ModelViewSet):
         if duration_months not in [3, 6, 9, 12]:
             return Response({"error": "مدت زمان نامعتبر است."}, status=status.HTTP_400_BAD_REQUEST)
 
-        start = timezone.now().date()
+        # تعیین تاریخ شروع بر اساس وجود پکیج فعال
+        active_package = package.get_active_package_for_business()
+        if active_package and active_package.end_date:
+            # اگر پکیج فعالی وجود دارد، تاریخ شروع را تاریخ پایان پکیج فعلی قرار بده
+            start = active_package.end_date
+        else:
+            # اگر پکیج فعالی وجود ندارد، تاریخ شروع را امروز قرار بده
+            start = timezone.now().date()
+        
         # approximate month addition by days (30) to avoid external libs
         end = start + timedelta(days=duration_months * 30)
 

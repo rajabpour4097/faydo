@@ -35,12 +35,21 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
   const [activeTab, setActiveTab] = useState<'details' | 'comments'>('details')
   const [newComment, setNewComment] = useState('')
   const [commentCategory, setCommentCategory] = useState<'discount_all' | 'specific_discount' | 'elite_gift' | 'vip_experience'>('discount_all')
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   useEffect(() => {
     if (businessId) {
       loadBusinessData()
     }
   }, [businessId])
+
+  useEffect(() => {
+    // Reset selected image index when gallery changes
+    if (gallery.length > 0) {
+      const featuredIndex = gallery.findIndex(img => img.is_featured)
+      setSelectedImageIndex(featuredIndex >= 0 ? featuredIndex : 0)
+    }
+  }, [gallery])
 
   const loadBusinessData = async () => {
     try {
@@ -173,6 +182,18 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
     return new Date(dateString).toLocaleDateString('fa-IR')
   }
 
+  const handlePreviousImage = () => {
+    setSelectedImageIndex(prev => prev > 0 ? prev - 1 : gallery.length - 1)
+  }
+
+  const handleNextImage = () => {
+    setSelectedImageIndex(prev => prev < gallery.length - 1 ? prev + 1 : 0)
+  }
+
+  const handleThumbnailClick = (index: number) => {
+    setSelectedImageIndex(index)
+  }
+
   if (loading) {
     return (
       <>
@@ -251,37 +272,76 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
           </div>
         </div>
 
-        {/* Gallery Section */}
+        {/* Gallery Section - Main Image + Thumbnails */}
         {gallery.length > 0 && (
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-6">
-              <h2 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                گالری تصاویر
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {gallery.map((item) => (
-                  <div key={item.id} className="relative group cursor-pointer">
-                    <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden">
-                      <img 
-                        src={item.image_url} 
-                        alt={item.title || 'تصویر گالری'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+            <div className="relative">
+              {/* Main Featured Image */}
+              <div className="relative h-80 md:h-96">
+                <img 
+                  src={gallery[selectedImageIndex]?.image_url} 
+                  alt={gallery[selectedImageIndex]?.title || 'تصویر اصلی کسب‌وکار'}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Navigation buttons */}
+                {gallery.length > 1 && (
+                  <>
+                    <button 
+                      onClick={handlePreviousImage}
+                      className="absolute top-4 left-4 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button 
+                      onClick={handleNextImage}
+                      className="absolute top-4 right-4 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Thumbnail Gallery */}
+              <div className="p-4">
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {gallery.map((item, index) => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => handleThumbnailClick(index)}
+                      className={`relative flex-shrink-0 group cursor-pointer transition-all duration-200 ${
+                        selectedImageIndex === index ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                      }`}
+                    >
+                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 dark:bg-slate-700">
+                        <img 
+                          src={item.image_url} 
+                          alt={item.title || 'تصویر گالری'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      {item.is_featured && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
-                    {item.is_featured && (
-                      <div className="absolute top-2 right-2">
-                        <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                          شاخص
-                        </span>
-                      </div>
-                    )}
-                    {item.title && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                        {item.title}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                  {gallery.length > 5 && (
+                    <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        +{gallery.length - 5}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -537,37 +597,76 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
           </div>
         </div>
 
-        {/* Mobile Gallery */}
+        {/* Mobile Gallery - Main Image + Thumbnails */}
         {gallery.length > 0 && (
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-4">
-              <h2 className={`text-lg font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                گالری تصاویر
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {gallery.slice(0, 4).map((item) => (
-                  <div key={item.id} className="relative group cursor-pointer">
-                    <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden">
-                      <img 
-                        src={item.image_url} 
-                        alt={item.title || 'تصویر گالری'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+            <div className="relative">
+              {/* Main Featured Image */}
+              <div className="relative h-64">
+                <img 
+                  src={gallery[selectedImageIndex]?.image_url} 
+                  alt={gallery[selectedImageIndex]?.title || 'تصویر اصلی کسب‌وکار'}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Navigation buttons */}
+                {gallery.length > 1 && (
+                  <>
+                    <button 
+                      onClick={handlePreviousImage}
+                      className="absolute top-3 left-3 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button 
+                      onClick={handleNextImage}
+                      className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Thumbnail Gallery */}
+              <div className="p-3">
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {gallery.map((item, index) => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => handleThumbnailClick(index)}
+                      className={`relative flex-shrink-0 group cursor-pointer transition-all duration-200 ${
+                        selectedImageIndex === index ? 'ring-2 ring-blue-500 ring-offset-1' : ''
+                      }`}
+                    >
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 dark:bg-slate-700">
+                        <img 
+                          src={item.image_url} 
+                          alt={item.title || 'تصویر گالری'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      {item.is_featured && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
-                    {item.is_featured && (
-                      <div className="absolute top-1 right-1">
-                        <span className="bg-yellow-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
-                          شاخص
-                        </span>
-                      </div>
-                    )}
-                    {item.title && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-xs">
-                        {item.title}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                  {gallery.length > 4 && (
+                    <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                        +{gallery.length - 4}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

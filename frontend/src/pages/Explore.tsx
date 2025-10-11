@@ -177,6 +177,7 @@ export const Explore: React.FC<ExploreProps> = () => {
         const samplePackages: Package[] = [
           {
             id: 1,
+            business_id: 1,
             business_name: 'رستوران تست',
             is_active: true,
             status: 'approved',

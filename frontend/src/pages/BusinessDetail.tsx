@@ -66,49 +66,19 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
         await loadComments(currentPkg)
       }
       
-      // Load gallery (for now using placeholder - in real implementation, you would get gallery by business ID)
-      setGallery([
-        { 
-          id: 1, 
-          image: '/api/placeholder/400/300', 
-          image_url: '/api/placeholder/400/300', 
-          title: 'نمای بیرونی رستوران',
-          description: 'نمای زیبای بیرونی رستوران',
-          is_featured: true,
-          order: 0,
-          created_at: '2024-01-01T00:00:00Z'
-        },
-        { 
-          id: 2, 
-          image: '/api/placeholder/400/300', 
-          image_url: '/api/placeholder/400/300', 
-          title: 'سالن اصلی',
-          description: 'سالن اصلی رستوران',
-          is_featured: false,
-          order: 1,
-          created_at: '2024-01-01T00:00:00Z'
-        },
-        { 
-          id: 3, 
-          image: '/api/placeholder/400/300', 
-          image_url: '/api/placeholder/400/300', 
-          title: 'آشپزخانه',
-          description: 'آشپزخانه مدرن',
-          is_featured: false,
-          order: 2,
-          created_at: '2024-01-01T00:00:00Z'
-        },
-        { 
-          id: 4, 
-          image: '/api/placeholder/400/300', 
-          image_url: '/api/placeholder/400/300', 
-          title: 'محیط VIP',
-          description: 'محیط ویژه VIP',
-          is_featured: false,
-          order: 3,
-          created_at: '2024-01-01T00:00:00Z'
+      // Load gallery images for the business
+      if (currentPkg && currentPkg.business_id) {
+        try {
+          const galleryResponse = await apiService.getBusinessGalleryByBusinessId(currentPkg.business_id)
+          setGallery(galleryResponse.data || [])
+        } catch (galleryError) {
+          console.error('Error loading gallery:', galleryError)
+          // Fallback to empty gallery if API fails
+          setGallery([])
         }
-      ])
+      } else {
+        setGallery([])
+      }
       
     } catch (err) {
       setError('خطا در بارگذاری اطلاعات کسب‌وکار')
@@ -282,31 +252,40 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
         </div>
 
         {/* Gallery Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-          <div className="p-6">
-            <h2 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              گالری تصاویر
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {gallery.map((item) => (
-                <div key={item.id} className="relative group cursor-pointer">
-                  <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden">
-                    <img 
-                      src={item.image_url} 
-                      alt={item.title || 'تصویر گالری'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  {item.title && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                      {item.title}
+        {gallery.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+            <div className="p-6">
+              <h2 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                گالری تصاویر
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {gallery.map((item) => (
+                  <div key={item.id} className="relative group cursor-pointer">
+                    <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden">
+                      <img 
+                        src={item.image_url} 
+                        alt={item.title || 'تصویر گالری'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     </div>
-                  )}
-                </div>
-              ))}
+                    {item.is_featured && (
+                      <div className="absolute top-2 right-2">
+                        <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                          شاخص
+                        </span>
+                      </div>
+                    )}
+                    {item.title && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                        {item.title}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Tabs */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700">
@@ -452,12 +431,19 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {gallery.map((item) => (
                   <div key={item.id} className="group cursor-pointer">
-                    <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-2">
+                    <div className="relative aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-2">
                       <img 
                         src={item.image_url} 
                         alt={item.title || 'تصویر گالری'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {item.is_featured && (
+                        <div className="absolute top-2 right-2">
+                          <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                            شاخص
+                          </span>
+                        </div>
+                      )}
                     </div>
                     {item.title && (
                       <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
@@ -581,31 +567,40 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
         </div>
 
         {/* Mobile Gallery */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-          <div className="p-4">
-            <h2 className={`text-lg font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              گالری تصاویر
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              {gallery.slice(0, 4).map((item) => (
-                <div key={item.id} className="relative group cursor-pointer">
-                  <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden">
-                    <img 
-                      src={item.image_url} 
-                      alt={item.title || 'تصویر گالری'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  {item.title && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-xs">
-                      {item.title}
+        {gallery.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+            <div className="p-4">
+              <h2 className={`text-lg font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                گالری تصاویر
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {gallery.slice(0, 4).map((item) => (
+                  <div key={item.id} className="relative group cursor-pointer">
+                    <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden">
+                      <img 
+                        src={item.image_url} 
+                        alt={item.title || 'تصویر گالری'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     </div>
-                  )}
-                </div>
-              ))}
+                    {item.is_featured && (
+                      <div className="absolute top-1 right-1">
+                        <span className="bg-yellow-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
+                          شاخص
+                        </span>
+                      </div>
+                    )}
+                    {item.title && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-xs">
+                        {item.title}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Mobile Tabs */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700">
@@ -681,12 +676,19 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
               <div className="grid grid-cols-2 gap-3">
                 {gallery.map((item) => (
                   <div key={item.id} className="group cursor-pointer">
-                    <div className="aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-2">
+                    <div className="relative aspect-video bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-2">
                       <img 
                         src={item.image_url} 
                         alt={item.title || 'تصویر گالری'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {item.is_featured && (
+                        <div className="absolute top-1 right-1">
+                          <span className="bg-yellow-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
+                            شاخص
+                          </span>
+                        </div>
+                      )}
                     </div>
                     {item.title && (
                       <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>

@@ -80,6 +80,7 @@ class VipExperienceSerializer(serializers.ModelSerializer):
 
 class PackageListSerializer(serializers.ModelSerializer):
     business_name = serializers.CharField(source='business.name', read_only=True)
+    business_id = serializers.IntegerField(source='business.id', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     
     # اطلاعات کسب‌وکار
@@ -115,7 +116,7 @@ class PackageListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Package
         fields = [
-            'id', 'business_name', 'is_active', 'start_date', 'end_date', 
+            'id', 'business_id', 'business_name', 'is_active', 'start_date', 'end_date', 
             'status', 'status_display', 'is_complete', 'created_at', 'modified_at',
             'business_logo', 'business_image', 'business_category', 'city',
             'discount_percentage', 'specific_discount_title', 'specific_discount_percentage', 'specific_discount_description',

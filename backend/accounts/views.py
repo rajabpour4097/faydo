@@ -1,6 +1,6 @@
 import os
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -625,4 +625,19 @@ class BusinessGalleryViewSet(viewsets.ModelViewSet):
             except BusinessProfile.DoesNotExist:
                 raise serializers.ValidationError('پروفایل کسب‌وکار یافت نشد')
         instance.delete()
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def by_business(self, request):
+        """Get gallery images for a specific business by business ID"""
+        business_id = request.query_params.get('business_id')
+        if not business_id:
+            return Response({'error': 'business_id parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            business_profile = BusinessProfile.objects.get(id=business_id)
+            gallery_images = BusinessGallery.objects.filter(business_profile=business_profile).order_by('order', '-created_at')
+            serializer = BusinessGallerySerializer(gallery_images, many=True, context={'request': request})
+            return Response(serializer.data)
+        except BusinessProfile.DoesNotExist:
+            return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
 

@@ -93,6 +93,7 @@ export interface VipExperienceCategory {
 
 export interface Package {
   id: number
+  business_id: number
   business_name: string
   is_active: boolean
   start_date?: string
@@ -703,6 +704,18 @@ class ApiService {
     return this.request<void>(`/accounts/business-gallery/${id}/`, {
       method: 'DELETE'
     })
+  }
+
+  async getBusinessGalleryByBusinessId(businessId: number): Promise<ApiResponse<BusinessGalleryImage[]>> {
+    const resp = await this.request<any>(`/accounts/business-gallery/by_business/?business_id=${businessId}`)
+    if (resp.data) {
+      if (Array.isArray(resp.data)) {
+        return { data: resp.data as BusinessGalleryImage[] }
+      } else if (Array.isArray(resp.data.results)) {
+        return { data: resp.data.results as BusinessGalleryImage[] }
+      }
+    }
+    return resp
   }
 
   // Stepwise package creation methods

@@ -465,6 +465,16 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                                   {getStatusText(pkg.status)}
                                 </span>
                               )}
+                              {pkg.status === 'pending' && (
+                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-orange-600 bg-orange-100">
+                                  در حال بررسی
+                                </span>
+                              )}
+                              {pkg.status === 'approved' && !pkg.is_active && (
+                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-blue-600 bg-blue-100">
+                                  در انتظار انتشار
+                                </span>
+                              )}
                               {pkg.is_active && (
                                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
                                   فعال
@@ -526,6 +536,13 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                                     </span>
                                   </div>
                                 </div>
+                              )}
+                              {/* فضای خالی برای حفظ یکدستی layout */}
+                              {!pkg.discount_percentage && !pkg.specific_discount_title && (
+                                <div className="h-6"></div>
+                              )}
+                              {pkg.discount_percentage && !pkg.specific_discount_title && (
+                                <div className="h-6"></div>
                               )}
                               {pkg.elite_gift_title && (
                                 <div className="flex items-center">
@@ -757,6 +774,16 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                         {getStatusText(pkg.status)}
                       </span>
                     )}
+                    {pkg.status === 'pending' && (
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-orange-600 bg-orange-100">
+                        در حال بررسی
+                      </span>
+                    )}
+                    {pkg.status === 'approved' && !pkg.is_active && (
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-blue-600 bg-blue-100">
+                        در انتظار انتشار
+                      </span>
+                    )}
                     {pkg.is_active && (
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
                         فعال
@@ -790,7 +817,8 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                   )}
 
                   {/* اطلاعات تخفیف و هدیه */}
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="space-y-3 text-sm">
+                    {/* تخفیف کلی */}
                     {pkg.discount_percentage && (
                       <div className={`flex items-center ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
                         <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center ml-2">
@@ -805,6 +833,7 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                       </div>
                     )}
 
+                    {/* تخفیف اختصاصی - زیر تخفیف کلی */}
                     {pkg.specific_discount_title && pkg.specific_discount_percentage && (
                       <div className={`flex items-center ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
                         <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center ml-2">
@@ -818,6 +847,14 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                           <div className="text-orange-500 text-xs truncate">{pkg.specific_discount_title}</div>
                         </div>
                       </div>
+                    )}
+
+                    {/* فضای خالی برای حفظ یکدستی layout */}
+                    {!pkg.discount_percentage && !pkg.specific_discount_title && (
+                      <div className="h-16"></div>
+                    )}
+                    {pkg.discount_percentage && !pkg.specific_discount_title && (
+                      <div className="h-8"></div>
                     )}
 
                     {pkg.elite_gift_title && (

@@ -972,11 +972,11 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
         </div>
         {/* Elite gift info */}
         {pkg.elite_gift_gift && (
-          <div className="mt-1 flex items-center text-[13px] text-gray-700 dark:text-slate-300">
+          <div className="mt-1 flex items-start text-[13px] text-gray-700 dark:text-slate-300">
             <svg className="w-4 h-4 ml-1 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13M12 8V6a2 2 0 112 2h-2zM5 12h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
             </svg>
-            <span className="truncate" style={{ fontSize: '10px' }}>
+            <span className="whitespace-normal break-words" style={{ fontSize: '10px', lineHeight: '1.4' }}>
               {pkg.elite_gift_gift}
               {typeof pkg.elite_gift_count === 'number' && (
                 <> با {pkg.elite_gift_count} بار خرید</>

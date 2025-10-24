@@ -321,8 +321,8 @@ class ApiService {
 
     try {
       const response = await fetch(url, config)
-      const data = await response.json()
-
+      
+      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
         // If it's a 401 error and we have a refresh token, try to refresh
         if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
@@ -335,20 +335,41 @@ class ApiService {
               Authorization: `Bearer ${this.accessToken}`,
             }
             const retryResponse = await fetch(url, config)
-            const retryData = await retryResponse.json()
             
             if (retryResponse.ok) {
+              const retryData = await retryResponse.json()
               return { data: retryData }
             }
           }
         }
         
-        return { error: data.detail || data.message || Object.values(data).flat().join(', ') || 'خطا در ارتباط با سرور' }
+        // Try to parse error response
+        let errorMessage = 'خطا در ارتباط با سرور'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.detail || errorData.message || Object.values(errorData).flat().join(', ') || errorMessage
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError)
+          errorMessage = `خطا در سرور (${response.status}): ${response.statusText}`
+        }
+        
+        return { error: errorMessage }
       }
 
+      const data = await response.json()
       return { data }
     } catch (error) {
       console.error('API request failed:', error)
+      
+      // Handle different types of network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return { error: 'خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید.' }
+      }
+      
+      if (error.name === 'NetworkError') {
+        return { error: 'خطا در شبکه. لطفا اتصال خود را بررسی کنید.' }
+      }
+      
       return { error: 'خطا در ارتباط با سرور' }
     }
   }

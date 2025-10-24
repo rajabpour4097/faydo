@@ -52,7 +52,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setError('')
 
     try {
-      const API_BASE_URL = `http://${window.location.hostname}:8000/api`
+      const API_BASE_URL = `http://${window.location.hostname}:8001/api`
       const response = await fetch(`${API_BASE_URL}/accounts/auth/send-otp/`, {
         method: 'POST',
         headers: {
@@ -92,7 +92,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
     try {
       // First verify OTP
-      const API_BASE_URL = `http://${window.location.hostname}:8000/api`
+      const API_BASE_URL = `http://${window.location.hostname}:8001/api`
       const otpResponse = await fetch(`${API_BASE_URL}/accounts/auth/verify-otp/`, {
         method: 'POST',
         headers: {

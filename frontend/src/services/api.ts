@@ -1,7 +1,7 @@
 // API configuration and utilities
 export const API_BASE_URL =
   (import.meta as any).env?.VITE_API_BASE_URL ||
-  `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8000/api`
+  `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8001/api`
 
 export interface ApiResponse<T> {
   data?: T
@@ -366,7 +366,7 @@ class ApiService {
         return { error: 'خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید.' }
       }
       
-      if (error.name === 'NetworkError') {
+      if (error instanceof Error && error.name === 'NetworkError') {
         return { error: 'خطا در شبکه. لطفا اتصال خود را بررسی کنید.' }
       }
       

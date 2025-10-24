@@ -346,8 +346,16 @@ class ApiService {
         // Try to parse error response
         let errorMessage = 'خطا در ارتباط با سرور'
         try {
-          const errorData = await response.json()
-          errorMessage = errorData.detail || errorData.message || Object.values(errorData).flat().join(', ') || errorMessage
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.detail || errorData.message || Object.values(errorData).flat().join(', ') || errorMessage
+          } else {
+            // Server returned HTML error page (like 500 error page)
+            const htmlText = await response.text()
+            console.error('Server returned HTML error page:', htmlText.substring(0, 200))
+            errorMessage = `خطا در سرور (${response.status}): ${response.statusText}`
+          }
         } catch (parseError) {
           console.error('Failed to parse error response:', parseError)
           errorMessage = `خطا در سرور (${response.status}): ${response.statusText}`

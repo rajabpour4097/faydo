@@ -49,7 +49,7 @@ interface CustomerRegisterData {
   phone_number: string
   password: string
   password_confirm: string
-  gender: 'male' | 'female'
+  gender: 'male' | 'female' | ''
   birth_date: string
   address?: string
 }
@@ -376,7 +376,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           first_name: apiUser.first_name,
           last_name: apiUser.last_name,
           profile: apiUser.role === 'customer' && profile && 'gender' in profile ? {
-            gender: profile.gender,
+            gender: profile.gender || '', // Convert null/undefined to empty string
             birth_date: profile.birth_date,
             city: profile.city,
             address: profile.address

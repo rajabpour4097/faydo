@@ -192,7 +192,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           phone_number: formData.phone_number,
           password: '',
           password_confirm: '',
-          gender: 'male',
+          gender: '', // Empty gender - user must choose
           birth_date: '',
           address: '',
         })

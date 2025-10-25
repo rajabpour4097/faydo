@@ -25,7 +25,7 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField()
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    gender = serializers.ChoiceField(choices=[('male', 'مرد'), ('female', 'زن')], required=False, allow_null=True)
+    gender = serializers.ChoiceField(choices=[('male', 'مرد'), ('female', 'زن')], required=False, allow_null=True, allow_blank=True)
     birth_date = OptionalDateField(required=False, allow_null=True)
     city_id = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), source='city', required=False, allow_null=True)
 
@@ -76,6 +76,10 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         user.save()
         
         # Create customer profile
+        # Convert empty gender to None
+        if 'gender' in validated_data and validated_data['gender'] == '':
+            validated_data['gender'] = None
+            
         customer_profile = CustomerProfile.objects.create(
             user=user,
             **validated_data
@@ -367,7 +371,8 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         for key, val in rep.items():
-            if val is None:
+            # Don't convert None to empty string for gender field
+            if val is None and key != 'gender':
                 rep[key] = ''
         return rep
 

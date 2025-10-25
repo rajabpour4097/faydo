@@ -1053,7 +1053,10 @@ const DesktopProfile = () => {
       case 'phone':
         return user?.phone_number || ''
       case 'gender':
-        return user?.profile?.gender === 'male' ? 'مرد' : user?.profile?.gender === 'female' ? 'زن' : ''
+        const gender = user?.profile?.gender
+        if (gender === 'male') return 'مرد'
+        if (gender === 'female') return 'زن'
+        return '' // Empty for null, undefined, or empty string
       case 'birth_date':
         if (user?.profile?.birth_date) {
           try {
@@ -1590,7 +1593,10 @@ const MobileProfile = () => {
       case 'phone':
         return user?.phone_number || ''
       case 'gender':
-        return user?.profile?.gender === 'male' ? 'مرد' : user?.profile?.gender === 'female' ? 'زن' : ''
+        const gender = user?.profile?.gender
+        if (gender === 'male') return 'مرد'
+        if (gender === 'female') return 'زن'
+        return '' // Empty for null, undefined, or empty string
       case 'birth_date':
         if (user?.profile?.birth_date) {
           try {

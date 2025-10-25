@@ -229,7 +229,7 @@ export interface CustomerRegisterRequest {
   phone_number: string
   password: string
   password_confirm: string
-  gender: 'male' | 'female'
+  gender: 'male' | 'female' | ''
   birth_date: string
   address?: string
 }

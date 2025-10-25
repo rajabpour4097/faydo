@@ -292,7 +292,7 @@ class PackageCreateUpdateSerializer(serializers.ModelSerializer):
             'status', 'is_complete', 'discount_all', 'specific_discount', 
             'elite_gift', 'experiences'
         ]
-        read_only_fields = ['id']
+        read_only_fields = ['id', 'business']  # business should be read-only for business users
     
     def create(self, validated_data):
         discount_all_data = validated_data.pop('discount_all', None)

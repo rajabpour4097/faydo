@@ -76,10 +76,10 @@ export const Home = () => {
                     مشاهده کسب‌وکارها
                   </Link>
                   <Link
-                    to="/test-users"
+                    to="/dashboard"
                     className="border-2 border-purple-300 text-purple-700 px-8 py-4 rounded-xl font-semibold hover:border-purple-400 hover:bg-purple-50 transition-all duration-200"
                   >
-                    🧪 تست داشبوردها
+                    داشبورد مدیریتی
                   </Link>
                 </>
               )}

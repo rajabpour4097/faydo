@@ -72,7 +72,7 @@ export const CustomerPointsCard = ({
       {nextLevel ? (
         <p className={`text-center text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
           {pointsToNext > 0 
-            ? `${pointsToNext.toLocaleString('fa-IR')} امتیاز مانده تا سطح بعدی`
+            ? `${pointsToNext.toLocaleString('fa-IR')} امتیاز مانده تا سطح ${nextLevel.name} ${nextLevel.name === 'طلایی' ? '🏆' : ''}`
             : `شما به سطح ${nextLevel.name} رسیده‌اید! 🎉`
           }
         </p>

@@ -288,15 +288,7 @@ export const TopClubExperiencesSlider: React.FC<TopClubExperiencesSliderProps> =
                     ({currentExperience.score})
                   </span>
                 </div>
-                {currentPackage.elite_gift_title && (
-                  <div className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-3 py-1 rounded-full text-sm font-semibold">
-                    🎁 هدیه ویژه
-                  </div>
-                )}
               </div>
-              <button className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:underline">
-                مشاهده جزئیات ←
-              </button>
             </div>
           </div>
         </div>

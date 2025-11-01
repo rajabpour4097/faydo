@@ -783,7 +783,7 @@ const DesktopPackageCard: React.FC<DesktopPackageCardProps> = ({ package: pkg })
     >
       {/* Business Image and VIP Badge */}
       <div className="relative mb-4">
-        <div className="w-full h-48 rounded-xl overflow-hidden bg-gray-100">
+        <div className="w-full h-48 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600">
           {!imageErrored && (pkg.business_image || pkg.business_logo) ? (
             <img
               src={pkg.business_image || pkg.business_logo || ''}
@@ -793,8 +793,13 @@ const DesktopPackageCard: React.FC<DesktopPackageCardProps> = ({ package: pkg })
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-              <span className="text-white text-4xl">🏢</span>
+            <div className="w-full h-full flex flex-col items-center justify-center">
+              <div className="w-16 h-16 mb-3 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <p className="text-white text-sm font-medium">بدون تصویر</p>
             </div>
           )}
         </div>
@@ -918,7 +923,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       onClick={handleCardClick}
     >
       {/* Left image: prefer business_image then logo */}
-      <div className="relative w-22 h-20 rounded-xl overflow-hidden shrink-0 bg-gray-100">
+      <div className="relative w-24 h-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600">
         {!imageErrored && (pkg.business_image || pkg.business_logo) ? (
           <img
             src={pkg.business_image || pkg.business_logo || ''}
@@ -928,7 +933,11 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600" />
+          <div className="w-full h-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
         )}
         
         {/* VIP Badge */}

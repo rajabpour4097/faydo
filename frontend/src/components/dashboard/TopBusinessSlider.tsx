@@ -117,12 +117,26 @@ export const TopBusinessSlider: React.FC<TopBusinessSliderProps> = ({ packages }
                 src={currentBusiness.business_image || currentBusiness.business_logo}
                 alt={currentBusiness.business_name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  const placeholder = e.currentTarget.nextElementSibling as HTMLElement
+                  if (placeholder) placeholder.style.display = 'flex'
+                }}
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-white text-5xl">🏢</span>
+            ) : null}
+            <div 
+              className={`w-full h-full flex flex-col items-center justify-center ${
+                currentBusiness.business_image || currentBusiness.business_logo ? 'hidden' : 'flex'
+              }`}
+              style={{ display: currentBusiness.business_image || currentBusiness.business_logo ? 'none' : 'flex' }}
+            >
+              <div className="w-20 h-20 mb-3 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
               </div>
-            )}
+              <p className="text-white text-sm font-medium">بدون تصویر</p>
+            </div>
             
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />

@@ -11,6 +11,7 @@ import { About } from './pages/About'
 import { Contact } from './pages/Contact'
 import { TestUsers } from './pages/TestUsers'
 import { Explore } from './pages/Explore'
+import { Clubs } from './pages/Clubs'
 import { BusinessDetail } from './pages/BusinessDetail'
 
 // Dashboard Pages
@@ -39,6 +40,16 @@ const DashboardRouter = () => {
       <Route path="explore" element={
         <ProfileGuard>
           <Explore />
+        </ProfileGuard>
+      } />
+      <Route path="clubs" element={
+        <ProfileGuard>
+          <Clubs />
+        </ProfileGuard>
+      } />
+      <Route path="clubs/:clubId" element={
+        <ProfileGuard>
+          <Clubs />
         </ProfileGuard>
       } />
       <Route path="business/:businessId" element={

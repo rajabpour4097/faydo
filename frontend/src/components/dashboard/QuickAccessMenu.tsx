@@ -20,6 +20,14 @@ const MENU_ITEMS: QuickAccessMenuItem[] = [
     isActive: true
   },
   {
+    id: 'clubs',
+    title: 'باشگاه‌ها',
+    icon: '🎯',
+    href: '/clubs',
+    color: 'from-purple-500 to-pink-500',
+    isActive: true
+  },
+  {
     id: 'qr-scan',
     title: 'اسکن QR',
     icon: '📷',
@@ -92,9 +100,6 @@ export const QuickAccessMenu = () => {
     <div className={`rounded-2xl p-6 ${
       isDark ? 'bg-slate-800' : 'bg-white'
     } shadow-lg`}>
-      <h3 className={`text-lg font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-        دسترسی سریع
-      </h3>
       
       {/* 3x3 Grid */}
       <div className="grid grid-cols-3 gap-4">

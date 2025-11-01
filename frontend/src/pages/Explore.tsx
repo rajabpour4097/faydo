@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
+import { TopBusinessSlider } from '../components/dashboard/TopBusinessSlider'
 import { apiService, Package } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -323,6 +324,9 @@ export const Explore: React.FC<ExploreProps> = () => {
   const DesktopLayout = () => (
     <DashboardLayout>
       <div className="space-y-6" style={{ direction: 'rtl' }}>
+        {/* Top Business Slider - Desktop */}
+        <TopBusinessSlider packages={packages} />
+
         {/* Desktop Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -494,6 +498,9 @@ export const Explore: React.FC<ExploreProps> = () => {
   const MobileLayout = () => (
     <MobileDashboardLayout>
       <div className="p-4 space-y-4" style={{ direction: 'rtl' }}>
+        {/* Top Business Slider - Mobile */}
+        <TopBusinessSlider packages={packages} />
+
         {/* Search Header like mock */}
         <div className="flex items-center gap-3">
           <div className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-3 py-2 flex items-center gap-2">

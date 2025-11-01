@@ -10,7 +10,7 @@ export const CustomerDashboardDesktop = () => {
 
   // Mock data - will be replaced with real data from API
   const customerPoints = 1250
-  const membershipLevel: 'bronze' | 'silver' | 'gold' = 'gold'
+  // Let the component auto-detect level based on points
 
   return (
     <DashboardLayout>
@@ -33,7 +33,6 @@ export const CustomerDashboardDesktop = () => {
           <div className="lg:col-span-1">
             <CustomerPointsCard 
               points={customerPoints}
-              membershipLevel={membershipLevel}
             />
           </div>
 

@@ -10,7 +10,7 @@ export const CustomerDashboardMobile = () => {
 
   // Mock data - will be replaced with real data from API
   const customerPoints = 1250
-  const membershipLevel: 'bronze' | 'silver' | 'gold' = 'gold'
+  // Let the component auto-detect level based on points
 
   return (
     <MobileDashboardLayout>
@@ -30,7 +30,6 @@ export const CustomerDashboardMobile = () => {
         {/* Customer Points and Level Card */}
         <CustomerPointsCard 
           points={customerPoints}
-          membershipLevel={membershipLevel}
         />
 
         {/* Quick Access Menu */}

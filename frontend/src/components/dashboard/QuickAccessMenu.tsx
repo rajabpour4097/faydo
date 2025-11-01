@@ -116,7 +116,6 @@ export const QuickAccessMenu = () => {
             >
               <span className="text-3xl mb-2">{item.icon}</span>
               <span className="text-xs font-medium text-center">{item.title}</span>
-              <span className="text-[10px] mt-1 opacity-75">به زودی</span>
             </div>
           )
         ))}

@@ -13,13 +13,19 @@ const MEMBERSHIP_LEVELS = {
 
 export const CustomerPointsCard = ({ 
   points = 1250, 
-  membershipLevel = 'gold' 
+  membershipLevel 
 }: CustomerPointsCardProps) => {
   const { isDark } = useTheme()
   
-  const currentLevel = MEMBERSHIP_LEVELS[membershipLevel]
-  const nextLevel = membershipLevel === 'bronze' ? MEMBERSHIP_LEVELS.silver : 
-                    membershipLevel === 'silver' ? MEMBERSHIP_LEVELS.gold : null
+  // Auto-detect membership level based on points if not provided
+  const detectedLevel: 'bronze' | 'silver' | 'gold' = membershipLevel || (
+    points >= 5000 ? 'gold' :
+    points >= 1000 ? 'silver' : 'bronze'
+  )
+  
+  const currentLevel = MEMBERSHIP_LEVELS[detectedLevel]
+  const nextLevel = detectedLevel === 'bronze' ? MEMBERSHIP_LEVELS.silver : 
+                    detectedLevel === 'silver' ? MEMBERSHIP_LEVELS.gold : null
   
   // Calculate progress to next level
   const pointsToNext = nextLevel ? nextLevel.minPoints - points : 0
@@ -36,7 +42,7 @@ export const CustomerPointsCard = ({
         <h3 className={`text-sm font-medium mb-2 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
           امتیاز شما
         </h3>
-        <div className={`text-5xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        <div className={`text-3xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {points.toLocaleString('fa-IR')}
         </div>
         <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
@@ -45,42 +51,37 @@ export const CustomerPointsCard = ({
       </div>
 
       {/* Membership Level Badge */}
-      <div className="flex justify-center mb-4">
-        <div className={`px-6 py-2 rounded-full bg-gradient-to-r ${currentLevel.color} text-white font-bold text-sm shadow-md`}>
-          {currentLevel.name}
+      <div className="flex justify-center mb-3">
+        <div className={`px-6 py-2 rounded-full ${
+          isDark ? 'bg-gray-700' : 'bg-gray-200'
+        } text-gray-800 font-bold text-xs shadow-sm uppercase tracking-wide`}>
+          سطح {detectedLevel === 'bronze' ? 'برنزی' : detectedLevel === 'silver' ? 'نقره‌ای' : 'طلایی'} 
         </div>
       </div>
 
-      {/* Progress Bar */}
-      {nextLevel && (
-        <div className="mb-3">
-          <div className={`w-full h-3 rounded-full overflow-hidden ${
-            isDark ? 'bg-slate-700' : 'bg-gray-200'
-          }`}>
-            <div 
-              className={`h-full bg-gradient-to-r ${currentLevel.color} transition-all duration-500`}
-              style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-            />
-          </div>
+      {/* Progress Bar - Always show */}
+      <div className="mb-2">
+        <div className={`w-full h-2 rounded-full overflow-hidden ${
+          isDark ? 'bg-slate-700' : 'bg-gray-200'
+        }`}>
+          <div 
+            className={`h-full bg-gradient-to-r ${currentLevel.color} transition-all duration-500`}
+            style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+          />
         </div>
-      )}
+      </div>
 
-      {/* Points to Next Level */}
-      {nextLevel && pointsToNext > 0 && (
-        <p className={`text-center text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-          {pointsToNext.toLocaleString('fa-IR')} امتیاز تا رسیدن به سطح {nextLevel.name}
+      {/* Points to Next Level - Always show */}
+      {nextLevel ? (
+        <p className={`text-center text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+          {pointsToNext > 0 
+            ? `${pointsToNext.toLocaleString('fa-IR')} امتیاز مانده تا سطح بعدی`
+            : `شما به سطح ${nextLevel.name} رسیده‌اید! 🎉`
+          }
         </p>
-      )}
-      
-      {nextLevel && pointsToNext <= 0 && (
-        <p className={`text-center text-sm font-medium ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-          🎉 شما به سطح {nextLevel.name} رسیده‌اید!
-        </p>
-      )}
-
-      {!nextLevel && (
-        <p className={`text-center text-sm font-medium ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
-          👑 شما در بالاترین سطح هستید!
+      ) : (
+        <p className={`text-center text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+          شما در بالاترین سطح هستید 👑
         </p>
       )}
     </div>

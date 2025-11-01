@@ -36,8 +36,14 @@ export const TopBusinessSlider: React.FC<TopBusinessSliderProps> = ({ packages }
       // Sort by rating (assuming business has rating in future, for now random selection)
       // In future, when backend provides rating_avg, sort by: pkg.business_rating_avg
       const sortedPkgs = [...pkgs].sort((a, b) => {
-        // For now, sort by created_at (newest first) or random
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        // For now, sort by created_at (newest first) or just take first
+        try {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+          return dateB - dateA
+        } catch {
+          return 0
+        }
       })
       
       if (sortedPkgs[0]) {
@@ -77,6 +83,10 @@ export const TopBusinessSlider: React.FC<TopBusinessSliderProps> = ({ packages }
   }
 
   const currentBusiness = topBusinessesByCategory[currentIndex]
+  
+  if (!currentBusiness) {
+    return null
+  }
 
   return (
     <div className="mb-6">

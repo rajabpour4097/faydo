@@ -39,9 +39,6 @@ export const CustomerPointsCard = ({
     } shadow-lg`}>
       {/* Points Display */}
       <div className="text-center mb-6">
-        <h3 className={`text-sm font-medium mb-2 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-          امتیاز شما
-        </h3>
         <div className={`text-3xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {points.toLocaleString('fa-IR')}
         </div>
@@ -84,6 +81,19 @@ export const CustomerPointsCard = ({
           شما در بالاترین سطح هستید 👑
         </p>
       )}
+
+      {/* Total Cashback Section */}
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
+        <div className="flex items-center justify-between">
+          <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+            مجموع کش‌بک دریافتی:
+          </span>
+          <span className={`text-sm font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+            ۲۵۰,۰۰۰ تومان
+          </span>
+        </div>
+      </div>
+
     </div>
   )
 }

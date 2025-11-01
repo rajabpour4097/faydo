@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -293,32 +293,90 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       <nav className={`fixed bottom-0 left-0 right-0 border-t ${
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
       }`}>
-        <div className="flex items-center justify-around py-2">
-          {bottomNavItems.map((item) => {
+        <div className="flex items-center justify-around py-2 relative">
+          {bottomNavItems.map((item, index) => {
             const active = isActive(item.href)
+            const isCustomer = user?.type !== 'business'
+            
             return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className="flex flex-col items-center py-1 px-3 transition-colors relative"
-              >
-                {/* Blue indicator line above the icon */}
-                {active && (
-                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-blue-500 rounded-full"></div>
+              <React.Fragment key={item.name}>
+                <Link
+                  to={item.href}
+                  className="flex flex-col items-center py-1 px-3 transition-colors relative"
+                >
+                  {/* Blue indicator line above the icon */}
+                  {active && (
+                    <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-blue-500 rounded-full"></div>
+                  )}
+                  <div className="mb-1">
+                    <CustomIcon
+                      type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'}
+                      value={item.icon}
+                      alt={item.name}
+                      className="w-6 h-5"
+                      active={active}
+                    />
+                  </div>
+                  <span className={`text-xs ${active ? 'text-blue-500' : 'text-gray-500'}`}>
+                    {item.name}
+                  </span>
+                </Link>
+                
+                {/* دکمه اسکن وسط - فقط برای مشتری‌ها و بعد از آیتم اول (داشبورد) */}
+                {isCustomer && index === 1 && (
+                  <button
+                    onClick={() => {
+                      // TODO: پیاده‌سازی اسکن QR
+                      console.log('Scan QR Code')
+                    }}
+                    className={`flex flex-col items-center relative -mt-6 transition-transform hover:scale-105`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg ${
+                      isDark ? 'shadow-blue-900/50' : 'shadow-blue-500/50'
+                    }`}>
+                      <svg 
+                        className="w-6 h-6 text-white" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                      >
+                        {/* QR Code Icon - 4 corners with brackets */}
+                        {/* Top-left corner */}
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          d="M3 7V5a2 2 0 012-2h2" 
+                        />
+                        {/* Top-right corner */}
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          d="M17 3h2a2 2 0 012 2v2" 
+                        />
+                        {/* Bottom-left corner */}
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          d="M3 17v2a2 2 0 002 2h2" 
+                        />
+                        {/* Bottom-right corner */}
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          d="M17 21h2a2 2 0 002-2v-2" 
+                        />
+                        {/* Center line */}
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          d="M9 12h6" 
+                        />
+                      </svg>
+                    </div>
+                  </button>
                 )}
-                <div className="mb-1">
-                  <CustomIcon
-                    type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'}
-                    value={item.icon}
-                    alt={item.name}
-                    className="w-6 h-5"
-                    active={active}
-                  />
-                </div>
-                <span className={`text-xs ${active ? 'text-blue-500' : 'text-gray-500'}`}>
-                  {item.name}
-                </span>
-              </Link>
+              </React.Fragment>
             )
           })}
         </div>

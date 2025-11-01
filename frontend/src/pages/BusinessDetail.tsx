@@ -422,18 +422,93 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
 
                     {currentPackage.elite_gift_title && (
                       <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 mb-4">
                           <span className="text-2xl">🎁</span>
-                          <div>
+                          <div className="flex-1">
                             <h4 className="font-semibold text-purple-800 dark:text-purple-200">هدیه ویژه</h4>
                             <p className="text-sm text-purple-600 dark:text-purple-400">{currentPackage.elite_gift_title}</p>
-                            {currentPackage.elite_gift_amount && (
-                              <p className="text-xs text-purple-500">برای خرید بالای {currentPackage.elite_gift_amount} تومان</p>
-                            )}
-                            {currentPackage.elite_gift_count && (
-                              <p className="text-xs text-purple-500">برای {currentPackage.elite_gift_count} خرید</p>
-                            )}
                           </div>
+                        </div>
+                        
+                        {/* Progress Section */}
+                        <div className="space-y-2">
+                          {currentPackage.elite_gift_amount && (() => {
+                            // Mock data - will be replaced with real data from API
+                            const currentAmount = 450000 // مبلغ خرید فعلی مشتری
+                            const targetAmount = currentPackage.elite_gift_amount
+                            const remainingAmount = Math.max(0, targetAmount - currentAmount)
+                            const progressPercentage = Math.min(100, (currentAmount / targetAmount) * 100)
+                            
+                            return (
+                              <>
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                                    مبلغ خرید شما: {currentAmount.toLocaleString('fa-IR')} تومان
+                                  </span>
+                                  <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                                    هدف: {targetAmount.toLocaleString('fa-IR')} تومان
+                                  </span>
+                                </div>
+                                
+                                {/* Progress Bar */}
+                                <div className="relative w-full h-3 bg-purple-200 dark:bg-purple-900/40 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                                    style={{ width: `${progressPercentage}%` }}
+                                  />
+                                </div>
+                                
+                                {remainingAmount > 0 ? (
+                                  <p className="text-center text-xs text-purple-600 dark:text-purple-400 font-medium">
+                                    {remainingAmount.toLocaleString('fa-IR')} تومان تا دریافت هدیه مانده 🎉
+                                  </p>
+                                ) : (
+                                  <p className="text-center text-xs text-purple-600 dark:text-purple-400 font-bold">
+                                    تبریک! شما واجد شرایط دریافت هدیه هستید 🎊
+                                  </p>
+                                )}
+                              </>
+                            )
+                          })()}
+                          
+                          {currentPackage.elite_gift_count && !currentPackage.elite_gift_amount && (() => {
+                            // Mock data for count-based gifts
+                            const currentCount = 3 // تعداد خرید فعلی مشتری
+                            const targetCount = currentPackage.elite_gift_count
+                            const remainingCount = Math.max(0, targetCount - currentCount)
+                            const progressPercentage = Math.min(100, (currentCount / targetCount) * 100)
+                            
+                            return (
+                              <>
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                                    تعداد خرید شما: {currentCount.toLocaleString('fa-IR')}
+                                  </span>
+                                  <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                                    هدف: {targetCount.toLocaleString('fa-IR')} خرید
+                                  </span>
+                                </div>
+                                
+                                {/* Progress Bar */}
+                                <div className="relative w-full h-3 bg-purple-200 dark:bg-purple-900/40 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                                    style={{ width: `${progressPercentage}%` }}
+                                  />
+                                </div>
+                                
+                                {remainingCount > 0 ? (
+                                  <p className="text-center text-xs text-purple-600 dark:text-purple-400 font-medium">
+                                    {remainingCount.toLocaleString('fa-IR')} خرید تا دریافت هدیه مانده 🎉
+                                  </p>
+                                ) : (
+                                  <p className="text-center text-xs text-purple-600 dark:text-purple-400 font-bold">
+                                    تبریک! شما واجد شرایط دریافت هدیه هستید 🎊
+                                  </p>
+                                )}
+                              </>
+                            )
+                          })()}
                         </div>
                       </div>
                     )}
@@ -751,12 +826,90 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
 
                 {currentPackage.elite_gift_title && (
                   <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 mb-3">
                       <span className="text-2xl">🎁</span>
-                      <div>
+                      <div className="flex-1">
                         <h4 className="font-semibold text-purple-800 dark:text-purple-200">هدیه ویژه</h4>
                         <p className="text-sm text-purple-600 dark:text-purple-400">{currentPackage.elite_gift_title}</p>
                       </div>
+                    </div>
+                    
+                    {/* Progress Section - Mobile */}
+                    <div className="space-y-2">
+                      {currentPackage.elite_gift_amount && (() => {
+                        // Mock data - will be replaced with real data from API
+                        const currentAmount = 450000
+                        const targetAmount = currentPackage.elite_gift_amount
+                        const remainingAmount = Math.max(0, targetAmount - currentAmount)
+                        const progressPercentage = Math.min(100, (currentAmount / targetAmount) * 100)
+                        
+                        return (
+                          <>
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                                خرید شما: {currentAmount.toLocaleString('fa-IR')} ت
+                              </span>
+                              <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                                هدف: {targetAmount.toLocaleString('fa-IR')} ت
+                              </span>
+                            </div>
+                            
+                            <div className="relative w-full h-2.5 bg-purple-200 dark:bg-purple-900/40 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                                style={{ width: `${progressPercentage}%` }}
+                              />
+                            </div>
+                            
+                            {remainingAmount > 0 ? (
+                              <p className="text-center text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                                {remainingAmount.toLocaleString('fa-IR')} تومان تا دریافت هدیه 🎉
+                              </p>
+                            ) : (
+                              <p className="text-center text-[10px] text-purple-600 dark:text-purple-400 font-bold">
+                                تبریک! شما واجد شرایط هستید 🎊
+                              </p>
+                            )}
+                          </>
+                        )
+                      })()}
+                      
+                      {currentPackage.elite_gift_count && !currentPackage.elite_gift_amount && (() => {
+                        const currentCount = 3
+                        const targetCount = currentPackage.elite_gift_count
+                        const remainingCount = Math.max(0, targetCount - currentCount)
+                        const progressPercentage = Math.min(100, (currentCount / targetCount) * 100)
+                        
+                        return (
+                          <>
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                                خرید شما: {currentCount.toLocaleString('fa-IR')}
+                              </span>
+                              <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                                هدف: {targetCount.toLocaleString('fa-IR')} خرید
+                              </span>
+                            </div>
+                            
+                            <div className="relative w-full h-2.5 bg-purple-200 dark:bg-purple-900/40 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                                style={{ width: `${progressPercentage}%` }}
+                              />
+                            </div>
+                            
+                            {remainingCount > 0 ? (
+                              <p className="text-center text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                                {remainingCount.toLocaleString('fa-IR')} خرید تا دریافت هدیه 🎉
+                              </p>
+                            ) : (
+                              <p className="text-center text-[10px] text-purple-600 dark:text-purple-400 font-bold">
+                                تبریک! شما واجد شرایط هستید 🎊
+                              </p>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                   </div>
                 )}

@@ -258,3 +258,30 @@ body {
   --service-color-start: #8b5cf6;
   --service-color-end: #7c3aed;
 }
+
+/* Customer Dashboard Styles */
+.customer-points-card {
+  transition: all 0.3s ease;
+}
+
+.customer-points-card:hover {
+  transform: translateY(-2px);
+}
+
+.membership-badge {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.quick-access-item {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.quick-access-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.quick-access-item:active {
+  transform: scale(0.98);
+}

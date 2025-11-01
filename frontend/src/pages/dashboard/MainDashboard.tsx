@@ -1,6 +1,8 @@
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboard } from './MobileDashboard'
 import { EmptyDashboard } from './EmptyDashboard'
+import { CustomerDashboardMobile } from './CustomerDashboardMobile'
+import { CustomerDashboardDesktop } from './CustomerDashboardDesktop'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePackages } from '../../hooks/usePackages'
@@ -38,6 +40,23 @@ export const MainDashboard = () => {
               </div>
             </div>
           </DashboardLayout>
+        </div>
+      </>
+    )
+  }
+
+  // Customer Dashboard
+  if (user?.type === 'customer') {
+    return (
+      <>
+        {/* Mobile Customer Dashboard */}
+        <div className="md:hidden">
+          <CustomerDashboardMobile />
+        </div>
+
+        {/* Desktop Customer Dashboard */}
+        <div className="hidden md:block">
+          <CustomerDashboardDesktop />
         </div>
       </>
     )

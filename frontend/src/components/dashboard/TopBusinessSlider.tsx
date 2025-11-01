@@ -190,34 +190,36 @@ export const TopBusinessSlider: React.FC<TopBusinessSliderProps> = ({ packages }
         {/* Navigation Buttons */}
         {topBusinessesByCategory.length > 1 && (
           <>
+            {/* دکمه راست - قبلی */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 handlePrevious()
               }}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+              className={`absolute right-2 top-20 sm:top-24 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                 isDark 
-                  ? 'bg-slate-700/90 hover:bg-slate-600 text-white' 
-                  : 'bg-white/90 hover:bg-white text-gray-900'
-              } shadow-lg backdrop-blur-sm`}
+                  ? 'bg-slate-900/40 hover:bg-slate-900/60 text-white' 
+                  : 'bg-white/40 hover:bg-white/60 text-gray-900'
+              } backdrop-blur-sm hover:scale-110`}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
+            {/* دکمه چپ - بعدی */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 handleNext()
               }}
-              className={`absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+              className={`absolute left-2 top-20 sm:top-24 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                 isDark 
-                  ? 'bg-slate-700/90 hover:bg-slate-600 text-white' 
-                  : 'bg-white/90 hover:bg-white text-gray-900'
-              } shadow-lg backdrop-blur-sm`}
+                  ? 'bg-slate-900/40 hover:bg-slate-900/60 text-white' 
+                  : 'bg-white/40 hover:bg-white/60 text-gray-900'
+              } backdrop-blur-sm hover:scale-110`}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           </>

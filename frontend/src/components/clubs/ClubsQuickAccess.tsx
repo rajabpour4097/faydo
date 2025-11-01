@@ -12,28 +12,28 @@ interface Club {
 
 const CLUBS: Club[] = [
   {
-    id: 'taste',
+    id: '1',
     name: 'مزه‌ها',
     icon: '🍽️',
     gradient: 'from-orange-500 to-red-500',
     description: 'رستوران و کافه'
   },
   {
-    id: 'health',
+    id: '2',
     name: 'سلامت و زیبایی',
     icon: '💆',
     gradient: 'from-green-500 to-teal-500',
     description: 'سالن زیبایی و باشگاه'
   },
   {
-    id: 'dreams',
+    id: '3',
     name: 'آرزوها',
     icon: '✨',
     gradient: 'from-purple-500 to-pink-500',
     description: 'سفر و تفریح'
   },
   {
-    id: 'family',
+    id: '4',
     name: 'خانواده',
     icon: '👨‍👩‍👧‍👦',
     gradient: 'from-blue-500 to-indigo-500',

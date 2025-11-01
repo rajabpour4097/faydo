@@ -12,6 +12,7 @@ import { Contact } from './pages/Contact'
 import { TestUsers } from './pages/TestUsers'
 import { Explore } from './pages/Explore'
 import { Clubs } from './pages/Clubs'
+import { ClubDetail } from './pages/ClubDetail'
 import { BusinessDetail } from './pages/BusinessDetail'
 
 // Dashboard Pages
@@ -49,7 +50,7 @@ const DashboardRouter = () => {
       } />
       <Route path="clubs/:clubId" element={
         <ProfileGuard>
-          <Clubs />
+          <ClubDetail />
         </ProfileGuard>
       } />
       <Route path="business/:businessId" element={

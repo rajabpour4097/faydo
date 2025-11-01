@@ -329,17 +329,18 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                       // TODO: پیاده‌سازی اسکن QR
                       console.log('Scan QR Code')
                     }}
-                    className={`flex flex-col items-center relative -mt-6 transition-transform hover:scale-105`}
+                    className={`flex flex-col items-center relative -mt-8 transition-all duration-300 hover:scale-110 hover:-translate-y-1`}
                   >
-                    <div className={`w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg ${
-                      isDark ? 'shadow-blue-900/50' : 'shadow-blue-500/50'
-                    }`}>
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 flex items-center justify-center backdrop-blur-sm relative overflow-hidden`}>
+                      {/* Liquid effect overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-50"></div>
+                      <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-transparent to-white/10"></div>
                       <svg 
-                        className="w-6 h-6 text-white" 
+                        className="w-6 h-6 text-white relative z-10" 
                         fill="none" 
                         stroke="currentColor" 
                         viewBox="0 0 24 24"
-                        strokeWidth={2.5}
+                        strokeWidth={1.5}
                       >
                         {/* QR Code Icon - 4 corners with brackets */}
                         {/* Top-left corner */}

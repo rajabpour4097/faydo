@@ -125,6 +125,49 @@ class BusinessProfile(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+    @staticmethod
+    def generate_unique_code():
+        """
+        تولید کد یکتا برای کسب‌وکار جدید
+        بر اساس آخرین کد موجود + 1
+        کد شروع: 111111
+        """
+        from django.db import transaction
+        
+        with transaction.atomic():
+            # پیدا کردن آخرین کسب‌وکار با بالاترین unique_code
+            last_business = BusinessProfile.objects.filter(
+                unique_code__isnull=False
+            ).order_by('-unique_code').first()
+            
+            if last_business and last_business.unique_code:
+                new_code = last_business.unique_code + 1
+            else:
+                # اولین کسب‌وکار - شروع از 111111
+                new_code = 111111
+            
+            # اطمینان از یکتا بودن (در صورت تداخل احتمالی)
+            max_attempts = 100
+            attempt = 0
+            while BusinessProfile.objects.filter(unique_code=new_code).exists() and attempt < max_attempts:
+                new_code += 1
+                attempt += 1
+            
+            if attempt >= max_attempts:
+                raise ValueError('امکان تولید کد یکتا وجود ندارد. لطفاً با پشتیبانی تماس بگیرید.')
+            
+            return new_code
+
+    def save(self, *args, **kwargs):
+        """
+        Override save برای تولید خودکار unique_code
+        """
+        # فقط برای کسب‌وکارهای جدید که unique_code ندارند
+        if not self.pk and not self.unique_code:
+            self.unique_code = self.generate_unique_code()
+        
+        super().save(*args, **kwargs)
+
 
 
     def get_featured_image(self):

@@ -116,6 +116,7 @@ class BusinessProfile(models.Model):
     logo = models.ImageField(upload_to='business_logos/', blank=True, null=True, verbose_name='لوگو')
     instagram_link = models.URLField(blank=True, null=True, verbose_name='لینک صفحه اینستاگرام')
     website_link = models.URLField(blank=True, null=True, verbose_name='لینک سایت')
+    unique_code = models.PositiveIntegerField(unique=True, blank=True, null=True, verbose_name='کد منحصر به فرد')
 
     class Meta:
         verbose_name = 'پروفایل کسب‌وکار'

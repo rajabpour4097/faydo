@@ -16,8 +16,17 @@ export default defineConfig({
     },
   },
   server: {
-    host: true,
-    port: 3000,
-    open: true,
+    host: 'localhost',
+    port: 5173,
+    strictPort: true,
+    // Allow Nginx proxy
+    cors: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
 })

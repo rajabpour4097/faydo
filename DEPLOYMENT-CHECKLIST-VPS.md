@@ -94,7 +94,7 @@ Group=www-data
 WorkingDirectory=/var/www/faydo/backend
 Environment="DJANGO_SETTINGS_MODULE=core.settings"
 ExecStart=/var/www/faydo/venv/bin/gunicorn --access-logfile - \
-          --workers 3 --bind 127.0.0.1:8000 core.wsgi:application
+          --workers 3 --bind 127.0.0.1:8001 core.wsgi:application
 Restart=always
 
 [Install]
@@ -110,7 +110,7 @@ sudo systemctl status faydo-backend
 
 تست سریع:
 ```bash
-curl -I http://127.0.0.1:8000/api/accounts/users/
+curl -I http://127.0.0.1:8001/api/accounts/users/
 ```
 
 ---
@@ -178,7 +178,7 @@ server {
 
     # API → Gunicorn
     location /api/ {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

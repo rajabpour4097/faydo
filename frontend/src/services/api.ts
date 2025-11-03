@@ -3,7 +3,7 @@ export const API_BASE_URL =
   (import.meta as any).env?.VITE_API_BASE_URL ||
   (typeof window !== 'undefined' 
     ? `${window.location.protocol}//${window.location.host}/api`
-    : 'http://localhost:8000/api')
+    : 'http://localhost:8001/api')
 
 export interface ApiResponse<T> {
   data?: T

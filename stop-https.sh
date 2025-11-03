@@ -31,7 +31,7 @@ if [ -f /tmp/faydo_vite.pid ]; then
 fi
 
 # Also kill any remaining processes on these ports
-pkill -f "manage.py runserver 8000" 2>/dev/null
+pkill -f "manage.py runserver 8001" 2>/dev/null
 pkill -f "vite.*5173" 2>/dev/null
 
 echo -e "${GREEN}✅ All servers stopped${NC}"

@@ -337,9 +337,9 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'user_id', 'name', 'description', 'category', 'category_id', 'address',
             'rating_avg', 'business_location_latitude', 'business_location_longitude', 'city', 'city_id',
-            'business_phone', 'instagram_link', 'website_link', 'is_profile_complete'
+            'business_phone', 'instagram_link', 'website_link', 'is_profile_complete', 'unique_code'
         ]
-        read_only_fields = ['rating_avg', 'is_profile_complete', 'category', 'city']
+        read_only_fields = ['rating_avg', 'is_profile_complete', 'category', 'city', 'unique_code']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)

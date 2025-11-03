@@ -1,7 +1,9 @@
 // API configuration and utilities
 export const API_BASE_URL =
   (import.meta as any).env?.VITE_API_BASE_URL ||
-  `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8001/api`
+  (typeof window !== 'undefined' 
+    ? `${window.location.protocol}//${window.location.host}/api`
+    : 'http://localhost:8000/api')
 
 export interface ApiResponse<T> {
   data?: T
@@ -51,6 +53,7 @@ export interface BusinessProfile {
   instagram_link?: string
   website_link?: string
   is_profile_complete: boolean
+  unique_code?: string
 }
 
 export interface ServiceCategoryItem {
@@ -814,6 +817,16 @@ class ApiService {
     }
     
     return response
+  }
+
+  // QR Code verification
+  async verifyQRCode(uniqueCode: string): Promise<ApiResponse<{ success: boolean; business: BusinessProfile }>> {
+    return this.request<{ success: boolean; business: BusinessProfile }>('/accounts/qr/verify/', {
+      method: 'POST',
+      body: JSON.stringify({
+        unique_code: uniqueCode,
+      }),
+    })
   }
 }
 

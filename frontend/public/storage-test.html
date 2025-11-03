@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست localStorage - موبایل</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            direction: rtl;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-right: 4px solid #4CAF50;
+        }
+        .section h2 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .info {
+            margin: 5px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .label {
+            font-weight: bold;
+            color: #666;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+        }
+        button:active {
+            background: #45a049;
+        }
+        .clear-btn {
+            background: #f44336;
+        }
+        .clear-btn:active {
+            background: #da190b;
+        }
+        #console {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 تست localStorage موبایل</h1>
+        
+        <div class="section">
+            <h2>📱 اطلاعات دستگاه</h2>
+            <div class="info"><span class="label">User Agent:</span> <span id="userAgent"></span></div>
+            <div class="info"><span class="label">Screen:</span> <span id="screen"></span></div>
+            <div class="info"><span class="label">localStorage Support:</span> <span id="storageSupport"></span></div>
+        </div>
+
+        <div class="section">
+            <h2>💾 وضعیت localStorage</h2>
+            <div class="info"><span class="label">auth_user:</span> <span id="authUser" class="error">❌ خالی</span></div>
+            <div class="info"><span class="label">access_token:</span> <span id="accessToken" class="error">❌ خالی</span></div>
+            <div class="info"><span class="label">refresh_token:</span> <span id="refreshToken" class="error">❌ خالی</span></div>
+        </div>
+
+        <button onclick="testWrite()">✍️ تست نوشتن</button>
+        <button onclick="testRead()">📖 تست خواندن</button>
+        <button onclick="refreshPage()">🔄 رفرش صفحه</button>
+        <button onclick="goToDashboard()">🏠 رفتن به داشبورد</button>
+        <button class="clear-btn" onclick="clearStorage()">🗑️ پاک کردن localStorage</button>
+
+        <div class="section">
+            <h2>📝 Console Logs</h2>
+            <div id="console"></div>
+        </div>
+    </div>
+
+    <script>
+        // Capture console.log
+        const consoleDiv = document.getElementById('console')
+        const originalLog = console.log
+        console.log = function(...args) {
+            originalLog.apply(console, args)
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ')
+            consoleDiv.innerHTML += `[${new Date().toLocaleTimeString()}] ${message}\n`
+            consoleDiv.scrollTop = consoleDiv.scrollHeight
+        }
+
+        // Capture console.error
+        const originalError = console.error
+        console.error = function(...args) {
+            originalError.apply(console, args)
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ')
+            consoleDiv.innerHTML += `<span style="color: #f44;">[ERROR ${new Date().toLocaleTimeString()}] ${message}</span>\n`
+            consoleDiv.scrollTop = consoleDiv.scrollHeight
+        }
+
+        function updateDisplay() {
+            // Device info
+            document.getElementById('userAgent').textContent = navigator.userAgent
+            document.getElementById('screen').textContent = `${screen.width}x${screen.height}`
+            
+            // Storage support
+            const hasStorage = typeof(Storage) !== "undefined"
+            document.getElementById('storageSupport').innerHTML = hasStorage ? 
+                '<span class="success">✅ پشتیبانی می‌شود</span>' : 
+                '<span class="error">❌ پشتیبانی نمی‌شود</span>'
+
+            // Check localStorage items
+            try {
+                const authUser = localStorage.getItem('auth_user')
+                const accessToken = localStorage.getItem('access_token')
+                const refreshToken = localStorage.getItem('refresh_token')
+
+                document.getElementById('authUser').innerHTML = authUser ? 
+                    `<span class="success">✅ موجود (${authUser.length} کاراکتر)</span>` : 
+                    '<span class="error">❌ خالی</span>'
+
+                document.getElementById('accessToken').innerHTML = accessToken ? 
+                    `<span class="success">✅ موجود (${accessToken.length} کاراکتر)</span>` : 
+                    '<span class="error">❌ خالی</span>'
+
+                document.getElementById('refreshToken').innerHTML = refreshToken ? 
+                    `<span class="success">✅ موجود (${refreshToken.length} کاراکتر)</span>` : 
+                    '<span class="error">❌ خالی</span>'
+
+                if (authUser) {
+                    console.log('auth_user data:', JSON.parse(authUser))
+                }
+            } catch (error) {
+                console.error('Error reading localStorage:', error)
+            }
+        }
+
+        function testWrite() {
+            try {
+                const testData = {
+                    id: 999,
+                    username: 'test_user',
+                    name: 'کاربر تست',
+                    type: 'customer',
+                    phone_number: '09123456789'
+                }
+                
+                localStorage.setItem('test_item', 'این یک تست است')
+                localStorage.setItem('test_user', JSON.stringify(testData))
+                
+                console.log('✅ نوشتن با موفقیت انجام شد')
+                console.log('test_item:', localStorage.getItem('test_item'))
+                console.log('test_user:', JSON.parse(localStorage.getItem('test_user')))
+                
+                updateDisplay()
+            } catch (error) {
+                console.error('❌ خطا در نوشتن:', error)
+            }
+        }
+
+        function testRead() {
+            try {
+                const testItem = localStorage.getItem('test_item')
+                const testUser = localStorage.getItem('test_user')
+                
+                if (testItem) {
+                    console.log('✅ test_item خوانده شد:', testItem)
+                } else {
+                    console.log('⚠️ test_item خالی است')
+                }
+                
+                if (testUser) {
+                    console.log('✅ test_user خوانده شد:', JSON.parse(testUser))
+                } else {
+                    console.log('⚠️ test_user خالی است')
+                }
+                
+                updateDisplay()
+            } catch (error) {
+                console.error('❌ خطا در خواندن:', error)
+            }
+        }
+
+        function refreshPage() {
+            console.log('🔄 رفرش صفحه...')
+            window.location.reload()
+        }
+
+        function goToDashboard() {
+            console.log('🏠 رفتن به داشبورد...')
+            window.location.href = '/dashboard'
+        }
+
+        function clearStorage() {
+            if (confirm('آیا مطمئن هستید که می‌خواهید localStorage را پاک کنید؟')) {
+                localStorage.clear()
+                console.log('🗑️ localStorage پاک شد')
+                updateDisplay()
+            }
+        }
+
+        // Update on load
+        updateDisplay()
+        console.log('📱 صفحه تست localStorage بارگذاری شد')
+        
+        // Auto-refresh every 2 seconds
+        setInterval(updateDisplay, 2000)
+    </script>
+</body>
+</html>

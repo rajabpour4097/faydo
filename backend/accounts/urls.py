@@ -8,7 +8,7 @@ from .views import (
     BusinessGalleryViewSet, register_view, business_register_view, login_view, logout_view, profile_view,
     send_otp_view, verify_otp_view, login_with_otp_view, upload_profile_image_view, 
     update_phone_view, update_business_profile_view, update_customer_profile_view,
-    get_cities_by_province_view, get_all_provinces_view, get_all_cities_view
+    get_cities_by_province_view, get_all_provinces_view, get_all_cities_view, verify_qr_code
 )
 
 # API Router for ViewSets
@@ -49,6 +49,9 @@ urlpatterns = [
     path('locations/provinces/', get_all_provinces_view, name='get_all_provinces'),
     path('locations/cities/', get_all_cities_view, name='get_all_cities'),
     path('locations/provinces/<int:province_id>/cities/', get_cities_by_province_view, name='get_cities_by_province'),
+    
+    # QR Code endpoints
+    path('qr/verify/', verify_qr_code, name='verify_qr_code'),
     
     # API endpoints
     path('', include(router.urls)),

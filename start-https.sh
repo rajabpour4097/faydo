@@ -39,10 +39,10 @@ elif [ -d "../venv" ]; then
     source ../venv/bin/activate
 fi
 
-# Run Django in background
-python3 manage.py runserver 8001 > /tmp/django.log 2>&1 &
+# Run Django in background - 0.0.0.0 to allow network access
+python3 manage.py runserver 0.0.0.0:8000 > /tmp/django.log 2>&1 &
 DJANGO_PID=$!
-echo -e "${GREEN}✅ Django started (PID: $DJANGO_PID)${NC}"
+echo -e "${GREEN}✅ Django started on 0.0.0.0:8000 (PID: $DJANGO_PID)${NC}"
 
 # Start Frontend (Vite)
 echo -e "${BLUE}🎨 Starting Vite frontend on port 5173...${NC}"

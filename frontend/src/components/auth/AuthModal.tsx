@@ -52,7 +52,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setError('')
 
     try {
-      const API_BASE_URL = `http://${window.location.hostname}:8001/api`
+      // Use the same protocol and host as the current page
+      const API_BASE_URL = `${window.location.protocol}//${window.location.host}/api`
       const response = await fetch(`${API_BASE_URL}/accounts/auth/send-otp/`, {
         method: 'POST',
         headers: {
@@ -92,7 +93,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
     try {
       // First verify OTP
-      const API_BASE_URL = `http://${window.location.hostname}:8001/api`
+      // Use the same protocol and host as the current page
+      const API_BASE_URL = `${window.location.protocol}//${window.location.host}/api`
       const otpResponse = await fetch(`${API_BASE_URL}/accounts/auth/verify-otp/`, {
         method: 'POST',
         headers: {
@@ -136,14 +138,58 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               return false
             }
 
-            // Login successful - store tokens and reload page to update AuthContext
-            localStorage.setItem('auth_user', JSON.stringify(loginData.user))
-            localStorage.setItem('access_token', loginData.tokens.access)
-            localStorage.setItem('refresh_token', loginData.tokens.refresh)
+            // Login successful - map backend user to frontend User type
+            const mappedUser = {
+              id: loginData.user.id,
+              username: loginData.user.username,
+              name: loginData.user.display_name || `${loginData.user.first_name} ${loginData.user.last_name}`.trim() || loginData.user.username,
+              email: loginData.user.email,
+              type: loginData.user.role, // Backend uses 'role', frontend uses 'type'
+              phone_number: loginData.user.phone_number,
+              avatar: loginData.user.image,
+              display_name: loginData.user.display_name,
+              first_name: loginData.user.first_name,
+              last_name: loginData.user.last_name
+            }
+            
+            console.log('[MOBILE DEBUG] Storing user in localStorage:', mappedUser)
+            console.log('[MOBILE DEBUG] Tokens:', {
+              access: loginData.tokens.access.substring(0, 20) + '...',
+              refresh: loginData.tokens.refresh.substring(0, 20) + '...'
+            })
+            
+            // Store tokens and user data with extra reliability for mobile
+            try {
+              localStorage.setItem('auth_user', JSON.stringify(mappedUser))
+              localStorage.setItem('access_token', loginData.tokens.access)
+              localStorage.setItem('refresh_token', loginData.tokens.refresh)
+              
+              // Force localStorage to flush (mobile Safari fix)
+              localStorage.getItem('auth_user')
+              
+              console.log('[MOBILE DEBUG] Storage successful:', {
+                hasUser: !!localStorage.getItem('auth_user'),
+                hasAccessToken: !!localStorage.getItem('access_token'),
+                hasRefreshToken: !!localStorage.getItem('refresh_token'),
+                userLength: localStorage.getItem('auth_user')?.length,
+                tokenLength: localStorage.getItem('access_token')?.length
+              })
+            } catch (error) {
+              console.error('[MOBILE DEBUG] Storage failed:', error)
+              alert('خطا در ذخیره‌سازی اطلاعات. لطفاً مرورگر خود را در حالت عادی (نه Private) باز کنید.')
+              return
+            }
             
             onClose()
-            // Force page reload to trigger AuthContext useEffect
-            window.location.href = '/dashboard?tab=profile&welcome=true'
+            
+            // Longer delay for mobile browsers to ensure localStorage is persisted
+            console.log('[MOBILE DEBUG] Starting redirect in 300ms...')
+            setTimeout(() => {
+              console.log('[MOBILE DEBUG] Redirecting now...')
+              // Force page reload to trigger AuthContext useEffect
+              window.location.href = '/dashboard?tab=profile&welcome=true'
+            }, 300)
+            
             return true
           }
         } catch (loginErr) {

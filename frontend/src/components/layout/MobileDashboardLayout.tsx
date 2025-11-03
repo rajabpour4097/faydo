@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { CustomIcon } from '../ui/CustomIcon'
 import { ThemeToggle } from '../ui/ThemeToggle'
+import { QRScannerModal } from '../scanner/QRScannerModal'
 
 interface MobileDashboardLayoutProps {
   children: ReactNode
@@ -22,6 +23,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [forceCloseThemeMenu, setForceCloseThemeMenu] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -38,6 +40,26 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
     setForceCloseThemeMenu(true)
     // Reset the force close flag after a short delay
     setTimeout(() => setForceCloseThemeMenu(false), 100)
+  }
+
+  const handleScanSuccess = async (decodedText: string) => {
+    try {
+      // Import API service dynamically
+      const { apiService } = await import('../../services/api')
+      
+      // Verify QR code with backend
+      const response = await apiService.verifyQRCode(decodedText)
+      
+      if (response.data?.success && response.data?.business) {
+        // Navigate to business detail page
+        navigate(`/dashboard/explore/business/${response.data.business.id}`)
+      } else {
+        alert('کد QR معتبر نیست')
+      }
+    } catch (error) {
+      console.error('Error verifying QR code:', error)
+      alert('خطا در بررسی کد QR')
+    }
   }
 
   // Removed unused serviceItems - services are defined in MobileDashboard component
@@ -224,6 +246,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                 ? [
                     { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' },
                     { name: 'مدیریت پکیج ها', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
+                    { name: 'QR Code کسب‌وکار', href: '/dashboard/qrcode', icon: '📱', iconType: 'emoji' },
                     { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
                     { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️', iconType: 'emoji' },
                   ]
@@ -325,10 +348,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                 {/* دکمه اسکن وسط - فقط برای مشتری‌ها و بعد از آیتم اول (داشبورد) */}
                 {isCustomer && index === 1 && (
                   <button
-                    onClick={() => {
-                      // TODO: پیاده‌سازی اسکن QR
-                      console.log('Scan QR Code')
-                    }}
+                    onClick={() => setScannerOpen(true)}
                     className={`flex flex-col items-center relative -mt-8 transition-all duration-300 hover:scale-110 hover:-translate-y-1`}
                   >
                     <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 flex items-center justify-center backdrop-blur-sm relative overflow-hidden`}>
@@ -382,6 +402,13 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
           })}
         </div>
       </nav>
+
+      {/* QR Scanner Modal */}
+      <QRScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScanSuccess={handleScanSuccess}
+      />
     </div>
   )
 }

@@ -14,6 +14,7 @@ import { Explore } from './pages/Explore'
 import { Clubs } from './pages/Clubs'
 import { ClubDetail } from './pages/ClubDetail'
 import { BusinessDetail } from './pages/BusinessDetail'
+import { QRCodePage } from './pages/QRCodePage'
 
 // Dashboard Pages
 import { MainDashboard } from './pages/dashboard/MainDashboard'
@@ -56,6 +57,11 @@ const DashboardRouter = () => {
       <Route path="business/:businessId" element={
         <ProfileGuard>
           <BusinessDetail />
+        </ProfileGuard>
+      } />
+      <Route path="qrcode" element={
+        <ProfileGuard>
+          <QRCodePage />
         </ProfileGuard>
       } />
       <Route path="" element={

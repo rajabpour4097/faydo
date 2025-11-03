@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: 'localhost',
+    host: '0.0.0.0', // Listen on all network interfaces
     port: 5173,
     strictPort: true,
     // Allow Nginx proxy

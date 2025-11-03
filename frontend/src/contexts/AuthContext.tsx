@@ -407,13 +407,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check for existing session on mount
   React.useEffect(() => {
     const checkAuthStatus = async () => {
+      console.log('[MOBILE DEBUG - AuthContext] Starting auth check...')
       try {
         const savedUser = localStorage.getItem('auth_user')
         const accessToken = localStorage.getItem('access_token')
         
+        console.log('[MOBILE DEBUG - AuthContext] Storage check:', {
+          hasSavedUser: !!savedUser,
+          hasAccessToken: !!accessToken,
+          savedUserLength: savedUser?.length,
+          tokenLength: accessToken?.length
+        })
+        
         if (savedUser && accessToken) {
           // Validate the token by making a profile request
-          console.log('Validating existing session...')
+          console.log('[MOBILE DEBUG - AuthContext] Found stored session, validating...')
           const response = await apiService.getProfile()
           
           if (response.data) {
@@ -455,10 +463,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
             setUser(mappedUser)
             localStorage.setItem('auth_user', JSON.stringify(mappedUser))
-            console.log('Session validated successfully')
+            console.log('[MOBILE DEBUG - AuthContext] Session validated successfully, user:', mappedUser.username, 'type:', mappedUser.type)
           } else {
             // Token is invalid or expired, try to refresh
-            console.log('Token validation failed, attempting refresh...')
+            console.log('[MOBILE DEBUG - AuthContext] Token validation failed, attempting refresh...')
             const refreshToken = localStorage.getItem('refresh_token')
             
             if (refreshToken) {
@@ -519,13 +527,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }
         } else {
-          console.log('No saved session found')
+          console.log('[MOBILE DEBUG - AuthContext] No saved session found in localStorage')
           setUser(null)
         }
       } catch (error) {
-        console.error('Error validating session:', error)
+        console.error('[MOBILE DEBUG - AuthContext] Error validating session:', error)
         clearSession()
       } finally {
+        console.log('[MOBILE DEBUG - AuthContext] Auth check complete, isLoading: false')
         setIsLoading(false)
       }
     }

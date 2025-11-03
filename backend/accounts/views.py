@@ -641,3 +641,37 @@ class BusinessGalleryViewSet(viewsets.ModelViewSet):
         except BusinessProfile.DoesNotExist:
             return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def verify_qr_code(request):
+    """Verify QR code and return business information"""
+    unique_code = request.data.get('unique_code')
+    
+    if not unique_code:
+        return Response(
+            {'error': 'کد یکتا الزامی است'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        # Find business by unique code
+        business_profile = BusinessProfile.objects.select_related('user').get(unique_code=unique_code)
+        
+        # Serialize business data
+        serializer = BusinessProfileSerializer(business_profile, context={'request': request})
+        
+        # TODO: Log the scan event for analytics
+        # You can create a ScanLog model to track scans
+        
+        return Response({
+            'success': True,
+            'business': serializer.data
+        })
+        
+    except BusinessProfile.DoesNotExist:
+        return Response(
+            {'error': 'کد QR معتبر نیست'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+

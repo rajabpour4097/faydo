@@ -32,6 +32,20 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']  # Dev: allow all for LAN testing
 
+# CSRF settings for HTTPS and network access
+CSRF_TRUSTED_ORIGINS = [
+    'https://localhost',
+    'https://192.168.70.102',
+    'https://127.0.0.1',
+]
+
+# For development: disable CSRF for API endpoints
+# In production, you should use proper CSRF tokens
+CSRF_COOKIE_SECURE = True  # Only send cookie over HTTPS
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read the cookie
+CSRF_COOKIE_SAMESITE = 'None'  # Allow cross-origin requests
+CSRF_USE_SESSIONS = False  # Use cookie-based CSRF instead of session
+
 # CORS settings for frontend connection
 # Allow all origins for both dev and production to avoid CORS issues
 CORS_ALLOW_ALL_ORIGINS = True

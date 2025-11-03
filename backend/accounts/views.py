@@ -1,6 +1,6 @@
 import os
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes, action, authentication_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -45,6 +45,7 @@ from .sms_service import sms_service
 
 
 @api_view(['POST'])
+@authentication_classes([])  # Disable CSRF check for registration
 @permission_classes([AllowAny])
 def register_view(request):
     """Customer registration endpoint"""
@@ -65,6 +66,7 @@ def register_view(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])  # Disable CSRF check for registration
 @permission_classes([AllowAny])
 def business_register_view(request):
     """Business registration endpoint"""
@@ -85,6 +87,7 @@ def business_register_view(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])  # Disable CSRF check for login
 @permission_classes([AllowAny])
 def login_view(request):
     """User login endpoint"""
@@ -158,6 +161,7 @@ def profile_view(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])  # Disable CSRF check for OTP endpoint
 @permission_classes([AllowAny])
 def send_otp_view(request):
     """Send OTP code to phone number"""
@@ -192,6 +196,7 @@ def send_otp_view(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])  # Disable CSRF check for OTP endpoint
 @permission_classes([AllowAny])
 def verify_otp_view(request):
     """Verify OTP code"""
@@ -219,6 +224,7 @@ def verify_otp_view(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])  # Disable CSRF check for OTP login endpoint
 @permission_classes([AllowAny])
 def login_with_otp_view(request):
     """Login with phone number after OTP verification"""

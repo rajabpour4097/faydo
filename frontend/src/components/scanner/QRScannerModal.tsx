@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { useTheme } from '../../contexts/ThemeContext'
+import { loyaltyService, BusinessInfo } from '../../services/loyalty'
+import { BusinessOptionsModal } from './BusinessOptionsModal'
 
 interface QRScannerModalProps {
   isOpen: boolean
@@ -17,21 +19,66 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const scannerRef = useRef<Html5Qrcode | null>(null)
+  const isInitializedRef = useRef(false)
   const qrCodeRegionId = 'qr-reader'
+  
+  // States for manual code entry
+  const [showManualEntry, setShowManualEntry] = useState(false)
+  const [manualCode, setManualCode] = useState('')
+  const [isLoadingBusiness, setIsLoadingBusiness] = useState(false)
+  
+  // States for business info
+  const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null)
+  const [showBusinessOptions, setShowBusinessOptions] = useState(false)
 
   useEffect(() => {
-    if (isOpen && !isScanning) {
+    if (isOpen && !isInitializedRef.current) {
+      isInitializedRef.current = true
       startScanner()
+    }
+    
+    if (!isOpen) {
+      isInitializedRef.current = false
     }
 
     return () => {
-      stopScanner()
+      // Cleanup: حتماً اسکنر را stop و پاک کنید
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            scannerRef.current.stop().catch(console.error)
+          }
+          scannerRef.current.clear()
+          scannerRef.current = null
+        } catch (err) {
+          console.error('Cleanup error:', err)
+        }
+      }
     }
   }, [isOpen])
 
   const startScanner = async () => {
     try {
       setError(null)
+      
+      // اگر اسکنر در حال اجرا است، نیازی به راه‌اندازی دوباره نیست
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        return
+      }
+      
+      // اگر اسکنر قبلی وجود دارد، ابتدا آن را پاک کنید
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            await scannerRef.current.stop()
+          }
+          scannerRef.current.clear()
+          scannerRef.current = null
+        } catch (err) {
+          console.error('Error clearing previous scanner:', err)
+        }
+      }
+      
       setIsScanning(true)
 
       // Create scanner instance
@@ -76,16 +123,29 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         setError('خطا در راه‌اندازی اسکنر')
       }
       setIsScanning(false)
+      // پاک کردن reference در صورت خطا
+      if (scannerRef.current) {
+        try {
+          scannerRef.current.clear()
+        } catch (e) {
+          console.error('Error clearing scanner after error:', e)
+        }
+        scannerRef.current = null
+      }
     }
   }
 
   const stopScanner = async () => {
-    if (scannerRef.current && scannerRef.current.isScanning) {
+    if (scannerRef.current) {
       try {
-        await scannerRef.current.stop()
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop()
+        }
         scannerRef.current.clear()
       } catch (err) {
         console.error('Error stopping scanner:', err)
+      } finally {
+        scannerRef.current = null
       }
     }
     setIsScanning(false)
@@ -93,16 +153,103 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
   const handleScanSuccess = async (decodedText: string) => {
     await stopScanner()
+    
+    // فرض می‌کنیم QR Code حاوی unique_code است
+    const uniqueCode = decodedText.trim()
+    await fetchBusinessInfo(uniqueCode)
+    
     onScanSuccess(decodedText)
-    onClose()
+  }
+  
+  const fetchBusinessInfo = async (code: string) => {
+    setIsLoadingBusiness(true)
+    setError(null)
+    
+    try {
+      const info = await loyaltyService.getBusinessByCode(code)
+      
+      // بررسی اینکه کسب‌وکار پکیج فعال دارد یا نه
+      if (!info.has_active_package) {
+        setError(`متأسفانه "${info.business_name}" در حال حاضر پکیج فعالی ندارد و امکان استفاده از تخفیف‌ها وجود ندارد`)
+        setBusinessInfo(null)
+        setShowBusinessOptions(false)
+        return
+      }
+      
+      setBusinessInfo(info)
+      setShowBusinessOptions(true)
+    } catch (err: any) {
+      console.error('Error fetching business info:', err)
+      setError(err.error || err.response?.data?.error || 'کسب‌وکاری با این کد یافت نشد')
+    } finally {
+      setIsLoadingBusiness(false)
+    }
+  }
+
+  const handleManualCodeSubmit = async () => {
+    if (!manualCode.trim()) {
+      setError('لطفاً کد یکتا را وارد کنید')
+      return
+    }
+    
+    await fetchBusinessInfo(manualCode.trim())
+  }
+  
+  const resetScanner = async () => {
+    // ابتدا اسکنر فعلی را متوقف کنید
+    await stopScanner()
+    
+    // پاک کردن تمام state ها
+    setError(null)
+    setShowManualEntry(false)
+    setManualCode('')
+    setIsLoadingBusiness(false)
+    
+    // Reset flag و راه‌اندازی مجدد
+    isInitializedRef.current = false
+    
+    // راه‌اندازی مجدد اسکنر با تأخیر کوتاه
+    setTimeout(async () => {
+      isInitializedRef.current = true
+      await startScanner()
+    }, 200)
   }
 
   const handleClose = async () => {
     await stopScanner()
+    // Reset کردن تمام state ها
+    setShowBusinessOptions(false)
+    setBusinessInfo(null)
+    setManualCode('')
+    setShowManualEntry(false)
+    setError(null)
+    setIsLoadingBusiness(false)
+    isInitializedRef.current = false
+    onClose()
+  }
+  
+  const handleBusinessOptionsClose = () => {
+    setShowBusinessOptions(false)
+    setBusinessInfo(null)
+    // Reset کردن state های دیگر
+    setManualCode('')
+    setShowManualEntry(false)
+    setError(null)
     onClose()
   }
 
   if (!isOpen) return null
+
+  // نمایش Business Options Modal
+  if (showBusinessOptions && businessInfo) {
+    return (
+      <BusinessOptionsModal
+        isOpen={true}
+        onClose={handleBusinessOptionsClose}
+        businessInfo={businessInfo}
+      />
+    )
+  }
 
   return (
     <div 
@@ -141,10 +288,17 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         <div className="p-4">
           {error ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">📷</div>
-              <p className="text-red-500 mb-4">{error}</p>
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
+                <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                خطا
+              </p>
+              <p className="text-red-500 mb-6 px-4">{error}</p>
               <button
-                onClick={startScanner}
+                onClick={resetScanner}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors"
               >
                 تلاش مجدد
@@ -184,9 +338,74 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
               {/* Instructions */}
               <div className="mt-4 text-center">
-                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                <p className={`text-sm mb-3 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                   QR Code را در مقابل دوربین قرار دهید
                 </p>
+                
+                {/* Manual Entry Toggle */}
+                {!showManualEntry ? (
+                  <button
+                    onClick={() => setShowManualEntry(true)}
+                    className={`text-sm font-medium underline ${
+                      isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
+                    }`}
+                  >
+                    وارد کردن کد یکتا به صورت دستی
+                  </button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-700' : 'bg-gray-100'}`}>
+                      <label className={`block text-sm font-medium mb-2 text-right ${
+                        isDark ? 'text-slate-300' : 'text-gray-700'
+                      }`}>
+                        کد یکتای کسب‌وکار
+                      </label>
+                      <input
+                        type="text"
+                        value={manualCode}
+                        onChange={(e) => setManualCode(e.target.value)}
+                        placeholder="مثال: 111111"
+                        className={`w-full px-4 py-2 rounded-lg text-center text-lg font-bold border-2 transition-colors ${
+                          isDark
+                            ? 'bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-blue-500'
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500'
+                        } focus:outline-none`}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleManualCodeSubmit()
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleManualCodeSubmit}
+                        disabled={isLoadingBusiness || !manualCode.trim()}
+                        className={`flex-1 px-4 py-2 rounded-lg font-bold transition-colors ${
+                          isLoadingBusiness || !manualCode.trim()
+                            ? 'bg-gray-400 cursor-not-allowed text-gray-600'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                      >
+                        {isLoadingBusiness ? 'در حال بررسی...' : 'تایید'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowManualEntry(false)
+                          setManualCode('')
+                          setError(null)
+                        }}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          isDark
+                            ? 'bg-slate-600 hover:bg-slate-500 text-white'
+                            : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+                        }`}
+                      >
+                        انصراف
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

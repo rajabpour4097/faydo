@@ -94,6 +94,7 @@ INSTALLED_APPS = [
     # Local apps
     'accounts',
     'packages',
+    'loyalty',
 ]
 
 MIDDLEWARE = [

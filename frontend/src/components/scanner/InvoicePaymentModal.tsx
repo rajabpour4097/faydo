@@ -8,15 +8,18 @@ interface InvoicePaymentModalProps {
   businessInfo: BusinessInfo
 }
 
-// تابع برای فرمت کردن اعداد با کاما
+// تابع برای فرمت کردن اعداد با کاما (انگلیسی)
 const formatNumber = (num: number | string): string => {
   const numStr = num.toString().replace(/,/g, '')
-  return parseInt(numStr).toLocaleString('fa-IR')
+  if (!numStr || numStr === '0') return ''
+  return parseInt(numStr).toLocaleString('en-US')
 }
 
 // تابع برای پاک کردن فرمت و تبدیل به عدد
 const parseNumber = (str: string): number => {
-  return parseInt(str.replace(/,/g, '')) || 0
+  // حذف کاماها و تبدیل اعداد فارسی به انگلیسی
+  const normalized = str.replace(/,/g, '').replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+  return parseInt(normalized) || 0
 }
 
 export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
@@ -65,16 +68,40 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
   const totalAfterDiscount = mainAmountAfterDiscount + (hasSpecialDiscount ? specialAmountAfterDiscount : 0)
 
   const handleMainAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/,/g, '')
-    if (/^\d*$/.test(value)) {
-      setMainAmount(value ? formatNumber(value) : '')
+    // حذف همه کاماها و تبدیل اعداد فارسی به انگلیسی
+    let rawValue = e.target.value.replace(/,/g, '')
+    rawValue = rawValue.replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+    
+    // فقط اعداد انگلیسی مجاز هستند
+    if (/^\d*$/.test(rawValue)) {
+      // اگر خالی است، state را خالی کن
+      if (rawValue === '' || rawValue === '0') {
+        setMainAmount('')
+        return
+      }
+      
+      // فرمت کردن عدد با کاما (انگلیسی)
+      const formattedValue = parseInt(rawValue).toLocaleString('en-US')
+      setMainAmount(formattedValue)
     }
   }
 
   const handleSpecialAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/,/g, '')
-    if (/^\d*$/.test(value)) {
-      setSpecialAmount(value ? formatNumber(value) : '')
+    // حذف همه کاماها و تبدیل اعداد فارسی به انگلیسی
+    let rawValue = e.target.value.replace(/,/g, '')
+    rawValue = rawValue.replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+    
+    // فقط اعداد انگلیسی مجاز هستند
+    if (/^\d*$/.test(rawValue)) {
+      // اگر خالی است، state را خالی کن
+      if (rawValue === '' || rawValue === '0') {
+        setSpecialAmount('')
+        return
+      }
+      
+      // فرمت کردن عدد با کاما (انگلیسی)
+      const formattedValue = parseInt(rawValue).toLocaleString('en-US')
+      setSpecialAmount(formattedValue)
     }
   }
 
@@ -220,10 +247,11 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
             </label>
             <input
               type="text"
+              inputMode="numeric"
               value={mainAmount}
               onChange={handleMainAmountChange}
-              placeholder="0"
-              className={`w-full px-4 py-3 rounded-xl text-lg font-bold text-left border-2 transition-colors ${
+              placeholder="100,000"
+              className={`w-full px-4 py-3 rounded-xl text-lg font-bold text-center border-2 transition-colors ${
                 isDark
                   ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500 focus:border-blue-500'
                   : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500'
@@ -272,10 +300,11 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
                   
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={specialAmount}
                     onChange={handleSpecialAmountChange}
-                    placeholder="0"
-                    className={`w-full px-4 py-3 rounded-xl text-lg font-bold text-left border-2 transition-colors ${
+                    placeholder="50,000"
+                    className={`w-full px-4 py-3 rounded-xl text-lg font-bold text-center border-2 transition-colors ${
                       isDark
                         ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500 focus:border-green-500'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-green-500'

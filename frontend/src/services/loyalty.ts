@@ -49,6 +49,10 @@ export interface Transaction {
   points_earned: number
   status: 'pending' | 'approved' | 'rejected'
   note: string | null
+  can_comment: boolean
+  comment_deadline: string | null
+  has_commented: boolean
+  can_add_comment: boolean
   created_at: string
   modified_at: string
 }
@@ -148,6 +152,36 @@ export const loyaltyService = {
         'Content-Type': 'application/json',
         ...getAuthHeader()
       }
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * افزودن کامنت و امتیاز به تراکنش
+   */
+  async addTransactionComment(data: {
+    transaction_id: number
+    text: string
+    score: number | null
+    service_type: string
+  }): Promise<{ success: boolean; message: string; comment_id: number }> {
+    const response = await fetch(`${API_BASE_URL}/loyalty/transactions/add_comment/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify(data)
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * دریافت تعداد تراکنش‌های در انتظار (برای کسب‌وکار) یا قابل نظردهی (برای مشتری)
+   */
+  async getPendingCount(): Promise<{ count: number; type: string }> {
+    const response = await fetch(`${API_BASE_URL}/loyalty/transactions/pending_count/`, {
+      headers: getAuthHeader()
     })
     return handleResponse(response)
   }

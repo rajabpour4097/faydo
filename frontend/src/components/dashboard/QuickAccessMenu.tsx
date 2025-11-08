@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useNotification } from '../../contexts/NotificationContext'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface QuickAccessMenuItem {
   id: string
@@ -8,6 +10,7 @@ interface QuickAccessMenuItem {
   href: string
   color: string
   isActive: boolean
+  badge?: number
 }
 
 const MENU_ITEMS: QuickAccessMenuItem[] = [
@@ -45,11 +48,11 @@ const MENU_ITEMS: QuickAccessMenuItem[] = [
   },
   {
     id: 'history',
-    title: 'تاریخچه خرید',
-    icon: '📝',
-    href: '/history',
-    color: 'from-secondary-500 to-secondary-600',
-    isActive: false
+    title: 'تراکنش‌های من',
+    icon: '📋',
+    href: '/dashboard/transactions',
+    color: 'from-blue-500 to-blue-600',
+    isActive: true
   },
   {
     id: 'favorites',
@@ -95,6 +98,16 @@ const MENU_ITEMS: QuickAccessMenuItem[] = [
 
 export const QuickAccessMenu = () => {
   const { isDark } = useTheme()
+  const { user } = useAuth()
+  const { pendingCount } = useNotification()
+
+  // آپدیت badge در آیتم history
+  const menuItems = MENU_ITEMS.map(item => {
+    if (item.id === 'history' && user?.type === 'customer') {
+      return { ...item, badge: pendingCount > 0 ? pendingCount : undefined }
+    }
+    return item
+  })
 
   return (
     <div className={`rounded-2xl p-6 ${
@@ -103,15 +116,21 @@ export const QuickAccessMenu = () => {
       
       {/* 3x3 Grid */}
       <div className="grid grid-cols-3 gap-4">
-        {MENU_ITEMS.map((item) => (
+        {menuItems.map((item) => (
           item.isActive ? (
             <Link
               key={item.id}
               to={item.href}
-              className={`flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105`}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 relative`}
             >
               <span className="text-3xl mb-2">{item.icon}</span>
               <span className="text-xs font-medium text-center">{item.title}</span>
+              {/* Badge for pending count */}
+              {item.badge && item.badge > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center shadow-lg">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           ) : (
             <div

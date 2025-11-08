@@ -24,7 +24,14 @@ class Comment(BaseModel):
     user = models.ForeignKey('accounts.CustomerProfile', on_delete=models.CASCADE, related_name='comments')
     
     # محتوای کامنت
-    text = models.TextField()
+    text = models.TextField(blank=True, null=True)
+    
+    # امتیاز (1 تا 5)
+    score = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        null=True,
+        blank=True
+    )
     
     class Meta:
         verbose_name = 'کامنت'
@@ -33,7 +40,7 @@ class Comment(BaseModel):
         unique_together = ['content_type', 'object_id', 'user']
     
     def __str__(self):
-        return f'{self.user.username} - {self.text[:50]}'
+        return f'{self.user.user.get_full_name() if hasattr(self.user, "user") else self.user} - {self.text[:50] if self.text else "بدون متن"}'
 
 # CommentLike Model
 class CommentLike(BaseModel):

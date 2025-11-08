@@ -1,8 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import { Layout } from './components/layout/Layout'
 import { ProfileGuard } from './components/ProfileGuard'
+import { AutoTransactionNotification } from './components/customer/AutoTransactionNotification'
 
 // Pages to keep
 import { Home } from './pages/Home'
@@ -21,6 +23,7 @@ import { MainDashboard } from './pages/dashboard/MainDashboard'
 import { Profile } from './pages/dashboard/Profile'
 import { PackageManagement } from './pages/dashboard/PackageManagement'
 import { BusinessTransactionsPage } from './pages/business/BusinessTransactionsPage'
+import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsPage'
 import { useAuth } from './contexts/AuthContext'
 
 // Dashboard Router Component
@@ -30,6 +33,8 @@ const DashboardRouter = () => {
   if (!user) {
     return <Layout><Home /></Layout>
   }
+
+  const isBusinessUser = user.type === 'business'
 
   // All dashboard routes need profile completion except the profile page itself
   return (
@@ -67,7 +72,7 @@ const DashboardRouter = () => {
       } />
       <Route path="transactions" element={
         <ProfileGuard>
-          <BusinessTransactionsPage />
+          {isBusinessUser ? <BusinessTransactionsPage /> : <CustomerTransactionsPage />}
         </ProfileGuard>
       } />
       <Route path="" element={
@@ -88,27 +93,32 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Public routes with Layout (Header + Footer) */}
-            <Route path="/" element={<Layout><Home /></Layout>} />
-            <Route path="/businesses" element={<Layout><Businesses /></Layout>} />
-            <Route path="/about" element={<Layout><About /></Layout>} />
-            <Route path="/contact" element={<Layout><Contact /></Layout>} />
+        <NotificationProvider>
+          <Router>
+            {/* Auto Notification برای نمایش خودکار modal نظردهی */}
+            <AutoTransactionNotification />
+            
+            <Routes>
+              {/* Public routes with Layout (Header + Footer) */}
+              <Route path="/" element={<Layout><Home /></Layout>} />
+              <Route path="/businesses" element={<Layout><Businesses /></Layout>} />
+              <Route path="/about" element={<Layout><About /></Layout>} />
+              <Route path="/contact" element={<Layout><Contact /></Layout>} />
 
-            {/* Redirect old auth routes to home */}
-            <Route path="/login" element={<Navigate to="/" replace />} />
-            <Route path="/register" element={<Navigate to="/" replace />} />
+              {/* Redirect old auth routes to home */}
+              <Route path="/login" element={<Navigate to="/" replace />} />
+              <Route path="/register" element={<Navigate to="/" replace />} />
 
-            {/* Dashboard routes - no Layout wrapper as DashboardLayout handles its own layout */}
-            <Route path="/dashboard/*" element={<DashboardRouter />} />
+              {/* Dashboard routes - no Layout wrapper as DashboardLayout handles its own layout */}
+              <Route path="/dashboard/*" element={<DashboardRouter />} />
 
-            {/* Test Users Page */}
-            <Route path="/test-users" element={<TestUsers />} />
+              {/* Test Users Page */}
+              <Route path="/test-users" element={<TestUsers />} />
 
-            {/* Only keep specified routes */}
-          </Routes>
-        </Router>
+              {/* Only keep specified routes */}
+            </Routes>
+          </Router>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   )

@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import CustomerLoyalty, Transaction
 from accounts.serializers import CustomerProfileSerializer, BusinessProfileSerializer
 from packages.serializers import PackageDetailSerializer
+from packages.models import Comment
+from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
 
 class CustomerLoyaltySerializer(serializers.ModelSerializer):
@@ -24,6 +27,7 @@ class CustomerLoyaltySerializer(serializers.ModelSerializer):
 class TransactionSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.user.get_full_name', read_only=True)
     business_name = serializers.CharField(source='business.name', read_only=True)
+    can_add_comment = serializers.SerializerMethodField()
     
     class Meta:
         model = Transaction
@@ -33,12 +37,17 @@ class TransactionSerializer(serializers.ModelSerializer):
             'has_special_discount', 'special_discount_title',
             'special_discount_original_amount', 'special_discount_amount',
             'final_amount', 'points_earned', 'status', 'note',
+            'can_comment', 'comment_deadline', 'has_commented', 'can_add_comment',
             'created_at', 'modified_at'
         ]
         read_only_fields = [
             'discount_all_amount', 'special_discount_amount',
-            'final_amount', 'points_earned', 'created_at', 'modified_at'
+            'final_amount', 'points_earned', 'created_at', 'modified_at',
+            'can_comment', 'comment_deadline', 'has_commented'
         ]
+    
+    def get_can_add_comment(self, obj):
+        return obj.can_add_comment()
 
 
 class TransactionCreateSerializer(serializers.ModelSerializer):
@@ -175,3 +184,90 @@ class BusinessInfoSerializer(serializers.Serializer):
         if logo_url and request:
             return request.build_absolute_uri(logo_url)
         return None
+
+
+class TransactionCommentSerializer(serializers.Serializer):
+    """
+    Serializer برای ایجاد کامنت برای تراکنش
+    """
+    transaction_id = serializers.IntegerField()
+    text = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    score = serializers.IntegerField(min_value=1, max_value=5, required=False, allow_null=True)
+    
+    # نوع خدمت که کامنت برای آن است
+    service_type = serializers.ChoiceField(
+        choices=['discount_all', 'specific_discount', 'elite_gift', 'vip_experience'],
+        required=True
+    )
+    
+    def validate_transaction_id(self, value):
+        """بررسی وجود تراکنش"""
+        try:
+            transaction = Transaction.objects.get(id=value)
+        except Transaction.DoesNotExist:
+            raise serializers.ValidationError('تراکنش یافت نشد')
+        
+        return value
+    
+    def validate(self, data):
+        """اعتبارسنجی کلی"""
+        request = self.context.get('request')
+        transaction = Transaction.objects.get(id=data['transaction_id'])
+        
+        # بررسی اینکه تراکنش متعلق به این مشتری است
+        if transaction.customer != request.user.customerprofile:
+            raise serializers.ValidationError('شما مجاز به کامنت‌گذاری برای این تراکنش نیستید')
+        
+        # بررسی امکان کامنت‌گذاری
+        if not transaction.can_add_comment():
+            if transaction.has_commented:
+                raise serializers.ValidationError('شما قبلاً برای این تراکنش کامنت گذاشته‌اید')
+            elif transaction.status != 'approved':
+                raise serializers.ValidationError('فقط می‌توانید برای تراکنش‌های تایید شده کامنت بگذارید')
+            elif transaction.comment_deadline and timezone.now() > transaction.comment_deadline:
+                raise serializers.ValidationError('مهلت کامنت‌گذاری (12 ساعت) به پایان رسیده است')
+            else:
+                raise serializers.ValidationError('امکان کامنت‌گذاری برای این تراکنش وجود ندارد')
+        
+        # حداقل یکی از text یا score باید وجود داشته باشد
+        if not data.get('text') and not data.get('score'):
+            raise serializers.ValidationError('حداقل باید متن کامنت یا امتیاز را وارد کنید')
+        
+        return data
+    
+    def create(self, validated_data):
+        """ایجاد کامنت"""
+        transaction = Transaction.objects.get(id=validated_data['transaction_id'])
+        service_type = validated_data['service_type']
+        
+        # تعیین content_object بر اساس نوع خدمت
+        content_object = None
+        if service_type == 'discount_all' and hasattr(transaction.package, 'discount_all'):
+            content_object = transaction.package.discount_all
+        elif service_type == 'specific_discount' and hasattr(transaction.package, 'specific_discount'):
+            content_object = transaction.package.specific_discount
+        elif service_type == 'elite_gift' and hasattr(transaction.package, 'elite_gift'):
+            content_object = transaction.package.elite_gift
+        elif service_type == 'vip_experience':
+            # برای VIP باید یکی از experienceها را انتخاب کنیم
+            # فعلاً اولین experience را انتخاب می‌کنیم
+            vip_exp = transaction.package.experiences.first()
+            if vip_exp:
+                content_object = vip_exp
+        
+        if not content_object:
+            raise serializers.ValidationError(f'خدمت {service_type} در این پکیج یافت نشد')
+        
+        # ایجاد کامنت
+        comment = Comment.objects.create(
+            content_object=content_object,
+            user=self.context['request'].user.customerprofile,
+            text=validated_data.get('text', ''),
+            score=validated_data.get('score')
+        )
+        
+        # علامت‌گذاری تراکنش به عنوان کامنت شده
+        transaction.has_commented = True
+        transaction.save(update_fields=['has_commented'])
+        
+        return comment

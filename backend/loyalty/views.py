@@ -2,10 +2,12 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from .models import CustomerLoyalty, Transaction
 from .serializers import (
     CustomerLoyaltySerializer, TransactionSerializer,
-    TransactionCreateSerializer, BusinessInfoSerializer
+    TransactionCreateSerializer, BusinessInfoSerializer,
+    TransactionCommentSerializer
 )
 from accounts.models import BusinessProfile
 
@@ -130,6 +132,71 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+    
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def add_comment(self, request):
+        """
+        افزودن کامنت و امتیاز به تراکنش توسط مشتری
+        """
+        if request.user.role != 'customer':
+            return Response(
+                {'error': 'فقط مشتریان می‌توانند کامنت بگذارند'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = TransactionCommentSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            try:
+                comment = serializer.save()
+                return Response({
+                    'success': True,
+                    'message': 'کامنت شما با موفقیت ثبت شد',
+                    'comment_id': comment.id
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def pending_count(self, request):
+        """
+        شمارش تراکنش‌های در انتظار تایید برای کسب‌وکار
+        یا تراکنش‌های آماده نظردهی برای مشتری
+        """
+        user = request.user
+        
+        if user.role == 'business':
+            # برای کسب‌وکار: تعداد تراکنش‌های pending
+            count = Transaction.objects.filter(
+                business=user.businessprofile,
+                status='pending'
+            ).count()
+            return Response({
+                'count': count,
+                'type': 'pending_approval'
+            })
+        elif user.role == 'customer':
+            # برای مشتری: تعداد تراکنش‌هایی که می‌تواند کامنت بگذارد
+            count = Transaction.objects.filter(
+                customer=user.customerprofile,
+                can_comment=True,
+                has_commented=False,
+                comment_deadline__gt=timezone.now()
+            ).count()
+            return Response({
+                'count': count,
+                'type': 'can_comment'
+            })
+        else:
+            return Response({'count': 0, 'type': 'none'})
 
 
 @api_view(['GET'])

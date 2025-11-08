@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useNotification } from '../../contexts/NotificationContext'
 import { ThemeToggle } from '../ui/ThemeToggle'
 // Desktop-only layout. Mobile dashboard is rendered at page level.
 
@@ -22,6 +23,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { isDark } = useTheme()
+  const { pendingCount } = useNotification()
 
 
   const handleLogout = async () => {
@@ -38,7 +40,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '📊' },
         { name: 'پکیج‌ها', href: '/dashboard/packages', icon: '📦' },
-        { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋' },
+        { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', badge: pendingCount > 0 ? pendingCount : undefined },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
         { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
       ]
@@ -49,6 +51,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '📊' },
         { name: 'اکتشاف', href: '/dashboard/explore', icon: '🔍' },
+        { name: 'تراکنش‌های من', href: '/dashboard/transactions', icon: '📋' },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
         { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
       ]
@@ -125,8 +128,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               >
                 <span className="text-lg mr-3">{item.icon}</span>
                 <span className="flex-1">{item.name}</span>
-                {item.badge && (
-                  <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full ml-2">
+                {item.badge && item.badge > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full ml-2">
                     {item.badge}
                   </span>
                 )}

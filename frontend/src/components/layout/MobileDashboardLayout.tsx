@@ -2,6 +2,7 @@ import React, { ReactNode, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useNotification } from '../../contexts/NotificationContext'
 import { CustomIcon } from '../ui/CustomIcon'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { QRScannerModal } from '../scanner/QRScannerModal'
@@ -17,6 +18,7 @@ interface BottomNavItem {
   href: string
   icon: string
   iconType?: 'emoji' | 'image' | 'base64' | 'url'
+  badge?: number
 }
 
 export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) => {
@@ -28,6 +30,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { isDark } = useTheme()
+  const { pendingCount } = useNotification()
 
   const handleLogout = async () => {
     await logout()
@@ -72,7 +75,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '/src/assets/images/home.png', iconType: 'image' },
         { name: 'مدیریت پکیج', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
-        { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', iconType: 'emoji' },
+        { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', iconType: 'emoji', badge: pendingCount > 0 ? pendingCount : undefined },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' },
       ]
     }
@@ -331,7 +334,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                   {active && (
                     <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-blue-500 rounded-full"></div>
                   )}
-                  <div className="mb-1">
+                  <div className="mb-1 relative">
                     <CustomIcon
                       type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'}
                       value={item.icon}
@@ -339,6 +342,12 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                       className="w-6 h-5"
                       active={active}
                     />
+                    {/* Badge for pending count */}
+                    {item.badge && item.badge > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                        {item.badge}
+                      </span>
+                    )}
                   </div>
                   <span className={`text-xs ${active ? 'text-blue-500' : 'text-gray-500'}`}>
                     {item.name}

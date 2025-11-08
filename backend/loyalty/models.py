@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from accounts.models import CustomerProfile, BusinessProfile
 from packages.models import Package
+from django.contrib.contenttypes.fields import GenericRelation
 
 
 class BaseModel(models.Model):
@@ -233,6 +234,24 @@ class Transaction(BaseModel):
         null=True,
         verbose_name='یادداشت'
     )
+    
+    # فیلدهای مربوط به کامنت و امتیاز
+    can_comment = models.BooleanField(
+        default=False,
+        verbose_name='امکان کامنت‌گذاری'
+    )
+    comment_deadline = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='مهلت کامنت‌گذاری'
+    )
+    has_commented = models.BooleanField(
+        default=False,
+        verbose_name='کامنت گذاشته شده'
+    )
+    
+    # Generic Relation برای کامنت‌ها
+    comments = GenericRelation('packages.Comment', related_query_name='transaction')
 
     class Meta:
         verbose_name = 'تراکنش'
@@ -301,6 +320,9 @@ class Transaction(BaseModel):
         """
         تایید تراکنش و افزودن امتیاز به مشتری
         """
+        from django.utils import timezone
+        from datetime import timedelta
+        
         if self.status == 'approved':
             return
         
@@ -310,6 +332,10 @@ class Transaction(BaseModel):
         self.points_earned = self.calculate_points()
         self.loyalty.add_points(self.points_earned)
         
+        # فعال کردن امکان کامنت‌گذاری برای 12 ساعت
+        self.can_comment = True
+        self.comment_deadline = timezone.now() + timedelta(hours=12)
+        
         self.save()
 
     def reject(self):
@@ -318,6 +344,30 @@ class Transaction(BaseModel):
         """
         self.status = 'rejected'
         self.save()
+    
+    def can_add_comment(self):
+        """
+        بررسی امکان کامنت‌گذاری
+        """
+        from django.utils import timezone
+        
+        # باید تایید شده باشد
+        if self.status != 'approved':
+            return False
+        
+        # نباید قبلاً کامنت گذاشته باشد
+        if self.has_commented:
+            return False
+        
+        # باید can_comment فعال باشد
+        if not self.can_comment:
+            return False
+        
+        # باید در مهلت 12 ساعت باشد
+        if not self.comment_deadline:
+            return False
+        
+        return timezone.now() <= self.comment_deadline
 
     def save(self, *args, **kwargs):
         """

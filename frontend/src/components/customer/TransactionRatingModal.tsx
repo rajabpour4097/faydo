@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 
 interface TransactionRatingModalProps {
@@ -44,6 +44,18 @@ export const TransactionRatingModal: React.FC<TransactionRatingModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Debug log
+  useEffect(() => {
+    if (isOpen) {
+      console.log('🎨 TransactionRatingModal باز شد:', {
+        transactionId,
+        businessName,
+        serviceTypes,
+        isMobile: window.innerWidth < 768
+      })
+    }
+  }, [isOpen, transactionId, businessName, serviceTypes])
+
   if (!isOpen) return null
 
   const handleSubmit = async () => {
@@ -83,11 +95,11 @@ export const TransactionRatingModal: React.FC<TransactionRatingModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div 
-        className={`relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden ${
+        className={`relative w-full max-w-lg rounded-2xl overflow-hidden ${
           isDark ? 'bg-slate-800' : 'bg-white'
         }`}
         onClick={(e) => e.stopPropagation()}

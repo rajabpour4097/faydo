@@ -31,6 +31,8 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   const [newTransactions, setNewTransactions] = useState<Transaction[]>([])
   const [approvedTransactions, setApprovedTransactions] = useState<Transaction[]>([])
   const [previousTransactionIds, setPreviousTransactionIds] = useState<Set<number>>(new Set())
+  const [lastCheckTime, setLastCheckTime] = useState<Date>(new Date(Date.now() - 60000))
+  const [isFirstCheck, setIsFirstCheck] = useState(true)
 
   const refreshPendingCount = useCallback(async () => {
     if (!user) {
@@ -58,26 +60,47 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
         const canCommentTxs = transactions.filter(
           tx => tx.can_comment && !tx.has_commented && tx.can_add_comment
         )
-        const newApproved = canCommentTxs.filter(tx => !previousTransactionIds.has(tx.id))
         
-        if (newApproved.length > 0) {
-          setApprovedTransactions(prev => [...newApproved, ...prev])
+        // در اولین بار، همه تراکنش‌های قابل کامنت را نشان بده
+        if (isFirstCheck) {
+          console.log('🎯 اولین بررسی - همه تراکنش‌های قابل کامنت:', canCommentTxs)
+          if (canCommentTxs.length > 0) {
+            setApprovedTransactions(canCommentTxs)
+          }
+          setIsFirstCheck(false)
+        } else {
+          // در بررسی‌های بعدی، فقط تراکنش‌های جدید
+          const recentlyApproved = canCommentTxs.filter(tx => {
+            const modifiedDate = new Date(tx.modified_at)
+            return modifiedDate > lastCheckTime
+          })
+          
+          if (recentlyApproved.length > 0) {
+            console.log('🔔 تراکنش‌های جدید تایید شده:', recentlyApproved)
+            setApprovedTransactions(prev => {
+              // جلوگیری از duplicate
+              const existingIds = new Set(prev.map(t => t.id))
+              const uniqueNew = recentlyApproved.filter(t => !existingIds.has(t.id))
+              return [...uniqueNew, ...prev]
+            })
+          }
         }
       }
 
       // به‌روزرسانی لیست transaction ID های قبلی
       const currentIds = new Set(transactions.map(tx => tx.id))
       setPreviousTransactionIds(currentIds)
+      setLastCheckTime(new Date())
     } catch (error) {
       console.error('خطا در دریافت تعداد تراکنش‌های در انتظار:', error)
     }
-  }, [user, previousTransactionIds])
+  }, [user, previousTransactionIds, lastCheckTime, isFirstCheck])
 
-  // Polling هر 30 ثانیه
+  // Polling هر 5 ثانیه برای واکنش سریع‌تر به تغییرات
   useEffect(() => {
     if (user) {
       refreshPendingCount()
-      const interval = setInterval(refreshPendingCount, 30000)
+      const interval = setInterval(refreshPendingCount, 5000) // 5 ثانیه
       return () => clearInterval(interval)
     }
   }, [user, refreshPendingCount])

@@ -13,18 +13,44 @@ export const AutoTransactionNotification = () => {
   const { approvedTransactions, refreshPendingCount } = useNotification()
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [processedTransactionIds, setProcessedTransactionIds] = useState<Set<number>>(new Set())
+
+  // Log برای دیدن اینکه component render می‌شود یا نه
+  useEffect(() => {
+    console.log('🚀 AutoTransactionNotification mounted - user:', user?.type)
+  }, [])
 
   useEffect(() => {
     // فقط برای مشتری‌ها
-    if (user?.type !== 'customer') return
+    if (user?.type !== 'customer') {
+      console.log('⚠️ کاربر مشتری نیست:', user?.type)
+      return
+    }
+
+    console.log('🔔 بررسی تراکنش‌های تایید شده:', {
+      count: approvedTransactions.length,
+      isModalOpen,
+      transactions: approvedTransactions,
+      processedIds: Array.from(processedTransactionIds),
+      userAgent: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'
+    })
 
     // اگر تراکنش جدیدی تایید شده و modal باز نیست
     if (approvedTransactions.length > 0 && !isModalOpen) {
-      const transaction = approvedTransactions[0]
-      setCurrentTransaction(transaction)
-      setIsModalOpen(true)
+      // پیدا کردن اولین تراکنشی که هنوز پردازش نشده
+      const unprocessedTransaction = approvedTransactions.find(
+        tx => !processedTransactionIds.has(tx.id)
+      )
+      
+      if (unprocessedTransaction) {
+        console.log('✅ نمایش popup برای تراکنش:', unprocessedTransaction.id, 'Device:', navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop')
+        setCurrentTransaction(unprocessedTransaction)
+        setIsModalOpen(true)
+        // علامت‌گذاری به عنوان پردازش شده
+        setProcessedTransactionIds(prev => new Set([...prev, unprocessedTransaction.id]))
+      }
     }
-  }, [approvedTransactions, user, isModalOpen])
+  }, [approvedTransactions, user, isModalOpen, processedTransactionIds])
 
   const handleClose = () => {
     setIsModalOpen(false)

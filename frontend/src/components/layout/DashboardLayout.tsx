@@ -38,6 +38,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '📊' },
         { name: 'پکیج‌ها', href: '/dashboard/packages', icon: '📦' },
+        { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋' },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
         { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
       ]

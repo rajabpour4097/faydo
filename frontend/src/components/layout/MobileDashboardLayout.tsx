@@ -72,7 +72,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '/src/assets/images/home.png', iconType: 'image' },
         { name: 'مدیریت پکیج', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
-        { name: 'برندها', href: '/dashboard/brands', icon: '🏷️', iconType: 'emoji' },
+        { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', iconType: 'emoji' },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' },
       ]
     }

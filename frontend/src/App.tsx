@@ -20,6 +20,7 @@ import { QRCodePage } from './pages/QRCodePage'
 import { MainDashboard } from './pages/dashboard/MainDashboard'
 import { Profile } from './pages/dashboard/Profile'
 import { PackageManagement } from './pages/dashboard/PackageManagement'
+import { BusinessTransactionsPage } from './pages/business/BusinessTransactionsPage'
 import { useAuth } from './contexts/AuthContext'
 
 // Dashboard Router Component
@@ -62,6 +63,11 @@ const DashboardRouter = () => {
       <Route path="qrcode" element={
         <ProfileGuard>
           <QRCodePage />
+        </ProfileGuard>
+      } />
+      <Route path="transactions" element={
+        <ProfileGuard>
+          <BusinessTransactionsPage />
         </ProfileGuard>
       } />
       <Route path="" element={

@@ -96,13 +96,22 @@ export const loyaltyService = {
   },
 
   /**
-   * دریافت لیست تراکنش‌های مشتری
+   * دریافت لیست تراکنش‌ها (برای هم مشتری و هم کسب‌وکار)
    */
-  async getCustomerTransactions(): Promise<Transaction[]> {
+  async getTransactions(): Promise<Transaction[]> {
     const response = await fetch(`${API_BASE_URL}/loyalty/transactions/`, {
       headers: getAuthHeader()
     })
-    return handleResponse(response)
+    const data = await handleResponse(response)
+    // API یک شیء pagination برمی‌گرداند با فرمت: { count, next, previous, results }
+    return Array.isArray(data) ? data : (data.results || [])
+  },
+
+  /**
+   * دریافت لیست تراکنش‌های مشتری (alias برای سازگاری)
+   */
+  async getCustomerTransactions(): Promise<Transaction[]> {
+    return this.getTransactions()
   },
 
   /**
@@ -111,6 +120,34 @@ export const loyaltyService = {
   async getTransaction(id: number): Promise<Transaction> {
     const response = await fetch(`${API_BASE_URL}/loyalty/transactions/${id}/`, {
       headers: getAuthHeader()
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * تایید تراکنش توسط کسب‌وکار
+   */
+  async approveTransaction(id: number): Promise<Transaction> {
+    const response = await fetch(`${API_BASE_URL}/loyalty/transactions/${id}/approve/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      }
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * رد تراکنش توسط کسب‌وکار
+   */
+  async rejectTransaction(id: number): Promise<Transaction> {
+    const response = await fetch(`${API_BASE_URL}/loyalty/transactions/${id}/reject/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      }
     })
     return handleResponse(response)
   }

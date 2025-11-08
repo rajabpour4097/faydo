@@ -138,7 +138,33 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
       }, 1000)
     } catch (error: any) {
       console.error('Error creating transaction:', error)
-      setErrorMessage(error.response?.data?.error || 'خطا در ارسال تراکنش')
+      
+      // استخراج پیام خطای مناسب
+      let errorMsg = 'خطا در ارسال تراکنش'
+      
+      if (error.response?.data) {
+        // اگر خطا به صورت object بود
+        if (error.response.data.error) {
+          errorMsg = error.response.data.error
+        } 
+        // اگر خطاها به صورت آرایه یا object بودند
+        else if (typeof error.response.data === 'object') {
+          const firstError = Object.values(error.response.data)[0]
+          if (Array.isArray(firstError)) {
+            errorMsg = firstError[0]
+          } else if (typeof firstError === 'string') {
+            errorMsg = firstError
+          }
+        }
+        // اگر خطا مستقیم string بود
+        else if (typeof error.response.data === 'string') {
+          errorMsg = error.response.data
+        }
+      } else if (error.message) {
+        errorMsg = error.message
+      }
+      
+      setErrorMessage(errorMsg)
       setSubmitStatus('error')
     } finally {
       setIsSubmitting(false)

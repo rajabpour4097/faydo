@@ -75,15 +75,47 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         ایجاد تراکنش جدید
         """
         request = self.context.get('request')
-        customer = request.user.customerprofile
+        
+        # بررسی وجود customer profile
+        try:
+            customer = request.user.customerprofile
+        except AttributeError:
+            raise serializers.ValidationError({
+                'error': 'پروفایل مشتری یافت نشد'
+            })
         
         # دریافت کسب‌وکار
-        business = validated_data['business']
+        business_id = validated_data.get('business')
+        if isinstance(business_id, int):
+            from accounts.models import BusinessProfile
+            try:
+                business = BusinessProfile.objects.get(id=business_id)
+            except BusinessProfile.DoesNotExist:
+                raise serializers.ValidationError({
+                    'error': 'کسب‌وکار یافت نشد'
+                })
+        else:
+            business = business_id
         
         # دریافت پکیج فعال کسب‌وکار
         package = business.packages.filter(is_active=True, status='approved').first()
         if not package:
-            raise serializers.ValidationError('کسب‌وکار پکیج فعالی ندارد')
+            raise serializers.ValidationError({
+                'error': 'کسب‌وکار پکیج فعالی ندارد'
+            })
+        
+        # بررسی وجود discount_all
+        if not hasattr(package, 'discount_all'):
+            raise serializers.ValidationError({
+                'error': 'پکیج کسب‌وکار تنظیمات تخفیف ندارد'
+            })
+        
+        # اگر تخفیف خاص درخواست شده، بررسی کنیم که در پکیج موجود باشد
+        if validated_data.get('has_special_discount'):
+            if not hasattr(package, 'specific_discount'):
+                raise serializers.ValidationError({
+                    'error': 'این کسب‌وکار تخفیف خاص ارائه نمی‌دهد'
+                })
         
         # دریافت یا ایجاد CustomerLoyalty
         loyalty, created = CustomerLoyalty.objects.get_or_create(
@@ -91,10 +123,12 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
             business=business
         )
         
+        # حذف business از validated_data و جایگزینی با object
+        validated_data['business'] = business
+        
         # ایجاد تراکنش
         transaction = Transaction.objects.create(
             customer=customer,
-            business=business,
             package=package,
             loyalty=loyalty,
             **validated_data

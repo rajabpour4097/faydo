@@ -246,21 +246,29 @@ class Transaction(BaseModel):
         """
         محاسبه تخفیف‌ها
         """
-        if not self.package or not hasattr(self.package, 'discount_all'):
+        # بررسی وجود پکیج
+        if not self.package:
             return 0, 0
         
-        discount_all = self.package.discount_all
+        # بررسی وجود discount_all
+        try:
+            discount_all = self.package.discount_all
+        except:
+            return 0, 0
         
         # محاسبه تخفیف اصلی
         discount_all_amount = (self.original_amount * discount_all.percentage) / 100
         
         # محاسبه تخفیف خاص
         special_discount_amount = 0
-        if self.has_special_discount and hasattr(self.package, 'specific_discount'):
-            specific_discount = self.package.specific_discount
-            special_discount_amount = (
-                self.special_discount_original_amount * specific_discount.percentage
-            ) / 100
+        if self.has_special_discount:
+            try:
+                specific_discount = self.package.specific_discount
+                special_discount_amount = (
+                    self.special_discount_original_amount * specific_discount.percentage
+                ) / 100
+            except:
+                pass
         
         return float(discount_all_amount), float(special_discount_amount)
 

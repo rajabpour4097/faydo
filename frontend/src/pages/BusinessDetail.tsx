@@ -92,34 +92,20 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
     }
   }
 
-  const loadComments = async (_pkg: Package) => {
+  const loadComments = async (pkg: Package) => {
     try {
-      // For now, we'll use mock data since we need to determine the correct content type IDs
-      // In a real implementation, you would need to get the content type IDs from the backend
-      setComments([
-        {
-          id: 1,
-          user_name: 'علی احمدی',
-          user_avatar: '',
-          content: 'تخفیف‌های این رستوران واقعاً عالی بود. کیفیت غذا هم فوق‌العاده.',
-          likes_count: 12,
-          is_liked: false,
-          category: 'discount_all',
-          created_at: '2024-01-15T10:30:00Z'
-        },
-        {
-          id: 2,
-          user_name: 'مریم رضایی',
-          user_avatar: '',
-          content: 'هدیه‌ای که برای خرید بالای 500 هزار تومان دادند خیلی خوب بود.',
-          likes_count: 8,
-          is_liked: true,
-          category: 'elite_gift',
-          created_at: '2024-01-14T15:45:00Z'
-        }
-      ])
+      if (!pkg.business_id) {
+        console.error('No business_id found in package')
+        return
+      }
+      
+      const response = await apiService.getBusinessComments(pkg.business_id)
+      if (response.data) {
+        setComments(response.data)
+      }
     } catch (err) {
       console.error('Error loading comments:', err)
+      setComments([]) // Set empty array on error
     }
   }
 
@@ -249,7 +235,9 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                 <svg className="w-6 h-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                 </svg>
-                <span className="text-xl font-semibold">4.8</span>
+                <span className="text-xl font-semibold">
+                  {currentPackage?.average_rating || 0}
+                </span>
               </div>
             </div>
           </div>
@@ -635,7 +623,9 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                 <svg className="w-4 h-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                 </svg>
-                <span className="text-[13px] font-semibold ml-2">4.8</span>
+                <span className="text-[13px] font-semibold ml-2">
+                  {currentPackage.average_rating || 0}
+                </span>
               </div>
             </div>
           </div>

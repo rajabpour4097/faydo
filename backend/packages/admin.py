@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import DiscountAll, EliteGift, Package, SpecificDiscount, VipExperience, VipExperienceCategory
+from .models import (
+    DiscountAll, EliteGift, Package, SpecificDiscount, 
+    VipExperience, VipExperienceCategory, Comment, CommentLike
+)
 
 
 @admin.register(Package)
@@ -74,3 +77,63 @@ class VipExperienceAdmin(admin.ModelAdmin):
     list_per_page = 10
     list_editable = ('vip_experience_category',)
     list_filter = ('vip_experience_category',)
+
+
+class CommentLikeInline(admin.TabularInline):
+    """Inline برای نمایش لایک‌های یک کامنت"""
+    model = CommentLike
+    extra = 0
+    readonly_fields = ('user', 'created_at')
+    can_delete = True
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'content_type', 'object_id', 'text_preview', 'score', 'likes_count', 'created_at')
+    search_fields = ('user__user__first_name', 'user__user__last_name', 'text')
+    list_filter = ('content_type', 'score', 'created_at')
+    list_per_page = 20
+    readonly_fields = ('content_type', 'object_id', 'created_at', 'modified_at', 'likes_count')
+    inlines = [CommentLikeInline]
+    
+    fieldsets = (
+        ('اطلاعات کاربر', {
+            'fields': ('user',)
+        }),
+        ('محتوای کامنت', {
+            'fields': ('text', 'score')
+        }),
+        ('ارتباط', {
+            'fields': ('content_type', 'object_id'),
+            'classes': ('collapse',)
+        }),
+        ('اطلاعات زمانی', {
+            'fields': ('created_at', 'modified_at', 'likes_count'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def text_preview(self, obj):
+        """نمایش پیش‌نمایش متن"""
+        if obj.text:
+            return obj.text[:50] + ('...' if len(obj.text) > 50 else '')
+        return '-'
+    text_preview.short_description = 'متن کامنت'
+    
+    def likes_count(self, obj):
+        """تعداد لایک‌ها"""
+        return obj.likes.count()
+    likes_count.short_description = 'تعداد لایک'
+
+
+@admin.register(CommentLike)
+class CommentLikeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'comment', 'user', 'created_at')
+    search_fields = ('user__user__first_name', 'user__user__last_name', 'comment__text')
+    list_filter = ('created_at',)
+    list_per_page = 20
+    readonly_fields = ('comment', 'user', 'created_at')
+    
+    def has_add_permission(self, request):
+        """جلوگیری از افزودن دستی لایک از پنل ادمین"""
+        return False

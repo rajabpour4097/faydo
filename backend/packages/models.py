@@ -81,6 +81,59 @@ class Package(BaseModel):
     def __str__(self):
         return f'{self.business.name} - {self.id}'
     
+    def get_average_rating(self):
+        """
+        محاسبه میانگین امتیازات تمام نظرات این پکیج
+        """
+        from django.db.models import Avg
+        
+        total_scores = []
+        
+        # امتیازات DiscountAll
+        if hasattr(self, 'discount_all'):
+            discount_scores = self.discount_all.comments.exclude(score__isnull=True).values_list('score', flat=True)
+            total_scores.extend(discount_scores)
+        
+        # امتیازات SpecificDiscount
+        if hasattr(self, 'specific_discount'):
+            specific_scores = self.specific_discount.comments.exclude(score__isnull=True).values_list('score', flat=True)
+            total_scores.extend(specific_scores)
+        
+        # امتیازات EliteGift
+        if hasattr(self, 'elite_gift'):
+            gift_scores = self.elite_gift.comments.exclude(score__isnull=True).values_list('score', flat=True)
+            total_scores.extend(gift_scores)
+        
+        # امتیازات VipExperience
+        for vip_exp in self.experiences.all():
+            vip_scores = vip_exp.comments.exclude(score__isnull=True).values_list('score', flat=True)
+            total_scores.extend(vip_scores)
+        
+        # محاسبه میانگین
+        if total_scores:
+            return round(sum(total_scores) / len(total_scores), 1)
+        return 0.0
+    
+    def get_total_comments_count(self):
+        """
+        تعداد کل نظرات این پکیج
+        """
+        count = 0
+        
+        if hasattr(self, 'discount_all'):
+            count += self.discount_all.comments.count()
+        
+        if hasattr(self, 'specific_discount'):
+            count += self.specific_discount.comments.count()
+        
+        if hasattr(self, 'elite_gift'):
+            count += self.elite_gift.comments.count()
+        
+        for vip_exp in self.experiences.all():
+            count += vip_exp.comments.count()
+        
+        return count
+    
     def check_completion(self):
         """
         بررسی کامل بودن پکیج:

@@ -113,6 +113,10 @@ class PackageListSerializer(serializers.ModelSerializer):
     # روزهای باقی‌مانده تا پایان پکیج
     days_remaining = serializers.SerializerMethodField()
     
+    # امتیاز و نظرات
+    average_rating = serializers.SerializerMethodField()
+    total_comments = serializers.SerializerMethodField()
+    
     class Meta:
         model = Package
         fields = [
@@ -121,7 +125,8 @@ class PackageListSerializer(serializers.ModelSerializer):
             'business_logo', 'business_image', 'business_category', 'city',
             'discount_percentage', 'specific_discount_title', 'specific_discount_percentage', 'specific_discount_description',
             'elite_gift_title', 'elite_gift_gift', 'elite_gift_amount', 'elite_gift_count',
-            'vip_experiences_count', 'has_vip', 'has_vip_plus', 'days_remaining'
+            'vip_experiences_count', 'has_vip', 'has_vip_plus', 'days_remaining',
+            'average_rating', 'total_comments'
         ]
         read_only_fields = ['id', 'created_at', 'modified_at']
     
@@ -203,6 +208,14 @@ class PackageListSerializer(serializers.ModelSerializer):
             else:
                 return 0
         return None
+    
+    def get_average_rating(self, obj):
+        """میانگین امتیازات پکیج"""
+        return obj.get_average_rating()
+    
+    def get_total_comments(self, obj):
+        """تعداد کل نظرات پکیج"""
+        return obj.get_total_comments_count()
     
     def get_business_logo(self, obj):
         """لوگوی کسب‌وکار"""

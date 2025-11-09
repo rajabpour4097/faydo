@@ -124,6 +124,43 @@ class BusinessProfile(models.Model):
     
     def __str__(self):
         return f"{self.name}"
+    
+    def get_average_rating(self):
+        """
+        محاسبه میانگین امتیازات تمام پکیج‌های فعال این کسب‌وکار
+        """
+        from packages.models import Package
+        
+        active_packages = Package.objects.filter(
+            business=self,
+            is_active=True,
+            status='approved'
+        )
+        
+        if not active_packages.exists():
+            return 0.0
+        
+        total_scores = []
+        for package in active_packages:
+            rating = package.get_average_rating()
+            if rating > 0:
+                total_scores.append(rating)
+        
+        if total_scores:
+            return round(sum(total_scores) / len(total_scores), 1)
+        return 0.0
+    
+    def get_total_comments_count(self):
+        """
+        تعداد کل نظرات تمام پکیج‌های این کسب‌وکار
+        """
+        from packages.models import Package
+        
+        packages = Package.objects.filter(business=self)
+        total = 0
+        for package in packages:
+            total += package.get_total_comments_count()
+        return total
 
     @staticmethod
     def generate_unique_code():

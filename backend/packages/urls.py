@@ -5,6 +5,7 @@ from . import views
 router = DefaultRouter()
 router.register(r'packages', views.PackageViewSet, basename='package')
 router.register(r'vip-experiences', views.VipExperienceCategoryViewSet, basename='vip-experience')
+router.register(r'comments', views.CommentViewSet, basename='comment')
 
 urlpatterns = [
     path('', include(router.urls)),

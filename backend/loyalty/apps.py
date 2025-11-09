@@ -5,3 +5,6 @@ class LoyaltyConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'loyalty'
     verbose_name = 'مدیریت وفاداری مشتریان'
+    
+    def ready(self):
+        import loyalty.signals  # noqa

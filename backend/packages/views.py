@@ -461,6 +461,113 @@ class PackageViewSet(viewsets.ModelViewSet):
                 for exp in package.experiences.all()
             ]
         })
+    
+    @action(detail=False, methods=['get'], url_path='business/(?P<business_id>[^/.]+)/comments')
+    def business_comments(self, request, business_id=None):
+        """
+        دریافت تمام نظرات مربوط به یک کسب‌وکار
+        """
+        try:
+            # Get all packages of this business
+            packages = Package.objects.filter(business_id=business_id)
+            
+            # Collect all comments from different package components
+            all_comments = []
+            
+            for package in packages:
+                # Comments from DiscountAll
+                if hasattr(package, 'discount_all'):
+                    discount_all_ct = ContentType.objects.get_for_model(DiscountAll)
+                    comments = Comment.objects.filter(
+                        content_type=discount_all_ct,
+                        object_id=package.discount_all.id
+                    )
+                    for comment in comments:
+                        all_comments.append({
+                            'comment': comment,
+                            'category': 'discount_all'
+                        })
+                
+                # Comments from SpecificDiscount
+                if hasattr(package, 'specific_discount'):
+                    specific_discount_ct = ContentType.objects.get_for_model(SpecificDiscount)
+                    comments = Comment.objects.filter(
+                        content_type=specific_discount_ct,
+                        object_id=package.specific_discount.id
+                    )
+                    for comment in comments:
+                        all_comments.append({
+                            'comment': comment,
+                            'category': 'specific_discount'
+                        })
+                
+                # Comments from EliteGift
+                if hasattr(package, 'elite_gift'):
+                    elite_gift_ct = ContentType.objects.get_for_model(EliteGift)
+                    comments = Comment.objects.filter(
+                        content_type=elite_gift_ct,
+                        object_id=package.elite_gift.id
+                    )
+                    for comment in comments:
+                        all_comments.append({
+                            'comment': comment,
+                            'category': 'elite_gift'
+                        })
+                
+                # Comments from VipExperience
+                for vip_exp in package.experiences.all():
+                    vip_experience_ct = ContentType.objects.get_for_model(VipExperience)
+                    comments = Comment.objects.filter(
+                        content_type=vip_experience_ct,
+                        object_id=vip_exp.id
+                    )
+                    for comment in comments:
+                        all_comments.append({
+                            'comment': comment,
+                            'category': 'vip_experience'
+                        })
+            
+            # Sort by creation date (newest first)
+            all_comments.sort(key=lambda x: x['comment'].created_at, reverse=True)
+            
+            # Serialize comments
+            user = request.user
+            customer_profile = None
+            if user.is_authenticated and user.role == 'customer':
+                try:
+                    customer_profile = user.customerprofile
+                except:
+                    pass
+            
+            serialized_comments = []
+            for item in all_comments:
+                comment = item['comment']
+                is_liked = False
+                if customer_profile:
+                    is_liked = CommentLike.objects.filter(
+                        comment=comment,
+                        user=customer_profile
+                    ).exists()
+                
+                serialized_comments.append({
+                    'id': comment.id,
+                    'user_name': comment.user.user.get_full_name() if hasattr(comment.user, 'user') else str(comment.user),
+                    'user_avatar': '',
+                    'content': comment.text or '',
+                    'score': comment.score,
+                    'likes_count': comment.likes.count(),
+                    'is_liked': is_liked,
+                    'category': item['category'],
+                    'created_at': comment.created_at.isoformat()
+                })
+            
+            return Response(serialized_comments)
+            
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):

@@ -95,6 +95,9 @@ export interface BusinessProfile {
   website_link?: string
   is_profile_complete: boolean
   unique_code?: string
+  // امتیاز و نظرات
+  average_rating?: number
+  total_comments?: number
 }
 
 export interface ServiceCategoryItem {
@@ -164,6 +167,9 @@ export interface Package {
   has_vip?: boolean
   has_vip_plus?: boolean
   days_remaining?: number
+  // امتیاز و نظرات
+  average_rating?: number
+  total_comments?: number
   // فیلدهای کسب‌وکار
   business_logo?: string
   business_image?: string
@@ -858,6 +864,11 @@ class ApiService {
     }
     
     return response
+  }
+
+  // Get business comments
+  async getBusinessComments(businessId: number): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(`/packages/packages/business/${businessId}/comments/`)
   }
 
   // QR Code verification

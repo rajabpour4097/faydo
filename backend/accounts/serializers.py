@@ -331,15 +331,28 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
     city_id = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), source='city', write_only=True, required=False, allow_null=True)
     is_profile_complete = serializers.ReadOnlyField()
+    
+    # امتیاز و نظرات
+    average_rating = serializers.SerializerMethodField()
+    total_comments = serializers.SerializerMethodField()
 
     class Meta:
         model = BusinessProfile
         fields = [
             'id', 'user', 'user_id', 'name', 'description', 'category', 'category_id', 'address',
             'rating_avg', 'business_location_latitude', 'business_location_longitude', 'city', 'city_id',
-            'business_phone', 'instagram_link', 'website_link', 'is_profile_complete', 'unique_code'
+            'business_phone', 'instagram_link', 'website_link', 'is_profile_complete', 'unique_code',
+            'average_rating', 'total_comments'
         ]
         read_only_fields = ['rating_avg', 'is_profile_complete', 'category', 'city', 'unique_code']
+    
+    def get_average_rating(self, obj):
+        """میانگین امتیازات کسب‌وکار"""
+        return obj.get_average_rating()
+    
+    def get_total_comments(self, obj):
+        """تعداد کل نظرات کسب‌وکار"""
+        return obj.get_total_comments_count()
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)

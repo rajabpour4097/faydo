@@ -425,6 +425,15 @@ export const CustomerTransactionsPage: React.FC = () => {
           transactionId={selectedTransaction.id}
           businessName={selectedTransaction.business_name}
           serviceTypes={getServiceTypes(selectedTransaction)}
+          transactionDate={selectedTransaction.created_at}
+          originalAmount={selectedTransaction.original_amount}
+          finalAmount={selectedTransaction.final_amount}
+          discountAmount={(
+            parseFloat(selectedTransaction.discount_all_amount || '0') +
+            parseFloat(selectedTransaction.special_discount_amount || '0')
+          ).toString()}
+          pointsEarned={selectedTransaction.points_earned}
+          specialDiscountTitle={selectedTransaction.special_discount_title || undefined}
           onSubmit={handleRatingSubmit}
         />
       )}

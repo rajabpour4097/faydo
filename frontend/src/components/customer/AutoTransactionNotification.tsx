@@ -87,6 +87,12 @@ export const AutoTransactionNotification = () => {
   // برای elite_gift و vip_experience باید از اطلاعات package استفاده کنیم
   // فعلاً فقط همین دو را اضافه می‌کنیم
 
+  // محاسبه مجموع تخفیف
+  const totalDiscount = (
+    parseFloat(currentTransaction.discount_all_amount || '0') +
+    parseFloat(currentTransaction.special_discount_amount || '0')
+  ).toString()
+
   return (
     <TransactionRatingModal
       isOpen={isModalOpen}
@@ -94,6 +100,12 @@ export const AutoTransactionNotification = () => {
       transactionId={currentTransaction.id}
       businessName={currentTransaction.business_name}
       serviceTypes={serviceTypes.length > 0 ? serviceTypes : ['discount_all']}
+      transactionDate={currentTransaction.created_at}
+      originalAmount={currentTransaction.original_amount}
+      finalAmount={currentTransaction.final_amount}
+      discountAmount={totalDiscount}
+      pointsEarned={currentTransaction.points_earned}
+      specialDiscountTitle={currentTransaction.special_discount_title || undefined}
       onSubmit={handleSubmit}
     />
   )

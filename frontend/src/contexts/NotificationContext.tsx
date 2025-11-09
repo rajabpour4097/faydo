@@ -31,7 +31,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   const [newTransactions, setNewTransactions] = useState<Transaction[]>([])
   const [approvedTransactions, setApprovedTransactions] = useState<Transaction[]>([])
   const [previousTransactionIds, setPreviousTransactionIds] = useState<Set<number>>(new Set())
-  const [lastCheckTime, setLastCheckTime] = useState<Date>(new Date(Date.now() - 60000))
+  const [previousCommentableIds, setPreviousCommentableIds] = useState<Set<number>>(new Set())
   const [isFirstCheck, setIsFirstCheck] = useState(true)
 
   const refreshPendingCount = useCallback(async () => {
@@ -41,11 +41,15 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     }
 
     try {
+      console.log('🔄 شروع بررسی تراکنش‌ها - کاربر:', user.type, 'زمان:', new Date().toLocaleTimeString())
+      
       const result = await loyaltyService.getPendingCount()
       setPendingCount(result.count)
 
       // دریافت تراکنش‌ها برای بررسی تراکنش‌های جدید
       const transactions = await loyaltyService.getTransactions()
+      
+      console.log('📋 تراکنش‌های دریافتی:', transactions.length, transactions)
       
       if (user.type === 'business') {
         // برای کسب‌وکار: تراکنش‌های pending جدید
@@ -61,6 +65,16 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
           tx => tx.can_comment && !tx.has_commented && tx.can_add_comment
         )
         
+        console.log('💬 تراکنش‌های قابل کامنت:', canCommentTxs.length, canCommentTxs)
+        console.log('🕒 previousCommentableIds:', Array.from(previousCommentableIds))
+        
+        // پیدا کردن تراکنش‌هایی که قبلاً قابل کامنت نبودند
+        const newCommentables = canCommentTxs.filter(
+          tx => !previousCommentableIds.has(tx.id)
+        )
+        
+        console.log('🆕 تراکنش‌های جدید قابل کامنت:', newCommentables.length, newCommentables)
+        
         // در اولین بار، همه تراکنش‌های قابل کامنت را نشان بده
         if (isFirstCheck) {
           console.log('🎯 اولین بررسی - همه تراکنش‌های قابل کامنت:', canCommentTxs)
@@ -68,33 +82,29 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
             setApprovedTransactions(canCommentTxs)
           }
           setIsFirstCheck(false)
-        } else {
+        } else if (newCommentables.length > 0) {
           // در بررسی‌های بعدی، فقط تراکنش‌های جدید
-          const recentlyApproved = canCommentTxs.filter(tx => {
-            const modifiedDate = new Date(tx.modified_at)
-            return modifiedDate > lastCheckTime
+          console.log('✨ افزودن تراکنش‌های جدید به لیست approved:', newCommentables)
+          setApprovedTransactions(prev => {
+            // جلوگیری از duplicate
+            const existingIds = new Set(prev.map(t => t.id))
+            const uniqueNew = newCommentables.filter(t => !existingIds.has(t.id))
+            return [...uniqueNew, ...prev]
           })
-          
-          if (recentlyApproved.length > 0) {
-            console.log('🔔 تراکنش‌های جدید تایید شده:', recentlyApproved)
-            setApprovedTransactions(prev => {
-              // جلوگیری از duplicate
-              const existingIds = new Set(prev.map(t => t.id))
-              const uniqueNew = recentlyApproved.filter(t => !existingIds.has(t.id))
-              return [...uniqueNew, ...prev]
-            })
-          }
         }
+        
+        // به‌روزرسانی لیست ID های قابل کامنت
+        const currentCommentableIds = new Set(canCommentTxs.map(tx => tx.id))
+        setPreviousCommentableIds(currentCommentableIds)
       }
 
       // به‌روزرسانی لیست transaction ID های قبلی
       const currentIds = new Set(transactions.map(tx => tx.id))
       setPreviousTransactionIds(currentIds)
-      setLastCheckTime(new Date())
     } catch (error) {
       console.error('خطا در دریافت تعداد تراکنش‌های در انتظار:', error)
     }
-  }, [user, previousTransactionIds, lastCheckTime, isFirstCheck])
+  }, [user, previousTransactionIds, previousCommentableIds, isFirstCheck])
 
   // Polling هر 5 ثانیه برای واکنش سریع‌تر به تغییرات
   useEffect(() => {

@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { apiService, Package, BusinessGalleryImage, getFullImageUrl } from '../services/api'
-import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 
 interface BusinessDetailProps {}
@@ -22,7 +21,6 @@ interface Comment {
 
 export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
   const { businessId } = useParams<{ businessId: string }>()
-  const { user } = useAuth()
   const { isDark } = useTheme()
   const navigate = useNavigate()
   
@@ -33,8 +31,6 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'details' | 'comments'>('details')
-  const [newComment, setNewComment] = useState('')
-  const [commentCategory, setCommentCategory] = useState<'discount_all' | 'specific_discount' | 'elite_gift' | 'vip_experience'>('discount_all')
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   useEffect(() => {
@@ -141,30 +137,6 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
       ))
     } catch (err) {
       console.error('Error liking comment:', err)
-    }
-  }
-
-  const handleSubmitComment = async () => {
-    if (!newComment.trim() || !currentPackage) return
-    
-    try {
-      // For now, we'll use mock functionality since we need to determine the correct content type IDs
-      // In a real implementation, you would need to get the content type IDs from the backend
-      const comment: Comment = {
-        id: Date.now(),
-        user_name: user?.name || 'کاربر',
-        user_avatar: '',
-        content: newComment,
-        likes_count: 0,
-        is_liked: false,
-        category: commentCategory,
-        created_at: new Date().toISOString()
-      }
-      
-      setComments(prev => [comment, ...prev])
-      setNewComment('')
-    } catch (err) {
-      console.error('Error creating comment:', err)
     }
   }
 
@@ -574,46 +546,20 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
 
             {activeTab === 'comments' && (
               <div className="space-y-6">
-                {/* Add Comment */}
-                <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
-                  <h4 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    نظر خود را بنویسید
-                  </h4>
-                  <div className="space-y-3">
-                    <select
-                      value={commentCategory}
-                      onChange={(e) => setCommentCategory(e.target.value as any)}
-                      className={`w-full p-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 ${isDark ? 'text-white' : 'text-gray-900'}`}
-                    >
-                      <option value="discount_all">تخفیف کلی</option>
-                      <option value="specific_discount">تخفیف خاص</option>
-                      <option value="elite_gift">هدیه ویژه</option>
-                      <option value="vip_experience">تجربه VIP</option>
-                    </select>
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="نظر خود را بنویسید..."
-                      className={`w-full p-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 ${isDark ? 'text-white placeholder-slate-400' : 'text-gray-900 placeholder-gray-500'}`}
-                      rows={3}
-                    />
-                    <button
-                      onClick={handleSubmitComment}
-                      disabled={!newComment.trim()}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      ارسال نظر
-                    </button>
-                  </div>
-                </div>
-
                 {/* Comments List */}
                 <div className="space-y-4">
-                  {comments.map((comment) => {
-                    const badge = getCategoryBadge(comment.category)
-                    return (
-                      <div key={comment.id} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
+                  {comments.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        هنوز نظری ثبت نشده است
+                      </p>
+                    </div>
+                  ) : (
+                    comments.map((comment) => {
+                      const badge = getCategoryBadge(comment.category)
+                      return (
+                        <div key={comment.id} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
                           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                             <span className="text-white font-semibold text-sm">
                               {comment.user_name.charAt(0)}
@@ -648,8 +594,9 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                           </div>
                         </div>
                       </div>
-                    )
-                  })}
+                      )
+                    })
+                  )}
                 </div>
               </div>
             )}
@@ -918,42 +865,14 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
 
             {activeTab === 'comments' && (
               <div className="space-y-4">
-                {/* Add Comment */}
-                <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
-                  <h4 className={`font-semibold mb-2 text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    نظر خود را بنویسید
-                  </h4>
-                  <div className="space-y-2">
-                    <select
-                      value={commentCategory}
-                      onChange={(e) => setCommentCategory(e.target.value as any)}
-                      className={`w-full p-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}
-                    >
-                      <option value="discount_all">تخفیف کلی</option>
-                      <option value="specific_discount">تخفیف خاص</option>
-                      <option value="elite_gift">هدیه ویژه</option>
-                      <option value="vip_experience">تجربه VIP</option>
-                    </select>
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="نظر خود را بنویسید..."
-                      className={`w-full p-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm ${isDark ? 'text-white placeholder-slate-400' : 'text-gray-900 placeholder-gray-500'}`}
-                      rows={2}
-                    />
-                    <button
-                      onClick={handleSubmitComment}
-                      disabled={!newComment.trim()}
-                      className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                    >
-                      ارسال نظر
-                    </button>
-                  </div>
-                </div>
-
                 {/* Comments List */}
                 <div className="space-y-3">
-                  {comments.map((comment) => {
+                  {comments.length === 0 ? (
+                    <div className={`text-center py-8 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                      <p className="text-sm">هنوز نظری ثبت نشده است</p>
+                    </div>
+                  ) : (
+                    comments.map((comment) => {
                     const badge = getCategoryBadge(comment.category)
                     return (
                       <div key={comment.id} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
@@ -990,7 +909,7 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                         </div>
                       </div>
                     )
-                  })}
+                  }))}
                 </div>
               </div>
             )}

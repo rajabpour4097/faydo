@@ -52,8 +52,19 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setError('')
 
     try {
-      // Use the same protocol and host as the current page
-      const API_BASE_URL = `${window.location.protocol}//${window.location.host}/api`
+      // Use HTTP for localhost and local network IPs
+      const hostname = window.location.hostname
+      const protocol = (hostname === 'localhost' || 
+                       hostname === '127.0.0.1' || 
+                       hostname.startsWith('192.168.') || 
+                       hostname.startsWith('10.') || 
+                       hostname.startsWith('172.'))
+        ? 'http:' 
+        : window.location.protocol
+      const API_BASE_URL = `${protocol}//${hostname}:8001/api`
+      
+      console.log('Sending OTP to:', API_BASE_URL)
+      
       const response = await fetch(`${API_BASE_URL}/accounts/auth/send-otp/`, {
         method: 'POST',
         headers: {
@@ -65,6 +76,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       })
 
       const data = await response.json()
+      console.log('OTP response:', data)
 
       if (data.success) {
         setError('')
@@ -93,8 +105,19 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
     try {
       // First verify OTP
-      // Use the same protocol and host as the current page
-      const API_BASE_URL = `${window.location.protocol}//${window.location.host}/api`
+      // Use HTTP for localhost and local network IPs
+      const hostname = window.location.hostname
+      const protocol = (hostname === 'localhost' || 
+                       hostname === '127.0.0.1' || 
+                       hostname.startsWith('192.168.') || 
+                       hostname.startsWith('10.') || 
+                       hostname.startsWith('172.'))
+        ? 'http:' 
+        : window.location.protocol
+      const API_BASE_URL = `${protocol}//${hostname}:8001/api`
+      
+      console.log('Verifying OTP at:', API_BASE_URL)
+      
       const otpResponse = await fetch(`${API_BASE_URL}/accounts/auth/verify-otp/`, {
         method: 'POST',
         headers: {
@@ -107,6 +130,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       })
 
       const otpData = await otpResponse.json()
+      console.log('OTP verification response:', otpData)
 
       if (otpData.success) {
         // Try to login first (existing user)

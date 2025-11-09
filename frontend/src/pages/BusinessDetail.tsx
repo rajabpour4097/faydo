@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { apiService, Package, BusinessGalleryImage } from '../services/api'
+import { apiService, Package, BusinessGalleryImage, getFullImageUrl } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 
@@ -290,7 +290,7 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
               {/* Main Featured Image */}
               <div className="relative h-80 md:h-96">
                 <img 
-                  src={gallery[selectedImageIndex]?.image_url} 
+                  src={getFullImageUrl(gallery[selectedImageIndex]?.image_url)} 
                   alt={gallery[selectedImageIndex]?.title || 'تصویر اصلی کسب‌وکار'}
                   className="w-full h-full object-cover"
                 />
@@ -331,7 +331,7 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                     >
                       <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 dark:bg-slate-700">
                         <img 
-                          src={item.image_url} 
+                          src={getFullImageUrl(item.image_url)} 
                           alt={item.title || 'تصویر گالری'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -701,7 +701,7 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
               {/* Main Featured Image */}
               <div className="relative h-64">
                 <img 
-                  src={gallery[selectedImageIndex]?.image_url} 
+                  src={getFullImageUrl(gallery[selectedImageIndex]?.image_url)} 
                   alt={gallery[selectedImageIndex]?.title || 'تصویر اصلی کسب‌وکار'}
                   className="w-full h-full object-cover"
                 />
@@ -742,7 +742,7 @@ export const BusinessDetail: React.FC<BusinessDetailProps> = () => {
                     >
                       <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 dark:bg-slate-700">
                         <img 
-                          src={item.image_url} 
+                          src={getFullImageUrl(item.image_url)} 
                           alt={item.title || 'تصویر گالری'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />

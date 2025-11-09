@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
-import { apiService } from '../../services/api'
+import { apiService, getFullImageUrl } from '../../services/api'
 import moment from 'moment-jalaali'
 import { LocationPicker } from '../../components/LocationPicker'
 import { GalleryManagement } from '../../components/business/GalleryManagement'
@@ -1140,7 +1140,7 @@ const DesktopProfile = () => {
             <div className="relative">
               {profileImage ? (
                 <img 
-                  src={profileImage} 
+                  src={getFullImageUrl(profileImage)} 
                   alt="Profile" 
                   className="w-24 h-24 rounded-full object-cover"
                 />
@@ -1661,7 +1661,7 @@ const MobileProfile = () => {
             <div className="relative">
               {profileImage ? (
                 <img 
-                  src={profileImage} 
+                  src={getFullImageUrl(profileImage)} 
                   alt="Profile" 
                   className="w-16 h-16 rounded-full object-cover"
                 />

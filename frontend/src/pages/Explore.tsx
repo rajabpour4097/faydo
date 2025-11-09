@@ -4,6 +4,7 @@ import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayou
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { TopBusinessSlider } from '../components/dashboard/TopBusinessSlider'
 import { apiService, Package } from '../services/api'
+import { getFullImageUrl } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 
@@ -786,7 +787,7 @@ const DesktopPackageCard: React.FC<DesktopPackageCardProps> = ({ package: pkg })
         <div className="w-full h-48 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600">
           {!imageErrored && (pkg.business_image || pkg.business_logo) ? (
             <img
-              src={pkg.business_image || pkg.business_logo || ''}
+              src={getFullImageUrl(pkg.business_image || pkg.business_logo)}
               alt={pkg.business_name}
               loading="lazy"
               onError={() => setImageErrored(true)}

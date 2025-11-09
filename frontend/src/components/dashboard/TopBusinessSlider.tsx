@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
-import { Package } from '../../services/api'
+import { Package, getFullImageUrl } from '../../services/api'
 
 interface TopBusinessSliderProps {
   packages: Package[]
@@ -114,7 +114,7 @@ export const TopBusinessSlider: React.FC<TopBusinessSliderProps> = ({ packages }
           <div className="relative h-48 sm:h-56 bg-gradient-to-br from-blue-500 to-purple-600">
             {currentBusiness.business_image || currentBusiness.business_logo ? (
               <img
-                src={currentBusiness.business_image || currentBusiness.business_logo}
+                src={getFullImageUrl(currentBusiness.business_image || currentBusiness.business_logo)}
                 alt={currentBusiness.business_name}
                 className="w-full h-full object-cover"
                 onError={(e) => {

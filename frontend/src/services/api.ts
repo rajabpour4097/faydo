@@ -1,9 +1,50 @@
 // API configuration and utilities
+// Use HTTP for localhost and local network IPs, otherwise use current protocol
+const getApiProtocol = () => {
+  if (typeof window === 'undefined') return 'http:'
+  const hostname = window.location.hostname
+  // Use HTTP for localhost and private IP ranges
+  if (hostname === 'localhost' || 
+      hostname === '127.0.0.1' || 
+      hostname.startsWith('192.168.') || 
+      hostname.startsWith('10.') || 
+      hostname.startsWith('172.')) {
+    return 'http:'
+  }
+  return window.location.protocol
+}
+
 export const API_BASE_URL =
   (import.meta as any).env?.VITE_API_BASE_URL ||
   (typeof window !== 'undefined' 
-    ? `${window.location.protocol}//${window.location.host}/api`
+    ? `${getApiProtocol()}//${window.location.hostname}:8001/api`
     : 'http://localhost:8001/api')
+
+// Base URL for media files (without /api)
+export const MEDIA_BASE_URL =
+  (import.meta as any).env?.VITE_MEDIA_BASE_URL ||
+  (typeof window !== 'undefined' 
+    ? `${getApiProtocol()}//${window.location.hostname}:8001`
+    : 'http://localhost:8001')
+
+/**
+ * تبدیل URL نسبی عکس به URL کامل
+ * @param imageUrl - URL نسبی که از API می‌آید (مثل /media/business_logos/logo.jpg)
+ * @returns URL کامل با دامنه سرور
+ */
+export const getFullImageUrl = (imageUrl: string | null | undefined): string => {
+  if (!imageUrl) return ''
+  
+  // اگر URL از قبل کامل است (شروع با http/https)
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl
+  }
+  
+  // اگر URL با / شروع نمی‌شود، آن را اضافه کن
+  const normalizedUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`
+  
+  return `${MEDIA_BASE_URL}${normalizedUrl}`
+}
 
 export interface ApiResponse<T> {
   data?: T

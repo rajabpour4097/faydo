@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomerLoyalty, Transaction
+from .models import CustomerLoyalty, Transaction, EliteGiftClaim
 from accounts.serializers import CustomerProfileSerializer, BusinessProfileSerializer
 from packages.serializers import PackageDetailSerializer
 from packages.models import Comment
@@ -271,3 +271,123 @@ class TransactionCommentSerializer(serializers.Serializer):
         transaction.save(update_fields=['has_commented'])
         
         return comment
+
+
+class EliteGiftProgressSerializer(serializers.Serializer):
+    """
+    Serializer برای نمایش پیشرفت کاربر در دریافت هدیه ویژه
+    """
+    type = serializers.CharField(read_only=True)
+    target = serializers.FloatField(read_only=True)
+    current = serializers.FloatField(read_only=True)
+    remaining = serializers.FloatField(read_only=True)
+    percentage = serializers.FloatField(read_only=True)
+    eligible = serializers.BooleanField(read_only=True)
+    transactions_count = serializers.IntegerField(read_only=True)
+    error = serializers.CharField(read_only=True, required=False)
+    
+    # اطلاعات هدیه
+    gift_name = serializers.CharField(read_only=True)
+    gift_description = serializers.CharField(read_only=True)
+    package_id = serializers.IntegerField(read_only=True)
+    package_start_date = serializers.DateField(read_only=True)
+    package_end_date = serializers.DateField(read_only=True)
+
+
+class EliteGiftClaimSerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(source='customer.user.get_full_name', read_only=True)
+    business_name = serializers.CharField(source='business.name', read_only=True)
+    gift_name = serializers.CharField(source='elite_gift.gift', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = EliteGiftClaim
+        fields = [
+            'id', 'customer', 'customer_name', 'elite_gift', 'gift_name',
+            'package', 'business', 'business_name', 'progress_at_claim',
+            'status', 'status_display', 'approved_at', 'used_at',
+            'business_note', 'created_at', 'modified_at'
+        ]
+        read_only_fields = [
+            'customer', 'progress_at_claim', 'approved_at', 'used_at',
+            'created_at', 'modified_at'
+        ]
+
+
+class EliteGiftClaimCreateSerializer(serializers.Serializer):
+    """
+    Serializer برای ایجاد درخواست دریافت هدیه ویژه
+    """
+    package_id = serializers.IntegerField(required=True)
+    
+    def validate_package_id(self, value):
+        from packages.models import Package
+        
+        try:
+            package = Package.objects.get(id=value)
+        except Package.DoesNotExist:
+            raise serializers.ValidationError("پکیج مورد نظر یافت نشد")
+        
+        # بررسی اینکه پکیج فعال است
+        if not package.is_active or package.status != 'approved':
+            raise serializers.ValidationError("این پکیج فعال نیست")
+        
+        # بررسی اینکه پکیج دارای هدیه ویژه است
+        if not hasattr(package, 'elite_gift'):
+            raise serializers.ValidationError("این پکیج هدیه ویژه ندارد")
+        
+        return value
+    
+    def validate(self, attrs):
+        from packages.models import Package
+        from loyalty.models import EliteGiftClaim
+        
+        package = Package.objects.get(id=attrs['package_id'])
+        customer = self.context['request'].user.customerprofile
+        
+        # بررسی اینکه قبلاً درخواست نداده
+        existing_claim = EliteGiftClaim.objects.filter(
+            customer=customer,
+            package=package
+        ).first()
+        
+        if existing_claim:
+            raise serializers.ValidationError(
+                f"شما قبلاً درخواست دریافت این هدیه را ثبت کرده‌اید. وضعیت: {existing_claim.get_status_display()}"
+            )
+        
+        # بررسی واجد شرایط بودن
+        elite_gift = package.elite_gift
+        if not elite_gift.is_customer_eligible(customer):
+            progress = elite_gift.get_customer_progress(customer)
+            raise serializers.ValidationError(
+                f"شما هنوز واجد شرایط دریافت این هدیه نیستید. پیشرفت شما: {progress['percentage']}%"
+            )
+        
+        attrs['package'] = package
+        attrs['elite_gift'] = elite_gift
+        attrs['customer'] = customer
+        
+        return attrs
+    
+    def create(self, validated_data):
+        from loyalty.models import EliteGiftClaim
+        
+        package = validated_data['package']
+        elite_gift = validated_data['elite_gift']
+        customer = validated_data['customer']
+        
+        # دریافت پیشرفت فعلی
+        progress = elite_gift.get_customer_progress(customer)
+        
+        # ایجاد درخواست
+        claim = EliteGiftClaim.objects.create(
+            customer=customer,
+            elite_gift=elite_gift,
+            package=package,
+            business=package.business,
+            progress_at_claim=progress,
+            status='pending'
+        )
+        
+        return claim

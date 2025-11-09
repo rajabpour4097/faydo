@@ -380,3 +380,123 @@ class Transaction(BaseModel):
             self.final_amount = self.calculate_final_amount()
         
         super().save(*args, **kwargs)
+
+
+class EliteGiftClaim(BaseModel):
+    """
+    مدل برای ثبت دریافت هدایای ویژه توسط مشتریان
+    """
+    STATUS_CHOICES = [
+        ('pending', 'در انتظار تایید کسب‌وکار'),
+        ('approved', 'تایید و اعطا شده'),
+        ('rejected', 'رد شده'),
+        ('used', 'استفاده شده'),
+    ]
+    
+    customer = models.ForeignKey(
+        CustomerProfile,
+        on_delete=models.CASCADE,
+        related_name='elite_gift_claims',
+        verbose_name='مشتری'
+    )
+    elite_gift = models.ForeignKey(
+        'packages.EliteGift',
+        on_delete=models.CASCADE,
+        related_name='claims',
+        verbose_name='هدیه ویژه'
+    )
+    package = models.ForeignKey(
+        Package,
+        on_delete=models.CASCADE,
+        related_name='gift_claims',
+        verbose_name='پکیج'
+    )
+    business = models.ForeignKey(
+        BusinessProfile,
+        on_delete=models.CASCADE,
+        related_name='gift_claims',
+        verbose_name='کسب‌وکار'
+    )
+    
+    # اطلاعات هنگام درخواست
+    progress_at_claim = models.JSONField(
+        default=dict,
+        verbose_name='پیشرفت هنگام درخواست'
+    )
+    
+    # وضعیت
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name='وضعیت'
+    )
+    
+    # تاریخ‌ها
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='تاریخ تایید'
+    )
+    used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='تاریخ استفاده'
+    )
+    
+    # یادداشت کسب‌وکار
+    business_note = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='یادداشت کسب‌وکار'
+    )
+    
+    class Meta:
+        verbose_name = 'درخواست هدیه ویژه'
+        verbose_name_plural = 'درخواست‌های هدیه ویژه'
+        ordering = ['-created_at']
+        # هر کاربر فقط یک بار می‌تواند هدیه یک پکیج را درخواست کند
+        unique_together = ['customer', 'package']
+    
+    def __str__(self):
+        return f"{self.customer.user.get_full_name()} - {self.elite_gift.gift} - {self.get_status_display()}"
+    
+    def approve(self, note=None):
+        """
+        تایید و اعطای هدیه
+        """
+        from django.utils import timezone
+        
+        if self.status != 'pending':
+            raise ValueError('فقط درخواست‌های در انتظار قابل تایید هستند')
+        
+        self.status = 'approved'
+        self.approved_at = timezone.now()
+        if note:
+            self.business_note = note
+        self.save()
+    
+    def reject(self, note=None):
+        """
+        رد درخواست
+        """
+        if self.status != 'pending':
+            raise ValueError('فقط درخواست‌های در انتظار قابل رد هستند')
+        
+        self.status = 'rejected'
+        if note:
+            self.business_note = note
+        self.save()
+    
+    def mark_as_used(self):
+        """
+        علامت‌گذاری به عنوان استفاده شده
+        """
+        from django.utils import timezone
+        
+        if self.status != 'approved':
+            raise ValueError('فقط هدایای تایید شده قابل استفاده هستند')
+        
+        self.status = 'used'
+        self.used_at = timezone.now()
+        self.save()

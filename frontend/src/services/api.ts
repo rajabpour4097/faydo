@@ -242,6 +242,22 @@ export interface Comment {
   is_liked: boolean
 }
 
+export interface EliteGiftProgress {
+  type: 'amount' | 'count'
+  target: number
+  current: number
+  remaining: number
+  percentage: number
+  eligible: boolean
+  transactions_count: number
+  error?: string
+  gift_name?: string
+  gift_description?: string
+  package_id?: number
+  package_start_date?: string
+  package_end_date?: string
+}
+
 export interface BusinessGalleryImage {
   id: number
   image: string
@@ -879,6 +895,11 @@ class ApiService {
         unique_code: uniqueCode,
       }),
     })
+  }
+
+  // Elite Gift Progress
+  async getEliteGiftProgress(packageId: number): Promise<ApiResponse<EliteGiftProgress>> {
+    return this.request<EliteGiftProgress>(`/loyalty/elite-gift-progress/${packageId}/`)
   }
 }
 

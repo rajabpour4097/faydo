@@ -348,6 +348,108 @@ class EliteGift(BaseModel):
 
     def __str__(self):
         return f'elite gift - {self.gift}'
+    
+    def get_customer_progress(self, customer):
+        """
+        محاسبه پیشرفت کاربر برای دریافت هدیه ویژه
+        بر اساس تراکنش‌های تایید شده در بازه زمانی این پکیج
+        
+        Returns:
+            dict: {
+                'type': 'amount' یا 'count',
+                'target': مقدار هدف (مبلغ یا تعداد),
+                'current': مقدار فعلی کاربر,
+                'remaining': باقی‌مانده تا هدف,
+                'percentage': درصد پیشرفت,
+                'eligible': آیا واجد شرایط دریافت هدیه است,
+                'transactions_count': تعداد تراکنش‌های محاسبه شده
+            }
+        """
+        from loyalty.models import Transaction
+        from django.db.models import Sum, Count
+        
+        # بررسی اینکه پکیج تاریخ شروع و پایان دارد
+        if not self.package.start_date or not self.package.end_date:
+            return {
+                'type': 'amount' if self.amount else 'count',
+                'target': float(self.amount) if self.amount else self.count,
+                'current': 0,
+                'remaining': float(self.amount) if self.amount else self.count,
+                'percentage': 0,
+                'eligible': False,
+                'transactions_count': 0,
+                'error': 'پکیج فاقد تاریخ شروع یا پایان است'
+            }
+        
+        # فیلتر تراکنش‌های تایید شده در بازه زمانی پکیج
+        transactions = Transaction.objects.filter(
+            customer=customer,
+            business=self.package.business,
+            package=self.package,
+            status='approved',
+            created_at__gte=self.package.start_date,
+            created_at__lte=self.package.end_date
+        )
+        
+        if self.amount:
+            # محاسبه بر اساس مبلغ
+            total_amount = transactions.aggregate(
+                total=Sum('final_amount')
+            )['total'] or 0
+            
+            target = float(self.amount)
+            current = float(total_amount)
+            remaining = max(0, target - current)
+            percentage = min(100, (current / target * 100) if target > 0 else 0)
+            eligible = current >= target
+            
+            return {
+                'type': 'amount',
+                'target': target,
+                'current': current,
+                'remaining': remaining,
+                'percentage': round(percentage, 1),
+                'eligible': eligible,
+                'transactions_count': transactions.count()
+            }
+        
+        elif self.count:
+            # محاسبه بر اساس تعداد
+            transactions_count = transactions.count()
+            
+            target = self.count
+            current = transactions_count
+            remaining = max(0, target - current)
+            percentage = min(100, (current / target * 100) if target > 0 else 0)
+            eligible = current >= target
+            
+            return {
+                'type': 'count',
+                'target': target,
+                'current': current,
+                'remaining': remaining,
+                'percentage': round(percentage, 1),
+                'eligible': eligible,
+                'transactions_count': transactions_count
+            }
+        
+        return {
+            'type': 'unknown',
+            'target': 0,
+            'current': 0,
+            'remaining': 0,
+            'percentage': 0,
+            'eligible': False,
+            'transactions_count': 0,
+            'error': 'نوع هدیه نامشخص است'
+        }
+    
+    def is_customer_eligible(self, customer):
+        """
+        بررسی اینکه آیا کاربر واجد شرایط دریافت هدیه است
+        """
+        progress = self.get_customer_progress(customer)
+        return progress.get('eligible', False)
 
 
 #For create all VIP experience that can be use in Package VIP Experience

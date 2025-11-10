@@ -23,6 +23,7 @@ import { MainDashboard } from './pages/dashboard/MainDashboard'
 import { Profile } from './pages/dashboard/Profile'
 import { PackageManagement } from './pages/dashboard/PackageManagement'
 import { BusinessTransactionsPage } from './pages/business/BusinessTransactionsPage'
+import { EliteGiftClaimsPage } from './pages/business/EliteGiftClaimsPage'
 import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsPage'
 import { useAuth } from './contexts/AuthContext'
 
@@ -73,6 +74,11 @@ const DashboardRouter = () => {
       <Route path="transactions" element={
         <ProfileGuard>
           {isBusinessUser ? <BusinessTransactionsPage /> : <CustomerTransactionsPage />}
+        </ProfileGuard>
+      } />
+      <Route path="elite-gift-claims" element={
+        <ProfileGuard>
+          {isBusinessUser ? <EliteGiftClaimsPage /> : <Navigate to="/dashboard" />}
         </ProfileGuard>
       } />
       <Route path="" element={

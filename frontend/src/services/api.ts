@@ -242,6 +242,35 @@ export interface Comment {
   is_liked: boolean
 }
 
+export interface EliteGiftClaim {
+  id: number
+  customer: number
+  customer_name: string
+  elite_gift: number
+  gift_name: string
+  package: number
+  business: number
+  business_name: string
+  progress_at_claim: {
+    type: 'amount' | 'count'
+    target: number
+    current: number
+    remaining: number
+    percentage: number
+    eligible: boolean
+    transactions_count: number
+    approved_claims: number
+    total_deducted: number
+  }
+  status: 'pending' | 'approved' | 'rejected' | 'used'
+  status_display: string
+  approved_at: string | null
+  used_at: string | null
+  business_note: string | null
+  created_at: string
+  modified_at: string
+}
+
 export interface EliteGiftProgress {
   type: 'amount' | 'count'
   target: number
@@ -901,6 +930,36 @@ class ApiService {
   async getEliteGiftProgress(packageId: number): Promise<ApiResponse<EliteGiftProgress>> {
     return this.request<EliteGiftProgress>(`/loyalty/elite-gift-progress/${packageId}/`)
   }
+
+  // Elite Gift Claim
+  async createEliteGiftClaim(packageId: number): Promise<ApiResponse<any>> {
+    return this.request<any>(`/loyalty/elite-gift-claims/`, {
+      method: 'POST',
+      body: JSON.stringify({ package_id: packageId })
+    })
+  }
+
+  // Get all Elite Gift Claims (filtered by user role)
+  async getEliteGiftClaims(): Promise<ApiResponse<EliteGiftClaim[]>> {
+    return this.request<EliteGiftClaim[]>(`/loyalty/elite-gift-claims/`)
+  }
+
+  // Approve Elite Gift Claim
+  async approveEliteGiftClaim(claimId: number, note?: string): Promise<ApiResponse<EliteGiftClaim>> {
+    return this.request<EliteGiftClaim>(`/loyalty/elite-gift-claims/${claimId}/approve/`, {
+      method: 'POST',
+      body: JSON.stringify({ note })
+    })
+  }
+
+  // Reject Elite Gift Claim
+  async rejectEliteGiftClaim(claimId: number, note?: string): Promise<ApiResponse<EliteGiftClaim>> {
+    return this.request<EliteGiftClaim>(`/loyalty/elite-gift-claims/${claimId}/reject/`, {
+      method: 'POST',
+      body: JSON.stringify({ note })
+    })
+  }
 }
 
 export const apiService = new ApiService()
+

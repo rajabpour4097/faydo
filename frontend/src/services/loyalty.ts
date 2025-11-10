@@ -5,6 +5,8 @@ export interface BusinessInfo {
   business_name: string
   business_logo: string | null
   business_description: string
+  service_category: string
+  package_id: number | null
   has_active_package: boolean
   discount_all_percentage: number | null
   has_specific_discount: boolean

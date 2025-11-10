@@ -30,7 +30,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { isDark } = useTheme()
-  const { pendingCount } = useNotification()
+  const { pendingCount, eliteGiftPendingCount } = useNotification()
 
   const handleLogout = async () => {
     await logout()
@@ -249,6 +249,8 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                 ? [
                     { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' },
                     { name: 'مدیریت پکیج ها', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
+                    { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', iconType: 'emoji', badge: pendingCount > 0 ? pendingCount : undefined },
+                    { name: 'هدایای ویژه', href: '/dashboard/elite-gift-claims', icon: '🎁', iconType: 'emoji', badge: eliteGiftPendingCount > 0 ? eliteGiftPendingCount : undefined },
                     { name: 'QR Code کسب‌وکار', href: '/dashboard/qrcode', icon: '📱', iconType: 'emoji' },
                     { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
                     { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️', iconType: 'emoji' },
@@ -259,11 +261,11 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                     { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️', iconType: 'emoji' },
                   ]
 
-              return sidebarItems.map((item) => (
+              return sidebarItems.map((item: any) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                     isActive(item.href)
                       ? 'bg-teal-500 text-white'
                       : isDark 
@@ -272,15 +274,22 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                   }`}
                   onClick={closeSidebar}
                 >
-                  <div className="ml-3">
-                    <CustomIcon 
-                      type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'} 
-                      value={item.icon} 
-                      alt={item.name}
-                      className="w-5 h-5"
-                    />
+                  <div className="flex items-center">
+                    <div className="ml-3">
+                      <CustomIcon 
+                        type={(item.iconType as 'emoji' | 'image' | 'base64' | 'url') || 'emoji'} 
+                        value={item.icon} 
+                        alt={item.name}
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <span>{item.name}</span>
                   </div>
-                  <span>{item.name}</span>
+                  {item.badge && item.badge > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[24px] text-center">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               ))
             })()}

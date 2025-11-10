@@ -18,12 +18,12 @@ interface SidebarItem {
 }
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { isDark } = useTheme()
+  const { user, logout } = useAuth()
+  const { pendingCount, eliteGiftPendingCount } = useNotification()
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
-  const { isDark } = useTheme()
-  const { pendingCount } = useNotification()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
 
   const handleLogout = async () => {
@@ -41,6 +41,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         { name: 'داشبورد', href: '/dashboard', icon: '📊' },
         { name: 'پکیج‌ها', href: '/dashboard/packages', icon: '📦' },
         { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', badge: pendingCount > 0 ? pendingCount : undefined },
+        { name: 'هدایای ویژه', href: '/dashboard/elite-gift-claims', icon: '🎁', badge: eliteGiftPendingCount > 0 ? eliteGiftPendingCount : undefined },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
         { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
       ]

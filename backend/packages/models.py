@@ -354,6 +354,11 @@ class EliteGift(BaseModel):
         محاسبه پیشرفت کاربر برای دریافت هدیه ویژه
         بر اساس تراکنش‌های تایید شده در بازه زمانی این پکیج
         
+        روش محاسبه:
+        1. مجموع تمام تراکنش‌های تایید شده
+        2. منهای مجموع تمام Elite Gift های تایید شده (هر کدام به اندازه target)
+        3. باقی‌مانده = پیشرفت فعلی
+        
         Returns:
             dict: {
                 'type': 'amount' یا 'count',
@@ -365,7 +370,7 @@ class EliteGift(BaseModel):
                 'transactions_count': تعداد تراکنش‌های محاسبه شده
             }
         """
-        from loyalty.models import Transaction
+        from loyalty.models import Transaction, EliteGiftClaim
         from django.db.models import Sum, Count
         
         # بررسی اینکه پکیج تاریخ شروع و پایان دارد
@@ -391,6 +396,14 @@ class EliteGift(BaseModel):
             created_at__lte=self.package.end_date
         )
         
+        # تعداد Elite Gift های تایید شده
+        approved_claims_count = EliteGiftClaim.objects.filter(
+            customer=customer,
+            package=self.package,
+            elite_gift=self,
+            status='approved'
+        ).count()
+        
         if self.amount:
             # محاسبه بر اساس مبلغ
             total_amount = transactions.aggregate(
@@ -398,7 +411,14 @@ class EliteGift(BaseModel):
             )['total'] or 0
             
             target = float(self.amount)
-            current = float(total_amount)
+            
+            # کسر مقدار Elite Gift های تایید شده
+            total_deducted = target * approved_claims_count
+            current = float(total_amount) - total_deducted
+            
+            # اطمینان از اینکه current منفی نمی‌شود
+            current = max(0, current)
+            
             remaining = max(0, target - current)
             percentage = min(100, (current / target * 100) if target > 0 else 0)
             eligible = current >= target
@@ -410,15 +430,24 @@ class EliteGift(BaseModel):
                 'remaining': remaining,
                 'percentage': round(percentage, 1),
                 'eligible': eligible,
-                'transactions_count': transactions.count()
+                'transactions_count': transactions.count(),
+                'approved_claims': approved_claims_count,
+                'total_deducted': total_deducted
             }
         
         elif self.count:
             # محاسبه بر اساس تعداد
-            transactions_count = transactions.count()
+            total_count = transactions.count()
             
             target = self.count
-            current = transactions_count
+            
+            # کسر تعداد Elite Gift های تایید شده
+            total_deducted = target * approved_claims_count
+            current = total_count - total_deducted
+            
+            # اطمینان از اینکه current منفی نمی‌شود
+            current = max(0, current)
+            
             remaining = max(0, target - current)
             percentage = min(100, (current / target * 100) if target > 0 else 0)
             eligible = current >= target
@@ -430,7 +459,9 @@ class EliteGift(BaseModel):
                 'remaining': remaining,
                 'percentage': round(percentage, 1),
                 'eligible': eligible,
-                'transactions_count': transactions_count
+                'transactions_count': total_count,
+                'approved_claims': approved_claims_count,
+                'total_deducted': total_deducted
             }
         
         return {

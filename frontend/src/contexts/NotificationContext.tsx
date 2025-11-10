@@ -1,9 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { useAuth } from './AuthContext'
 import { loyaltyService, Transaction } from '../services/loyalty'
+import { apiService } from '../services/api'
 
 interface NotificationContextType {
   pendingCount: number
+  eliteGiftPendingCount: number
   newTransactions: Transaction[]
   approvedTransactions: Transaction[]
   refreshPendingCount: () => Promise<void>
@@ -28,6 +30,7 @@ interface NotificationProviderProps {
 export const NotificationProvider = ({ children }: NotificationProviderProps) => {
   const { user } = useAuth()
   const [pendingCount, setPendingCount] = useState(0)
+  const [eliteGiftPendingCount, setEliteGiftPendingCount] = useState(0)
   const [newTransactions, setNewTransactions] = useState<Transaction[]>([])
   const [approvedTransactions, setApprovedTransactions] = useState<Transaction[]>([])
   const [previousTransactionIds, setPreviousTransactionIds] = useState<Set<number>>(new Set())
@@ -45,6 +48,19 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       
       const result = await loyaltyService.getPendingCount()
       setPendingCount(result.count)
+
+      // برای کسب‌وکار: دریافت تعداد Elite Gift Claims در انتظار
+      if (user.type === 'business') {
+        try {
+          const claimsResponse = await apiService.getEliteGiftClaims()
+          const claims = (claimsResponse.data as any)?.results || claimsResponse.data || []
+          const pendingClaims = Array.isArray(claims) ? claims.filter((c: any) => c.status === 'pending') : []
+          setEliteGiftPendingCount(pendingClaims.length)
+        } catch (error) {
+          console.error('خطا در دریافت Elite Gift Claims:', error)
+          setEliteGiftPendingCount(0)
+        }
+      }
 
       // دریافت تراکنش‌ها برای بررسی تراکنش‌های جدید
       const transactions = await loyaltyService.getTransactions()
@@ -125,6 +141,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
 
   const value: NotificationContextType = {
     pendingCount,
+    eliteGiftPendingCount,
     newTransactions,
     approvedTransactions,
     refreshPendingCount,

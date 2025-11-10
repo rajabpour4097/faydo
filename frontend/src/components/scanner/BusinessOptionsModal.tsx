@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { BusinessInfo } from '../../services/loyalty'
 import { InvoicePaymentModal } from './InvoicePaymentModal'
+import { EliteGiftClaimModal } from './EliteGiftClaimModal'
 
 interface BusinessOptionsModalProps {
   isOpen: boolean
@@ -16,6 +17,7 @@ export const BusinessOptionsModal: React.FC<BusinessOptionsModalProps> = ({
 }) => {
   const { isDark } = useTheme()
   const [showInvoicePayment, setShowInvoicePayment] = useState(false)
+  const [showEliteGiftClaim, setShowEliteGiftClaim] = useState(false)
 
   if (!isOpen) return null
 
@@ -24,8 +26,7 @@ export const BusinessOptionsModal: React.FC<BusinessOptionsModalProps> = ({
   }
 
   const handleEliteGift = () => {
-    // TODO: Implement elite gift usage
-    alert('استفاده از هدیه الیت - قابلیت در حال توسعه')
+    setShowEliteGiftClaim(true)
   }
 
   const handleVIPServices = () => {
@@ -39,6 +40,19 @@ export const BusinessOptionsModal: React.FC<BusinessOptionsModalProps> = ({
         isOpen={true}
         onClose={() => {
           setShowInvoicePayment(false)
+          onClose()
+        }}
+        businessInfo={businessInfo}
+      />
+    )
+  }
+
+  if (showEliteGiftClaim) {
+    return (
+      <EliteGiftClaimModal
+        isOpen={true}
+        onClose={() => {
+          setShowEliteGiftClaim(false)
           onClose()
         }}
         businessInfo={businessInfo}

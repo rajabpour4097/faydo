@@ -455,8 +455,8 @@ class EliteGiftClaim(BaseModel):
         verbose_name = 'درخواست هدیه ویژه'
         verbose_name_plural = 'درخواست‌های هدیه ویژه'
         ordering = ['-created_at']
-        # هر کاربر فقط یک بار می‌تواند هدیه یک پکیج را درخواست کند
-        unique_together = ['customer', 'package']
+        # کاربر می‌تواند چند بار در یک پکیج Elite Gift دریافت کند
+        # unique_together را حذف کردیم
     
     def __str__(self):
         return f"{self.customer.user.get_full_name()} - {self.elite_gift.gift} - {self.get_status_display()}"
@@ -464,6 +464,8 @@ class EliteGiftClaim(BaseModel):
     def approve(self, note=None):
         """
         تایید و اعطای هدیه
+        پس از تایید، محاسبه پیشرفت فقط تراکنش‌های بعد از این تاریخ را در نظر می‌گیرد
+        بنابراین مازاد به طور خودکار حفظ می‌شود
         """
         from django.utils import timezone
         

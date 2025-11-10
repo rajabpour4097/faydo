@@ -245,8 +245,10 @@ def get_business_by_code(request):
         'business_name': business.name,
         'business_logo': business.logo.url if business.logo else None,
         'business_description': business.description or '',
+        'service_category': business.category.name if business.category else '',
         
         # اطلاعات پکیج
+        'package_id': package.id if package else None,
         'has_active_package': package is not None,
         'discount_all_percentage': None,
         'has_specific_discount': False,
@@ -282,6 +284,12 @@ def get_business_by_code(request):
             data['has_elite_gift'] = True
             elite_gift = package.elite_gift
             data['elite_gift_title'] = elite_gift.gift
+            
+            # محاسبه پیشرفت برای بررسی eligible بودن
+            progress = elite_gift.get_customer_progress(customer)
+            
+            # بروزرسانی can_use_elite_gift بر اساس eligible
+            data['can_use_elite_gift'] = progress.get('eligible', False)
             
             # ساخت توضیحات هدیه
             if elite_gift.amount:

@@ -154,8 +154,10 @@ class BusinessInfoSerializer(serializers.Serializer):
     business_name = serializers.CharField()
     business_logo = serializers.SerializerMethodField()
     business_description = serializers.CharField()
+    service_category = serializers.CharField()
     
     # اطلاعات پکیج
+    package_id = serializers.IntegerField(allow_null=True)
     has_active_package = serializers.BooleanField()
     discount_all_percentage = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
     
@@ -345,15 +347,22 @@ class EliteGiftClaimCreateSerializer(serializers.Serializer):
         package = Package.objects.get(id=attrs['package_id'])
         customer = self.context['request'].user.customerprofile
         
-        # بررسی اینکه قبلاً درخواست نداده
-        existing_claim = EliteGiftClaim.objects.filter(
+        # بررسی اینکه درخواست pending نداشته باشد
+        # کاربر می‌تواند چند بار Elite Gift بگیرد، ولی نباید درخواست pending داشته باشد
+        existing_pending_claim = EliteGiftClaim.objects.filter(
             customer=customer,
-            package=package
+            package=package,
+            status='pending'
         ).first()
         
-        if existing_claim:
+        if existing_pending_claim:
             raise serializers.ValidationError(
-                f"شما قبلاً درخواست دریافت این هدیه را ثبت کرده‌اید. وضعیت: {existing_claim.get_status_display()}"
+                {
+                    'detail': 'شما یک درخواست در انتظار تایید دارید.',
+                    'message': 'لطفا صبر کنید تا کسب‌وکار درخواست قبلی شما را بررسی کند.',
+                    'claim_id': existing_pending_claim.id,
+                    'created_at': existing_pending_claim.created_at
+                }
             )
         
         # بررسی واجد شرایط بودن

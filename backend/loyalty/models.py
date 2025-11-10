@@ -164,6 +164,34 @@ class Transaction(BaseModel):
         verbose_name='وفاداری'
     )
     
+    # نوع تراکنش
+    transaction_type = models.CharField(
+        max_length=50,
+        default='regular',
+        choices=[
+            ('regular', 'عادی'),
+            ('elite_gift', 'هدیه ویژه'),
+        ],
+        verbose_name='نوع تراکنش'
+    )
+    
+    # هدیه ویژه (اختیاری)
+    elite_gift = models.ForeignKey(
+        'packages.EliteGift',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transactions',
+        verbose_name='هدیه ویژه'
+    )
+    
+    # توضیحات
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='توضیحات'
+    )
+    
     # مبالغ
     original_amount = models.DecimalField(
         max_digits=12,
@@ -464,8 +492,8 @@ class EliteGiftClaim(BaseModel):
     def approve(self, note=None):
         """
         تایید و اعطای هدیه
-        پس از تایید، محاسبه پیشرفت فقط تراکنش‌های بعد از این تاریخ را در نظر می‌گیرد
-        بنابراین مازاد به طور خودکار حفظ می‌شود
+        پس از تایید، یک Transaction برای این Elite Gift ایجاد می‌شود
+        تا سیستم نظردهی trigger شود
         """
         from django.utils import timezone
         
@@ -477,6 +505,30 @@ class EliteGiftClaim(BaseModel):
         if note:
             self.business_note = note
         self.save()
+        
+        # پیدا کردن یا ایجاد loyalty (CustomerLoyalty فقط customer و business دارد)
+        loyalty, _ = CustomerLoyalty.objects.get_or_create(
+            customer=self.customer,
+            business=self.business
+        )
+        
+        # ایجاد یک Transaction برای این Elite Gift
+        # تا سیستم نظردهی و امتیازدهی trigger شود
+        Transaction.objects.create(
+            customer=self.customer,
+            business=self.business,
+            package=self.package,
+            loyalty=loyalty,
+            elite_gift=self.elite_gift,
+            transaction_type='elite_gift',
+            original_amount=0,  # Elite Gift بدون مبلغ است
+            final_amount=0,
+            points_earned=0,
+            status='approved',
+            description=f'دریافت هدیه ویژه: {self.elite_gift.gift}',
+            can_comment=True,  # امکان کامنت‌گذاری
+            comment_deadline=timezone.now() + timezone.timedelta(days=7)  # 7 روز مهلت
+        )
     
     def reject(self, note=None):
         """

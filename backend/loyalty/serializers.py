@@ -248,8 +248,12 @@ class TransactionCommentSerializer(serializers.Serializer):
             content_object = transaction.package.discount_all
         elif service_type == 'specific_discount' and hasattr(transaction.package, 'specific_discount'):
             content_object = transaction.package.specific_discount
-        elif service_type == 'elite_gift' and hasattr(transaction.package, 'elite_gift'):
-            content_object = transaction.package.elite_gift
+        elif service_type == 'elite_gift':
+            # برای elite_gift از فیلد مستقیم transaction استفاده می‌کنیم
+            if transaction.elite_gift:
+                content_object = transaction.elite_gift
+            elif hasattr(transaction.package, 'elite_gift'):
+                content_object = transaction.package.elite_gift
         elif service_type == 'vip_experience':
             # برای VIP باید یکی از experienceها را انتخاب کنیم
             # فعلاً اولین experience را انتخاب می‌کنیم

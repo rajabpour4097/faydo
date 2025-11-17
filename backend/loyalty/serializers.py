@@ -269,7 +269,8 @@ class TransactionCommentSerializer(serializers.Serializer):
             content_object=content_object,
             user=self.context['request'].user.customerprofile,
             text=validated_data.get('text', ''),
-            score=validated_data.get('score')
+            score=validated_data.get('score'),
+            service_type=service_type  # ذخیره نوع سرویس
         )
         
         # علامت‌گذاری تراکنش به عنوان کامنت شده

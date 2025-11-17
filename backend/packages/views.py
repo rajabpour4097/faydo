@@ -555,6 +555,7 @@ class PackageViewSet(viewsets.ModelViewSet):
                     'user_avatar': '',
                     'content': comment.text or '',
                     'score': comment.score,
+                    'service_type': comment.service_type or item['category'],  # استفاده از service_type یا category
                     'likes_count': comment.likes.count(),
                     'is_liked': is_liked,
                     'category': item['category'],

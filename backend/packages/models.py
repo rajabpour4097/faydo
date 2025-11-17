@@ -33,6 +33,21 @@ class Comment(BaseModel):
         blank=True
     )
     
+    # نوع سرویس که نظر برای آن است
+    SERVICE_TYPE_CHOICES = [
+        ('discount_all', 'تخفیف روی همه'),
+        ('specific_discount', 'تخفیف خاص'),
+        ('elite_gift', 'هدیه ویژه'),
+        ('vip_experience', 'تجربه VIP'),
+    ]
+    service_type = models.CharField(
+        max_length=50,
+        choices=SERVICE_TYPE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name='نوع سرویس'
+    )
+    
     class Meta:
         verbose_name = 'کامنت'
         verbose_name_plural = 'کامنت‌ها'

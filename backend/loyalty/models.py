@@ -66,7 +66,7 @@ class CustomerLoyalty(BaseModel):
     class Meta:
         verbose_name = 'وفاداری مشتری'
         verbose_name_plural = 'وفاداری مشتریان'
-        aunique_together = ['customer', 'business']
+        unique_together = ['customer', 'business']
         ordering = ['-points']
 
     def __str__(self):

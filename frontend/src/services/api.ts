@@ -1,31 +1,49 @@
 // API configuration and utilities
-// Use HTTP for localhost and local network IPs, otherwise use current protocol
+// Use current protocol and handle Docker/production environment
 const getApiProtocol = () => {
   if (typeof window === 'undefined') return 'http:'
-  const hostname = window.location.hostname
-  // Use HTTP for localhost and private IP ranges
-  if (hostname === 'localhost' || 
-      hostname === '127.0.0.1' || 
-      hostname.startsWith('192.168.') || 
-      hostname.startsWith('10.') || 
-      hostname.startsWith('172.')) {
-    return 'http:'
-  }
   return window.location.protocol
 }
 
+const getApiBaseUrl = () => {
+  if (typeof window === 'undefined') return 'http://localhost:8001/api'
+  
+  const hostname = window.location.hostname
+  const protocol = window.location.protocol
+  const port = window.location.port
+  
+  // In Docker/production: use same origin with /api path (Nginx proxies to backend)
+  // Port 9000 or 443 means we're behind Nginx reverse proxy
+  if (port === '9000' || port === '443' || port === '') {
+    return `${protocol}//${hostname}${port ? ':' + port : ''}/api`
+  }
+  
+  // Local development: direct connection to backend on port 8001
+  return `${protocol}//${hostname}:8001/api`
+}
+
+const getMediaBaseUrl = () => {
+  if (typeof window === 'undefined') return 'http://localhost:8001'
+  
+  const hostname = window.location.hostname
+  const protocol = window.location.protocol
+  const port = window.location.port
+  
+  // In Docker/production: use same origin (Nginx serves media)
+  if (port === '9000' || port === '443' || port === '') {
+    return `${protocol}//${hostname}${port ? ':' + port : ''}`
+  }
+  
+  // Local development: direct connection to backend
+  return `${protocol}//${hostname}:8001`
+}
+
 export const API_BASE_URL =
-  (import.meta as any).env?.VITE_API_BASE_URL ||
-  (typeof window !== 'undefined' 
-    ? `${getApiProtocol()}//${window.location.hostname}:8001/api`
-    : 'http://localhost:8001/api')
+  (import.meta as any).env?.VITE_API_BASE_URL || getApiBaseUrl()
 
 // Base URL for media files (without /api)
 export const MEDIA_BASE_URL =
-  (import.meta as any).env?.VITE_MEDIA_BASE_URL ||
-  (typeof window !== 'undefined' 
-    ? `${getApiProtocol()}//${window.location.hostname}:8001`
-    : 'http://localhost:8001')
+  (import.meta as any).env?.VITE_MEDIA_BASE_URL || getMediaBaseUrl()
 
 /**
  * تبدیل URL نسبی عکس به URL کامل

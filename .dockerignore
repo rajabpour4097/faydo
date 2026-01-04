@@ -1,0 +1,31 @@
+# Docker files
+*.log
+.env
+docker/nginx/ssl/
+
+# Backend
+backend/__pycache__/
+backend/*/__pycache__/
+backend/*/*/__pycache__/
+backend/*.pyc
+backend/.env
+backend/staticfiles/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+backups/
+
+# Virtual environments
+venv/
+.venv/

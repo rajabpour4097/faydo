@@ -1,10 +1,5 @@
 // API configuration and utilities
-// Use current protocol and handle Docker/production environment
-const getApiProtocol = () => {
-  if (typeof window === 'undefined') return 'http:'
-  return window.location.protocol
-}
-
+// Handle Docker/production environment
 const getApiBaseUrl = () => {
   if (typeof window === 'undefined') return 'http://localhost:8001/api'
   

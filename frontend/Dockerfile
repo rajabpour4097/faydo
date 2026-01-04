@@ -19,6 +19,9 @@ COPY . .
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
+# Increase Node.js memory limit for build
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 # Build the app
 RUN npm run build
 

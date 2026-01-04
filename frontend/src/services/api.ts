@@ -8,8 +8,8 @@ const getApiBaseUrl = () => {
   const port = window.location.port
   
   // In Docker/production: use same origin with /api path (Nginx proxies to backend)
-  // Port 9000 or 443 means we're behind Nginx reverse proxy
-  if (port === '9000' || port === '443' || port === '') {
+  // Port 8001 or 443 means we're behind Nginx reverse proxy
+  if (port === '8001' || port === '443' || port === '') {
     return `${protocol}//${hostname}${port ? ':' + port : ''}/api`
   }
   
@@ -25,7 +25,7 @@ const getMediaBaseUrl = () => {
   const port = window.location.port
   
   // In Docker/production: use same origin (Nginx serves media)
-  if (port === '9000' || port === '443' || port === '') {
+  if (port === '8001' || port === '443' || port === '') {
     return `${protocol}//${hostname}${port ? ':' + port : ''}`
   }
   

@@ -33,12 +33,11 @@ const getMediaBaseUrl = () => {
   return `${protocol}//${hostname}:8001`
 }
 
-export const API_BASE_URL =
-  (import.meta as any).env?.VITE_API_BASE_URL || getApiBaseUrl()
+// Always use runtime detection (ignore build-time env vars)
+export const API_BASE_URL = getApiBaseUrl()
 
 // Base URL for media files (without /api)
-export const MEDIA_BASE_URL =
-  (import.meta as any).env?.VITE_MEDIA_BASE_URL || getMediaBaseUrl()
+export const MEDIA_BASE_URL = getMediaBaseUrl()
 
 /**
  * تبدیل URL نسبی عکس به URL کامل

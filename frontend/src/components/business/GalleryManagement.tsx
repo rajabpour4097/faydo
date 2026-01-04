@@ -64,7 +64,7 @@ export const GalleryManagement: React.FC<GalleryManagementProps> = ({ onGalleryU
       formData.append('title', `تصویر ${gallery.length + 1}`)
       formData.append('order', gallery.length.toString())
 
-      const response = await apiService.createGalleryImage(formData)
+      await apiService.createGalleryImage(formData)
       await loadGallery() // Reload gallery to get updated data
     } catch (err) {
       setError('خطا در آپلود تصویر')

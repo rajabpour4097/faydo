@@ -11,14 +11,14 @@ interface CustomIconProps {
 export const CustomIcon: React.FC<CustomIconProps> = ({ 
   type, 
   value, 
-  alt = 'Icon', 
+  alt: _alt = 'Icon', 
   className = 'w-5 h-5',
   active = false,
 }) => {
   // For image-based icons we approximate tinting using CSS filters.
   // Active: make icon blue for selected state.
   // Inactive: gray tone similar to the provided mock.
-  const imageFilter = active
+  const _imageFilter = active
     ? 'brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)'
     : 'grayscale(100%) brightness(85%) saturate(60%)';
 

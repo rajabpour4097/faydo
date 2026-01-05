@@ -37,6 +37,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://localhost',
     'https://192.168.70.102',
     'https://127.0.0.1',
+    'https://87.248.150.141:8001',  # Production server
 ]
 
 # For development: disable CSRF for API endpoints

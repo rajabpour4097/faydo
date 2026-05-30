@@ -39,29 +39,24 @@ def send_sms(to, body_id, text):
             "bodyId": body_id,
             "text": text
         }
-        
-        # Add timeout and better error handling
+        logger.debug(f"Sending SMS payload: {payload}")
         response = requests.post(
             "https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber", 
             json=payload,
             timeout=30,
             headers={'Content-Type': 'application/json'}
         )
-        
+        logger.debug(f"SMS API response status: {response.status_code}, body: {response.text}")
         # Check if response is successful
         if response.status_code != 200:
             logger.error(f"SMS API returned status {response.status_code} for {to}")
             return False, f"API returned status {response.status_code}"
-        
         result = response.json()
-        
         if result.get("RetStatus") != 1:
             logger.error(f"SMS failed for {to}: {result.get('StrRetStatus')}")
             return False, f"SMS failed: {result.get('StrRetStatus')}"
-        
         logger.info(f"SMS sent successfully to {to}")
         return True, None
-        
     except requests.exceptions.Timeout:
         logger.error(f"SMS timeout for {to}")
         return False, "SMS service timeout"

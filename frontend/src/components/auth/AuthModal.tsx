@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { API_BASE_URL } from '../../services/api'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -52,19 +53,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setError('')
 
     try {
-      // Use HTTP for localhost and local network IPs
-      const hostname = window.location.hostname
-      const protocol = (hostname === 'localhost' || 
-                       hostname === '127.0.0.1' || 
-                       hostname.startsWith('192.168.') || 
-                       hostname.startsWith('10.') || 
-                       hostname.startsWith('172.'))
-        ? 'http:' 
-        : window.location.protocol
-      const API_BASE_URL = `${protocol}//${hostname}:8001/api`
-      
       console.log('Sending OTP to:', API_BASE_URL)
-      
+
       const response = await fetch(`${API_BASE_URL}/accounts/auth/send-otp/`, {
         method: 'POST',
         headers: {
@@ -104,20 +94,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setError('')
 
     try {
-      // First verify OTP
-      // Use HTTP for localhost and local network IPs
-      const hostname = window.location.hostname
-      const protocol = (hostname === 'localhost' || 
-                       hostname === '127.0.0.1' || 
-                       hostname.startsWith('192.168.') || 
-                       hostname.startsWith('10.') || 
-                       hostname.startsWith('172.'))
-        ? 'http:' 
-        : window.location.protocol
-      const API_BASE_URL = `${protocol}//${hostname}:8001/api`
-      
       console.log('Verifying OTP at:', API_BASE_URL)
-      
+
       const otpResponse = await fetch(`${API_BASE_URL}/accounts/auth/verify-otp/`, {
         method: 'POST',
         headers: {

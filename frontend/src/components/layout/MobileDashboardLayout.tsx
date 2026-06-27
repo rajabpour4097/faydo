@@ -80,12 +80,22 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       ]
     }
 
+    // Admin / manager users get management bottom nav
+    if (['admin', 'it_manager', 'project_manager'].includes(user.type)) {
+      return [
+        { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' as const },
+        { name: 'باشگاه‌ها', href: '/dashboard/admin/clubs', icon: '🏆', iconType: 'emoji' as const },
+        { name: 'دسته‌بندی', href: '/dashboard/admin/service-categories', icon: '📂', iconType: 'emoji' as const },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' as const },
+      ]
+    }
+
     // Default items for other user types
       return [
-        { name: 'داشبورد', href: '/dashboard', icon: '/src/assets/images/home.png', iconType: 'image' },
-        { name: 'اکسپلور', href: '/dashboard/explore', icon: '/src/assets/images/explore.png', iconType: 'image'},
-        { name: 'باشگاه ها', href: '/dashboard/clubs', icon: '/src/assets/images/club-icon.png', iconType: 'image' },
-        { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' },
+        { name: 'داشبورد', href: '/dashboard', icon: '/src/assets/images/home.png', iconType: 'image' as const },
+        { name: 'اکسپلور', href: '/dashboard/explore', icon: '/src/assets/images/explore.png', iconType: 'image' as const },
+        { name: 'باشگاه ها', href: '/dashboard/clubs', icon: '/src/assets/images/club-icon.png', iconType: 'image' as const },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '/src/assets/images/user.png', iconType: 'image' as const },
       ]
   }
 

@@ -22,6 +22,8 @@ import { QRCodePage } from './pages/QRCodePage'
 import { MainDashboard } from './pages/dashboard/MainDashboard'
 import { Profile } from './pages/dashboard/Profile'
 import { PackageManagement } from './pages/dashboard/PackageManagement'
+import { ClubManagement } from './pages/dashboard/ClubManagement'
+import { ServiceCategoryManagement } from './pages/dashboard/ServiceCategoryManagement'
 import { BusinessTransactionsPage } from './pages/business/BusinessTransactionsPage'
 import { EliteGiftClaimsPage } from './pages/business/EliteGiftClaimsPage'
 import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsPage'
@@ -81,6 +83,8 @@ const DashboardRouter = () => {
           {isBusinessUser ? <EliteGiftClaimsPage /> : <Navigate to="/dashboard" />}
         </ProfileGuard>
       } />
+      <Route path="admin/clubs" element={<ClubManagement />} />
+      <Route path="admin/service-categories" element={<ServiceCategoryManagement />} />
       <Route path="" element={
         <ProfileGuard>
           <MainDashboard />

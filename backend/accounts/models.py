@@ -13,11 +13,34 @@ class BaseModel(models.Model):
         abstract = True
 
 
+# Clubs
+class Club(BaseModel):
+    name = models.CharField(max_length=255, verbose_name='نام باشگاه')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    icon = models.CharField(max_length=10, blank=True, null=True, verbose_name='آیکون')
+
+    class Meta:
+        verbose_name = 'باشگاه'
+        verbose_name_plural = 'باشگاه‌ها'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 # Business categories
 class ServiceCategory(BaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='subcategories')
+    club = models.ForeignKey(
+        Club,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='service_categories',
+        verbose_name='باشگاه'
+    )
 
     class Meta:
         verbose_name = 'دسته‌بندی خدمات'

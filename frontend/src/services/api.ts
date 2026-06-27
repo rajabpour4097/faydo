@@ -112,11 +112,20 @@ export interface BusinessProfile {
   total_comments?: number
 }
 
+export interface ClubItem {
+  id: number
+  name: string
+  description?: string
+  icon?: string
+}
+
 export interface ServiceCategoryItem {
   id: number
   name: string
   description?: string
   parent?: number | null
+  club?: number | null
+  club_detail?: ClubItem | null
 }
 
 export interface Province {
@@ -563,6 +572,33 @@ class ApiService {
     })
   }
 
+  async getClubs(): Promise<ApiResponse<ClubItem[]>> {
+    const resp = await this.request<any>('/accounts/clubs/')
+    if (resp.data) {
+      if (Array.isArray(resp.data)) return { data: resp.data as ClubItem[] }
+      if (Array.isArray(resp.data.results)) return { data: resp.data.results as ClubItem[] }
+    }
+    return resp
+  }
+
+  async createClub(data: Omit<ClubItem, 'id'>): Promise<ApiResponse<ClubItem>> {
+    return this.request<ClubItem>('/accounts/clubs/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateClub(id: number, data: Partial<ClubItem>): Promise<ApiResponse<ClubItem>> {
+    return this.request<ClubItem>(`/accounts/clubs/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteClub(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/accounts/clubs/${id}/`, { method: 'DELETE' })
+  }
+
   async getServiceCategories(): Promise<ApiResponse<ServiceCategoryItem[]>> {
     const resp = await this.request<any>('/accounts/service-categories/')
     if (resp.data) {
@@ -574,6 +610,24 @@ class ApiService {
       }
     }
     return resp
+  }
+
+  async createServiceCategory(data: Omit<ServiceCategoryItem, 'id' | 'club_detail'>): Promise<ApiResponse<ServiceCategoryItem>> {
+    return this.request<ServiceCategoryItem>('/accounts/service-categories/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateServiceCategory(id: number, data: Partial<Omit<ServiceCategoryItem, 'club_detail'>>): Promise<ApiResponse<ServiceCategoryItem>> {
+    return this.request<ServiceCategoryItem>(`/accounts/service-categories/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteServiceCategory(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/accounts/service-categories/${id}/`, { method: 'DELETE' })
   }
 
   async getProvinces(): Promise<ApiResponse<Province[]>> {

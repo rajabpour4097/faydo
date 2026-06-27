@@ -526,8 +526,13 @@ class UserViewSet(BaseReadWriteViewSet):
 	serializer_class = UserSerializer
 
 
+class ClubViewSet(BaseReadWriteViewSet):
+	queryset = Club.objects.all()
+	serializer_class = ClubSerializer
+
+
 class ServiceCategoryViewSet(BaseReadWriteViewSet):
-	queryset = ServiceCategory.objects.all()
+	queryset = ServiceCategory.objects.select_related('club').all()
 	serializer_class = ServiceCategorySerializer
 
 

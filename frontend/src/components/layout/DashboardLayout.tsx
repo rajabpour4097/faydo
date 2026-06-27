@@ -58,7 +58,18 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       ]
     }
 
-    // Default items for other user types (admin, etc.)
+    // Admin / manager users get management tools
+    if (['admin', 'it_manager', 'project_manager'].includes(user.type)) {
+      return [
+        { name: 'داشبورد', href: '/dashboard', icon: '📊' },
+        { name: 'مدیریت باشگاه‌ها', href: '/dashboard/admin/clubs', icon: '🏆' },
+        { name: 'دسته‌بندی خدمات', href: '/dashboard/admin/service-categories', icon: '📂' },
+        { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
+        { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
+      ]
+    }
+
+    // Default items for other user types
     return [
       { name: 'داشبورد', href: '/dashboard', icon: '📊' },
       { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
@@ -67,7 +78,10 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }
 
   const sidebarItems = getSidebarItems()
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string) => {
+    if (path === '/dashboard') return location.pathname === '/dashboard'
+    return location.pathname === path || location.pathname.startsWith(path + '/')
+  }
 
   return (
     <div className="min-h-screen dashboard-bg font-persian flex" style={{ direction: 'rtl' }}>

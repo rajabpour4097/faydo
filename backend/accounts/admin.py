@@ -31,10 +31,17 @@ class CustomerProfileAdmin(admin.ModelAdmin):
         return f"{obj.user.first_name} {obj.user.last_name}"
     get_full_name.short_description = 'نام کامل'
 
+@admin.register(Club)
+class ClubAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'icon', 'description')
+    search_fields = ('name',)
+
+
 @admin.register(ServiceCategory)
 class ServiceCategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'description')
-    search_fields = ('name',) 
+    list_display = ('id', 'name', 'club', 'description')
+    search_fields = ('name',)
+    list_filter = ('club',)
 
 
 @admin.register(Province)

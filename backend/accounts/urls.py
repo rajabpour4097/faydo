@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
-    UserViewSet, ServiceCategoryViewSet, ProvinceViewSet, CityViewSet,
+    UserViewSet, ClubViewSet, ServiceCategoryViewSet, ProvinceViewSet, CityViewSet,
     BusinessProfileViewSet, CustomerProfileViewSet, ITManagerProfileViewSet,
     ProjectManagerProfileViewSet, SupporterProfileViewSet, FinancialManagerProfileViewSet,
     BusinessGalleryViewSet, register_view, business_register_view, login_view, logout_view, profile_view,
@@ -14,6 +14,7 @@ from .views import (
 # API Router for ViewSets
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
+router.register(r'clubs', ClubViewSet)
 router.register(r'service-categories', ServiceCategoryViewSet)
 router.register(r'provinces', ProvinceViewSet)
 router.register(r'cities', CityViewSet)

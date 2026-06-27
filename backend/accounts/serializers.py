@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import (
-    User, ServiceCategory, Province, City, BusinessProfile, CustomerProfile,
+    User, Club, ServiceCategory, Province, City, BusinessProfile, CustomerProfile,
     ITManagerProfile, ProjectManagerProfile, SupporterProfile, FinancialManagerProfile,
     BusinessGallery
 )
@@ -268,10 +268,18 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
+class ClubSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Club
+		fields = ['id', 'name', 'description', 'icon']
+
+
 class ServiceCategorySerializer(serializers.ModelSerializer):
+	club_detail = ClubSerializer(source='club', read_only=True)
+
 	class Meta:
 		model = ServiceCategory
-		fields = ['id', 'name', 'description', 'parent']
+		fields = ['id', 'name', 'description', 'parent', 'club', 'club_detail']
 
 
 class ProvinceSerializer(serializers.ModelSerializer):

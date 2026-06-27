@@ -3,6 +3,8 @@ import { MobileDashboard } from './MobileDashboard'
 import { EmptyDashboard } from './EmptyDashboard'
 import { CustomerDashboardMobile } from './CustomerDashboardMobile'
 import { CustomerDashboardDesktop } from './CustomerDashboardDesktop'
+import { BusinessDashboard } from './BusinessDashboard'
+import { BusinessDashboardMobile } from './BusinessDashboardMobile'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePackages } from '../../hooks/usePackages'
@@ -62,20 +64,15 @@ export const MainDashboard = () => {
     )
   }
 
-  // Show empty dashboard for businesses without packages
-  if (user?.type === 'business' && !hasPackages) {
+  // Business Dashboard (with or without packages)
+  if (user?.type === 'business') {
     return (
       <>
-        {/* Mobile Empty Dashboard */}
         <div className="md:hidden">
-          <MobileDashboard />
+          <BusinessDashboardMobile />
         </div>
-
-        {/* Desktop Empty Dashboard */}
         <div className="hidden md:block">
-          <DashboardLayout>
-            <EmptyDashboard />
-          </DashboardLayout>
+          <BusinessDashboard />
         </div>
       </>
     )

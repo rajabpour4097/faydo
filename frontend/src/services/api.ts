@@ -349,6 +349,54 @@ export interface PointsHistoryResponse {
 
 // ─────────────────────────────────────────────────────────────────────
 
+// ─── Business Dashboard Interfaces ──────────────────────────────────
+
+export interface BusinessTransaction {
+  id: number
+  customer: number
+  customer_name: string
+  business: number
+  business_name: string
+  package: number | null
+  loyalty: number
+  original_amount: string
+  discount_all_amount: string
+  final_amount: string
+  points_earned: number
+  status: 'pending' | 'approved' | 'rejected'
+  note: string | null
+  description?: string | null
+  transaction_type?: string
+  can_comment: boolean
+  comment_deadline?: string | null
+  has_commented: boolean
+  created_at: string
+  modified_at: string
+}
+
+export interface BusinessLoyalty {
+  id: number
+  customer: number
+  customer_name: string
+  business: number
+  business_name: string
+  points: number
+  vip_status: 'none' | 'vip' | 'vip_plus'
+  elite_gift_target_reached: boolean
+  elite_gift_used: boolean
+  created_at: string
+  modified_at: string
+}
+
+export interface BusinessTransactionsResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: BusinessTransaction[]
+}
+
+// ─────────────────────────────────────────────────────────────────────
+
 export interface BusinessGalleryImage {
   id: number
   image: string
@@ -1090,6 +1138,39 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ business_id: businessId }),
     })
+  }
+
+  // ─── Business Dashboard ────────────────────────────────────────────
+
+  async getTransactions(params?: { status?: string; page?: number; page_size?: number }): Promise<ApiResponse<BusinessTransactionsResponse>> {
+    const qs = new URLSearchParams()
+    if (params?.status) qs.set('status', params.status)
+    if (params?.page) qs.set('page', String(params.page))
+    if (params?.page_size) qs.set('page_size', String(params.page_size))
+    const query = qs.toString() ? `?${qs}` : ''
+    return this.request<BusinessTransactionsResponse>(`/loyalty/transactions/${query}`)
+  }
+
+  async approveTransaction(transactionId: number): Promise<ApiResponse<BusinessTransaction>> {
+    return this.request<BusinessTransaction>(`/loyalty/transactions/${transactionId}/approve/`, {
+      method: 'POST',
+    })
+  }
+
+  async rejectTransaction(transactionId: number, note?: string): Promise<ApiResponse<BusinessTransaction>> {
+    return this.request<BusinessTransaction>(`/loyalty/transactions/${transactionId}/reject/`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    })
+  }
+
+  async getLoyalties(): Promise<ApiResponse<BusinessLoyalty[]>> {
+    const resp = await this.request<any>('/loyalty/loyalties/')
+    if (resp.data) {
+      if (Array.isArray(resp.data)) return { data: resp.data }
+      if (Array.isArray(resp.data.results)) return { data: resp.data.results }
+    }
+    return resp
   }
 }
 

@@ -155,8 +155,13 @@ export interface VipExperienceCategory {
   id: number
   vip_type: 'VIP' | 'VIP+'
   category: number
+  category_name?: string
+  club_id?: number | null
+  club_name?: string | null
   name: string
   description?: string
+  created_at?: string
+  modified_at?: string
 }
 
 export interface Package {
@@ -233,15 +238,7 @@ export interface EliteGift {
   modified_at: string
 }
 
-export interface VipExperienceCategory {
-  id: number
-  vip_type: 'VIP' | 'VIP+'
-  category_name: string
-  name: string
-  description?: string
-  created_at: string
-  modified_at: string
-}
+// (merged into the VipExperienceCategory interface above)
 
 export interface VipExperience {
   id: number
@@ -968,12 +965,16 @@ class ApiService {
 
   async getVipExperienceCategories(): Promise<ApiResponse<VipExperienceCategory[]>> {
     const response = await this.request<any>('/packages/vip-experiences/')
-    
-    // Handle paginated response
     if (response.data && response.data.results) {
       return { ...response, data: response.data.results }
     }
-    
+    return response
+  }
+
+  async getVipExperienceCategoriesByClub(clubId: number): Promise<ApiResponse<VipExperienceCategory[]>> {
+    const response = await this.request<any>(`/packages/vip-experiences/?club_id=${clubId}`)
+    if (response.data && Array.isArray(response.data)) return { data: response.data }
+    if (response.data && response.data.results) return { data: response.data.results }
     return response
   }
 

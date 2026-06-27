@@ -4,7 +4,7 @@ import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayou
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { TopClubExperiencesSlider } from '../components/clubs/TopClubExperiencesSlider'
 import { ClubsQuickAccess } from '../components/clubs/ClubsQuickAccess'
-import { apiService, Package } from '../services/api'
+import { apiService, Package, ClubItem } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 
@@ -13,6 +13,7 @@ export const Clubs: React.FC = () => {
   const { isDark } = useTheme()
   const navigate = useNavigate()
   const [packages, setPackages] = useState<Package[]>([])
+  const [clubs, setClubs] = useState<ClubItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,28 +25,29 @@ export const Clubs: React.FC = () => {
     }
   }, [user, navigate])
 
-  // بارگذاری پکیج‌های فعال
+  // بارگذاری پکیج‌های فعال و باشگاه‌ها
   useEffect(() => {
-    loadPackages()
+    loadData()
   }, [])
 
-  const loadPackages = async () => {
+  const loadData = async () => {
     try {
       setLoading(true)
       setError(null)
-      
-      const response = await apiService.getPackages()
-      
-      if (response.data) {
-        const activePackages = response.data.filter(pkg => 
-          pkg.is_active && pkg.status === 'approved'
-        )
-        setPackages(activePackages)
-      } else if (response.error) {
-        setError(response.error)
+      const [pkgResp, clubsResp] = await Promise.all([
+        apiService.getPackages(),
+        apiService.getClubs(),
+      ])
+      if (pkgResp.data) {
+        setPackages(pkgResp.data.filter(pkg => pkg.is_active && pkg.status === 'approved'))
+      } else if (pkgResp.error) {
+        setError(pkgResp.error)
+      }
+      if (clubsResp.data) {
+        setClubs(clubsResp.data)
       }
     } catch (err) {
-      console.error('Error loading packages:', err)
+      console.error('Error loading clubs data:', err)
       setError('خطا در بارگذاری اطلاعات')
     } finally {
       setLoading(false)
@@ -120,27 +122,22 @@ export const Clubs: React.FC = () => {
         <ClubsQuickAccess />
 
         {/* Info Section */}
-        <div className={`rounded-2xl p-6 ${
-          isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
-        }`}>
-          <h3 className={`text-lg font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            درباره باشگاه‌های مشتریان
-          </h3>
-          <div className="space-y-3 text-sm">
-            <p className={isDark ? 'text-slate-400' : 'text-gray-600'}>
-              🍽️ <strong>باشگاه مزه‌ها:</strong> تجربیات غذایی منحصر به فرد در رستوران‌ها و کافه‌های برتر
-            </p>
-            <p className={isDark ? 'text-slate-400' : 'text-gray-600'}>
-              💆 <strong>باشگاه سلامت و زیبایی:</strong> خدمات تخصصی سالن‌های زیبایی و باشگاه‌های ورزشی
-            </p>
-            <p className={isDark ? 'text-slate-400' : 'text-gray-600'}>
-              ✨ <strong>باشگاه آرزوها:</strong> سفرها و تفریحات هیجان‌انگیز با تخفیف‌های ویژه
-            </p>
-            <p className={isDark ? 'text-slate-400' : 'text-gray-600'}>
-              👨‍👩‍👧‍👦 <strong>باشگاه خانواده:</strong> خریدها و فعالیت‌های خانوادگی با مزایای انحصاری
-            </p>
+        {clubs.length > 0 && (
+          <div className={`rounded-2xl p-6 ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'}`}>
+            <h3 className={`text-lg font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              درباره باشگاه‌های مشتریان
+            </h3>
+            <div className="space-y-3 text-sm">
+              {clubs.map(club => (
+                <p key={club.id} className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                  <span className="ml-1">{club.icon || '🏆'}</span>
+                  <strong>{club.name}:</strong>
+                  {club.description && <span className="mr-1">{club.description}</span>}
+                </p>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   )
@@ -173,27 +170,22 @@ export const Clubs: React.FC = () => {
         <ClubsQuickAccess />
 
         {/* Info Section */}
-        <div className={`rounded-2xl p-4 ${
-          isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
-        }`}>
-          <h3 className={`text-base font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            درباره باشگاه‌ها
-          </h3>
-          <div className="space-y-2 text-xs">
-            <p className={isDark ? 'text-slate-400' : 'text-gray-600'}>
-              🍽️ <strong>مزه‌ها:</strong> رستوران و کافه
-            </p>
-            <p className={isDark ? 'text-slate-400' : 'text-gray-600'}>
-              💆 <strong>سلامت و زیبایی:</strong> سالن و باشگاه
-            </p>
-            <p className={isDark ? 'text-slate-400' : 'text-gray-600'}>
-              ✨ <strong>آرزوها:</strong> سفر و تفریح
-            </p>
-            <p className={isDark ? 'text-slate-400' : 'text-gray-600'}>
-              👨‍👩‍👧‍👦 <strong>خانواده:</strong> خرید خانوادگی
-            </p>
+        {clubs.length > 0 && (
+          <div className={`rounded-2xl p-4 ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'}`}>
+            <h3 className={`text-base font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              درباره باشگاه‌ها
+            </h3>
+            <div className="space-y-2 text-xs">
+              {clubs.map(club => (
+                <p key={club.id} className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                  <span className="ml-1">{club.icon || '🏆'}</span>
+                  <strong>{club.name}:</strong>
+                  {club.description && <span className="mr-1">{club.description}</span>}
+                </p>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </MobileDashboardLayout>
   )

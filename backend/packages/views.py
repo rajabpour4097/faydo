@@ -573,31 +573,42 @@ class PackageViewSet(viewsets.ModelViewSet):
 
 class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for reading VIP experience categories filtered by business category
+    ViewSet for reading VIP experience categories.
+    - Business: filtered by their own service category
+    - Customer: filtered by club_id query param (?club_id=X)
+    - Admin/Manager: all
     """
     serializer_class = VipExperienceCategorySerializer
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        """
-        Filter VIP experiences based on business category
-        """
         user = self.request.user
         
         if user.role == 'business':
             try:
                 business_profile = user.businessprofile
-                # Get business category
                 business_category = business_profile.category
                 if business_category:
-                    return VipExperienceCategory.objects.filter(category=business_category).order_by('id')
+                    return VipExperienceCategory.objects.select_related(
+                        'category', 'category__club'
+                    ).filter(category=business_category).order_by('id')
                 else:
                     return VipExperienceCategory.objects.none()
             except BusinessProfile.DoesNotExist:
                 return VipExperienceCategory.objects.none()
+        
+        elif user.role == 'customer':
+            club_id = self.request.query_params.get('club_id')
+            qs = VipExperienceCategory.objects.select_related('category', 'category__club')
+            if club_id:
+                return qs.filter(category__club_id=club_id).order_by('vip_type', 'id')
+            return qs.order_by('vip_type', 'id')
+        
         elif user.role in ['admin', 'it_manager', 'project_manager']:
-            # Admin users can see all VIP experiences
-            return VipExperienceCategory.objects.all().order_by('id')
+            return VipExperienceCategory.objects.select_related(
+                'category', 'category__club'
+            ).all().order_by('id')
+        
         else:
             return VipExperienceCategory.objects.none()
 

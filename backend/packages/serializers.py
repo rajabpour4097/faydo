@@ -60,10 +60,12 @@ class EliteGiftSerializer(serializers.ModelSerializer):
 
 class VipExperienceCategorySerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
+    club_id = serializers.IntegerField(source='category.club_id', read_only=True)
+    club_name = serializers.CharField(source='category.club.name', read_only=True, default=None)
     
     class Meta:
         model = VipExperienceCategory
-        fields = ['id', 'vip_type', 'category_name', 'name', 'description', 'created_at', 'modified_at']
+        fields = ['id', 'vip_type', 'category', 'category_name', 'club_id', 'club_name', 'name', 'description', 'created_at', 'modified_at']
         read_only_fields = ['id', 'created_at', 'modified_at']
 
 

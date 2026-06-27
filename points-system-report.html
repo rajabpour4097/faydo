@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>گزارش پیاده‌سازی سیستم امتیازدهی - فایدو</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    line-height: 1.7;
+    padding: 2rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .header h1 { font-size: 2rem; font-weight: 900; color: #fff; }
+  .header p { color: rgba(255,255,255,.8); margin-top: .5rem; }
+  .badge {
+    display: inline-block;
+    padding: .25rem .75rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+    margin: .25rem;
+  }
+
+  /* Section */
+  section {
+    background: #1e293b;
+    border-radius: 1rem;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #334155;
+  }
+  section h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .icon { font-size: 1.5rem; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media(max-width:600px) { .grid-2,.grid-3 { grid-template-columns: 1fr; } }
+
+  /* Card */
+  .card {
+    background: #0f172a;
+    border-radius: .75rem;
+    padding: 1.25rem;
+    border: 1px solid #334155;
+  }
+  .card h3 { font-size: .95rem; font-weight: 700; color: #a5b4fc; margin-bottom: .5rem; }
+  .card p, .card li { font-size: .875rem; color: #94a3b8; }
+  .card ul { padding-right: 1rem; }
+  .card li { margin-bottom: .25rem; }
+
+  /* Tier badges */
+  .bronze  { background:#78350f22; color:#f59e0b; border:1px solid #92400e; }
+  .silver  { background:#1e293b;   color:#94a3b8; border:1px solid #475569; }
+  .gold    { background:#422006;   color:#fbbf24; border:1px solid #92400e; }
+  .vip     { background:#2e1065;   color:#a78bfa; border:1px solid #6d28d9; }
+
+  /* File tag */
+  .file {
+    display: inline-block;
+    background: #0f172a;
+    border: 1px solid #4f46e5;
+    border-radius: .375rem;
+    padding: .15rem .5rem;
+    font-size: .75rem;
+    font-family: monospace;
+    color: #818cf8;
+    margin: .15rem;
+  }
+
+  /* Points table */
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th { background: #1e3a5f; color: #93c5fd; padding: .5rem .75rem; text-align: right; }
+  td { padding: .45rem .75rem; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+  tr:hover td { background: #1e293b55; }
+
+  /* Status */
+  .status-done { color: #34d399; font-weight: 700; }
+  .status-info { color: #60a5fa; }
+
+  /* Endpoint */
+  .ep {
+    background: #0f172a;
+    border-right: 3px solid #4f46e5;
+    padding: .6rem 1rem;
+    font-family: monospace;
+    font-size: .8rem;
+    color: #a5b4fc;
+    border-radius: 0 .5rem .5rem 0;
+    margin: .4rem 0;
+  }
+  .ep .method { color: #34d399; font-weight: 700; margin-left: .5rem; }
+  .ep .desc { color: #64748b; font-size: .75rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>🏆 سیستم امتیازدهی و سطوح مشتری</h1>
+    <p>گزارش پیاده‌سازی · فایدو · خرداد ۱۴۰۵</p>
+    <div style="margin-top:1rem">
+      <span class="badge bronze">🥉 برنزی</span>
+      <span class="badge silver">🥈 نقره‌ای</span>
+      <span class="badge gold">🥇 طلایی</span>
+      <span class="badge vip">👑 VIP</span>
+    </div>
+  </div>
+
+  <!-- Tiers -->
+  <section>
+    <h2><span class="icon">🎖️</span> سطوح مشتری (بر اساس امتیاز ۶ ماه اخیر)</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🥉 برنزی (Bronze)</h3>
+        <ul>
+          <li>امتیاز ۶ ماه: ۰ تا ۴۹۹</li>
+          <li>سطح پیش‌فرض همه کاربران جدید</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🥈 نقره‌ای (Silver)</h3>
+        <ul>
+          <li>امتیاز ۶ ماه: ۵۰۰ تا ۱,۹۹۹</li>
+          <li>دسترسی به پیشنهادهای ویژه</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🥇 طلایی (Gold)</h3>
+        <ul>
+          <li>امتیاز ۶ ماه: ۲,۰۰۰ تا ۴,۹۹۹</li>
+          <li>باشگاه طلایی · تخفیف‌های Gold</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>👑 VIP</h3>
+        <ul>
+          <li>امتیاز ۶ ماه: ۵,۰۰۰+</li>
+          <li>تجربه‌های VIP · دسترسی اختصاصی</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin-top:1rem;font-size:.8rem;color:#64748b">
+      * ملاک تعیین سطح، مجموع امتیازهای مثبت ۶ ماه اخیر است (نه کل امتیاز تاریخی)
+    </p>
+  </section>
+
+  <!-- Points Rules -->
+  <section>
+    <h2><span class="icon">💎</span> قوانین امتیازدهی</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>رویداد</th>
+          <th>امتیاز</th>
+          <th>محدودیت</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>ثبت‌نام</td><td>+۵۰</td><td>فقط یک بار</td></tr>
+        <tr><td>تکمیل پروفایل</td><td>+۱۰۰</td><td>فقط یک بار</td></tr>
+        <tr><td>اولین خرید از کسب‌وکار جدید</td><td>+۳۰</td><td>به ازای هر کسب‌وکار</td></tr>
+        <tr><td>خریدهای بعدی از همان کسب‌وکار</td><td>+۱۰</td><td>—</td></tr>
+        <tr><td>بر اساس مبلغ خرید</td><td>هر ۱۰,۰۰۰ تومان = ۱ امتیاز</td><td>۰.۰۱٪</td></tr>
+        <tr><td>خرید در روز تولد</td><td>ضریب ×۲ روی امتیاز خرید</td><td>فقط روز تولد</td></tr>
+        <tr><td>امتیازدهی به کسب‌وکار</td><td>+۳۰</td><td>—</td></tr>
+        <tr><td>ثبت نظر</td><td>+۲۰</td><td>—</td></tr>
+        <tr><td>افزودن به علاقه‌مندی</td><td>+۳۰</td><td>سقف ۱۵۰ (۵ کسب‌وکار)</td></tr>
+        <tr><td>دعوت موفق (معرف)</td><td>+۱۰۰ + ۰.۰۱٪ از خرید</td><td>—</td></tr>
+        <tr><td>هدیه به معرف‌شونده</td><td>+۵۰</td><td>پس از اولین خرید</td></tr>
+        <tr><td>اشتراک استوری اینستاگرام</td><td>+۵۰</td><td>حداکثر ۲ بار در ماه</td></tr>
+        <tr><td>ورود روزانه</td><td>+۲ + Streak bonus</td><td>—</td></tr>
+        <tr><td>تکمیل هفته (۷ روز streak)</td><td>+۵۰</td><td>—</td></tr>
+        <tr><td>نشان ماهانه (۳۰ روز streak)</td><td>+۱۵۰</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Active Score -->
+  <section>
+    <h2><span class="icon">⚡</span> امتیاز فعالیت (Active Score)</h2>
+    <p style="margin-bottom:1rem;color:#94a3b8;font-size:.875rem">
+      عدد ۰ تا ۱۰۰ که میزان فعالیت اخیر مشتری را نشان می‌دهد.
+    </p>
+    <div class="grid-3">
+      <div class="card">
+        <h3>افزایش‌ها</h3>
+        <ul>
+          <li>خرید: +۵</li>
+          <li>نظر: +۲</li>
+          <li>دعوت موفق: +۱۰</li>
+          <li>استفاده VIP: +۳</li>
+          <li>اولین خرید جدید: +۵</li>
+          <li>استوری: +۱</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>کاهش‌ها</h3>
+        <ul>
+          <li>عدم فعالیت هفتگی: −۱۰</li>
+          <li>حداقل: ۰ (هرگز منفی نمی‌شود)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>وضعیت</h3>
+        <ul>
+          <li>🟢 فعال: ≥۷۰</li>
+          <li>🟡 نیمه‌فعال: ۳۰–۶۹</li>
+          <li>🔴 غیرفعال: &lt;۳۰</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Expiry Rules -->
+  <section>
+    <h2><span class="icon">⏳</span> قوانین انقضا و کاهش امتیاز</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>عدم فعالیت ۹۰ روزه</h3>
+        <p>کاهش ۱٪ از کل امتیازها</p>
+        <p style="color:#f87171;margin-top:.5rem;font-size:.8rem">اجرا می‌شود: هر روز (Batch Job)</p>
+      </div>
+      <div class="card">
+        <h3>عدم فعالیت ۶ ماهه</h3>
+        <p>۲۰٪ از امتیازها منقضی می‌شود</p>
+        <p style="color:#f87171;margin-top:.5rem;font-size:.8rem">امتیازها قابل انتقال نیستند</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Backend Changes -->
+  <section>
+    <h2><span class="icon">🛠️</span> تغییرات Backend</h2>
+
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card">
+        <h3>مدل‌های بروزرسانی شده</h3>
+        <span class="file">accounts/models.py</span>
+        <ul style="margin-top:.5rem">
+          <li class="status-done">✔ فیلد <code>active_score</code> (0–100)</li>
+          <li class="status-done">✔ فیلد <code>last_activity_date</code></li>
+          <li class="status-done">✔ سطح <code>gold</code> به membership_level اضافه شد</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>مدل جدید: PointsEvent</h3>
+        <span class="file">loyalty/models.py</span>
+        <ul style="margin-top:.5rem">
+          <li class="status-done">✔ لاگ Event Sourcing برای هر تغییر امتیاز</li>
+          <li class="status-done">✔ ۱۷ نوع رویداد تعریف شده</li>
+          <li class="status-done">✔ ایندکس‌های DB بهینه</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem">
+      <h3>PointsService <span class="file">loyalty/services.py</span></h3>
+      <div class="grid-2" style="margin-top:.5rem">
+        <ul>
+          <li class="status-done">✔ <code>award_registration()</code></li>
+          <li class="status-done">✔ <code>award_profile_complete()</code></li>
+          <li class="status-done">✔ <code>award_purchase()</code> – اولین/تکراری/تولد</li>
+          <li class="status-done">✔ <code>award_comment()</code></li>
+          <li class="status-done">✔ <code>award_rating()</code></li>
+          <li class="status-done">✔ <code>award_favorite()</code></li>
+          <li class="status-done">✔ <code>award_referral()</code></li>
+          <li class="status-done">✔ <code>award_story_share()</code></li>
+        </ul>
+        <ul>
+          <li class="status-done">✔ <code>award_daily_streak()</code></li>
+          <li class="status-done">✔ <code>calculate_tier()</code></li>
+          <li class="status-done">✔ <code>get_points_summary()</code></li>
+          <li class="status-done">✔ <code>run_expiry_check()</code></li>
+          <li class="status-done">✔ <code>run_active_score_weekly_decay()</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>سیگنال‌ها <span class="file">accounts/signals.py</span></h3>
+      <ul>
+        <li class="status-done">✔ ثبت‌نام جدید → <code>award_registration()</code> اجرا می‌شود</li>
+        <li class="status-done">✔ تکمیل پروفایل → <code>award_profile_complete()</code> اجرا می‌شود</li>
+        <li class="status-done">✔ <code>Transaction.approve()</code> → <code>award_purchase()</code></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- API Endpoints -->
+  <section>
+    <h2><span class="icon">🔌</span> Endpoint های جدید API</h2>
+
+    <div class="ep"><span class="method">GET</span> /api/loyalty/points-summary/ <span class="desc">— خلاصه امتیاز، سطح، پیشرفت برای dashboard</span></div>
+    <div class="ep"><span class="method">GET</span> /api/loyalty/points-history/?page=1 <span class="desc">— تاریخچه رویدادهای امتیازی</span></div>
+    <div class="ep"><span class="method">POST</span> /api/loyalty/story-share/ <span class="desc">— ثبت اشتراک استوری اینستاگرام</span></div>
+    <div class="ep"><span class="method">POST</span> /api/loyalty/favorite/ <span class="desc">— ثبت امتیاز علاقه‌مندی</span></div>
+
+    <div style="margin-top:1rem">
+      <p style="font-size:.8rem;color:#64748b">نمونه پاسخ <code>/points-summary/</code>:</p>
+      <pre style="background:#0f172a;border:1px solid #334155;border-radius:.5rem;padding:1rem;font-size:.75rem;color:#a5b4fc;margin-top:.5rem;overflow-x:auto">{
+  "total_points":    1250,
+  "points_6months":  890,
+  "active_score":    72,
+  "active_status":   "active",
+  "membership_level":"silver",
+  "expiring_points": 0,
+  "tier_progress": {
+    "percent":       78.0,
+    "points_to_next": 1110,
+    "next_tier":     "gold",
+    "current_min":   500,
+    "current_max":   1999
+  },
+  "last_activity": "2026-06-27"
+}</pre>
+    </div>
+  </section>
+
+  <!-- Frontend Changes -->
+  <section>
+    <h2><span class="icon">🎨</span> تغییرات Frontend</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>CustomerPointsCard (بازنویسی کامل)</h3>
+        <span class="file">components/dashboard/CustomerPointsCard.tsx</span>
+        <ul style="margin-top:.5rem">
+          <li class="status-done">✔ ۴ سطح با آیکون و رنگ اختصاصی</li>
+          <li class="status-done">✔ داده واقعی از API</li>
+          <li class="status-done">✔ نمایش امتیاز کل + امتیاز ۶ ماه</li>
+          <li class="status-done">✔ Progress bar به سطح بعدی</li>
+          <li class="status-done">✔ Active Score bar (رنگ‌بندی وضعیت)</li>
+          <li class="status-done">✔ هشدار امتیازهای در حال انقضا</li>
+          <li class="status-done">✔ جدول راهنمای سطوح</li>
+          <li class="status-done">✔ حالت loading skeleton</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Dashboard مشتری</h3>
+        <span class="file">CustomerDashboardDesktop.tsx</span><br/>
+        <span class="file">CustomerDashboardMobile.tsx</span>
+        <ul style="margin-top:.5rem">
+          <li class="status-done">✔ داده mock حذف شد</li>
+          <li class="status-done">✔ <code>fetchFromApi={true}</code></li>
+          <li class="status-done">✔ سازگار Desktop + Mobile</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>api.ts</h3>
+        <span class="file">services/api.ts</span>
+        <ul style="margin-top:.5rem">
+          <li class="status-done">✔ interface <code>PointsSummary</code></li>
+          <li class="status-done">✔ interface <code>PointsEvent</code></li>
+          <li class="status-done">✔ interface <code>TierProgress</code></li>
+          <li class="status-done">✔ <code>MembershipLevel</code> type</li>
+          <li class="status-done">✔ متد <code>getPointsSummary()</code></li>
+          <li class="status-done">✔ متد <code>getPointsHistory()</code></li>
+          <li class="status-done">✔ متد <code>awardStoryShare()</code></li>
+          <li class="status-done">✔ متد <code>awardFavoriteBusiness()</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Migration</h3>
+        <span class="file">accounts/migrations/0004_...</span><br/>
+        <span class="file">loyalty/migrations/0007_...</span>
+        <ul style="margin-top:.5rem">
+          <li class="status-done">✔ فیلدهای جدید CustomerProfile</li>
+          <li class="status-done">✔ مدل PointsEvent</li>
+          <li class="status-done">✔ اجرا موفق</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:1.5rem;color:#475569;font-size:.8rem">
+    فایدو · سیستم امتیازدهی · ۲۷ خرداد ۱۴۰۵
+  </div>
+
+</div>
+</body>
+</html>

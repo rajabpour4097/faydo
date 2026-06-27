@@ -8,10 +8,6 @@ export const CustomerDashboardMobile = () => {
   const { isDark } = useTheme()
   const { user } = useAuth()
 
-  // Mock data - will be replaced with real data from API
-  const customerPoints = 1250
-  // Let the component auto-detect level based on points
-
   return (
     <MobileDashboardLayout>
       <div className="p-4 space-y-4">
@@ -28,9 +24,7 @@ export const CustomerDashboardMobile = () => {
         </div>
 
         {/* Customer Points and Level Card */}
-        <CustomerPointsCard 
-          points={customerPoints}
-        />
+        <CustomerPointsCard fetchFromApi={true} />
 
         {/* Quick Access Menu */}
         <QuickAccessMenu />

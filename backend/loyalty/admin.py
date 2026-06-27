@@ -1,5 +1,14 @@
 from django.contrib import admin
-from .models import CustomerLoyalty, Transaction, EliteGiftClaim
+from .models import CustomerLoyalty, Transaction, EliteGiftClaim, PointsEvent
+
+
+@admin.register(PointsEvent)
+class PointsEventAdmin(admin.ModelAdmin):
+    list_display = ['customer', 'event_type', 'points_delta', 'active_score_delta', 'description', 'created_at']
+    list_filter = ['event_type', 'created_at']
+    search_fields = ['customer__user__first_name', 'customer__user__last_name']
+    readonly_fields = ['created_at', 'modified_at']
+    ordering = ['-created_at']
 
 
 @admin.register(CustomerLoyalty)

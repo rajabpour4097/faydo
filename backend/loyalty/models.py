@@ -13,6 +13,76 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class PointsEvent(BaseModel):
+    """
+    لاگ رویدادهای امتیازی - Event Sourcing سبک
+    هر تغییر امتیاز یک رویداد ثبت می‌کند
+    """
+    EVENT_TYPES = [
+        ('registration',     'ثبت‌نام'),
+        ('profile_complete', 'تکمیل پروفایل'),
+        ('first_purchase',   'اولین خرید از کسب‌وکار'),
+        ('purchase',         'خرید'),
+        ('birthday_purchase','خرید در روز تولد'),
+        ('comment',          'ثبت نظر'),
+        ('rating',           'امتیازدهی به کسب‌وکار'),
+        ('favorite',         'افزودن به علاقه‌مندی'),
+        ('referral_bonus',   'پاداش دعوت موفق'),
+        ('referral_purchase','درصد از خرید معرف‌شونده'),
+        ('story_share',      'اشتراک استوری'),
+        ('daily_streak',     'ورود روزانه'),
+        ('weekly_streak',    'تکمیل هفته'),
+        ('monthly_badge',    'نشان ماهانه'),
+        ('expiry',           'انقضای امتیاز'),
+        ('decay',            'کاهش عدم فعالیت'),
+        ('tier_upgrade',     'ارتقای سطح'),
+        ('manual',           'دستی توسط ادمین'),
+    ]
+
+    customer = models.ForeignKey(
+        CustomerProfile,
+        on_delete=models.CASCADE,
+        related_name='points_events',
+        verbose_name='مشتری'
+    )
+    event_type = models.CharField(
+        max_length=30,
+        choices=EVENT_TYPES,
+        verbose_name='نوع رویداد'
+    )
+    points_delta = models.IntegerField(
+        default=0,
+        verbose_name='تغییر امتیاز'
+    )
+    active_score_delta = models.IntegerField(
+        default=0,
+        verbose_name='تغییر امتیاز فعالیت'
+    )
+    description = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name='توضیحات'
+    )
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='اطلاعات تکمیلی'
+    )
+
+    class Meta:
+        verbose_name = 'رویداد امتیازی'
+        verbose_name_plural = 'رویدادهای امتیازی'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['customer', '-created_at']),
+            models.Index(fields=['customer', 'event_type']),
+        ]
+
+    def __str__(self):
+        return f"{self.customer} | {self.get_event_type_display()} | {self.points_delta:+d}"
+
+
 class CustomerLoyalty(BaseModel):
     """
     مدل برای ردیابی وفاداری و امتیازات مشتری نزد یک کسب‌وکار خاص
@@ -346,24 +416,33 @@ class Transaction(BaseModel):
 
     def approve(self):
         """
-        تایید تراکنش و افزودن امتیاز به مشتری
+        تایید تراکنش، ثبت امتیاز از طریق PointsService
         """
         from django.utils import timezone
         from datetime import timedelta
-        
+        from loyalty import services as pts_svc
+
         if self.status == 'approved':
             return
-        
+
         self.status = 'approved'
-        
-        # محاسبه و افزودن امتیاز
-        self.points_earned = self.calculate_points()
-        self.loyalty.add_points(self.points_earned)
-        
+
+        # امتیازدهی از طریق سرویس (شامل اول/تکراری، تولد، ...)
+        try:
+            customer_profile = self.customer
+            earned = pts_svc.award_purchase(customer_profile, self)
+            self.points_earned = earned
+            # هم در loyalty قدیمی هم در CustomerProfile ثبت می‌شود
+            self.loyalty.add_points(earned)
+        except Exception:
+            # fallback به محاسبه قدیمی در صورت خطا
+            self.points_earned = self.calculate_points()
+            self.loyalty.add_points(self.points_earned)
+
         # فعال کردن امکان کامنت‌گذاری برای 12 ساعت
         self.can_comment = True
         self.comment_deadline = timezone.now() + timedelta(hours=12)
-        
+
         self.save()
 
     def reject(self):

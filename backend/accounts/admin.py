@@ -23,9 +23,10 @@ class BusinessProfileAdmin(admin.ModelAdmin):
 
 @admin.register(CustomerProfile)
 class CustomerProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'get_full_name', 'gender', 'membership_level', 'points', 'city')
+    list_display = ('id', 'get_full_name', 'gender', 'membership_level', 'points', 'active_score', 'last_activity_date', 'city')
     search_fields = ('user__first_name', 'user__last_name', 'user__username', 'city__name')
     list_filter = ('gender', 'membership_level', 'city')
+    readonly_fields = ('active_score', 'last_activity_date')
 
     def get_full_name(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"

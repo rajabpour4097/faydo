@@ -268,11 +268,23 @@ class BusinessProfile(models.Model):
         )
 
 class CustomerProfile(models.Model):
+    MEMBERSHIP_CHOICES = [
+        ('bronze', 'برنزی'),
+        ('silver', 'نقره‌ای'),
+        ('gold', 'طلایی'),
+        ('vip', 'ویژه (VIP)'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'customer'})
     gender = models.CharField(max_length=10, choices=[('male','مرد'),('female','زن')], blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
-    membership_level = models.CharField(max_length=10, choices=[('bronze','برنزی'),('silver','نقره‌ای'),('vip','ویژه')], default='bronze')
-    points = models.IntegerField(default=0)
+    membership_level = models.CharField(max_length=10, choices=MEMBERSHIP_CHOICES, default='bronze')
+    # total_points: امتیاز کل (دائمی)
+    points = models.IntegerField(default=0, verbose_name='مجموع امتیازها')
+    # active_score: سنجه فعالیت اخیر 0-100
+    active_score = models.IntegerField(default=0, verbose_name='امتیاز فعالیت')
+    # تاریخ آخرین فعالیت
+    last_activity_date = models.DateField(null=True, blank=True, verbose_name='آخرین فعالیت')
     city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True)
     address = models.CharField(max_length=255, blank=True, null=True)
 

@@ -8,10 +8,6 @@ export const CustomerDashboardDesktop = () => {
   const { isDark } = useTheme()
   const { user } = useAuth()
 
-  // Mock data - will be replaced with real data from API
-  const customerPoints = 1250
-  // Let the component auto-detect level based on points
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -31,9 +27,7 @@ export const CustomerDashboardDesktop = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Points Card */}
           <div className="lg:col-span-1">
-            <CustomerPointsCard 
-              points={customerPoints}
-            />
+            <CustomerPointsCard fetchFromApi={true} />
           </div>
 
           {/* Right Column - Quick Access Menu */}

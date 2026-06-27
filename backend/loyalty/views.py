@@ -619,6 +619,92 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
+def points_summary(request):
+    """
+    خلاصه امتیازات مشتری برای dashboard
+    GET /api/loyalty/points-summary/
+    """
+    if request.user.role != 'customer':
+        return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
+
+    from loyalty.services import get_points_summary
+    customer = request.user.customerprofile
+    data = get_points_summary(customer)
+    return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def points_history(request):
+    """
+    تاریخچه رویدادهای امتیازی مشتری
+    GET /api/loyalty/points-history/?page=1
+    """
+    if request.user.role != 'customer':
+        return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
+
+    from loyalty.models import PointsEvent
+    customer = request.user.customerprofile
+    events = PointsEvent.objects.filter(customer=customer).order_by('-created_at')
+
+    page = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('page_size', 20))
+    offset = (page - 1) * page_size
+    total = events.count()
+
+    data = []
+    for ev in events[offset: offset + page_size]:
+        data.append({
+            'id':                 ev.id,
+            'event_type':         ev.event_type,
+            'event_label':        ev.get_event_type_display(),
+            'points_delta':       ev.points_delta,
+            'active_score_delta': ev.active_score_delta,
+            'description':        ev.description,
+            'created_at':         ev.created_at.isoformat(),
+        })
+
+    return Response({
+        'count':       total,
+        'page':        page,
+        'total_pages': (total + page_size - 1) // page_size,
+        'results':     data,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def award_story_share(request):
+    """
+    ثبت اشتراک استوری
+    POST /api/loyalty/story-share/
+    """
+    if request.user.role != 'customer':
+        return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
+    from loyalty.services import award_story_share as _award
+    _award(request.user.customerprofile)
+    return Response({'message': 'امتیاز استوری ثبت شد'})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def award_favorite_business(request):
+    """
+    ثبت امتیاز علاقه‌مندی
+    POST /api/loyalty/favorite/
+    """
+    if request.user.role != 'customer':
+        return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
+    business_id = request.data.get('business_id')
+    if not business_id:
+        return Response({'detail': 'business_id الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+    from loyalty.services import award_favorite
+    award_favorite(request.user.customerprofile, business_id)
+    return Response({'message': 'امتیاز علاقه‌مندی ثبت شد'})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
 def elite_gift_progress(request, package_id):
     """
     دریافت پیشرفت کاربر در دریافت هدیه ویژه یک پکیج

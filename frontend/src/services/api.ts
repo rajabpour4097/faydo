@@ -83,8 +83,10 @@ export interface CustomerProfile {
   user: User
   gender: 'male' | 'female' | ''
   birth_date: string
-  membership_level: 'bronze' | 'silver' | 'vip'
+  membership_level: 'bronze' | 'silver' | 'gold' | 'vip'
   points: number
+  active_score?: number
+  last_activity_date?: string | null
   address: string
   city: any
   city_id?: number
@@ -304,6 +306,48 @@ export interface EliteGiftProgress {
   package_start_date?: string
   package_end_date?: string
 }
+
+// ─── Points & Tier Interfaces ───────────────────────────────────────
+
+export type MembershipLevel = 'bronze' | 'silver' | 'gold' | 'vip'
+
+export interface TierProgress {
+  percent: number
+  points_to_next: number
+  next_tier: MembershipLevel | null
+  current_min: number
+  current_max: number | null
+}
+
+export interface PointsSummary {
+  total_points: number
+  points_6months: number
+  active_score: number
+  active_status: 'active' | 'semi_active' | 'inactive'
+  membership_level: MembershipLevel
+  expiring_points: number
+  tier_progress: TierProgress
+  last_activity: string | null
+}
+
+export interface PointsEvent {
+  id: number
+  event_type: string
+  event_label: string
+  points_delta: number
+  active_score_delta: number
+  description: string | null
+  created_at: string
+}
+
+export interface PointsHistoryResponse {
+  count: number
+  page: number
+  total_pages: number
+  results: PointsEvent[]
+}
+
+// ─────────────────────────────────────────────────────────────────────
 
 export interface BusinessGalleryImage {
   id: number
@@ -1024,6 +1068,27 @@ class ApiService {
     return this.request<EliteGiftClaim>(`/loyalty/elite-gift-claims/${claimId}/reject/`, {
       method: 'POST',
       body: JSON.stringify({ note })
+    })
+  }
+
+  // ─── Points & Tier ───────────────────────────────────────────────
+
+  async getPointsSummary(): Promise<ApiResponse<PointsSummary>> {
+    return this.request<PointsSummary>('/loyalty/points-summary/')
+  }
+
+  async getPointsHistory(page = 1, pageSize = 20): Promise<ApiResponse<PointsHistoryResponse>> {
+    return this.request<PointsHistoryResponse>(`/loyalty/points-history/?page=${page}&page_size=${pageSize}`)
+  }
+
+  async awardStoryShare(): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>('/loyalty/story-share/', { method: 'POST' })
+  }
+
+  async awardFavoriteBusiness(businessId: number): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>('/loyalty/favorite/', {
+      method: 'POST',
+      body: JSON.stringify({ business_id: businessId }),
     })
   }
 }

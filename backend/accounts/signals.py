@@ -2,9 +2,12 @@
 """
 سیگنال‌های امتیازدهی - ثبت‌نام و تکمیل پروفایل
 """
+import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import CustomerProfile
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=CustomerProfile)
@@ -19,5 +22,5 @@ def handle_customer_profile_save(sender, instance, created, **kwargs):
             award_registration(instance)
         if instance.is_profile_complete():
             award_profile_complete(instance)
-    except Exception:
-        pass  # جلوگیری از crash در migration یا init
+    except Exception as e:
+        logger.error(f'[points signal] customer_id={instance.pk} error: {e}', exc_info=True)

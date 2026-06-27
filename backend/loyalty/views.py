@@ -623,12 +623,37 @@ def points_summary(request):
     """
     خلاصه امتیازات مشتری برای dashboard
     GET /api/loyalty/points-summary/
+
+    Self-healing: اگر کاربر هنوز امتیاز ثبت‌نام/پروفایل نگرفته باشد، اعطا می‌کند.
+    این برای کاربرانی که قبل از پیاده‌سازی سیستم امتیاز ثبت‌نام کرده‌اند مفید است.
     """
     if request.user.role != 'customer':
         return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
 
-    from loyalty.services import get_points_summary
+    from loyalty.services import (
+        get_points_summary, award_registration, award_profile_complete
+    )
+    from loyalty.models import PointsEvent
+
     customer = request.user.customerprofile
+
+    # Self-healing: اعطای امتیاز ثبت‌نام به کاربران قدیمی
+    if not PointsEvent.objects.filter(customer=customer, event_type='registration').exists():
+        try:
+            award_registration(customer)
+        except Exception:
+            pass
+
+    # Self-healing: اعطای امتیاز تکمیل پروفایل
+    if customer.is_profile_complete():
+        if not PointsEvent.objects.filter(customer=customer, event_type='profile_complete').exists():
+            try:
+                award_profile_complete(customer)
+            except Exception:
+                pass
+
+    # Refresh از DB بعد از update احتمالی
+    customer.refresh_from_db()
     data = get_points_summary(customer)
     return Response(data)
 

@@ -5,6 +5,7 @@
 """
 from django.utils import timezone
 from django.db import transaction as db_transaction
+from django.db.models import Sum
 from datetime import timedelta, date
 
 
@@ -75,7 +76,7 @@ def _get_points_6months(customer):
         customer=customer,
         created_at__gte=six_months_ago,
         points_delta__gt=0,
-    ).aggregate(total=models.Sum('points_delta'))
+    ).aggregate(total=Sum('points_delta'))
     return result['total'] or 0
 
 
@@ -365,7 +366,6 @@ def get_points_summary(customer):
     خلاصه امتیازات برای dashboard
     """
     from loyalty.models import PointsEvent
-    from django.db.models import Sum
 
     now = timezone.now()
     six_months_ago = now - timedelta(days=182)
@@ -434,5 +434,3 @@ def _calc_tier_progress(current_tier, pts_6m):
             'current_min': 0, 'current_max': 499}
 
 
-# Required import fix
-from django.db import models

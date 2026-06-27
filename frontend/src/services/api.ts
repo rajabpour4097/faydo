@@ -1172,6 +1172,22 @@ class ApiService {
     }
     return resp
   }
+
+  // ─── Password Management ───────────────────────────────────────────
+  async checkHasPassword(): Promise<ApiResponse<{ has_password: boolean }>> {
+    return this.request<{ has_password: boolean }>('/accounts/auth/set-password/')
+  }
+
+  async setPassword(data: {
+    new_password: string
+    confirm_password: string
+    current_password?: string
+  }): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>('/accounts/auth/set-password/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
 }
 
 export const apiService = new ApiService()

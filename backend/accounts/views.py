@@ -653,6 +653,38 @@ class BusinessGalleryViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def set_password_view(request):
+    """Set or change user password. GET checks if password is already set."""
+    user = request.user
+
+    if request.method == 'GET':
+        return Response({'has_password': user.has_usable_password()})
+
+    new_password = request.data.get('new_password', '').strip()
+    confirm_password = request.data.get('confirm_password', '').strip()
+    current_password = request.data.get('current_password', '').strip()
+
+    if not new_password:
+        return Response({'error': 'کلمه عبور جدید الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(new_password) < 8:
+        return Response({'error': 'کلمه عبور باید حداقل ۸ کاراکتر باشد'}, status=status.HTTP_400_BAD_REQUEST)
+    if new_password != confirm_password:
+        return Response({'error': 'کلمه عبور و تکرار آن مطابقت ندارند'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # If user already has a usable password, require current password for verification
+    if user.has_usable_password():
+        if not current_password:
+            return Response({'error': 'برای تغییر رمز عبور، رمز عبور فعلی الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.check_password(current_password):
+            return Response({'error': 'رمز عبور فعلی اشتباه است'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+    return Response({'message': 'رمز عبور با موفقیت تنظیم شد'})
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def verify_qr_code(request):

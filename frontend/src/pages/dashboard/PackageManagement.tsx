@@ -6,6 +6,33 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { useTheme } from '../../contexts/ThemeContext'
 
+// ─── Helpers for currency formatting ───────────────────────────────────────
+/**
+ * فرمت‌بندی عدد با جداسازی سه رقمی برای نمایش
+ * مثال: 1000000 → "1,000,000"
+ */
+const formatAmount = (value: string | number): string => {
+  if (value === '' || value === null || value === undefined) return ''
+  const num = typeof value === 'string' ? value.replace(/,/g, '') : String(value)
+  if (num === '' || isNaN(Number(num))) return typeof value === 'string' ? value : ''
+  return Number(num).toLocaleString('en-US')
+}
+
+/**
+ * پاک‌سازی فرمت و برگرداندن عدد خالص (string)
+ * مثال: "1,000,000" → "1000000"
+ */
+const stripFormat = (value: string): string => value.replace(/,/g, '').replace(/[^0-9]/g, '')
+
+/**
+ * پاک‌سازی فرمت و برگرداندن عدد (number)
+ */
+const parseAmount = (value: string): number => {
+  const stripped = stripFormat(value)
+  return stripped ? parseFloat(stripped) : 0
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 interface PackageManagementProps {}
 
 export const PackageManagement: React.FC<PackageManagementProps> = () => {
@@ -566,7 +593,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                                     </span>
                                     {pkg.elite_gift_amount && (
                                       <span className="text-xs text-purple-500">
-                                        برای این مبلغ خرید
+                                        برای {formatAmount(pkg.elite_gift_amount)} تومان خرید
                                       </span>
                                     )}
                                     {pkg.elite_gift_count && (
@@ -887,7 +914,7 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                           <div className="text-purple-600 text-xs truncate">{pkg.elite_gift_title}</div>
                           {pkg.elite_gift_amount && (
                             <div className="text-xs text-purple-500">
-                              برای {pkg.elite_gift_amount} مبلغ خرید
+                              برای {formatAmount(pkg.elite_gift_amount)} تومان خرید
                             </div>
                           )}
                           {pkg.elite_gift_count && (
@@ -1051,7 +1078,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
             ...prev,
             giftDescription: gift.gift,
             giftType: gift.amount ? 'amount' : 'count',
-            giftAmount: gift.amount ? gift.amount.toString() : '',
+            giftAmount: gift.amount ? formatAmount(gift.amount) : '',
             giftCount: gift.count ? gift.count.toString() : ''
           }))
         }
@@ -1092,8 +1119,16 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
 
   const handleInputChange = (name: string, value: any) => {
     setFormData(prev => {
-      const newData = { ...prev, [name]: value }
-      
+      let finalValue = value
+
+      // فیلد مبلغ: فرمت‌بندی خودکار با جداسازی سه رقمی
+      if (name === 'giftAmount') {
+        const digits = stripFormat(String(value))
+        finalValue = digits ? formatAmount(digits) : ''
+      }
+
+      const newData = { ...prev, [name]: finalValue }
+
       // اگر نوع هدیه تغییر کرد، فیلد مخالف را پاک کن
       if (name === 'giftType') {
         if (value === 'amount') {
@@ -1102,7 +1137,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
           newData.giftAmount = '' // پاک کردن مبلغ
         }
       }
-      
+
       return newData
     })
   }
@@ -1261,7 +1296,8 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
       setLoading(true)
       setError(null)
       
-      const amount = formData.giftType === 'amount' && formData.giftAmount ? parseFloat(formData.giftAmount) : undefined
+      // حذف جداکننده سه‌رقمی قبل از ارسال به backend
+      const amount = formData.giftType === 'amount' && formData.giftAmount ? parseAmount(formData.giftAmount) : undefined
       const count = formData.giftType === 'count' && formData.giftCount ? parseInt(formData.giftCount) : undefined
       
       const response = await apiService.savePackageLoyalGift(
@@ -1496,13 +1532,20 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   مبلغ کل خرید
                 </label>
-                <input
-                  type="number"
-                  value={formData.giftAmount}
-                  onChange={(e) => handleInputChange('giftAmount', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="مثال: 1000000"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formData.giftAmount}
+                    onChange={(e) => handleInputChange('giftAmount', e.target.value)}
+                    className="w-full pl-16 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
+                    placeholder="مثال: 1,000,000"
+                    dir="ltr"
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none select-none">
+                    تومان
+                  </span>
+                </div>
               </div>
             )}
             
@@ -1644,7 +1687,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                     )}
                     {formData.giftDescription && (
                       <p>هدیه: {formData.giftDescription} 
-                        {formData.giftType === 'amount' && formData.giftAmount && ` (مبلغ: ${formData.giftAmount})`}
+                        {formData.giftType === 'amount' && formData.giftAmount && ` (مبلغ: ${formData.giftAmount} تومان)`}
                         {formData.giftType === 'count' && formData.giftCount && ` (تعداد: ${formData.giftCount})`}
                       </p>
                     )}

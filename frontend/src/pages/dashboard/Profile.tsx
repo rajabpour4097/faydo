@@ -1287,7 +1287,7 @@ const DesktopProfile = () => {
       case 'lastName':
         return user?.last_name || ''
       case 'businessName':
-        return user?.name || ''
+        return user?.businessProfile?.name || ''
       case 'email':
         return user?.email || ''
       case 'phone':
@@ -1786,7 +1786,7 @@ const MobileProfile = () => {
       case 'lastName':
         return user?.last_name || ''
       case 'businessName':
-        return user?.businessProfile?.name || user?.name || ''
+        return user?.businessProfile?.name || ''
       case 'email':
         return user?.email || ''
       case 'phone':

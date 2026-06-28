@@ -145,10 +145,10 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
             user.set_password(password)
         user.save()
         
-        # Create business profile
-        # Assign default business name if none provided
+        # Create business profile — name is intentionally left empty so
+        # is_profile_complete() forces the user to fill it in.
         if not validated_data.get('name'):
-            validated_data['name'] = 'کاربر جدید'
+            validated_data['name'] = ''
 
         business_profile = BusinessProfile.objects.create(
             user=user,
@@ -200,11 +200,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         # Prefer business name if business
         if obj.role == 'business':
             bp = getattr(obj, 'businessprofile', None)
-            if bp and bp.name:
-                return bp.name
-            return 'کاربر جدید'
+            if bp and bp.name and bp.name.strip():
+                return bp.name.strip()
+            return ''  # empty → frontend shows "—" and highlights as incomplete
         name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
-        return name if name else 'کاربر جدید'
+        return name
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)

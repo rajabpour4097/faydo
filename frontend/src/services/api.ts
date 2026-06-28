@@ -246,6 +246,7 @@ export interface VipExperience {
   id: number
   vip_experience_category: VipExperienceCategory
   vip_experience_category_id: number
+  description?: string
   score: number
   comments: Comment[]
   created_at: string
@@ -1020,12 +1021,13 @@ class ApiService {
     })
   }
 
-  async savePackageVip(packageId: number, experienceIds: number[]): Promise<ApiResponse<{ message: string }>> {
+  async savePackageVip(
+    packageId: number,
+    experiences: { category_id: number; description: string }[]
+  ): Promise<ApiResponse<{ message: string }>> {
     return this.request<{ message: string }>(`/packages/packages/${packageId}/vip/`, {
       method: 'POST',
-      body: JSON.stringify({
-        experience_ids: experienceIds,
-      }),
+      body: JSON.stringify({ experiences }),
     })
   }
 
@@ -1050,7 +1052,7 @@ class ApiService {
     discount_all: number | null;
     specific_discount: { title: string; percentage: number; description: string } | null;
     elite_gift: { gift: string; amount: number | null; count: number | null } | null;
-    vip_experiences: { id: number; name: string; vip_type: string }[];
+    vip_experiences: { id: number; name: string; vip_type: string; description?: string }[];
   }>> {
     return this.request(`/packages/packages/${packageId}/status/`)
   }

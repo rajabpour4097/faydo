@@ -1030,9 +1030,11 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     giftCount: '',
     giftDescription: '',
     
-    // Step 3: VIP
-    oneStarFeatures: [] as string[],
-    twoStarFeatures: [] as string[],
+    // Step 3: طلایی و VIP
+    goldFeatureId: '',
+    goldDescription: '',
+    vipFeatureId: '',
+    vipDescription: '',
     
     // Step 4: تایید
     duration: '',
@@ -1085,13 +1087,15 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
         
         // بارگذاری VIP
         if (data.vip_experiences && data.vip_experiences.length > 0) {
-          const oneStar = data.vip_experiences.filter(v => v.vip_type === 'VIP').map(v => v.id.toString())
-          const twoStar = data.vip_experiences.filter(v => v.vip_type === 'VIP+').map(v => v.id.toString())
-          
+          const goldExp = data.vip_experiences.find(v => v.vip_type === 'VIP')
+          const vipExp = data.vip_experiences.find(v => v.vip_type === 'VIP+')
+
           setFormData(prev => ({
             ...prev,
-            oneStarFeatures: oneStar,
-            twoStarFeatures: twoStar
+            goldFeatureId: goldExp ? goldExp.id.toString() : '',
+            goldDescription: goldExp?.description || '',
+            vipFeatureId: vipExp ? vipExp.id.toString() : '',
+            vipDescription: vipExp?.description || '',
           }))
         }
       }
@@ -1142,14 +1146,6 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
     })
   }
 
-  const handleCheckboxChange = (name: string, value: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: checked 
-        ? [...prev[name as keyof typeof prev] as string[], value]
-        : (prev[name as keyof typeof prev] as string[]).filter(item => item !== value)
-    }))
-  }
 
   const nextStep = async () => {
     if (currentStep < 4) {
@@ -1194,9 +1190,21 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
           saved = await saveLoyalGift()
           break
         case 3:
-          // اعتبارسنجی VIP
-          if (formData.oneStarFeatures.length === 0) {
-            setError('حداقل یک گزینه از گروه VIP الزامی است.')
+          // اعتبارسنجی طلایی و VIP
+          if (!formData.goldFeatureId) {
+            setError('انتخاب یک گزینه از بخش طلایی الزامی است.')
+            return
+          }
+          if (!formData.goldDescription.trim()) {
+            setError('توضیحات بخش طلایی الزامی است.')
+            return
+          }
+          if (!formData.vipFeatureId) {
+            setError('انتخاب یک گزینه از بخش VIP الزامی است.')
+            return
+          }
+          if (!formData.vipDescription.trim()) {
+            setError('توضیحات بخش VIP الزامی است.')
             return
           }
           saved = await saveVip()
@@ -1323,24 +1331,32 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
   // ذخیره مرحله VIP
   const saveVip = async () => {
     if (!packageId) return false
-    
+
     try {
       setLoading(true)
       setError(null)
-      
-      const allSelectedIds = [...formData.oneStarFeatures, ...formData.twoStarFeatures]
-        .map(id => parseInt(id))
-        .filter(id => !isNaN(id))
-      
-      const response = await apiService.savePackageVip(packageId, allSelectedIds)
-      
+
+      const experiences: { category_id: number; description: string }[] = []
+
+      const goldId = parseInt(formData.goldFeatureId)
+      if (!isNaN(goldId) && formData.goldDescription.trim()) {
+        experiences.push({ category_id: goldId, description: formData.goldDescription.trim() })
+      }
+
+      const vipId = parseInt(formData.vipFeatureId)
+      if (!isNaN(vipId) && formData.vipDescription.trim()) {
+        experiences.push({ category_id: vipId, description: formData.vipDescription.trim() })
+      }
+
+      const response = await apiService.savePackageVip(packageId, experiences)
+
       if (response.error) {
         setError(response.error)
         return false
       }
       return true
     } catch (err) {
-      setError('خطا در ذخیره VIP')
+      setError('خطا در ذخیره گزینه‌های طلایی و VIP')
       return false
     } finally {
       setLoading(false)
@@ -1579,74 +1595,158 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
           </div>
         )
 
-      case 3:
+      case 3: {
+        const goldOptions = vipExperiences ? vipExperiences.filter(exp => exp.vip_type === 'VIP') : []
+        const vipOptions = vipExperiences ? vipExperiences.filter(exp => exp.vip_type === 'VIP+') : []
+        const selectedGold = goldOptions.find(e => e.id.toString() === formData.goldFeatureId)
+        const selectedVip = vipOptions.find(e => e.id.toString() === formData.vipFeatureId)
+
         return (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* راهنمایی مرحله */}
-            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-lg p-3 border border-gray-200`}>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                {getStepDescription(currentStep)}
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-amber-50'} rounded-lg p-3 border ${isDark ? 'border-slate-600' : 'border-amber-200'}`}>
+              <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-amber-800'}`}>
+                برای هر سطح، یک نوع تجربه انتخاب کنید و توضیح دهید که چطور آن را برای مشتری فراهم می‌کنید.
+                هر دو بخش باید تکمیل شوند.
               </p>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">VIP</h3>
-              <div className="space-y-2">
-                {vipExperiences && vipExperiences.length > 0 ? (
-                  vipExperiences.filter(exp => exp.vip_type === 'VIP').map((experience) => (
-                    <label key={experience.id} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.oneStarFeatures.includes(experience.id.toString())}
-                        onChange={(e) => handleCheckboxChange('oneStarFeatures', experience.id.toString(), e.target.checked)}
-                        className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-gray-700">{experience.name}</span>
-                        {experience.description && (
-                          <span className="text-xs text-gray-500">{experience.description}</span>
-                        )}
-                      </div>
-                    </label>
-                  ))
-                ) : (
-                  <p className="text-xs text-gray-500">در حال بارگذاری...</p>
-                )}
-                {vipExperiences && vipExperiences.filter(exp => exp.vip_type === 'VIP').length === 0 && (
-                  <p className="text-xs text-gray-500">هیچ گزینه VIP برای دسته‌بندی کسب و کار شما تعریف نشده است.</p>
-                )}
+
+            {/* بخش طلایی */}
+            <div className={`rounded-lg border-2 p-4 ${isDark ? 'bg-slate-700/50 border-yellow-700/50' : 'bg-yellow-50 border-yellow-200'}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">🥇</span>
+                <h3 className={`text-sm font-semibold ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}>
+                  سطح طلایی
+                </h3>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-yellow-700/40 text-yellow-300' : 'bg-yellow-100 text-yellow-700'}`}>
+                  الزامی
+                </span>
               </div>
+
+              {goldOptions.length === 0 ? (
+                <p className="text-xs text-gray-500">در حال بارگذاری گزینه‌ها...</p>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      نوع تجربه طلایی را انتخاب کنید
+                    </label>
+                    <select
+                      value={formData.goldFeatureId}
+                      onChange={(e) => {
+                        handleInputChange('goldFeatureId', e.target.value)
+                        if (!e.target.value) handleInputChange('goldDescription', '')
+                      }}
+                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 ${
+                        isDark
+                          ? 'bg-slate-600 border-slate-500 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="">انتخاب کنید...</option>
+                      {goldOptions.map((exp) => (
+                        <option key={exp.id} value={exp.id.toString()}>
+                          {exp.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {formData.goldFeatureId && (
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                        توضیح خودتان
+                      </label>
+                      <textarea
+                        value={formData.goldDescription}
+                        onChange={(e) => handleInputChange('goldDescription', e.target.value)}
+                        rows={3}
+                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none ${
+                          isDark
+                            ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                        }`}
+                        placeholder={
+                          selectedGold?.description
+                            ? `مثال: ${selectedGold.description}`
+                            : 'توضیح دهید که چطور این تجربه را برای مشتریان طلایی فراهم می‌کنید.'
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">VIP+</h3>
-              <div className="space-y-2">
-                {vipExperiences && vipExperiences.length > 0 ? (
-                  vipExperiences.filter(exp => exp.vip_type === 'VIP+').map((experience) => (
-                    <label key={experience.id} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.twoStarFeatures.includes(experience.id.toString())}
-                        onChange={(e) => handleCheckboxChange('twoStarFeatures', experience.id.toString(), e.target.checked)}
-                        className="ml-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-gray-700">{experience.name}</span>
-                        {experience.description && (
-                          <span className="text-xs text-gray-500">{experience.description}</span>
-                        )}
-                      </div>
-                    </label>
-                  ))
-                ) : (
-                  <p className="text-xs text-gray-500">در حال بارگذاری...</p>
-                )}
-                {vipExperiences && vipExperiences.filter(exp => exp.vip_type === 'VIP+').length === 0 && (
-                  <p className="text-xs text-gray-500">هیچ گزینه VIP+ برای دسته‌بندی کسب و کار شما تعریف نشده است.</p>
-                )}
+
+            {/* بخش VIP */}
+            <div className={`rounded-lg border-2 p-4 ${isDark ? 'bg-slate-700/50 border-purple-700/50' : 'bg-purple-50 border-purple-200'}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">💎</span>
+                <h3 className={`text-sm font-semibold ${isDark ? 'text-purple-300' : 'text-purple-800'}`}>
+                  سطح VIP
+                </h3>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-purple-700/40 text-purple-300' : 'bg-purple-100 text-purple-700'}`}>
+                  الزامی
+                </span>
               </div>
+
+              {vipOptions.length === 0 ? (
+                <p className="text-xs text-gray-500">در حال بارگذاری گزینه‌ها...</p>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                      نوع تجربه VIP را انتخاب کنید
+                    </label>
+                    <select
+                      value={formData.vipFeatureId}
+                      onChange={(e) => {
+                        handleInputChange('vipFeatureId', e.target.value)
+                        if (!e.target.value) handleInputChange('vipDescription', '')
+                      }}
+                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 ${
+                        isDark
+                          ? 'bg-slate-600 border-slate-500 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="">انتخاب کنید...</option>
+                      {vipOptions.map((exp) => (
+                        <option key={exp.id} value={exp.id.toString()}>
+                          {exp.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {formData.vipFeatureId && (
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                        توضیح خودتان
+                      </label>
+                      <textarea
+                        value={formData.vipDescription}
+                        onChange={(e) => handleInputChange('vipDescription', e.target.value)}
+                        rows={3}
+                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none ${
+                          isDark
+                            ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                        }`}
+                        placeholder={
+                          selectedVip?.description
+                            ? `مثال: ${selectedVip.description}`
+                            : 'توضیح دهید که چطور این تجربه انحصاری را برای مشتریان VIP فراهم می‌کنید.'
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )
+      }
 
       case 4:
         return (
@@ -1691,17 +1791,21 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                         {formData.giftType === 'count' && formData.giftCount && ` (تعداد: ${formData.giftCount})`}
                       </p>
                     )}
-                    {formData.oneStarFeatures.length > 0 && (
-                      <p>ویژگی‌های VIP: {formData.oneStarFeatures.map(id => {
-                        const exp = vipExperiences?.find(e => e.id.toString() === id)
-                        return exp ? exp.name : id
-                      }).join(', ')}</p>
+                    {formData.goldFeatureId && (
+                      <div>
+                        <p className="font-medium">طلایی: {vipExperiences?.find(e => e.id.toString() === formData.goldFeatureId)?.name}</p>
+                        {formData.goldDescription && (
+                          <p className="text-gray-500 mr-3">↳ {formData.goldDescription}</p>
+                        )}
+                      </div>
                     )}
-                    {formData.twoStarFeatures.length > 0 && (
-                      <p>ویژگی‌های VIP+: {formData.twoStarFeatures.map(id => {
-                        const exp = vipExperiences?.find(e => e.id.toString() === id)
-                        return exp ? exp.name : id
-                      }).join(', ')}</p>
+                    {formData.vipFeatureId && (
+                      <div>
+                        <p className="font-medium">VIP: {vipExperiences?.find(e => e.id.toString() === formData.vipFeatureId)?.name}</p>
+                        {formData.vipDescription && (
+                          <p className="text-gray-500 mr-3">↳ {formData.vipDescription}</p>
+                        )}
+                      </div>
                     )}
                     {formData.duration && (
                       <p>مدت زمان: {durationOptions.find(opt => opt.value === formData.duration)?.label}</p>

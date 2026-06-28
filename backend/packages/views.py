@@ -362,27 +362,55 @@ class PackageViewSet(viewsets.ModelViewSet):
     def vip(self, request, pk=None):
         """
         Save VIP experiences for step 3.
-        Payload example: {"experience_ids": [1,2,3]}
-        Must include at least one experience with vip_type = 'VIP'.
+        New payload format:
+        {
+          "experiences": [
+            {"category_id": <int>, "description": "<str>"},
+            {"category_id": <int>, "description": "<str>"}
+          ]
+        }
+        Exactly one entry for vip_type='VIP' (طلایی) and one for vip_type='VIP+' (VIP) are required.
         """
         package = self.get_object()
-        ids = request.data.get('experience_ids', [])
-        if not isinstance(ids, list) or len(ids) == 0:
-            return Response({"error": "حداقل یک گزینه VIP باید انتخاب شود."}, status=status.HTTP_400_BAD_REQUEST)
+        experiences_data = request.data.get('experiences', [])
 
-        categories = VipExperienceCategory.objects.filter(id__in=ids)
-        if not categories.filter(vip_type='VIP').exists():
-            return Response({"error": "حداقل یک گزینه از گروه VIP الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(experiences_data, list) or len(experiences_data) == 0:
+            return Response({"error": "هر دو بخش طلایی و VIP باید تکمیل شوند."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate entries
+        for entry in experiences_data:
+            if not entry.get('category_id'):
+                return Response({"error": "شناسه دسته‌بندی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+            if not entry.get('description', '').strip():
+                return Response({"error": "توضیحات هر بخش الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        category_ids = [e['category_id'] for e in experiences_data]
+        categories_map = {c.id: c for c in VipExperienceCategory.objects.filter(id__in=category_ids)}
+
+        # Validate: must have exactly one Gold (VIP) and one VIP (VIP+)
+        has_gold = any(categories_map.get(e['category_id']) and categories_map[e['category_id']].vip_type == 'VIP' for e in experiences_data)
+        has_vip = any(categories_map.get(e['category_id']) and categories_map[e['category_id']].vip_type == 'VIP+' for e in experiences_data)
+
+        if not has_gold:
+            return Response({"error": "انتخاب یک گزینه از بخش طلایی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+        if not has_vip:
+            return Response({"error": "انتخاب یک گزینه از بخش VIP الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Replace selections
         package.experiences.all().delete()
-        for c in categories:
-            VipExperience.objects.create(package=package, vip_experience_category=c)
+        for entry in experiences_data:
+            cat = categories_map.get(entry['category_id'])
+            if cat:
+                VipExperience.objects.create(
+                    package=package,
+                    vip_experience_category=cat,
+                    description=entry.get('description', '').strip()
+                )
 
         # بررسی کامل بودن پکیج
         package.save()
 
-        return Response({"message": "گزینه‌های VIP ذخیره شد."})
+        return Response({"message": "گزینه‌های طلایی و VIP ذخیره شدند."})
 
     @action(detail=True, methods=['post'])
     def finalize(self, request, pk=None):
@@ -456,7 +484,8 @@ class PackageViewSet(viewsets.ModelViewSet):
                 {
                     "id": exp.vip_experience_category.id,
                     "name": exp.vip_experience_category.name,
-                    "vip_type": exp.vip_experience_category.vip_type
+                    "vip_type": exp.vip_experience_category.vip_type,
+                    "description": exp.description or ""
                 }
                 for exp in package.experiences.all()
             ]

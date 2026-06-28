@@ -73,10 +73,10 @@ class VipExperienceSerializer(serializers.ModelSerializer):
     vip_experience_category = VipExperienceCategorySerializer(read_only=True)
     vip_experience_category_id = serializers.IntegerField(write_only=True)
     comments = CommentSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = VipExperience
-        fields = ['id', 'vip_experience_category', 'vip_experience_category_id', 'score', 'comments', 'created_at', 'modified_at']
+        fields = ['id', 'vip_experience_category', 'vip_experience_category_id', 'description', 'score', 'comments', 'created_at', 'modified_at']
         read_only_fields = ['id', 'created_at', 'modified_at']
 
 

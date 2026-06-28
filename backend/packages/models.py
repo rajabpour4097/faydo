@@ -159,10 +159,12 @@ class Package(BaseModel):
         """
         has_discount_all = hasattr(self, 'discount_all')
         has_elite_gift = hasattr(self, 'elite_gift')
-        has_vip_experiences = self.experiences.exists()
+        # هر دو سطح طلایی (VIP) و VIP (VIP+) باید وجود داشته باشند
+        has_gold = self.experiences.filter(vip_experience_category__vip_type='VIP').exists()
+        has_vip = self.experiences.filter(vip_experience_category__vip_type='VIP+').exists()
         has_dates = bool(self.start_date and self.end_date)
-        
-        return bool(has_discount_all and has_elite_gift and has_vip_experiences and has_dates)
+
+        return bool(has_discount_all and has_elite_gift and has_gold and has_vip and has_dates)
     
     def get_active_package_for_business(self):
         """
@@ -520,6 +522,7 @@ class VipExperienceCategory(BaseModel):
 class VipExperience(BaseModel):
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name="experiences")
     vip_experience_category = models.ForeignKey(VipExperienceCategory, on_delete=models.CASCADE)
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات کسب‌وکار')
     score = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         default=1

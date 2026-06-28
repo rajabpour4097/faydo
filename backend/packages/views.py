@@ -612,32 +612,34 @@ class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        
+        base_qs = VipExperienceCategory.objects.select_related('category', 'category__club')
+
         if user.role == 'business':
             try:
-                business_profile = user.businessprofile
-                business_category = business_profile.category
-                if business_category:
-                    return VipExperienceCategory.objects.select_related(
-                        'category', 'category__club'
-                    ).filter(category=business_category).order_by('id')
-                else:
-                    return VipExperienceCategory.objects.none()
+                business_category = user.businessprofile.category
             except BusinessProfile.DoesNotExist:
-                return VipExperienceCategory.objects.none()
-        
+                business_category = None
+
+            if business_category:
+                # Return category-specific items first; fall back to universal ones
+                specific = base_qs.filter(category=business_category)
+                if specific.exists():
+                    return specific.order_by('vip_type', 'id')
+            # Universal entries (category=NULL) visible to all businesses
+            return base_qs.filter(category__isnull=True).order_by('vip_type', 'id')
+
         elif user.role == 'customer':
             club_id = self.request.query_params.get('club_id')
-            qs = VipExperienceCategory.objects.select_related('category', 'category__club')
+            qs = base_qs.filter(category__isnull=True)
             if club_id:
-                return qs.filter(category__club_id=club_id).order_by('vip_type', 'id')
+                specific = base_qs.filter(category__club_id=club_id)
+                if specific.exists():
+                    return specific.order_by('vip_type', 'id')
             return qs.order_by('vip_type', 'id')
-        
+
         elif user.role in ['admin', 'it_manager', 'project_manager']:
-            return VipExperienceCategory.objects.select_related(
-                'category', 'category__club'
-            ).all().order_by('id')
-        
+            return base_qs.all().order_by('vip_type', 'id')
+
         else:
             return VipExperienceCategory.objects.none()
 

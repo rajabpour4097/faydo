@@ -507,7 +507,10 @@ class VipExperienceCategory(BaseModel):
         ("VIP+", "VIP+"),
     ]
     vip_type = models.CharField(max_length=5, choices=STAR_CHOICES)
-    category = models.ForeignKey('accounts.ServiceCategory', on_delete=models.CASCADE, related_name="category")#category for business
+    category = models.ForeignKey(
+        'accounts.ServiceCategory', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="category"
+    )
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
 

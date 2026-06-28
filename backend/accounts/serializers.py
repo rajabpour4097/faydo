@@ -356,11 +356,17 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
     
     def get_average_rating(self, obj):
         """میانگین امتیازات کسب‌وکار"""
-        return obj.get_average_rating()
-    
+        try:
+            return obj.get_average_rating()
+        except Exception:
+            return 0.0
+
     def get_total_comments(self, obj):
         """تعداد کل نظرات کسب‌وکار"""
-        return obj.get_total_comments_count()
+        try:
+            return obj.get_total_comments_count()
+        except Exception:
+            return 0
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)

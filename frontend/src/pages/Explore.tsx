@@ -941,100 +941,106 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
       onClick={() => navigate(`/dashboard/business/${pkg.id}`)}
     >
-      {/* ── Scrollable image strip ── */}
-      <div className="relative w-full overflow-hidden" style={{ height: 210 }}>
-        {images.length > 0 ? (
-          <>
-            {/* Images rail */}
-            <div
-              className="flex h-full transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(-${activeImg * 100}%)`, direction: 'ltr' }}
-            >
-              {images.map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={pkg.business_name}
-                  loading="lazy"
-                  className="w-full h-full object-cover shrink-0"
-                  style={{ minWidth: '100%' }}
-                />
-              ))}
-            </div>
-
-            {/* Dot indicators */}
-            {images.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10"
-                   onClick={(e) => e.stopPropagation()}>
-                {images.map((_, i) => (
-                  <button
+      {/* ── Hero image + overlapping logo ── */}
+      <div className="relative">
+        <div className="relative w-full overflow-hidden" style={{ height: 210 }}>
+          {images.length > 0 ? (
+            <>
+              {/* Images rail */}
+              <div
+                className="flex h-full transition-transform duration-300 ease-out"
+                style={{ transform: `translateX(-${activeImg * 100}%)`, direction: 'ltr' }}
+              >
+                {images.map((src, i) => (
+                  <img
                     key={i}
-                    onClick={(e) => { e.stopPropagation(); setActiveImg(i) }}
-                    className={`rounded-full transition-all ${
-                      i === activeImg
-                        ? 'w-4 h-2 bg-white'
-                        : 'w-2 h-2 bg-white/60'
-                    }`}
+                    src={src}
+                    alt={pkg.business_name}
+                    loading="lazy"
+                    className="w-full h-full object-cover shrink-0"
+                    style={{ minWidth: '100%' }}
                   />
                 ))}
               </div>
-            )}
 
-            {/* Swipe areas */}
-            {images.length > 1 && (
-              <>
-                <div className="absolute inset-y-0 left-0 w-1/3 z-10"
-                  onClick={(e) => { e.stopPropagation(); setActiveImg(p => Math.max(0, p - 1)) }} />
-                <div className="absolute inset-y-0 right-0 w-1/3 z-10"
-                  onClick={(e) => { e.stopPropagation(); setActiveImg(p => Math.min(images.length - 1, p + 1)) }} />
-              </>
-            )}
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center">
-            <svg className="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+              {/* Dot indicators */}
+              {images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10"
+                     onClick={(e) => e.stopPropagation()}>
+                  {images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => { e.stopPropagation(); setActiveImg(i) }}
+                      className={`rounded-full transition-all ${
+                        i === activeImg
+                          ? 'w-4 h-2 bg-white'
+                          : 'w-2 h-2 bg-white/60'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Swipe areas */}
+              {images.length > 1 && (
+                <>
+                  <div className="absolute inset-y-0 left-0 w-1/3 z-10"
+                    onClick={(e) => { e.stopPropagation(); setActiveImg(p => Math.max(0, p - 1)) }} />
+                  <div className="absolute inset-y-0 right-0 w-1/3 z-10"
+                    onClick={(e) => { e.stopPropagation(); setActiveImg(p => Math.min(images.length - 1, p + 1)) }} />
+                </>
+              )}
+            </>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center">
+              <svg className="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+          )}
+
+          {/* VIP badge — top left */}
+          <div className="absolute top-3 left-3 z-10">
+            <span className={`px-2.5 py-1 rounded-full text-xs font-bold text-white shadow ${
+              vipGold ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                      : 'bg-gradient-to-r from-violet-500 to-purple-600'
+            }`}>{vipLabel}</span>
           </div>
-        )}
 
-        {/* VIP badge — top left */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className={`px-2.5 py-1 rounded-full text-xs font-bold text-white shadow ${
-            vipGold ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
-                    : 'bg-gradient-to-r from-violet-500 to-purple-600'
-          }`}>{vipLabel}</span>
+          {/* Discount badge — top right */}
+          {typeof pkg.discount_percentage === 'number' && (
+            <div className="absolute top-3 right-3 z-10">
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-500 text-white shadow">
+                {pkg.discount_percentage}٪ تخفیف
+              </span>
+            </div>
+          )}
+
+          {/* Bottom gradient */}
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
         </div>
 
-        {/* Discount badge — top right */}
-        {typeof pkg.discount_percentage === 'number' && (
-          <div className="absolute top-3 right-3 z-10">
-            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-500 text-white shadow">
-              {pkg.discount_percentage}٪ تخفیف
-            </span>
-          </div>
-        )}
-
-        {/* Bottom gradient */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-
-        {/* Business logo avatar — bottom right, overlapping card */}
-        <div className="absolute -bottom-5 right-4 z-10">
-          <div className="w-12 h-12 rounded-full border-[3px] border-white dark:border-slate-800
-                          overflow-hidden shadow-lg bg-gradient-to-br from-blue-400 to-indigo-500">
-            {logoSrc && !logoErrored ? (
-              <img
-                src={logoSrc}
-                alt=""
-                className="w-full h-full object-contain bg-white p-0.5"
-                onError={() => setLogoErrored(true)}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-white text-lg font-bold">
-                {pkg.business_name?.charAt(0) || '؟'}
-              </div>
-            )}
+        {/* Logo avatar — outside overflow-hidden so the circle stays perfect */}
+        <div
+          className="absolute bottom-0 right-4 z-20 translate-y-1/2 pointer-events-none"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="size-14 shrink-0 rounded-full p-[3px] bg-white dark:bg-slate-800 shadow-lg">
+            <div className="size-full rounded-full overflow-hidden bg-white flex items-center justify-center">
+              {logoSrc && !logoErrored ? (
+                <img
+                  src={logoSrc}
+                  alt=""
+                  className="size-full object-cover"
+                  onError={() => setLogoErrored(true)}
+                />
+              ) : (
+                <div className="size-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-indigo-500 text-white text-lg font-bold">
+                  {pkg.business_name?.charAt(0) || '؟'}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

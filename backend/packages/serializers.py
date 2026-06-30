@@ -314,7 +314,7 @@ class PackageListSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             images = list(
                 business_profile.gallery_images
-                .order_by('-is_featured', 'id')[:5]
+                .order_by('-is_featured', 'order', '-created_at')[:5]
             )
             result = []
             for img in images:

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
@@ -24,14 +24,29 @@ interface FilterState {
   cities: number[]
 }
 
+/** تصاویر کارت: عکس اصلی (لوگو/شاخص) اول، سپس بقیه آلبوم بدون تکرار */
+function buildCardImages(pkg: Package): string[] {
+  const urls: string[] = []
+  const seen = new Set<string>()
+  const add = (raw: string | null | undefined) => {
+    const full = getFullImageUrl(raw)
+    if (full && !seen.has(full)) {
+      seen.add(full)
+      urls.push(full)
+    }
+  }
+  add(pkg.business_image)
+  for (const src of pkg.gallery_images || []) add(src)
+  if (urls.length === 0) add(pkg.business_logo)
+  return urls
+}
+
 export const Explore: React.FC<ExploreProps> = () => {
   const { user } = useAuth()
   const { isDark } = useTheme()
   const navigate = useNavigate()
   const [packages, setPackages] = useState<Package[]>([])
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
-  const [availableCities, setAvailableCities] = useState<{id: number, name: string}[]>([])
-  const [availableCategories, setAvailableCategories] = useState<{id: number, name: string}[]>([])
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
   const [showMap, setShowMap] = useState(false)
@@ -47,14 +62,149 @@ export const Explore: React.FC<ExploreProps> = () => {
     cities: []
   })
 
+  const extractCitiesFromPackages = useCallback((pkgs: Package[]) => {
+    const cityMap = new Map<number, { id: number; name: string }>()
+    pkgs.forEach(pkg => {
+      if (pkg.city?.id && pkg.city?.name) {
+        cityMap.set(pkg.city.id, { id: pkg.city.id, name: pkg.city.name })
+      }
+    })
+    return Array.from(cityMap.values()).sort((a, b) => {
+      try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
+    })
+  }, [])
+
+  const extractCategoriesFromPackages = useCallback((pkgs: Package[]) => {
+    const categoryMap = new Map<number, { id: number; name: string }>()
+    pkgs.forEach(pkg => {
+      if (pkg.business_category?.id && pkg.business_category?.name) {
+        categoryMap.set(pkg.business_category.id, {
+          id: pkg.business_category.id,
+          name: pkg.business_category.name,
+        })
+      }
+    })
+    return Array.from(categoryMap.values()).sort((a, b) => {
+      try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
+    })
+  }, [])
+
+  const availableCities = useMemo(
+    () => extractCitiesFromPackages(packages),
+    [packages, extractCitiesFromPackages]
+  )
+  const availableCategories = useMemo(
+    () => extractCategoriesFromPackages(packages),
+    [packages, extractCategoriesFromPackages]
+  )
+
+  const loadActivePackages = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await apiService.getPackages()
+
+      let dataArray: Package[] = []
+      if (Array.isArray(response.data)) {
+        dataArray = response.data
+      } else if (response.data && Array.isArray((response.data as { results?: Package[] }).results)) {
+        dataArray = (response.data as { results: Package[] }).results
+      } else if (response.error) {
+        setError('خطا در دریافت پکیج‌ها')
+        return
+      }
+
+      const activePackages = dataArray.filter(pkg =>
+        pkg.is_active && pkg.status === 'approved' && pkg.is_complete
+      )
+      setPackages(activePackages)
+      setError(null)
+    } catch (err) {
+      console.error('Error loading packages:', err)
+      setError('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const applyFilters = useCallback(() => {
+    let filtered = [...packages]
+
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase()
+      filtered = filtered.filter(pkg =>
+        pkg.business_name?.toLowerCase().includes(searchTerm) ||
+        pkg.elite_gift_title?.toLowerCase().includes(searchTerm)
+      )
+    }
+
+    if (filters.categories.length > 0) {
+      filtered = filtered.filter(pkg =>
+        pkg.business_category && filters.categories.includes(pkg.business_category.id)
+      )
+    }
+
+    if (filters.cities.length > 0) {
+      filtered = filtered.filter(pkg =>
+        pkg.city && filters.cities.includes(pkg.city.id)
+      )
+    }
+
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case 'discount_high':
+          filtered.sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0))
+          break
+        case 'discount_low':
+          filtered.sort((a, b) => (a.discount_percentage || 0) - (b.discount_percentage || 0))
+          break
+        case 'newest':
+          filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          break
+      }
+    }
+
+    setFilteredPackages(filtered)
+  }, [packages, filters])
+
   // Check if user is customer
   useEffect(() => {
     if (user && user.type !== 'customer') {
-      // Redirect non-customer users to dashboard
       navigate('/dashboard')
-      return
     }
   }, [user, navigate])
+
+  useEffect(() => {
+    if (user?.type === 'customer') {
+      loadActivePackages()
+    }
+  }, [user, loadActivePackages])
+
+  useEffect(() => {
+    applyFilters()
+  }, [applyFilters])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.city-dropdown')) {
+        setIsCityDropdownOpen(false)
+      }
+      if (!target.closest('.category-dropdown')) {
+        setIsCategoryDropdownOpen(false)
+      }
+    }
+
+    if (isCityDropdownOpen || isCategoryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isCityDropdownOpen, isCategoryDropdownOpen])
 
   // Show loading if user is not loaded yet
   if (!user) {
@@ -84,162 +234,6 @@ export const Explore: React.FC<ExploreProps> = () => {
         </div>
       </MobileDashboardLayout>
     )
-  }
-
-  useEffect(() => {
-    console.log('🔍 Explore component mounted')
-    console.log('🔍 User from localStorage:', localStorage.getItem('auth_user'))
-    console.log('🔍 Access token:', localStorage.getItem('access_token'))
-    loadActivePackages()
-  }, [])
-
-  useEffect(() => {
-    applyFilters()
-  }, [packages, filters])
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest('.city-dropdown')) {
-        setIsCityDropdownOpen(false)
-      }
-      if (!target.closest('.category-dropdown')) {
-        setIsCategoryDropdownOpen(false)
-      }
-    }
-
-    if (isCityDropdownOpen || isCategoryDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isCityDropdownOpen, isCategoryDropdownOpen])
-
-  // Extract unique cities from packages
-  const extractCitiesFromPackages = (packages: Package[]) => {
-    const cityMap = new Map<number, {id: number, name: string}>()
-    
-    packages.forEach(pkg => {
-      if (pkg.city && pkg.city.id && pkg.city.name) {
-        cityMap.set(pkg.city.id, {
-          id: pkg.city.id,
-          name: pkg.city.name
-        })
-      }
-    })
-    
-    return Array.from(cityMap.values()).sort((a, b) => {
-      try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
-    })
-  }
-
-  // Extract unique categories from packages
-  const extractCategoriesFromPackages = (packages: Package[]) => {
-    const categoryMap = new Map<number, {id: number, name: string}>()
-    
-    packages.forEach(pkg => {
-      if (pkg.business_category && pkg.business_category.id && pkg.business_category.name) {
-        categoryMap.set(pkg.business_category.id, {
-          id: pkg.business_category.id,
-          name: pkg.business_category.name
-        })
-      }
-    })
-    
-    return Array.from(categoryMap.values()).sort((a, b) => {
-      try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
-    })
-  }
-
-  const loadActivePackages = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const response = await apiService.getPackages()
-
-      // handle both array and paginated response
-      let dataArray: Package[] = []
-      if (Array.isArray(response.data)) {
-        dataArray = response.data
-      } else if (response.data && Array.isArray((response.data as any).results)) {
-        dataArray = (response.data as any).results
-      } else if (response.error) {
-        setError('خطا در دریافت پکیج‌ها')
-        return
-      }
-
-      const activePackages = dataArray.filter(pkg =>
-        pkg.is_active && pkg.status === 'approved' && pkg.is_complete
-      )
-      setPackages(activePackages)
-
-      // These are independent — never let them block the main data or trigger the error banner
-      try { setAvailableCities(extractCitiesFromPackages(activePackages)) } catch { /* ignore */ }
-      try { setAvailableCategories(extractCategoriesFromPackages(activePackages)) } catch { /* ignore */ }
-
-      // Packages loaded successfully — clear any stale error
-      setError(null)
-    } catch (err) {
-      console.error('Error loading packages:', err)
-      // Only show error if packages themselves failed (not filter extraction)
-      setError('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // const loadCategories = async () => {
-  //   // Function temporarily disabled
-  // }
-
-  const applyFilters = () => {
-    console.log('🔍 Applying filters...', { packages: packages.length, filters })
-    let filtered = [...packages]
-
-    // فیلتر بر اساس جستجو
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase()
-      filtered = filtered.filter(pkg => 
-        pkg.business_name?.toLowerCase().includes(searchTerm) ||
-        pkg.elite_gift_title?.toLowerCase().includes(searchTerm)
-      )
-    }
-
-    // فیلتر بر اساس دسته‌بندی
-    if (filters.categories.length > 0) {
-      filtered = filtered.filter(pkg => 
-        pkg.business_category && filters.categories.includes(pkg.business_category.id)
-      )
-    }
-
-    // فیلتر بر اساس شهر
-    if (filters.cities.length > 0) {
-      filtered = filtered.filter(pkg => 
-        pkg.city && filters.cities.includes(pkg.city.id)
-      )
-    }
-
-    // مرتب‌سازی
-    if (filters.sortBy) {
-      switch (filters.sortBy) {
-        case 'discount_high':
-          filtered.sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0))
-          break
-        case 'discount_low':
-          filtered.sort((a, b) => (a.discount_percentage || 0) - (b.discount_percentage || 0))
-          break
-        case 'newest':
-          filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          break
-      }
-    }
-
-    console.log('✅ Filtered packages:', filtered.length)
-    setFilteredPackages(filtered)
   }
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
@@ -936,15 +930,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
   const [activeImg, setActiveImg] = useState(0)
   const navigate = useNavigate()
 
-  // Build image list: gallery first, fall back to business_image / business_logo
-  const images: string[] = (() => {
-    const gallery = (pkg.gallery_images || []).filter(Boolean)
-    if (gallery.length > 0) return gallery
-    const single = getFullImageUrl(pkg.business_image || pkg.business_logo)
-    return single ? [single] : []
-  })()
-
-  // Logo/avatar: only the business_logo field (no gallery fallback)
+  const images = buildCardImages(pkg)
   const logoSrc = getFullImageUrl(pkg.business_logo)
 
   const vipLabel = (pkg.has_vip_plus || (!pkg.has_vip && !pkg.has_vip_plus)) ? 'VIP+' : 'طلایی'
@@ -962,7 +948,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
             {/* Images rail */}
             <div
               className="flex h-full transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(${activeImg * 100}%)`, direction: 'ltr' }}
+              style={{ transform: `translateX(-${activeImg * 100}%)`, direction: 'ltr' }}
             >
               {images.map((src, i) => (
                 <img
@@ -1073,12 +1059,12 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
               {pkg.business_category.name}
             </span>
           )}
-          {(pkg as any)?.city?.name && (
+          {(pkg.city?.name) && (
             <span className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-0.5">
               <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M10 2a6 6 0 00-6 6c0 4.418 6 10 6 10s6-5.582 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z" />
               </svg>
-              {(pkg as any).city.name}
+              {pkg.city.name}
             </span>
           )}
         </div>

@@ -927,10 +927,20 @@ const DesktopPackageCard: React.FC<DesktopPackageCardProps> = ({ package: pkg })
 interface PackageCardProps { package: Package }
 
 const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
-  const [imgError, setImgError] = useState(false)
+  const [activeImg, setActiveImg] = useState(0)
   const navigate = useNavigate()
 
-  const imgSrc = getFullImageUrl(pkg.business_image || pkg.business_logo)
+  // Build image list: gallery first, fall back to business_image / business_logo
+  const images: string[] = (() => {
+    const gallery = (pkg.gallery_images || []).filter(Boolean)
+    if (gallery.length > 0) return gallery
+    const single = getFullImageUrl(pkg.business_image || pkg.business_logo)
+    return single ? [single] : []
+  })()
+
+  // Logo/avatar: only the business_logo field (no gallery fallback)
+  const logoSrc = getFullImageUrl(pkg.business_logo)
+
   const vipLabel = (pkg.has_vip_plus || (!pkg.has_vip && !pkg.has_vip_plus)) ? 'VIP+' : 'طلایی'
   const vipGold = vipLabel === 'VIP+'
 
@@ -939,19 +949,58 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
       onClick={() => navigate(`/dashboard/business/${pkg.id}`)}
     >
-      {/* ── Hero image ── */}
-      <div className="relative w-full" style={{ height: 200 }}>
-        {!imgError && imgSrc ? (
-          <img
-            src={imgSrc}
-            alt={pkg.business_name}
-            loading="lazy"
-            onError={() => setImgError(true)}
-            className="w-full h-full object-cover"
-          />
+      {/* ── Scrollable image strip ── */}
+      <div className="relative w-full overflow-hidden" style={{ height: 210 }}>
+        {images.length > 0 ? (
+          <>
+            {/* Images rail */}
+            <div
+              className="flex h-full transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(${activeImg * 100}%)`, direction: 'ltr' }}
+            >
+              {images.map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt={pkg.business_name}
+                  loading="lazy"
+                  className="w-full h-full object-cover shrink-0"
+                  style={{ minWidth: '100%' }}
+                />
+              ))}
+            </div>
+
+            {/* Dot indicators */}
+            {images.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10"
+                   onClick={(e) => e.stopPropagation()}>
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => { e.stopPropagation(); setActiveImg(i) }}
+                    className={`rounded-full transition-all ${
+                      i === activeImg
+                        ? 'w-4 h-2 bg-white'
+                        : 'w-2 h-2 bg-white/60'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Swipe areas */}
+            {images.length > 1 && (
+              <>
+                <div className="absolute inset-y-0 left-0 w-1/3 z-10"
+                  onClick={(e) => { e.stopPropagation(); setActiveImg(p => Math.max(0, p - 1)) }} />
+                <div className="absolute inset-y-0 right-0 w-1/3 z-10"
+                  onClick={(e) => { e.stopPropagation(); setActiveImg(p => Math.min(images.length - 1, p + 1)) }} />
+              </>
+            )}
+          </>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center">
-            <svg className="w-16 h-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
@@ -959,36 +1008,33 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
         )}
 
         {/* VIP badge — top left */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 z-10">
           <span className={`px-2.5 py-1 rounded-full text-xs font-bold text-white shadow ${
             vipGold ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
                     : 'bg-gradient-to-r from-violet-500 to-purple-600'
-          }`}>
-            {vipLabel}
-          </span>
+          }`}>{vipLabel}</span>
         </div>
 
         {/* Discount badge — top right */}
         {typeof pkg.discount_percentage === 'number' && (
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-10">
             <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-500 text-white shadow">
               {pkg.discount_percentage}٪ تخفیف
             </span>
           </div>
         )}
 
-        {/* gradient overlay at bottom so avatar sits nicely */}
-        <div className="absolute bottom-0 left-0 right-0 h-20
-                        bg-gradient-to-t from-black/50 to-transparent" />
+        {/* Bottom gradient */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
 
-        {/* Business logo avatar — bottom right, overlapping */}
-        <div className="absolute -bottom-6 right-4">
-          <div className="w-14 h-14 rounded-full border-[3px] border-white dark:border-slate-800
-                          overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 shadow-lg">
-            {!imgError && imgSrc ? (
-              <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+        {/* Business logo avatar — bottom right, overlapping card */}
+        <div className="absolute -bottom-5 right-4 z-10">
+          <div className="w-12 h-12 rounded-full border-[3px] border-white dark:border-slate-800
+                          overflow-hidden shadow-lg bg-gradient-to-br from-blue-400 to-indigo-500">
+            {logoSrc ? (
+              <img src={logoSrc} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-white text-xl font-bold">
+              <div className="w-full h-full flex items-center justify-center text-white text-lg font-bold">
                 {pkg.business_name?.charAt(0) || '؟'}
               </div>
             )}
@@ -996,9 +1042,8 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
         </div>
       </div>
 
-      {/* ── Info area ── */}
-      <div className="pt-8 px-4 pb-4">
-        {/* name + rating row */}
+      {/* ── Info ── */}
+      <div className="pt-7 px-4 pb-4">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">
             {pkg.business_name}
@@ -1010,13 +1055,12 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
             <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
               {pkg.average_rating ?? '—'}
             </span>
-            {pkg.total_comments != null && pkg.total_comments > 0 && (
+            {!!pkg.total_comments && (
               <span className="text-xs text-gray-400">({pkg.total_comments} نظر)</span>
             )}
           </div>
         </div>
 
-        {/* category + city */}
         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
           {pkg.business_category?.name && (
             <span className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-lg">
@@ -1033,11 +1077,10 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
           )}
         </div>
 
-        {/* Elite gift */}
         {pkg.elite_gift_gift && (
           <div className="mt-2.5 flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20
                           rounded-xl px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
-            <span className="text-base">🎁</span>
+            <span>🎁</span>
             <span className="line-clamp-1">
               {pkg.elite_gift_gift}
               {typeof pkg.elite_gift_count === 'number' && ` • ${pkg.elite_gift_count} خرید`}
@@ -1047,7 +1090,6 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
           </div>
         )}
 
-        {/* Days remaining */}
         {pkg.days_remaining != null && pkg.days_remaining > 0 && (
           <div className="mt-2 text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

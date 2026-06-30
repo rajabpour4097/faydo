@@ -201,6 +201,9 @@ export interface Package {
   // فیلدهای کسب‌وکار
   business_logo?: string
   business_image?: string
+  gallery_images?: string[]
+  business_location_latitude?: number
+  business_location_longitude?: number
   business_category?: {
     id: number
     name: string

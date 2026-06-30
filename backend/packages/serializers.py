@@ -122,7 +122,10 @@ class PackageListSerializer(serializers.ModelSerializer):
     # موقعیت مکانی کسب‌وکار
     business_location_latitude = serializers.SerializerMethodField()
     business_location_longitude = serializers.SerializerMethodField()
-    
+
+    # تصاویر گالری (حداکثر ۵ عکس)
+    gallery_images = serializers.SerializerMethodField()
+
     class Meta:
         model = Package
         fields = [
@@ -134,6 +137,7 @@ class PackageListSerializer(serializers.ModelSerializer):
             'vip_experiences_count', 'has_vip', 'has_vip_plus', 'days_remaining',
             'average_rating', 'total_comments',
             'business_location_latitude', 'business_location_longitude',
+            'gallery_images',
         ]
         read_only_fields = ['id', 'created_at', 'modified_at']
     
@@ -300,6 +304,29 @@ class PackageListSerializer(serializers.ModelSerializer):
             return float(lng) if lng is not None else None
         except Exception:
             return None
+
+    def get_gallery_images(self, obj):
+        """حداکثر ۵ عکس از گالری کسب‌وکار (featured اول)"""
+        try:
+            business_profile = obj.business
+            if not business_profile:
+                return []
+            request = self.context.get('request')
+            images = list(
+                business_profile.gallery_images
+                .order_by('-is_featured', 'id')[:5]
+            )
+            result = []
+            for img in images:
+                if img.image:
+                    url = img.image.url
+                    result.append(
+                        request.build_absolute_uri(url) if request else url
+                    )
+            return result
+        except Exception as e:
+            print(f"Error getting gallery images: {e}")
+            return []
 
 
 class PackageDetailSerializer(serializers.ModelSerializer):

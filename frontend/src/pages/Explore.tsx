@@ -151,6 +151,7 @@ export const Explore: React.FC<ExploreProps> = () => {
   const loadActivePackages = async () => {
     try {
       setLoading(true)
+      setError(null)
       console.log('🔍 Loading packages...')
       
       // استفاده از authenticated endpoint

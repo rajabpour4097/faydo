@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { LocateFixed, Layers, Map } from 'lucide-react'
@@ -55,10 +55,18 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   const [isSatellite, setIsSatellite] = useState(false)
   const [isLocating, setIsLocating] = useState(false)
   const [isMapReady, setIsMapReady] = useState(false)
+  const isFirstMount = useRef(true)
 
   useEffect(() => {
     setPosition([initialLat, initialLng])
-    setIsMapReady(true)
+    if (isFirstMount.current) {
+      // First time map mounts — just show it at this position
+      isFirstMount.current = false
+      setIsMapReady(true)
+    } else {
+      // Props changed after mount (e.g. saved coords loaded async) — fly there
+      setFlyTarget([initialLat, initialLng])
+    }
   }, [initialLat, initialLng])
 
   const handleLocationSelect = useCallback(

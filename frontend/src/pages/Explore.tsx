@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
@@ -8,7 +8,7 @@ import { getFullImageUrl } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { ExploreMapView } from '../components/ExploreMapView'
-import { Map } from 'lucide-react'
+import { Map as MapIcon } from 'lucide-react'
 
 interface ExploreProps {}
 
@@ -41,10 +41,73 @@ function buildCardImages(pkg: Package): string[] {
   return urls
 }
 
+/** استخراج شهرها و دسته‌بندی‌ها از لیست پکیج‌ها */
+function extractCitiesFromPackages(pkgs: Package[]) {
+  const cityMap = new Map<number, { id: number; name: string }>()
+  pkgs.forEach(pkg => {
+    if (pkg.city?.id && pkg.city?.name) {
+      cityMap.set(pkg.city.id, { id: pkg.city.id, name: pkg.city.name })
+    }
+  })
+  return Array.from(cityMap.values()).sort((a, b) => {
+    try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
+  })
+}
+
+function extractCategoriesFromPackages(pkgs: Package[]) {
+  const categoryMap = new Map<number, { id: number; name: string }>()
+  pkgs.forEach(pkg => {
+    if (pkg.business_category?.id && pkg.business_category?.name) {
+      categoryMap.set(pkg.business_category.id, {
+        id: pkg.business_category.id,
+        name: pkg.business_category.name,
+      })
+    }
+  })
+  return Array.from(categoryMap.values()).sort((a, b) => {
+    try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
+  })
+}
+
 export const Explore: React.FC<ExploreProps> = () => {
   const { user } = useAuth()
-  const { isDark } = useTheme()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (user && user.type !== 'customer') {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
+
+  if (!user) {
+    return (
+      <MobileDashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        </div>
+      </MobileDashboardLayout>
+    )
+  }
+
+  if (user.type !== 'customer') {
+    return (
+      <MobileDashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🚫</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">دسترسی محدود</h1>
+            <p className="text-gray-600 dark:text-slate-400">این صفحه فقط برای مشتریان قابل دسترسی است</p>
+          </div>
+        </div>
+      </MobileDashboardLayout>
+    )
+  }
+
+  return <ExploreCustomerView />
+}
+
+const ExploreCustomerView: React.FC = () => {
+  const { isDark } = useTheme()
   const [packages, setPackages] = useState<Package[]>([])
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
@@ -62,73 +125,49 @@ export const Explore: React.FC<ExploreProps> = () => {
     cities: []
   })
 
-  const extractCitiesFromPackages = useCallback((pkgs: Package[]) => {
-    const cityMap = new Map<number, { id: number; name: string }>()
-    pkgs.forEach(pkg => {
-      if (pkg.city?.id && pkg.city?.name) {
-        cityMap.set(pkg.city.id, { id: pkg.city.id, name: pkg.city.name })
+  const availableCities = useMemo(() => extractCitiesFromPackages(packages), [packages])
+  const availableCategories = useMemo(() => extractCategoriesFromPackages(packages), [packages])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const load = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const response = await apiService.getPackages()
+
+        let dataArray: Package[] = []
+        if (Array.isArray(response.data)) {
+          dataArray = response.data
+        } else if (response.data && Array.isArray((response.data as { results?: Package[] }).results)) {
+          dataArray = (response.data as { results: Package[] }).results
+        } else if (response.error) {
+          if (!cancelled) setError('خطا در دریافت پکیج‌ها')
+          return
+        }
+
+        if (!cancelled) {
+          const activePackages = dataArray.filter(pkg =>
+            pkg.is_active && pkg.status === 'approved' && pkg.is_complete
+          )
+          setPackages(activePackages)
+          setError(null)
+        }
+      } catch (err) {
+        console.error('Error loading packages:', err)
+        if (!cancelled) setError('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.')
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-    })
-    return Array.from(cityMap.values()).sort((a, b) => {
-      try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
-    })
-  }, [])
-
-  const extractCategoriesFromPackages = useCallback((pkgs: Package[]) => {
-    const categoryMap = new Map<number, { id: number; name: string }>()
-    pkgs.forEach(pkg => {
-      if (pkg.business_category?.id && pkg.business_category?.name) {
-        categoryMap.set(pkg.business_category.id, {
-          id: pkg.business_category.id,
-          name: pkg.business_category.name,
-        })
-      }
-    })
-    return Array.from(categoryMap.values()).sort((a, b) => {
-      try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
-    })
-  }, [])
-
-  const availableCities = useMemo(
-    () => extractCitiesFromPackages(packages),
-    [packages, extractCitiesFromPackages]
-  )
-  const availableCategories = useMemo(
-    () => extractCategoriesFromPackages(packages),
-    [packages, extractCategoriesFromPackages]
-  )
-
-  const loadActivePackages = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const response = await apiService.getPackages()
-
-      let dataArray: Package[] = []
-      if (Array.isArray(response.data)) {
-        dataArray = response.data
-      } else if (response.data && Array.isArray((response.data as { results?: Package[] }).results)) {
-        dataArray = (response.data as { results: Package[] }).results
-      } else if (response.error) {
-        setError('خطا در دریافت پکیج‌ها')
-        return
-      }
-
-      const activePackages = dataArray.filter(pkg =>
-        pkg.is_active && pkg.status === 'approved' && pkg.is_complete
-      )
-      setPackages(activePackages)
-      setError(null)
-    } catch (err) {
-      console.error('Error loading packages:', err)
-      setError('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.')
-    } finally {
-      setLoading(false)
     }
+
+    load()
+    return () => { cancelled = true }
   }, [])
 
-  const applyFilters = useCallback(() => {
+  useEffect(() => {
     let filtered = [...packages]
 
     if (filters.search) {
@@ -168,23 +207,6 @@ export const Explore: React.FC<ExploreProps> = () => {
     setFilteredPackages(filtered)
   }, [packages, filters])
 
-  // Check if user is customer
-  useEffect(() => {
-    if (user && user.type !== 'customer') {
-      navigate('/dashboard')
-    }
-  }, [user, navigate])
-
-  useEffect(() => {
-    if (user?.type === 'customer') {
-      loadActivePackages()
-    }
-  }, [user, loadActivePackages])
-
-  useEffect(() => {
-    applyFilters()
-  }, [applyFilters])
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -205,36 +227,6 @@ export const Explore: React.FC<ExploreProps> = () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isCityDropdownOpen, isCategoryDropdownOpen])
-
-  // Show loading if user is not loaded yet
-  if (!user) {
-    return (
-      <MobileDashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </MobileDashboardLayout>
-    )
-  }
-
-  // Show access denied if user is not customer
-  if (user.type !== 'customer') {
-    return (
-      <MobileDashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl mb-4">🚫</div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              دسترسی محدود
-            </h1>
-            <p className="text-gray-600 dark:text-slate-400">
-              این صفحه فقط برای مشتریان قابل دسترسی است
-            </p>
-          </div>
-        </div>
-      </MobileDashboardLayout>
-    )
-  }
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -772,7 +764,7 @@ export const Explore: React.FC<ExploreProps> = () => {
                      text-white text-sm font-semibold rounded-full shadow-xl transition-all"
           style={{ direction: 'rtl' }}
         >
-          <Map size={16} strokeWidth={2} />
+          <MapIcon size={16} strokeWidth={2} />
           نقشه
           {filteredPackages.filter(p => p.business_location_latitude != null).length > 0 && (
             <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full leading-none">

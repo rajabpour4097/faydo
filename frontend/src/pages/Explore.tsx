@@ -176,11 +176,17 @@ export const Explore: React.FC<ExploreProps> = () => {
         pkg.is_active && pkg.status === 'approved' && pkg.is_complete
       )
       setPackages(activePackages)
-      setAvailableCities(extractCitiesFromPackages(activePackages))
-      setAvailableCategories(extractCategoriesFromPackages(activePackages))
+
+      // These are independent — never let them block the main data or trigger the error banner
+      try { setAvailableCities(extractCitiesFromPackages(activePackages)) } catch { /* ignore */ }
+      try { setAvailableCategories(extractCategoriesFromPackages(activePackages)) } catch { /* ignore */ }
+
+      // Packages loaded successfully — clear any stale error
+      setError(null)
     } catch (err) {
       console.error('Error loading packages:', err)
-      setError('خطا در دریافت پکیج‌ها')
+      // Only show error if packages themselves failed (not filter extraction)
+      setError('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.')
     } finally {
       setLoading(false)
     }

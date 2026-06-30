@@ -10,7 +10,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 })
 
-const STREET_TILE = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+const STREET_TILE = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
 const SATELLITE_TILE =
   'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 
@@ -128,7 +128,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             attribution={
               isSatellite
                 ? '&copy; Esri &mdash; Source: Esri, Maxar, GeoEye'
-                : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
             }
           />
           <Marker position={position} />

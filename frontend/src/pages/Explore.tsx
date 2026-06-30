@@ -24,20 +24,27 @@ interface FilterState {
   cities: number[]
 }
 
-/** تصاویر کارت: عکس اصلی (لوگو/شاخص) اول، سپس بقیه آلبوم بدون تکرار */
+/** لوگوی کسب‌وکار برای آواتار دایره‌ای */
+function buildLogoUrl(pkg: Package): string {
+  return getFullImageUrl(pkg.business_logo)
+}
+
+/** تصاویر اسلایدر کارت: فقط آلبوم/کاور — بدون لوگو */
 function buildCardImages(pkg: Package): string[] {
   const urls: string[] = []
   const seen = new Set<string>()
+  const logoUrl = buildLogoUrl(pkg)
+
   const add = (raw: string | null | undefined) => {
     const full = getFullImageUrl(raw)
-    if (full && !seen.has(full)) {
-      seen.add(full)
-      urls.push(full)
-    }
+    if (!full || full === logoUrl || seen.has(full)) return
+    seen.add(full)
+    urls.push(full)
   }
-  add(pkg.business_image)
+
   for (const src of pkg.gallery_images || []) add(src)
-  if (urls.length === 0) add(pkg.business_logo)
+  add(pkg.business_image)
+
   return urls
 }
 
@@ -920,10 +927,11 @@ interface PackageCardProps { package: Package }
 
 const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
   const [activeImg, setActiveImg] = useState(0)
+  const [logoErrored, setLogoErrored] = useState(false)
   const navigate = useNavigate()
 
   const images = buildCardImages(pkg)
-  const logoSrc = getFullImageUrl(pkg.business_logo)
+  const logoSrc = buildLogoUrl(pkg)
 
   const vipLabel = (pkg.has_vip_plus || (!pkg.has_vip && !pkg.has_vip_plus)) ? 'VIP+' : 'طلایی'
   const vipGold = vipLabel === 'VIP+'
@@ -1015,8 +1023,13 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
         <div className="absolute -bottom-5 right-4 z-10">
           <div className="w-12 h-12 rounded-full border-[3px] border-white dark:border-slate-800
                           overflow-hidden shadow-lg bg-gradient-to-br from-blue-400 to-indigo-500">
-            {logoSrc ? (
-              <img src={logoSrc} alt="" className="w-full h-full object-cover" />
+            {logoSrc && !logoErrored ? (
+              <img
+                src={logoSrc}
+                alt=""
+                className="w-full h-full object-contain bg-white p-0.5"
+                onError={() => setLogoErrored(true)}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-white text-lg font-bold">
                 {pkg.business_name?.charAt(0) || '؟'}

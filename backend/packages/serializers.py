@@ -228,36 +228,59 @@ class PackageListSerializer(serializers.ModelSerializer):
         """تعداد کل نظرات پکیج"""
         return obj.get_total_comments_count()
     
+    def _absolute_media_url(self, request, file_field):
+        if not file_field:
+            return None
+        try:
+            url = file_field.url
+            return request.build_absolute_uri(url) if request else url
+        except Exception:
+            return None
+
+    def _get_business_owner_image(self, business_profile, request):
+        """عکس پروفایل صاحب کسب‌وکار (همان تصویری که در پروفایل آپلود می‌شود)"""
+        try:
+            user = getattr(business_profile, 'user', None)
+            if user and user.image:
+                return self._absolute_media_url(request, user.image)
+        except Exception:
+            pass
+        return None
+
     def get_business_logo(self, obj):
-        """لوگوی کسب‌وکار (فقط لوگو، بدون fallback به گالری)"""
+        """لوگوی کسب‌وکار: فیلد logo → عکس پروفایل کاربر"""
         try:
             business_profile = obj.business
-            if business_profile and business_profile.logo:
-                request = self.context.get('request')
-                url = business_profile.logo.url
-                return request.build_absolute_uri(url) if request else url
+            if not business_profile:
+                return None
+            request = self.context.get('request')
+            if business_profile.logo:
+                return self._absolute_media_url(request, business_profile.logo)
+            return self._get_business_owner_image(business_profile, request)
         except Exception as e:
             print(f"Error getting business logo: {e}")
         return None
     
     def get_business_image(self, obj):
-        """تصویر اصلی کسب‌وکار: لوگو → عکس featured گالری → اولین عکس گالری"""
+        """تصویر کاور: گالری (شاخص/اولین) → لوگو → عکس پروفایل"""
         try:
             business_profile = obj.business
             if not business_profile:
                 return None
             request = self.context.get('request')
 
-            # 1. Logo
-            if business_profile.logo:
-                url = business_profile.logo.url
-                return request.build_absolute_uri(url) if request else url
-
-            # 2. Gallery: featured or first
             featured = business_profile.get_featured_image()
             if featured and featured.image:
-                url = featured.image.url
-                return request.build_absolute_uri(url) if request else url
+                return self._absolute_media_url(request, featured.image)
+
+            first_gallery = business_profile.gallery_images.first()
+            if first_gallery and first_gallery.image:
+                return self._absolute_media_url(request, first_gallery.image)
+
+            if business_profile.logo:
+                return self._absolute_media_url(request, business_profile.logo)
+
+            return self._get_business_owner_image(business_profile, request)
         except Exception as e:
             print(f"Error getting business image: {e}")
         return None

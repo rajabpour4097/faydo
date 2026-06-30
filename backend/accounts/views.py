@@ -320,6 +320,19 @@ def upload_profile_image_view(request):
             # For regular images keep original but optionally re-save to optimize (future)
             user.image = image_file
         user.save()
+
+        # برای کسب‌وکار: عکس پروفایل همان لوگوی نمایشی است
+        if user.role == 'business' and user.image:
+            try:
+                bp = user.businessprofile
+                with user.image.open('rb') as f:
+                    bp.logo.save(
+                        os.path.basename(user.image.name),
+                        ContentFile(f.read()),
+                        save=True,
+                    )
+            except Exception:
+                pass
     finally:
         # Clean old image after successful save
         if old_image_path and os.path.isfile(old_image_path):

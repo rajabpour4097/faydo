@@ -39,7 +39,7 @@ class PackageViewSet(viewsets.ModelViewSet):
         elif user.role == 'customer':
             return Package.objects.filter(
                 is_active=True, status='approved', is_complete=True
-            ).select_related('business').prefetch_related('business__gallery_images')
+            ).select_related('business', 'business__user').prefetch_related('business__gallery_images')
         else:
             return Package.objects.none()
     

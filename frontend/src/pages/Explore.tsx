@@ -158,24 +158,20 @@ export const Explore: React.FC<ExploreProps> = () => {
       const response = await apiService.getPackages()
       console.log('📦 API Response:', response)
       
-      if (response.data) {
-        console.log('📊 Raw packages:', response.data)
+      if (response.data && Array.isArray(response.data)) {
         // فقط پکیج‌های فعال و تایید شده
         const activePackages = response.data.filter(pkg => 
           pkg.is_active && pkg.status === 'approved' && pkg.is_complete
         )
-        console.log('✅ Active packages:', activePackages)
         setPackages(activePackages)
         
-        // Extract available cities from packages
-        const cities = extractCitiesFromPackages(activePackages)
-        console.log('🏙️ Available cities:', cities)
-        setAvailableCities(cities)
-        
-        // Extract available categories from packages
-        const categories = extractCategoriesFromPackages(activePackages)
-        console.log('📂 Available categories:', categories)
-        setAvailableCategories(categories)
+        try {
+          setAvailableCities(extractCitiesFromPackages(activePackages))
+          setAvailableCategories(extractCategoriesFromPackages(activePackages))
+        } catch {
+          // locale sort failure - ignore, filters just won't show
+        }
+        setError(null)
       } else {
         console.error('❌ No data in response:', response)
         // برای تست، داده‌های نمونه اضافه کن
@@ -956,7 +952,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
       <div className="relative w-24 h-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600">
         {!imageErrored && (pkg.business_image || pkg.business_logo) ? (
           <img
-            src={pkg.business_image || pkg.business_logo || ''}
+            src={getFullImageUrl(pkg.business_image || pkg.business_logo)}
             alt={pkg.business_name}
             loading="lazy"
             onError={() => setImageErrored(true)}

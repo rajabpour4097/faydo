@@ -238,17 +238,14 @@ class PackageListSerializer(serializers.ModelSerializer):
         return None
     
     def get_business_image(self, obj):
-        """تصویر اصلی کسب‌وکار"""
+        """تصویر اصلی کسب‌وکار (همان لوگو)"""
         try:
             business_profile = obj.business
-            if business_profile:
-                # تصویر featured یا اولین تصویر گالری
-                featured_image = business_profile.logo
-                # if featured_image:
-                #     request = self.context.get('request')
-                #     if request:
-                #         return request.build_absolute_uri(featured_image.image.url)
-                #     return featured_image.image.url
+            if business_profile and business_profile.logo:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(business_profile.logo.url)
+                return business_profile.logo.url
         except Exception as e:
             print(f"Error getting business image: {e}")
         return None

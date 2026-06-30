@@ -129,7 +129,9 @@ export const Explore: React.FC<ExploreProps> = () => {
       }
     })
     
-    return Array.from(cityMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'fa'))
+    return Array.from(cityMap.values()).sort((a, b) => {
+      try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
+    })
   }
 
   // Extract unique categories from packages
@@ -145,58 +147,37 @@ export const Explore: React.FC<ExploreProps> = () => {
       }
     })
     
-    return Array.from(categoryMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'fa'))
+    return Array.from(categoryMap.values()).sort((a, b) => {
+      try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
+    })
   }
 
   const loadActivePackages = async () => {
     try {
       setLoading(true)
       setError(null)
-      console.log('🔍 Loading packages...')
-      
-      // استفاده از authenticated endpoint
+
       const response = await apiService.getPackages()
-      console.log('📦 API Response:', response)
-      
-      if (response.data && Array.isArray(response.data)) {
-        // فقط پکیج‌های فعال و تایید شده
-        const activePackages = response.data.filter(pkg => 
-          pkg.is_active && pkg.status === 'approved' && pkg.is_complete
-        )
-        setPackages(activePackages)
-        
-        try {
-          setAvailableCities(extractCitiesFromPackages(activePackages))
-          setAvailableCategories(extractCategoriesFromPackages(activePackages))
-        } catch {
-          // locale sort failure - ignore, filters just won't show
-        }
-        setError(null)
-      } else {
-        console.error('❌ No data in response:', response)
-        // برای تست، داده‌های نمونه اضافه کن
-        console.log('🔧 Adding sample data for testing...')
-        const samplePackages: Package[] = [
-          {
-            id: 1,
-            business_id: 1,
-            business_name: 'رستوران تست',
-            is_active: true,
-            status: 'approved',
-            status_display: 'تایید شده',
-            is_complete: true,
-            created_at: new Date().toISOString(),
-            modified_at: new Date().toISOString(),
-            discount_percentage: 20,
-            elite_gift_title: 'هدیه رایگان',
-            vip_experiences_count: 2
-          }
-        ]
-        setPackages(samplePackages)
-        setError(null)
+
+      // handle both array and paginated response
+      let dataArray: Package[] = []
+      if (Array.isArray(response.data)) {
+        dataArray = response.data
+      } else if (response.data && Array.isArray((response.data as any).results)) {
+        dataArray = (response.data as any).results
+      } else if (response.error) {
+        setError('خطا در دریافت پکیج‌ها')
+        return
       }
-    } catch (error) {
-      console.error('❌ Error loading packages:', error)
+
+      const activePackages = dataArray.filter(pkg =>
+        pkg.is_active && pkg.status === 'approved' && pkg.is_complete
+      )
+      setPackages(activePackages)
+      setAvailableCities(extractCitiesFromPackages(activePackages))
+      setAvailableCategories(extractCategoriesFromPackages(activePackages))
+    } catch (err) {
+      console.error('Error loading packages:', err)
       setError('خطا در دریافت پکیج‌ها')
     } finally {
       setLoading(false)

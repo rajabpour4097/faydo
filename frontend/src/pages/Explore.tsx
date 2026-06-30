@@ -35,6 +35,8 @@ export const Explore: React.FC<ExploreProps> = () => {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
   const [showMap, setShowMap] = useState(false)
+  const [showFilterSheet, setShowFilterSheet] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   // const [categories] = useState<BusinessCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -477,238 +479,270 @@ export const Explore: React.FC<ExploreProps> = () => {
   )
 
   // Mobile Layout Component
-  const MobileLayout = () => (
-    <MobileDashboardLayout>
-      <div className="p-4 space-y-4" style={{ direction: 'rtl' }}>
-        {/* Top Business Slider - Mobile */}
-        <TopBusinessSlider packages={packages} />
+  const MobileLayout = () => {
+    const activeFilterCount =
+      filters.cities.length + filters.categories.length + (filters.sortBy ? 1 : 0)
 
-        {/* Search Header like mock */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-3 py-2 flex items-center gap-2">
-            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="جستجو..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="flex-1 bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
-            />
-            {filters.search && (
-              <button onClick={() => handleFilterChange('search', '')} className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                <svg className="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+    return (
+      <MobileDashboardLayout>
+        <div style={{ direction: 'rtl' }}>
+          {/* Top Business Slider */}
+          <div className="px-4 pt-4">
+            <TopBusinessSlider packages={packages} />
+          </div>
+
+          {/* ── Filter chip bar ── */}
+          <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 px-4 py-2">
+            {/* Search input (collapsible) */}
+            {searchOpen && (
+              <div className="mb-2 flex items-center gap-2 bg-gray-100 dark:bg-slate-800 rounded-xl px-3 py-2">
+                <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="نام کسب‌وکار..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="flex-1 bg-transparent focus:outline-none text-sm text-gray-900 dark:text-white"
+                />
+                <button onClick={() => { handleFilterChange('search', ''); setSearchOpen(false) }}
+                  className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {/* Chips row */}
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {/* Search chip */}
+              <button
+                onClick={() => setSearchOpen(v => !v)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                  filters.search
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                {filters.search ? filters.search.slice(0, 10) + (filters.search.length > 10 ? '…' : '') : 'جستجو'}
               </button>
+
+              {/* City chip */}
+              {availableCities.length > 0 && (
+                <button
+                  onClick={() => setShowFilterSheet(true)}
+                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                    filters.cities.length > 0
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {filters.cities.length > 0 ? `${filters.cities.length} شهر` : 'شهر'}
+                </button>
+              )}
+
+              {/* Category chip */}
+              {availableCategories.length > 0 && (
+                <button
+                  onClick={() => setShowFilterSheet(true)}
+                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                    filters.categories.length > 0
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  {filters.categories.length > 0 ? `${filters.categories.length} دسته` : 'دسته‌بندی'}
+                </button>
+              )}
+
+              {/* All filters chip */}
+              <button
+                onClick={() => setShowFilterSheet(true)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                  activeFilterCount > 0
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                سایر فیلترها
+                {activeFilterCount > 0 && (
+                  <span className="bg-white text-gray-900 text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* result count */}
+          <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+            <span className="text-sm text-gray-500 dark:text-slate-400">
+              {filteredPackages.length} کسب‌وکار
+            </span>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={() => setFilters({ categories: [], sortBy: '', search: '', cities: [] })}
+                className="text-xs text-blue-600 font-medium"
+              >
+                پاک کردن فیلترها
+              </button>
+            )}
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="mx-4 mt-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Package list */}
+          <div className="px-4 pb-32 pt-2 space-y-4">
+            {filteredPackages.length > 0 ? (
+              filteredPackages.map((pkg) => <PackageCard key={pkg.id} package={pkg} />)
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">پکیجی یافت نشد</h3>
+                <p className="text-sm text-gray-500 dark:text-slate-400">فیلترها را تغییر دهید یا دوباره تلاش کنید.</p>
+                <button onClick={() => window.location.reload()}
+                  className="mt-4 px-5 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium">
+                  تلاش مجدد
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* City Filter Dropdown */}
-        {availableCities.length > 0 && (
-          <div className="relative city-dropdown">
-            <button
-              onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-3 py-2 flex items-center justify-between text-gray-900 dark:text-white"
-            >
-              <span className="text-sm">
-                {filters.cities.length === 0 
-                  ? 'همه شهرها' 
-                  : filters.cities.length === availableCities.length 
-                    ? 'همه شهرها' 
-                    : `${filters.cities.length} شهر انتخاب شده`
-                }
-              </span>
-              <svg 
-                className={`w-5 h-5 text-gray-500 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            
-            {isCityDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-lg z-10 max-h-60 overflow-y-auto">
-                <div className="p-2">
-                  <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-slate-700 mb-2">
-                    <button
-                      onClick={handleSelectAllCities}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+        {/* ── Filter Bottom Sheet ── */}
+        {showFilterSheet && (
+          <div className="fixed inset-0 z-[1800] flex flex-col justify-end" style={{ direction: 'rtl' }}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setShowFilterSheet(false)} />
+            <div className="relative bg-white dark:bg-slate-900 rounded-t-3xl p-6 pb-8 shadow-2xl max-h-[85vh] overflow-y-auto">
+              {/* handle */}
+              <div className="w-12 h-1 bg-gray-200 dark:bg-slate-700 rounded-full mx-auto mb-5" />
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5">فیلترها</h3>
+
+              {/* Sort */}
+              <div className="mb-5">
+                <p className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">مرتب‌سازی</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: '', label: 'پیش‌فرض' },
+                    { value: 'discount_high', label: '🏷 بیشترین تخفیف' },
+                    { value: 'discount_low', label: 'کمترین تخفیف' },
+                    { value: 'newest', label: '🆕 جدیدترین' },
+                  ].map(opt => (
+                    <button key={opt.value}
+                      onClick={() => setFilters(p => ({ ...p, sortBy: opt.value as any }))}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                        filters.sortBy === opt.value
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                      }`}
                     >
-                      انتخاب همه
+                      {opt.label}
                     </button>
-                    <button
-                      onClick={handleClearAllCities}
-                      className="text-sm text-gray-500 hover:text-gray-700 font-medium"
-                    >
-                      پاک کردن همه
+                  ))}
+                </div>
+              </div>
+
+              {/* Cities */}
+              {availableCities.length > 0 && (
+                <div className="mb-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">شهر</p>
+                    <button onClick={filters.cities.length > 0 ? handleClearAllCities : handleSelectAllCities}
+                      className="text-xs text-blue-600 font-medium">
+                      {filters.cities.length > 0 ? 'پاک کردن' : 'همه'}
                     </button>
                   </div>
-                  
-                  {availableCities.map((city) => (
-                    <label
-                      key={city.id}
-                      className="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer rounded-lg"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filters.cities.includes(city.id)}
-                        onChange={() => handleCityToggle(city.id)}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                      <span className="mr-3 text-sm text-gray-900 dark:text-white">
+                  <div className="flex flex-wrap gap-2">
+                    {availableCities.map(city => (
+                      <button key={city.id}
+                        onClick={() => handleCityToggle(city.id)}
+                        className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                          filters.cities.includes(city.id)
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                        }`}
+                      >
                         {city.name}
-                      </span>
-                    </label>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
 
-        {/* Category Filter Dropdown */}
-        {availableCategories.length > 0 && (
-          <div className="relative category-dropdown">
-            <button
-              onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-3 py-2 flex items-center justify-between text-gray-900 dark:text-white"
-            >
-              <span className="text-sm">
-                {filters.categories.length === 0 
-                  ? 'همه دسته‌بندی‌ها' 
-                  : filters.categories.length === availableCategories.length 
-                    ? 'همه دسته‌بندی‌ها' 
-                    : `${filters.categories.length} دسته انتخاب شده`
-                }
-              </span>
-              <svg 
-                className={`w-5 h-5 text-gray-500 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            
-            {isCategoryDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-lg z-10 max-h-60 overflow-y-auto">
-                <div className="p-2">
-                  <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-slate-700 mb-2">
-                    <button
-                      onClick={handleSelectAllCategories}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      انتخاب همه
-                    </button>
-                    <button
-                      onClick={handleClearAllCategories}
-                      className="text-sm text-gray-500 hover:text-gray-700 font-medium"
-                    >
-                      پاک کردن همه
+              {/* Categories */}
+              {availableCategories.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">دسته‌بندی</p>
+                    <button onClick={filters.categories.length > 0 ? handleClearAllCategories : handleSelectAllCategories}
+                      className="text-xs text-blue-600 font-medium">
+                      {filters.categories.length > 0 ? 'پاک کردن' : 'همه'}
                     </button>
                   </div>
-                  
-                  {availableCategories.map((category) => (
-                    <label
-                      key={category.id}
-                      className="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer rounded-lg"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filters.categories.includes(category.id)}
-                        onChange={() => handleCategoryToggle(category.id)}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                      <span className="mr-3 text-sm text-gray-900 dark:text-white">
-                        {category.name}
-                      </span>
-                    </label>
-                  ))}
+                  <div className="flex flex-wrap gap-2">
+                    {availableCategories.map(cat => (
+                      <button key={cat.id}
+                        onClick={() => handleCategoryToggle(cat.id)}
+                        className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                          filters.categories.includes(cat.id)
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {/* List of packages or empty state */}
-        {filteredPackages.length > 0 ? (
-          <div className="space-y-4">
-            {filteredPackages.map((pkg) => (
-              <PackageCard key={pkg.id} package={pkg} />)
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 px-4">
-            {/* Empty state illustration */}
-            <div className="relative mb-8">
-              <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center">
-                <svg className="w-16 h-16 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </div>
-              {/* Decorative elements */}
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-pulse"></div>
-              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-purple-400 rounded-full animate-pulse delay-300"></div>
-            </div>
-            
-            {/* Empty state content */}
-            <div className="text-center max-w-md">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                هیچ پکیج فعالی یافت نشد
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-                در حال حاضر هیچ پکیج فعالی از کسب‌وکارها موجود نیست. 
-                لطفاً بعداً دوباره بررسی کنید یا فیلترهای جستجو را تغییر دهید.
-              </p>
-              
-              {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => window.location.reload()}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                  onClick={() => { setFilters({ categories: [], sortBy: '', search: '', cities: [] }); setShowFilterSheet(false) }}
+                  className="flex-1 py-3 rounded-2xl border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 text-sm font-medium"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  تلاش مجدد
+                  🗑 پاک کردن
                 </button>
-                
                 <button
-                  onClick={() => {
-                    setFilters({
-                      categories: [],
-                      sortBy: '',
-                      search: '',
-                      cities: []
-                    })
-                  }}
-                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                  onClick={() => setShowFilterSheet(false)}
+                  className="flex-2 flex-grow-[2] py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                  پاک کردن فیلترها
+                  اعمال فیلترها ({filteredPackages.length})
                 </button>
               </div>
             </div>
           </div>
         )}
-      </div>
-    </MobileDashboardLayout>
-  )
+      </MobileDashboardLayout>
+    )
+  }
 
   // Main return with responsive layout
   return (
@@ -889,129 +923,139 @@ const DesktopPackageCard: React.FC<DesktopPackageCardProps> = ({ package: pkg })
   )
 }
 
-// Package Card Component
-interface PackageCardProps {
-  package: Package
-}
+// ─── Mobile Package Card ──────────────────────────────────────────────────────
+interface PackageCardProps { package: Package }
 
 const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
-  const [imageErrored, setImageErrored] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const navigate = useNavigate()
-  
-  const handleCardClick = () => {
-    navigate(`/dashboard/business/${pkg.id}`)
-  }
 
-  // Determine VIP badge type
-  const getVipBadgeType = () => {
-    // استفاده از فیلدهای جدید از backend
-    const hasVip = pkg.has_vip || false
-    const hasVipPlus = pkg.has_vip_plus || false
-    
-    // اگر هم VIP و هم VIP+ دارد، VIP+ نمایش بده
-    if (hasVip && hasVipPlus) {
-      return '+VIP'
-    }
-    // اگر فقط VIP دارد، VIP نمایش بده
-    else if (hasVip && !hasVipPlus) {
-      return 'VIP'
-    }
-    // اگر فقط VIP+ دارد، VIP+ نمایش بده
-    else if (!hasVip && hasVipPlus) {
-      return '+VIP'
-    }
-    
-    return 'VIP' // Default to VIP if no VIP experiences
-  }
+  const imgSrc = getFullImageUrl(pkg.business_image || pkg.business_logo)
+  const vipLabel = (pkg.has_vip_plus || (!pkg.has_vip && !pkg.has_vip_plus)) ? 'VIP+' : 'طلایی'
+  const vipGold = vipLabel === 'VIP+'
 
   return (
     <div
-      className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-3 flex gap-3 items-start cursor-pointer"
-      onClick={handleCardClick}
+      className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
+      onClick={() => navigate(`/dashboard/business/${pkg.id}`)}
     >
-      {/* Left image: prefer business_image then logo */}
-      <div className="relative w-24 h-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600">
-        {!imageErrored && (pkg.business_image || pkg.business_logo) ? (
+      {/* ── Hero image ── */}
+      <div className="relative w-full" style={{ height: 200 }}>
+        {!imgError && imgSrc ? (
           <img
-            src={getFullImageUrl(pkg.business_image || pkg.business_logo)}
+            src={imgSrc}
             alt={pkg.business_name}
             loading="lazy"
-            onError={() => setImageErrored(true)}
+            onError={() => setImgError(true)}
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          <div className="w-full h-full bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center">
+            <svg className="w-16 h-16 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
         )}
-        
-        {/* VIP Badge */}
-        <div className="absolute top-1 right-1">
-          <div className={`px-2 py-1 rounded-full text-[8px] font-bold text-white shadow-lg ${
-            getVipBadgeType() === '+VIP' 
-              ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
-              : 'bg-gradient-to-r from-purple-500 to-pink-500'
-          }`}>
-            {getVipBadgeType()}
-          </div>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            {pkg.business_category?.name && (
-              <div className="inline-block px-2 py-0.5 rounded-md text-[8px] bg-blue-100 text-blue-700 mb-1">
-                {pkg.business_category.name}
-              </div>
-            )}
-            <h3 className="text-[14px] font-bold text-gray-900 dark:text-white truncate">{pkg.business_name}</h3>
-            {(((pkg as any)?.city?.name) || pkg.status_display) && (
-              <div className="flex items-center text-gray-500 dark:text-slate-400 text-sm mt-1 text-[10px]">
-                  <svg className="w-3 h-3 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 2a6 6 0 00-6 6c0 4.418 6 10 6 10s6-5.582 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
-                  </svg>
-                {(pkg as any)?.city?.name || pkg.status_display}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-1 text-gray-700 dark:text-slate-200">
-            <svg className="w-4 h-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-            <span className="font-semibold">{pkg.average_rating || 0}</span>
-          </div>
+        {/* VIP badge — top left */}
+        <div className="absolute top-3 left-3">
+          <span className={`px-2.5 py-1 rounded-full text-xs font-bold text-white shadow ${
+            vipGold ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                    : 'bg-gradient-to-r from-violet-500 to-purple-600'
+          }`}>
+            {vipLabel}
+          </span>
         </div>
-        <div className="mt-2">
-          {typeof pkg.discount_percentage === 'number' ? (
-            <>
-              <span className="text-blue-600 font-extrabold text-[12px]">%{pkg.discount_percentage}</span>
-              <span className="text-gray-500 text-sm mr-1" style={{fontSize: '12px'}}>تخفیف</span>
-            </>
-          ) : (
-            <span className="text-gray-500 text-sm">بدون تخفیف</span>
-          )}
-        </div>
-        {/* Elite gift info */}
-        {pkg.elite_gift_gift && (
-          <div className="mt-1 flex items-start text-[13px] text-gray-700 dark:text-slate-300">
-            <svg className="w-4 h-4 ml-1 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13M12 8V6a2 2 0 112 2h-2zM5 12h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
-            </svg>
-            <span className="whitespace-normal break-words" style={{ fontSize: '10px', lineHeight: '1.4' }}>
-              {pkg.elite_gift_gift}
-              {typeof pkg.elite_gift_count === 'number' && (
-                <> با {pkg.elite_gift_count} بار خرید</>
-              )}
-              {typeof pkg.elite_gift_amount === 'number' && !pkg.elite_gift_count && (
-                <> با {Number(pkg.elite_gift_amount).toLocaleString('fa-IR')} تومان خرید</>
-              )}
+
+        {/* Discount badge — top right */}
+        {typeof pkg.discount_percentage === 'number' && (
+          <div className="absolute top-3 right-3">
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-500 text-white shadow">
+              {pkg.discount_percentage}٪ تخفیف
             </span>
           </div>
         )}
 
-  
+        {/* gradient overlay at bottom so avatar sits nicely */}
+        <div className="absolute bottom-0 left-0 right-0 h-20
+                        bg-gradient-to-t from-black/50 to-transparent" />
+
+        {/* Business logo avatar — bottom right, overlapping */}
+        <div className="absolute -bottom-6 right-4">
+          <div className="w-14 h-14 rounded-full border-[3px] border-white dark:border-slate-800
+                          overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 shadow-lg">
+            {!imgError && imgSrc ? (
+              <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white text-xl font-bold">
+                {pkg.business_name?.charAt(0) || '؟'}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Info area ── */}
+      <div className="pt-8 px-4 pb-4">
+        {/* name + rating row */}
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">
+            {pkg.business_name}
+          </h3>
+          <div className="flex items-center gap-1 shrink-0 mt-0.5">
+            <svg className="w-4 h-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
+              {pkg.average_rating ?? '—'}
+            </span>
+            {pkg.total_comments != null && pkg.total_comments > 0 && (
+              <span className="text-xs text-gray-400">({pkg.total_comments} نظر)</span>
+            )}
+          </div>
+        </div>
+
+        {/* category + city */}
+        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          {pkg.business_category?.name && (
+            <span className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-lg">
+              {pkg.business_category.name}
+            </span>
+          )}
+          {(pkg as any)?.city?.name && (
+            <span className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-0.5">
+              <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2a6 6 0 00-6 6c0 4.418 6 10 6 10s6-5.582 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+              {(pkg as any).city.name}
+            </span>
+          )}
+        </div>
+
+        {/* Elite gift */}
+        {pkg.elite_gift_gift && (
+          <div className="mt-2.5 flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20
+                          rounded-xl px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+            <span className="text-base">🎁</span>
+            <span className="line-clamp-1">
+              {pkg.elite_gift_gift}
+              {typeof pkg.elite_gift_count === 'number' && ` • ${pkg.elite_gift_count} خرید`}
+              {typeof pkg.elite_gift_amount === 'number' && !pkg.elite_gift_count &&
+                ` • ${Number(pkg.elite_gift_amount).toLocaleString('fa-IR')} تومان`}
+            </span>
+          </div>
+        )}
+
+        {/* Days remaining */}
+        {pkg.days_remaining != null && pkg.days_remaining > 0 && (
+          <div className="mt-2 text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {pkg.days_remaining} روز باقی‌مانده
+          </div>
+        )}
       </div>
     </div>
   )

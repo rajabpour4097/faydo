@@ -118,6 +118,10 @@ class PackageListSerializer(serializers.ModelSerializer):
     # امتیاز و نظرات
     average_rating = serializers.SerializerMethodField()
     total_comments = serializers.SerializerMethodField()
+
+    # موقعیت مکانی کسب‌وکار
+    business_location_latitude = serializers.SerializerMethodField()
+    business_location_longitude = serializers.SerializerMethodField()
     
     class Meta:
         model = Package
@@ -128,7 +132,8 @@ class PackageListSerializer(serializers.ModelSerializer):
             'discount_percentage', 'specific_discount_title', 'specific_discount_percentage', 'specific_discount_description',
             'elite_gift_title', 'elite_gift_gift', 'elite_gift_amount', 'elite_gift_count',
             'vip_experiences_count', 'has_vip', 'has_vip_plus', 'days_remaining',
-            'average_rating', 'total_comments'
+            'average_rating', 'total_comments',
+            'business_location_latitude', 'business_location_longitude',
         ]
         read_only_fields = ['id', 'created_at', 'modified_at']
     
@@ -274,6 +279,22 @@ class PackageListSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting business city: {e}")
         return None
+
+    def get_business_location_latitude(self, obj):
+        """عرض جغرافیایی کسب‌وکار"""
+        try:
+            lat = obj.business.business_location_latitude
+            return float(lat) if lat is not None else None
+        except Exception:
+            return None
+
+    def get_business_location_longitude(self, obj):
+        """طول جغرافیایی کسب‌وکار"""
+        try:
+            lng = obj.business.business_location_longitude
+            return float(lng) if lng is not None else None
+        except Exception:
+            return None
 
 
 class PackageDetailSerializer(serializers.ModelSerializer):

@@ -7,6 +7,8 @@ import { apiService, Package } from '../services/api'
 import { getFullImageUrl } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { ExploreMapView } from '../components/ExploreMapView'
+import { Map } from 'lucide-react'
 
 interface ExploreProps {}
 
@@ -32,6 +34,7 @@ export const Explore: React.FC<ExploreProps> = () => {
   const [availableCategories, setAvailableCategories] = useState<{id: number, name: string}[]>([])
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
+  const [showMap, setShowMap] = useState(false)
   // const [categories] = useState<BusinessCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -732,6 +735,11 @@ export const Explore: React.FC<ExploreProps> = () => {
   // Main return with responsive layout
   return (
     <>
+      {/* Map overlay */}
+      {showMap && (
+        <ExploreMapView packages={filteredPackages} onClose={() => setShowMap(false)} />
+      )}
+
       {/* Desktop Layout */}
       <div className="hidden lg:block">
         <DesktopLayout />
@@ -741,6 +749,26 @@ export const Explore: React.FC<ExploreProps> = () => {
       <div className="lg:hidden">
         <MobileLayout />
       </div>
+
+      {/* Floating map button — both layouts */}
+      {!showMap && (
+        <button
+          onClick={() => setShowMap(true)}
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[1500]
+                     flex items-center gap-2 px-5 py-2.5
+                     bg-gray-900 hover:bg-gray-800 active:scale-95
+                     text-white text-sm font-semibold rounded-full shadow-xl transition-all"
+          style={{ direction: 'rtl' }}
+        >
+          <Map size={16} strokeWidth={2} />
+          نقشه
+          {filteredPackages.filter(p => p.business_location_latitude != null).length > 0 && (
+            <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full leading-none">
+              {filteredPackages.filter(p => p.business_location_latitude != null).length}
+            </span>
+          )}
+        </button>
+      )}
     </>
   )
 }

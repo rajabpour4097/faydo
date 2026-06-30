@@ -225,27 +225,35 @@ class PackageListSerializer(serializers.ModelSerializer):
         return obj.get_total_comments_count()
     
     def get_business_logo(self, obj):
-        """لوگوی کسب‌وکار"""
+        """لوگوی کسب‌وکار (فقط لوگو، بدون fallback به گالری)"""
         try:
             business_profile = obj.business
             if business_profile and business_profile.logo:
                 request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(business_profile.logo.url)
-                return business_profile.logo.url
+                url = business_profile.logo.url
+                return request.build_absolute_uri(url) if request else url
         except Exception as e:
             print(f"Error getting business logo: {e}")
         return None
     
     def get_business_image(self, obj):
-        """تصویر اصلی کسب‌وکار (همان لوگو)"""
+        """تصویر اصلی کسب‌وکار: لوگو → عکس featured گالری → اولین عکس گالری"""
         try:
             business_profile = obj.business
-            if business_profile and business_profile.logo:
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(business_profile.logo.url)
-                return business_profile.logo.url
+            if not business_profile:
+                return None
+            request = self.context.get('request')
+
+            # 1. Logo
+            if business_profile.logo:
+                url = business_profile.logo.url
+                return request.build_absolute_uri(url) if request else url
+
+            # 2. Gallery: featured or first
+            featured = business_profile.get_featured_image()
+            if featured and featured.image:
+                url = featured.image.url
+                return request.build_absolute_uri(url) if request else url
         except Exception as e:
             print(f"Error getting business image: {e}")
         return None

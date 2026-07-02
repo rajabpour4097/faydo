@@ -1374,14 +1374,14 @@ const DesktopProfile = () => {
         {/* Hero Card */}
         <div className={`rounded-2xl overflow-hidden ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
           <div className="relative">
-            <div className={`h-32 px-6 pt-6 pb-16 ${user?.type === 'business'
+            <div className={`h-32 px-6 pb-14 flex flex-col justify-center ${user?.type === 'business'
               ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600'
               : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500'}`}
             >
               <h2 className="text-xl font-bold text-white drop-shadow-sm pr-28 leading-tight">
                 {user?.name || '—'}
               </h2>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 bg-white/20 text-white">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 bg-white/20 text-white w-fit">
                 {user?.type === 'business' ? '🏢 کسب‌وکار' : '👤 مشتری'}
               </span>
             </div>
@@ -1866,14 +1866,14 @@ const MobileProfile = () => {
         {/* Hero Card */}
         <div className={`mx-4 rounded-2xl overflow-hidden ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
           <div className="relative">
-            <div className={`h-28 px-4 pt-5 pb-14 ${user?.type === 'business'
+            <div className={`h-28 px-4 pb-12 flex flex-col justify-center ${user?.type === 'business'
               ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600'
               : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500'}`}
             >
               <h2 className="font-bold text-base text-white drop-shadow-sm pr-20 leading-tight">
                 {user?.name || '—'}
               </h2>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1.5 bg-white/20 text-white">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1.5 bg-white/20 text-white w-fit">
                 {user?.type === 'business' ? '🏢 کسب‌وکار' : '👤 مشتری'}
               </span>
             </div>

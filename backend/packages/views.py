@@ -377,13 +377,13 @@ class PackageViewSet(viewsets.ModelViewSet):
             {"category_id": <int>, "description": "<str>"}
           ]
         }
-        Exactly one entry for vip_type='VIP' (طلایی) and one for vip_type='VIP+' (VIP) are required.
+        Exactly one entry for vip_type='VIP' (طلایی) is required; VIP+ is optional.
         """
         package = self.get_object()
         experiences_data = request.data.get('experiences', [])
 
         if not isinstance(experiences_data, list) or len(experiences_data) == 0:
-            return Response({"error": "هر دو بخش طلایی و VIP باید تکمیل شوند."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "بخش طلایی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Validate entries
         for entry in experiences_data:
@@ -395,16 +395,14 @@ class PackageViewSet(viewsets.ModelViewSet):
         category_ids = [e['category_id'] for e in experiences_data]
         categories_map = {c.id: c for c in VipExperienceCategory.objects.filter(id__in=category_ids)}
 
-        # Validate: must have exactly one Gold (VIP) and one VIP (VIP+)
-        has_gold = any(categories_map.get(e['category_id']) and categories_map[e['category_id']].vip_type == 'VIP' for e in experiences_data)
-        has_vip = any(categories_map.get(e['category_id']) and categories_map[e['category_id']].vip_type == 'VIP+' for e in experiences_data)
+        has_gold = any(
+            categories_map.get(e['category_id']) and categories_map[e['category_id']].vip_type == 'VIP'
+            for e in experiences_data
+        )
 
         if not has_gold:
             return Response({"error": "انتخاب یک گزینه از بخش طلایی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
-        if not has_vip:
-            return Response({"error": "انتخاب یک گزینه از بخش VIP الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Replace selections
         package.experiences.all().delete()
         for entry in experiences_data:
             cat = categories_map.get(entry['category_id'])
@@ -415,7 +413,6 @@ class PackageViewSet(viewsets.ModelViewSet):
                     description=entry.get('description', '').strip()
                 )
 
-        # بررسی کامل بودن پکیج
         package.save()
 
         return Response({"message": "گزینه‌های طلایی و VIP ذخیره شدند."})

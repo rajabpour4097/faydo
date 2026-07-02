@@ -1237,12 +1237,8 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
             setError('توضیحات بخش طلایی الزامی است.')
             return
           }
-          if (!formData.vipFeatureId) {
-            setError('انتخاب یک گزینه از بخش VIP الزامی است.')
-            return
-          }
-          if (!formData.vipDescription.trim()) {
-            setError('توضیحات بخش VIP الزامی است.')
+          if (formData.vipFeatureId && !formData.vipDescription.trim()) {
+            setError('اگر سطح VIP را انتخاب کردید، توضیحات آن نیز الزامی است.')
             return
           }
           saved = await saveVip()
@@ -1444,7 +1440,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
       case 2:
         return "در این بخش می‌توانید هدایای ویژه برای مشتریان خود تعریف کنید."
       case 3:
-        return "در این بخش می‌توانید ویژگی‌های VIP و امتیازات ویژه را انتخاب کنید."
+        return "سطح طلایی الزامی است. سطح VIP اختیاری است و در صورت تمایل می‌توانید آن را تکمیل کنید."
       case 4:
         return "در این بخش مدت زمان طرح و خلاصه‌ای از پکیج خود را مشاهده کنید."
       default:
@@ -1644,8 +1640,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
             {/* راهنمایی مرحله */}
             <div className={`${isDark ? 'bg-slate-700' : 'bg-amber-50'} rounded-lg p-3 border ${isDark ? 'border-slate-600' : 'border-amber-200'}`}>
               <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-amber-800'}`}>
-                برای هر سطح، یک نوع تجربه انتخاب کنید و توضیح دهید که چطور آن را برای مشتری فراهم می‌کنید.
-                هر دو بخش باید تکمیل شوند.
+                سطح طلایی الزامی است. سطح VIP اختیاری است؛ در صورت انتخاب VIP، توضیح آن را هم بنویسید.
               </p>
             </div>
 
@@ -1732,8 +1727,8 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                 <h3 className={`text-sm font-semibold ${isDark ? 'text-purple-300' : 'text-purple-800'}`}>
                   سطح VIP
                 </h3>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-purple-700/40 text-purple-300' : 'bg-purple-100 text-purple-700'}`}>
-                  الزامی
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-slate-600 text-slate-300' : 'bg-gray-100 text-gray-600'}`}>
+                  اختیاری
                 </span>
               </div>
 

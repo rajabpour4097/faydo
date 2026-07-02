@@ -159,12 +159,11 @@ class Package(BaseModel):
         """
         has_discount_all = hasattr(self, 'discount_all')
         has_elite_gift = hasattr(self, 'elite_gift')
-        # هر دو سطح طلایی (VIP) و VIP (VIP+) باید وجود داشته باشند
+        # سطح طلایی (VIP) الزامی است؛ سطح VIP+ اختیاری
         has_gold = self.experiences.filter(vip_experience_category__vip_type='VIP').exists()
-        has_vip = self.experiences.filter(vip_experience_category__vip_type='VIP+').exists()
         has_dates = bool(self.start_date and self.end_date)
 
-        return bool(has_discount_all and has_elite_gift and has_gold and has_vip and has_dates)
+        return bool(has_discount_all and has_elite_gift and has_gold and has_dates)
     
     def get_active_package_for_business(self):
         """

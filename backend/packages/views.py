@@ -13,7 +13,40 @@ from .serializers import (
     PackageListSerializer, PackageDetailSerializer, PackageCreateUpdateSerializer,
     VipExperienceCategorySerializer, CommentSerializer, CommentCreateSerializer
 )
-from accounts.models import BusinessProfile
+from accounts.models import BusinessProfile, Club
+
+
+CATEGORY_CLUB_KEYWORDS = {
+    'باشگاه طعم\u200cها': ['کافه', 'رستوران', 'بیکری', 'شیرینی', 'فست', 'غذا', 'نوشیدنی'],
+    'باشگاه تندرستی': ['کلینیک', 'زیبایی', 'ورزش', 'سلامت', 'ماساژ', 'پزشک', 'تندرست'],
+    'باشگاه سبک زندگی': ['آرایش', 'مزون', 'پت', 'بازی', 'پوشاک', 'مد', 'سبک'],
+}
+
+
+def resolve_business_club(business_profile):
+    """Resolve club from category FK, parent chain, or category name keywords."""
+    if not business_profile or not business_profile.category_id:
+        return None
+
+    category = business_profile.category
+    cat = category
+    while cat:
+        if cat.club_id:
+            return cat.club
+        cat = cat.parent
+
+    names = []
+    cat = category
+    while cat:
+        if cat.name:
+            names.append(cat.name)
+        cat = cat.parent
+    combined = ' '.join(names)
+
+    for club_name, keywords in CATEGORY_CLUB_KEYWORDS.items():
+        if any(kw in combined for kw in keywords):
+            return Club.objects.filter(name=club_name).first()
+    return None
 
 
 class PackageViewSet(viewsets.ModelViewSet):
@@ -611,54 +644,66 @@ class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = VipExperienceCategorySerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
     
+    def _club_items(self, base_qs, club):
+        if not club:
+            return base_qs.none()
+        return base_qs.filter(club=club, category__isnull=True).order_by('vip_type', 'id')
+
     def get_queryset(self):
         user = self.request.user
         base_qs = VipExperienceCategory.objects.select_related(
             'category', 'category__club', 'club'
         )
+        club_id_param = self.request.query_params.get('club_id')
 
         if user.role == 'business':
             try:
                 business_profile = user.businessprofile
                 business_category = business_profile.category
-                business_club = business_category.club if business_category else None
             except BusinessProfile.DoesNotExist:
+                business_profile = None
                 business_category = None
-                business_club = None
+
+            if club_id_param:
+                club = Club.objects.filter(pk=club_id_param).first()
+                club_qs = self._club_items(base_qs, club)
+                if club_qs.exists():
+                    return club_qs
 
             if business_category:
                 specific = base_qs.filter(category=business_category)
                 if specific.exists():
                     return specific.order_by('vip_type', 'id')
 
-            if business_club:
-                club_specific = base_qs.filter(
-                    club=business_club, category__isnull=True
-                )
-                if club_specific.exists():
-                    return club_specific.order_by('vip_type', 'id')
+            business_club = resolve_business_club(business_profile)
+            club_qs = self._club_items(base_qs, business_club)
+            if club_qs.exists():
+                return club_qs
 
-            return base_qs.filter(
-                category__isnull=True, club__isnull=True
-            ).order_by('vip_type', 'id')
+            universal = base_qs.filter(category__isnull=True, club__isnull=True)
+            if universal.exists():
+                return universal.order_by('vip_type', 'id')
+
+            return base_qs.order_by('vip_type', 'id')[:10]
 
         elif user.role == 'customer':
-            club_id = self.request.query_params.get('club_id')
-            if club_id:
-                club_specific = base_qs.filter(
-                    club_id=club_id, category__isnull=True
-                )
-                if club_specific.exists():
-                    return club_specific.order_by('vip_type', 'id')
+            if club_id_param:
+                club = Club.objects.filter(pk=club_id_param).first()
+                club_qs = self._club_items(base_qs, club)
+                if club_qs.exists():
+                    return club_qs
 
-                legacy = base_qs.filter(category__club_id=club_id)
+                legacy = base_qs.filter(category__club_id=club_id_param)
                 if legacy.exists():
                     return legacy.order_by('vip_type', 'id')
 
-            return base_qs.filter(
-                category__isnull=True, club__isnull=True
-            ).order_by('vip_type', 'id')
+            universal = base_qs.filter(category__isnull=True, club__isnull=True)
+            if universal.exists():
+                return universal.order_by('vip_type', 'id')
+
+            return base_qs.filter(category__isnull=True, club__isnull=False).order_by('vip_type', 'id')
 
         elif user.role in ['admin', 'it_manager', 'project_manager']:
             return base_qs.all().order_by('vip_type', 'id')

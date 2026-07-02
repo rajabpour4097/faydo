@@ -1060,12 +1060,19 @@ class ApiService {
     return this.request(`/packages/packages/${packageId}/status/`)
   }
 
-  async getVipExperienceCategories(): Promise<ApiResponse<VipExperienceCategory[]>> {
-    const response = await this.request<any>('/packages/vip-experiences/')
-    if (response.data && response.data.results) {
-      return { ...response, data: response.data.results }
+  async getVipExperienceCategories(clubId?: number): Promise<ApiResponse<VipExperienceCategory[]>> {
+    const query = clubId ? `?club_id=${clubId}` : ''
+    const response = await this.request<any>(`/packages/vip-experiences/${query}`)
+    if (response.error) return response
+    if (response.data) {
+      if (Array.isArray(response.data)) {
+        return { ...response, data: response.data as VipExperienceCategory[] }
+      }
+      if (Array.isArray(response.data.results)) {
+        return { ...response, data: response.data.results as VipExperienceCategory[] }
+      }
     }
-    return response
+    return { ...response, data: [] }
   }
 
   async getVipExperienceCategoriesByClub(clubId: number): Promise<ApiResponse<VipExperienceCategory[]>> {

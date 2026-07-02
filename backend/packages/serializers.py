@@ -59,9 +59,12 @@ class EliteGiftSerializer(serializers.ModelSerializer):
 
 
 class VipExperienceCategorySerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source='category.name', read_only=True, default=None)
+    category_name = serializers.SerializerMethodField()
     club_id = serializers.SerializerMethodField()
     club_name = serializers.SerializerMethodField()
+
+    def get_category_name(self, obj):
+        return obj.category.name if obj.category_id else None
 
     def get_club_id(self, obj):
         if obj.club_id:

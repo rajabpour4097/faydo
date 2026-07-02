@@ -47,6 +47,8 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const [packageBlockReason, setPackageBlockReason] = useState<string>('')
   const [editingPackageId, setEditingPackageId] = useState<number | undefined>(undefined)
   const [vipExperiences, setVipExperiences] = useState<VipExperienceCategory[]>([])
+  const [vipExperiencesLoading, setVipExperiencesLoading] = useState(true)
+  const [vipExperiencesError, setVipExperiencesError] = useState<string | null>(null)
   const [viewingPackage, setViewingPackage] = useState<Package | null>(null)
   const [showPackageDetails, setShowPackageDetails] = useState(false)
 
@@ -127,24 +129,37 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   }
 
   const loadVipExperiences = async () => {
+    setVipExperiencesLoading(true)
+    setVipExperiencesError(null)
     try {
-      console.log('Loading VIP experiences...')
-      const response = await apiService.getVipExperienceCategories()
-      console.log('VIP experiences response:', response)
-      
+      const category = user?.businessProfile?.category
+      const clubId =
+        (typeof category === 'object' && category !== null
+          ? category.club ?? category.club_detail?.id
+          : undefined) as number | undefined
+
+      let response = await apiService.getVipExperienceCategories(clubId)
+
+      if ((!response.data || response.data.length === 0) && clubId) {
+        response = await apiService.getVipExperienceCategories()
+      }
+
       if (response.error) {
-        console.error('Error loading VIP experiences:', response.error)
-        setVipExperiences([]) // Set empty array on error
-      } else if (response.data) {
-        console.log('VIP experiences loaded:', response.data)
+        setVipExperiences([])
+        setVipExperiencesError(response.error)
+      } else if (response.data && response.data.length > 0) {
         setVipExperiences(response.data)
       } else {
-        console.log('No data in VIP experiences response')
         setVipExperiences([])
+        setVipExperiencesError(
+          'گزینه\u200cای یافت نشد. لطفاً migrate و populate_vip_categories را روی سرور اجرا کنید.'
+        )
       }
-    } catch (err) {
-      console.error('Exception loading VIP experiences:', err)
-      setVipExperiences([]) // Set empty array on exception
+    } catch {
+      setVipExperiences([])
+      setVipExperiencesError('خطا در بارگذاری گزینه\u200cهای VIP')
+    } finally {
+      setVipExperiencesLoading(false)
     }
   }
 
@@ -692,6 +707,8 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
             }}
             editingPackageId={editingPackageId}
             vipExperiences={vipExperiences}
+            vipExperiencesLoading={vipExperiencesLoading}
+            vipExperiencesError={vipExperiencesError}
           />
         )}
 
@@ -1006,9 +1023,18 @@ interface CreatePackageModalProps {
   onSuccess: () => void
   editingPackageId?: number
   vipExperiences: VipExperienceCategory[]
+  vipExperiencesLoading?: boolean
+  vipExperiencesError?: string | null
 }
 
-const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSuccess, editingPackageId, vipExperiences }) => {
+const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
+  onClose,
+  onSuccess,
+  editingPackageId,
+  vipExperiences,
+  vipExperiencesLoading = false,
+  vipExperiencesError = null,
+}) => {
   const { isDark } = useTheme()
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -1623,8 +1649,12 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                 </span>
               </div>
 
-              {goldOptions.length === 0 ? (
+              {vipExperiencesLoading ? (
                 <p className="text-xs text-gray-500">در حال بارگذاری گزینه‌ها...</p>
+              ) : goldOptions.length === 0 ? (
+                <p className="text-xs text-red-500">
+                  {vipExperiencesError || 'گزینه\u200cای برای سطح طلایی یافت نشد.'}
+                </p>
               ) : (
                 <div className="space-y-3">
                   <div>
@@ -1695,8 +1725,12 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                 </span>
               </div>
 
-              {vipOptions.length === 0 ? (
+              {vipExperiencesLoading ? (
                 <p className="text-xs text-gray-500">در حال بارگذاری گزینه‌ها...</p>
+              ) : vipOptions.length === 0 ? (
+                <p className="text-xs text-red-500">
+                  {vipExperiencesError || 'گزینه\u200cای برای سطح VIP یافت نشد.'}
+                </p>
               ) : (
                 <div className="space-y-3">
                   <div>

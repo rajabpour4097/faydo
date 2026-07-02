@@ -133,3 +133,31 @@ class Command(BaseCommand):
             f"\nDone. Created {created_count}, updated {updated_count}. "
             f"Total club/universal items: {total}"
         )
+
+        self._ensure_universal_fallbacks()
+
+    def _ensure_universal_fallbacks(self):
+        """Generic hints when club cannot be resolved."""
+        universal_gold = [
+            ("خوشامدگویی", "نوشیدنی ولکام یا پذیرایی کوچک"),
+            ("هدیه کوچک", "کوپن یا استیکر برند"),
+            ("توجه ویژه", "پذیرش سریع‌تر یا جایگاه بهتر"),
+            ("پیشنهاد اختصاصی", "معرفی محصول یا خدمت مخصوص فایدو"),
+            ("امتیاز بازگشت", "کارت دعوت یا QR امتیاز بیشتر"),
+        ]
+        universal_vip = [
+            ("دسترسی زودتر", "اولویت رزرو در تایم‌های شلوغ"),
+            ("تجربه ویژه", "خدمت یا تجربه شخصی‌سازی‌شده"),
+            ("روز خاص من", "هدیه یا سرویس مخصوص تولد"),
+            ("دعوت از دوست", "آیتم اشتراکی یا تست رایگان برای همراه"),
+            ("هدیه برند", "پک مخصوص با برند کسب‌وکار"),
+        ]
+        for vip_type, items in (("VIP", universal_gold), ("VIP+", universal_vip)):
+            for name, hint in items:
+                VipExperienceCategory.objects.update_or_create(
+                    vip_type=vip_type,
+                    name=name,
+                    club=None,
+                    category=None,
+                    defaults={"description": hint},
+                )

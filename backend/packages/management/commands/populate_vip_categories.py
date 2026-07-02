@@ -13,7 +13,11 @@ Usage:
 from django.core.management.base import BaseCommand
 
 from accounts.models import Club, ServiceCategory
-from packages.club_utils import assign_club_to_service_category, find_club_by_name
+from packages.club_utils import (
+    assign_club_to_service_category,
+    ensure_default_clubs,
+    find_club_by_name,
+)
 from packages.models import VipExperienceCategory
 
 
@@ -108,6 +112,9 @@ class Command(BaseCommand):
             ).delete()
             print(f"Deleted {deleted} existing VIP category items.")
 
+        clubs, clubs_created = ensure_default_clubs()
+        print(f"Ensured {len(clubs)} clubs ({clubs_created} newly created).")
+
         assigned = self._assign_clubs_to_service_categories()
         print(f"Assigned club to {assigned} service categories.")
 
@@ -123,7 +130,7 @@ class Command(BaseCommand):
             for vip_type, names in (("VIP", GOLD_NAMES), ("VIP+", VIP_NAMES)):
                 hints = tiers[vip_type]
                 for name, hint in zip(names, hints):
-                    _, created = VipExperienceCategory.objects.update_or_create(
+                    obj, created = VipExperienceCategory.objects.update_or_create(
                         vip_type=vip_type,
                         name=name,
                         club=club,
@@ -136,7 +143,7 @@ class Command(BaseCommand):
                         updated_count += 1
                     tier_label = "Gold" if vip_type == "VIP" else "VIP+"
                     status = "Created" if created else "Updated"
-                    print(f"  [{tier_label}] {status} club={club.pk} id={club.pk}")
+                    print(f"  [{tier_label}] {status} club={club.pk} item={obj.pk}")
 
         total = VipExperienceCategory.objects.filter(category__isnull=True).count()
         print(

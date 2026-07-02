@@ -3,6 +3,24 @@
 from accounts.models import Club
 
 
+DEFAULT_CLUBS = [
+    {
+        "name": "باشگاه طعم\u200cها",
+        "description": "کافه\u200cها، رستوران\u200cها، بیکری\u200cها و شیرینی\u200cفروشی\u200cها",
+        "icon": "🍽",
+    },
+    {
+        "name": "باشگاه تندرستی",
+        "description": "کلینیک\u200cها، مراکز زیبایی، باشگاه\u200cهای ورزشی",
+        "icon": "💪",
+    },
+    {
+        "name": "باشگاه سبک زندگی",
+        "description": "آرایشگاه، مزون، پت\u200cشاپ، خانه بازی",
+        "icon": "✨",
+    },
+]
+
 CATEGORY_CLUB_KEYWORDS = {
     'باشگاه طعم\u200cها': [
         'کافه', 'رستوران', 'بیکری', 'شیرینی', 'فست', 'غذا', 'نوشیدنی', 'کافی',
@@ -45,6 +63,31 @@ def find_club_by_name(name: str):
         if normalize_persian(candidate.name) == target:
             return candidate
     return None
+
+
+def ensure_default_clubs():
+    """Create the 3 PDF clubs if they do not exist yet."""
+    ensured = []
+    created_count = 0
+    for data in DEFAULT_CLUBS:
+        club = find_club_by_name(data["name"])
+        if club:
+            changed = False
+            for field in ("description", "icon"):
+                if data.get(field) and getattr(club, field) != data[field]:
+                    setattr(club, field, data[field])
+                    changed = True
+            if changed:
+                club.save(update_fields=["description", "icon"])
+        else:
+            club = Club.objects.create(
+                name=data["name"],
+                description=data.get("description", ""),
+                icon=data.get("icon", ""),
+            )
+            created_count += 1
+        ensured.append(club)
+    return ensured, created_count
 
 
 def category_name_chain(category) -> str:

@@ -7,11 +7,13 @@ The `description` field holds the short hint shown in the package-creation texta
 Usage:
     python manage.py populate_vip_categories
     python manage.py populate_vip_categories --clear
+    python manage.py populate_vip_categories --no-universal
 """
 
 from django.core.management.base import BaseCommand
 
-from accounts.models import Club
+from accounts.models import Club, ServiceCategory
+from packages.club_utils import assign_club_to_service_category, find_club_by_name
 from packages.models import VipExperienceCategory
 
 
@@ -31,9 +33,9 @@ VIP_NAMES = [
     "هدیه برند",
 ]
 
-# PDF example hints per club (short text for textarea placeholder)
+# Keys are matched with find_club_by_name (ZWNJ / spelling tolerant)
 CLUB_HINTS = {
-    "باشگاه طعم‌ها": {
+    "باشگاه طعم\u200cها": {
         "VIP": [
             "نوشیدنی ولکام یا نان تازه کوچک",
             "کوپن دسر بعدی، استیکر یا کارت برند",
@@ -91,7 +93,12 @@ class Command(BaseCommand):
         parser.add_argument(
             "--clear",
             action="store_true",
-            help="Delete existing universal and club-specific items before creating new ones",
+            help="Delete existing universal/club VIP category items before creating new ones",
+        )
+        parser.add_argument(
+            "--no-universal",
+            action="store_true",
+            help="Skip creating generic fallback hints (club=null)",
         )
 
     def handle(self, *args, **options):
@@ -101,19 +108,22 @@ class Command(BaseCommand):
             ).delete()
             print(f"Deleted {deleted} existing VIP category items.")
 
+        assigned = self._assign_clubs_to_service_categories()
+        print(f"Assigned club to {assigned} service categories.")
+
         created_count = 0
         updated_count = 0
 
         for club_name, tiers in CLUB_HINTS.items():
-            club = Club.objects.filter(name=club_name).first()
+            club = find_club_by_name(club_name)
             if not club:
-                print(f"  [SKIP] Club not found: {club_name}")
+                print(f"  [SKIP] Club not found: {club_name.encode('unicode_escape').decode()}")
                 continue
 
             for vip_type, names in (("VIP", GOLD_NAMES), ("VIP+", VIP_NAMES)):
                 hints = tiers[vip_type]
                 for name, hint in zip(names, hints):
-                    obj, created = VipExperienceCategory.objects.update_or_create(
+                    _, created = VipExperienceCategory.objects.update_or_create(
                         vip_type=vip_type,
                         name=name,
                         club=club,
@@ -126,7 +136,7 @@ class Command(BaseCommand):
                         updated_count += 1
                     tier_label = "Gold" if vip_type == "VIP" else "VIP+"
                     status = "Created" if created else "Updated"
-                    print(f"  [{tier_label}] {status} club={club.pk} id={obj.pk}")
+                    print(f"  [{tier_label}] {status} club={club.pk} id={club.pk}")
 
         total = VipExperienceCategory.objects.filter(category__isnull=True).count()
         print(
@@ -134,10 +144,21 @@ class Command(BaseCommand):
             f"Total club/universal items: {total}"
         )
 
-        self._ensure_universal_fallbacks()
+        if not options["no_universal"]:
+            self._ensure_universal_fallbacks()
+
+    def _assign_clubs_to_service_categories(self):
+        assigned = 0
+        for service_category in ServiceCategory.objects.select_related('parent').all():
+            if service_category.club_id:
+                continue
+            club = assign_club_to_service_category(service_category)
+            if club:
+                assigned += 1
+        return assigned
 
     def _ensure_universal_fallbacks(self):
-        """Generic hints when club cannot be resolved."""
+        """Generic hints only when club cannot be resolved at all."""
         universal_gold = [
             ("خوشامدگویی", "نوشیدنی ولکام یا پذیرایی کوچک"),
             ("هدیه کوچک", "کوپن یا استیکر برند"),

@@ -1061,8 +1061,10 @@ class ApiService {
   }
 
   async getVipExperienceCategories(clubId?: number): Promise<ApiResponse<VipExperienceCategory[]>> {
-    const query = clubId ? `?club_id=${clubId}` : ''
-    const response = await this.request<any>(`/packages/vip-experiences/${query}`)
+    const endpoint = clubId
+      ? `/packages/vip-experiences/?club_id=${clubId}`
+      : '/packages/vip-experiences/'
+    const response = await this.request<any>(endpoint)
     if (response.error) return response
     if (response.data) {
       if (Array.isArray(response.data)) {

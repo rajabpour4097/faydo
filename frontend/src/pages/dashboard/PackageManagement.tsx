@@ -132,17 +132,23 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
     setVipExperiencesLoading(true)
     setVipExperiencesError(null)
     try {
-      const category = user?.businessProfile?.category
-      const clubId =
-        (typeof category === 'object' && category !== null
-          ? category.club ?? category.club_detail?.id
-          : undefined) as number | undefined
+      let clubId: number | undefined
 
-      let response = await apiService.getVipExperienceCategories(clubId)
+      const profileResp = await apiService.getProfile()
+      const freshCategory = profileResp.data?.profile && 'category' in profileResp.data.profile
+        ? profileResp.data.profile.category
+        : null
 
-      if ((!response.data || response.data.length === 0) && clubId) {
-        response = await apiService.getVipExperienceCategories()
+      if (freshCategory && typeof freshCategory === 'object') {
+        clubId = freshCategory.club ?? freshCategory.club_detail?.id
+      } else {
+        const category = user?.businessProfile?.category
+        if (typeof category === 'object' && category !== null) {
+          clubId = category.club ?? category.club_detail?.id
+        }
       }
+
+      const response = await apiService.getVipExperienceCategories(clubId)
 
       if (response.error) {
         setVipExperiences([])
@@ -152,7 +158,9 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
       } else {
         setVipExperiences([])
         setVipExperiencesError(
-          'گزینه\u200cای یافت نشد. لطفاً migrate و populate_vip_categories را روی سرور اجرا کنید.'
+          clubId
+            ? 'راهنمای VIP این باشگاه هنوز در سرور ثبت نشده. دستور populate_vip_categories را اجرا کنید.'
+            : 'باشگاه کسب\u200cوکار مشخص نیست. در پروفایل دسته\u200cبندی (مثلاً کافه) را انتخاب کنید.'
         )
       }
     } catch {

@@ -14,39 +14,7 @@ from .serializers import (
     VipExperienceCategorySerializer, CommentSerializer, CommentCreateSerializer
 )
 from accounts.models import BusinessProfile, Club
-
-
-CATEGORY_CLUB_KEYWORDS = {
-    'باشگاه طعم\u200cها': ['کافه', 'رستوران', 'بیکری', 'شیرینی', 'فست', 'غذا', 'نوشیدنی'],
-    'باشگاه تندرستی': ['کلینیک', 'زیبایی', 'ورزش', 'سلامت', 'ماساژ', 'پزشک', 'تندرست'],
-    'باشگاه سبک زندگی': ['آرایش', 'مزون', 'پت', 'بازی', 'پوشاک', 'مد', 'سبک'],
-}
-
-
-def resolve_business_club(business_profile):
-    """Resolve club from category FK, parent chain, or category name keywords."""
-    if not business_profile or not business_profile.category_id:
-        return None
-
-    category = business_profile.category
-    cat = category
-    while cat:
-        if cat.club_id:
-            return cat.club
-        cat = cat.parent
-
-    names = []
-    cat = category
-    while cat:
-        if cat.name:
-            names.append(cat.name)
-        cat = cat.parent
-    combined = ' '.join(names)
-
-    for club_name, keywords in CATEGORY_CLUB_KEYWORDS.items():
-        if any(kw in combined for kw in keywords):
-            return Club.objects.filter(name=club_name).first()
-    return None
+from .club_utils import resolve_business_club
 
 
 class PackageViewSet(viewsets.ModelViewSet):
@@ -660,11 +628,20 @@ class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
         if user.role == 'business':
             try:
-                business_profile = user.businessprofile
+                business_profile = BusinessProfile.objects.select_related(
+                    'category',
+                    'category__club',
+                    'category__parent',
+                    'category__parent__club',
+                    'category__parent__parent',
+                    'category__parent__parent__club',
+                ).get(user=user)
                 business_category = business_profile.category
             except BusinessProfile.DoesNotExist:
                 business_profile = None
                 business_category = None
+
+            business_club = resolve_business_club(business_profile)
 
             if club_id_param:
                 club = Club.objects.filter(pk=club_id_param).first()
@@ -677,16 +654,15 @@ class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
                 if specific.exists():
                     return specific.order_by('vip_type', 'id')
 
-            business_club = resolve_business_club(business_profile)
-            club_qs = self._club_items(base_qs, business_club)
-            if club_qs.exists():
+            if business_club:
+                club_qs = self._club_items(base_qs, business_club)
                 return club_qs
 
             universal = base_qs.filter(category__isnull=True, club__isnull=True)
             if universal.exists():
                 return universal.order_by('vip_type', 'id')
 
-            return base_qs.order_by('vip_type', 'id')[:10]
+            return base_qs.none()
 
         elif user.role == 'customer':
             if club_id_param:

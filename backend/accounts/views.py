@@ -139,7 +139,9 @@ def profile_view(request):
                 profile_data = None
         elif user.role == 'business':
             try:
-                business_profile = BusinessProfile.objects.get(user=user)
+                business_profile = BusinessProfile.objects.select_related(
+                    'category', 'category__club', 'category__parent', 'category__parent__club'
+                ).get(user=user)
                 profile_data = BusinessProfileSerializer(business_profile).data
             except BusinessProfile.DoesNotExist:
                 profile_data = None

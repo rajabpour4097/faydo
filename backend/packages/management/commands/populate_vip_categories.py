@@ -15,6 +15,7 @@ from django.core.management.base import BaseCommand
 from accounts.models import Club, ServiceCategory
 from packages.club_utils import (
     assign_club_to_service_category,
+    consolidate_duplicate_clubs,
     ensure_default_clubs,
     find_club_by_name,
 )
@@ -114,6 +115,12 @@ class Command(BaseCommand):
 
         clubs, clubs_created = ensure_default_clubs()
         print(f"Ensured {len(clubs)} clubs ({clubs_created} newly created).")
+
+        merged_cats, merged_vip, deleted_clubs = consolidate_duplicate_clubs()
+        print(
+            f"Consolidated duplicates: {deleted_clubs} clubs removed, "
+            f"{merged_cats} categories reassigned, {merged_vip} VIP rows merged."
+        )
 
         assigned = self._assign_clubs_to_service_categories()
         print(f"Assigned club to {assigned} service categories.")

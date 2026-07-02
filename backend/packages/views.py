@@ -14,7 +14,12 @@ from .serializers import (
     VipExperienceCategorySerializer, CommentSerializer, CommentCreateSerializer
 )
 from accounts.models import BusinessProfile, Club
-from .club_utils import resolve_business_club
+from .club_utils import (
+    resolve_business_club,
+    resolve_canonical_club,
+    club_ids_for_lookup,
+    infer_club_from_category_name,
+)
 
 
 class PackageViewSet(viewsets.ModelViewSet):
@@ -617,7 +622,10 @@ class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     def _club_items(self, base_qs, club):
         if not club:
             return base_qs.none()
-        return base_qs.filter(club=club, category__isnull=True).order_by('vip_type', 'id')
+        lookup_ids = club_ids_for_lookup(club)
+        return base_qs.filter(
+            club_id__in=lookup_ids, category__isnull=True
+        ).order_by('vip_type', 'id')
 
     def get_queryset(self):
         user = self.request.user
@@ -645,9 +653,10 @@ class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
             if club_id_param:
                 club = Club.objects.filter(pk=club_id_param).first()
-                club_qs = self._club_items(base_qs, club)
-                if club_qs.exists():
-                    return club_qs
+                if club:
+                    club_qs = self._club_items(base_qs, club)
+                    if club_qs.exists():
+                        return club_qs
 
             if business_category:
                 specific = base_qs.filter(category=business_category)
@@ -656,7 +665,15 @@ class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
             if business_club:
                 club_qs = self._club_items(base_qs, business_club)
-                return club_qs
+                if club_qs.exists():
+                    return club_qs
+
+            if business_category:
+                inferred = infer_club_from_category_name(business_category)
+                if inferred:
+                    club_qs = self._club_items(base_qs, resolve_canonical_club(inferred))
+                    if club_qs.exists():
+                        return club_qs
 
             universal = base_qs.filter(category__isnull=True, club__isnull=True)
             if universal.exists():

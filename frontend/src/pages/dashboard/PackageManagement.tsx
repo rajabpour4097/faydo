@@ -148,7 +148,11 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
         }
       }
 
-      const response = await apiService.getVipExperienceCategories(clubId)
+      let response = await apiService.getVipExperienceCategories(clubId)
+
+      if ((!response.data || response.data.length === 0) && clubId) {
+        response = await apiService.getVipExperienceCategories()
+      }
 
       if (response.error) {
         setVipExperiences([])

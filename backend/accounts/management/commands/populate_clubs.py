@@ -1,6 +1,11 @@
 from django.core.management.base import BaseCommand
 
-from packages.club_utils import DEFAULT_CLUBS, ensure_default_clubs, find_club_by_name
+from packages.club_utils import (
+    DEFAULT_CLUBS,
+    consolidate_duplicate_clubs,
+    ensure_default_clubs,
+    find_club_by_name,
+)
 
 
 class Command(BaseCommand):
@@ -9,6 +14,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         clubs, created_count = ensure_default_clubs()
         print(f"Ensured {len(clubs)} clubs ({created_count} newly created).")
+        merged_cats, merged_vip, deleted_clubs = consolidate_duplicate_clubs()
+        print(
+            f"Consolidated duplicates: {deleted_clubs} clubs removed, "
+            f"{merged_cats} categories reassigned, {merged_vip} VIP rows merged."
+        )
         for data in DEFAULT_CLUBS:
             club = find_club_by_name(data["name"])
             if club:

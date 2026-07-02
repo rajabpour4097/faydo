@@ -511,6 +511,11 @@ class VipExperienceCategory(BaseModel):
         'accounts.ServiceCategory', on_delete=models.SET_NULL,
         null=True, blank=True, related_name="category"
     )
+    club = models.ForeignKey(
+        'accounts.Club', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='vip_experience_categories',
+        verbose_name='باشگاه'
+    )
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
 

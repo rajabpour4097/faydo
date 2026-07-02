@@ -614,30 +614,51 @@ class VipExperienceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        base_qs = VipExperienceCategory.objects.select_related('category', 'category__club')
+        base_qs = VipExperienceCategory.objects.select_related(
+            'category', 'category__club', 'club'
+        )
 
         if user.role == 'business':
             try:
-                business_category = user.businessprofile.category
+                business_profile = user.businessprofile
+                business_category = business_profile.category
+                business_club = business_category.club if business_category else None
             except BusinessProfile.DoesNotExist:
                 business_category = None
+                business_club = None
 
             if business_category:
-                # Return category-specific items first; fall back to universal ones
                 specific = base_qs.filter(category=business_category)
                 if specific.exists():
                     return specific.order_by('vip_type', 'id')
-            # Universal entries (category=NULL) visible to all businesses
-            return base_qs.filter(category__isnull=True).order_by('vip_type', 'id')
+
+            if business_club:
+                club_specific = base_qs.filter(
+                    club=business_club, category__isnull=True
+                )
+                if club_specific.exists():
+                    return club_specific.order_by('vip_type', 'id')
+
+            return base_qs.filter(
+                category__isnull=True, club__isnull=True
+            ).order_by('vip_type', 'id')
 
         elif user.role == 'customer':
             club_id = self.request.query_params.get('club_id')
-            qs = base_qs.filter(category__isnull=True)
             if club_id:
-                specific = base_qs.filter(category__club_id=club_id)
-                if specific.exists():
-                    return specific.order_by('vip_type', 'id')
-            return qs.order_by('vip_type', 'id')
+                club_specific = base_qs.filter(
+                    club_id=club_id, category__isnull=True
+                )
+                if club_specific.exists():
+                    return club_specific.order_by('vip_type', 'id')
+
+                legacy = base_qs.filter(category__club_id=club_id)
+                if legacy.exists():
+                    return legacy.order_by('vip_type', 'id')
+
+            return base_qs.filter(
+                category__isnull=True, club__isnull=True
+            ).order_by('vip_type', 'id')
 
         elif user.role in ['admin', 'it_manager', 'project_manager']:
             return base_qs.all().order_by('vip_type', 'id')

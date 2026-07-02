@@ -33,13 +33,9 @@ class PackageAdmin(admin.ModelAdmin):
 
 @admin.register(VipExperienceCategory)
 class VipExperienceCategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'vip_type', 'category', 'name')
+    list_display = ('id', 'vip_type', 'club', 'category', 'name')
     search_fields = ('name',)
-    list_filter = ('vip_type', 'category')
-    list_per_page = 10
-    list_display_links = ('id', 'vip_type')
-    list_editable = ('name',)
-    list_filter = ('vip_type', 'category')
+    list_filter = ('vip_type', 'club', 'category')
 
 
 @admin.register(DiscountAll)

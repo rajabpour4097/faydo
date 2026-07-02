@@ -1657,6 +1657,11 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                       <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
                         توضیح خودتان
                       </label>
+                      {selectedGold?.description && (
+                        <p className={`text-xs mb-1.5 leading-relaxed ${isDark ? 'text-yellow-300/80' : 'text-yellow-700'}`}>
+                          راهنما: {selectedGold.description}
+                        </p>
+                      )}
                       <textarea
                         value={formData.goldDescription}
                         onChange={(e) => handleInputChange('goldDescription', e.target.value)}
@@ -1668,7 +1673,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                         }`}
                         placeholder={
                           selectedGold?.description
-                            ? `مثال: ${selectedGold.description}`
+                            ? selectedGold.description
                             : 'توضیح دهید که چطور این تجربه را برای مشتریان طلایی فراهم می‌کنید.'
                         }
                       />
@@ -1724,6 +1729,11 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                       <label className={`block text-xs font-medium mb-1 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
                         توضیح خودتان
                       </label>
+                      {selectedVip?.description && (
+                        <p className={`text-xs mb-1.5 leading-relaxed ${isDark ? 'text-purple-300/80' : 'text-purple-700'}`}>
+                          راهنما: {selectedVip.description}
+                        </p>
+                      )}
                       <textarea
                         value={formData.vipDescription}
                         onChange={(e) => handleInputChange('vipDescription', e.target.value)}
@@ -1735,7 +1745,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ onClose, onSucc
                         }`}
                         placeholder={
                           selectedVip?.description
-                            ? `مثال: ${selectedVip.description}`
+                            ? selectedVip.description
                             : 'توضیح دهید که چطور این تجربه انحصاری را برای مشتریان VIP فراهم می‌کنید.'
                         }
                       />

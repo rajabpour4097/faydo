@@ -1373,16 +1373,21 @@ const DesktopProfile = () => {
 
         {/* Hero Card */}
         <div className={`rounded-2xl overflow-hidden ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-          {/* Gradient banner */}
-          <div className={`h-28 ${user?.type === 'business'
-            ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600'
-            : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500'}`}
-          />
-          {/* Avatar row */}
-          <div className="px-6 pb-6">
-            <div className="flex items-end gap-4 -mt-12 mb-4">
+          <div className="relative">
+            <div className={`h-32 px-6 pt-6 pb-16 ${user?.type === 'business'
+              ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600'
+              : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500'}`}
+            >
+              <h2 className="text-xl font-bold text-white drop-shadow-sm pr-28 leading-tight">
+                {user?.name || '—'}
+              </h2>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 bg-white/20 text-white">
+                {user?.type === 'business' ? '🏢 کسب‌وکار' : '👤 مشتری'}
+              </span>
+            </div>
+            <div className="absolute bottom-0 right-6 translate-y-1/2">
               <div className="relative flex-shrink-0">
-                <div className="w-24 h-24 rounded-2xl ring-4 ring-white dark:ring-slate-800 overflow-hidden bg-gray-200 flex items-center justify-center">
+                <div className="w-24 h-24 rounded-2xl ring-4 ring-white dark:ring-slate-800 overflow-hidden bg-gray-200 flex items-center justify-center shadow-md">
                   {profileImage ? (
                     <img src={getFullImageUrl(profileImage)} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -1400,18 +1405,9 @@ const DesktopProfile = () => {
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
               </div>
-              <div className="pb-1">
-                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.name || '—'}</h2>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                  user?.type === 'business'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                    : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
-                }`}>
-                  {user?.type === 'business' ? '🏢 کسب‌وکار' : '👤 مشتری'}
-                </span>
-              </div>
             </div>
           </div>
+          <div className="h-14" />
         </div>
 
         {/* Info Cards */}
@@ -1869,14 +1865,21 @@ const MobileProfile = () => {
 
         {/* Hero Card */}
         <div className={`mx-4 rounded-2xl overflow-hidden ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-          <div className={`h-20 ${user?.type === 'business'
-            ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600'
-            : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500'}`}
-          />
-          <div className="px-4 pb-4">
-            <div className="flex items-end gap-3 -mt-8 mb-3">
+          <div className="relative">
+            <div className={`h-28 px-4 pt-5 pb-14 ${user?.type === 'business'
+              ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600'
+              : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500'}`}
+            >
+              <h2 className="font-bold text-base text-white drop-shadow-sm pr-20 leading-tight">
+                {user?.name || '—'}
+              </h2>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1.5 bg-white/20 text-white">
+                {user?.type === 'business' ? '🏢 کسب‌وکار' : '👤 مشتری'}
+              </span>
+            </div>
+            <div className="absolute bottom-0 right-4 translate-y-1/2">
               <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 rounded-xl ring-4 ring-white dark:ring-slate-800 overflow-hidden bg-gray-200 flex items-center justify-center">
+                <div className="size-16 rounded-xl ring-4 ring-white dark:ring-slate-800 overflow-hidden bg-gray-200 flex items-center justify-center shadow-md">
                   {profileImage ? (
                     <img src={getFullImageUrl(profileImage)} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -1892,18 +1895,9 @@ const MobileProfile = () => {
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
               </div>
-              <div className="pb-0.5">
-                <h2 className={`font-bold text-base ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.name || '—'}</h2>
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                  user?.type === 'business'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                    : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
-                }`}>
-                  {user?.type === 'business' ? '🏢 کسب‌وکار' : '👤 مشتری'}
-                </span>
-              </div>
             </div>
           </div>
+          <div className="h-10" />
         </div>
 
         {/* Base Info */}

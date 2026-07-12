@@ -55,22 +55,29 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   const [isSatellite, setIsSatellite] = useState(false)
   const [isLocating, setIsLocating] = useState(false)
   const [isMapReady, setIsMapReady] = useState(false)
-  const isFirstMount = useRef(true)
+  const positionRef = useRef<[number, number]>([initialLat, initialLng])
 
   useEffect(() => {
-    setPosition([initialLat, initialLng])
-    if (isFirstMount.current) {
-      // First time map mounts — just show it at this position
-      isFirstMount.current = false
+    if (!isMapReady) {
+      positionRef.current = [initialLat, initialLng]
+      setPosition([initialLat, initialLng])
       setIsMapReady(true)
-    } else {
-      // Props changed after mount (e.g. saved coords loaded async) — fly there
+      return
+    }
+
+    const delta =
+      Math.abs(initialLat - positionRef.current[0]) +
+      Math.abs(initialLng - positionRef.current[1])
+    if (delta > 1e-5) {
+      positionRef.current = [initialLat, initialLng]
+      setPosition([initialLat, initialLng])
       setFlyTarget([initialLat, initialLng])
     }
-  }, [initialLat, initialLng])
+  }, [initialLat, initialLng, isMapReady])
 
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
+      positionRef.current = [lat, lng]
       setPosition([lat, lng])
       onLocationSelect(lat, lng)
     },
@@ -120,9 +127,11 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         روی نقشه کلیک کنید تا موقعیت کسب‌وکار را انتخاب کنید
       </div>
 
-      {/* Map wrapper */}
-      <div className="relative rounded-xl overflow-hidden shadow-md"
-           style={{ height: '320px' }}>
+      {/* Map wrapper — touch-action lets modal scroll when not dragging map */}
+      <div
+        className="relative rounded-xl overflow-hidden shadow-md"
+        style={{ height: '280px', touchAction: 'pan-y' }}
+      >
         <MapContainer
           center={position}
           zoom={13}

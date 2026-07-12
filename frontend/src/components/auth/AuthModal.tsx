@@ -4,6 +4,7 @@ import { API_BASE_URL, apiService, ServiceCategoryItem } from '../../services/ap
 import { AuthServiceSlider } from './AuthServiceSlider'
 import { OtpInput } from './OtpInput'
 import { LocationPicker } from '../LocationPicker'
+import { PersianDatePicker } from '../PersianDatePicker'
 import { User, Building2, Check } from 'lucide-react'
 
 interface AuthModalProps {
@@ -32,6 +33,9 @@ interface FormData {
   last_name: string
   province_id: string
   city_id: string
+  gender: '' | 'male' | 'female'
+  birth_date: string
+  map_location_selected: boolean
   // business
   business_name: string
   category_id: string
@@ -53,6 +57,9 @@ const INITIAL_FORM: FormData = {
   last_name: '',
   province_id: '',
   city_id: '',
+  gender: '',
+  birth_date: '',
+  map_location_selected: false,
   business_name: '',
   category_id: '',
   business_phone: '',
@@ -79,6 +86,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [lookupsError, setLookupsError] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
   const verifyingOtpRef = useRef(false)
+  const mapInitialCenter = useRef({ lat: 35.6892, lng: 51.389 })
 
   const loadRegistrationLookups = useCallback(async () => {
     setLookupsLoading(true)
@@ -160,6 +168,15 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const patchForm = (patch: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...patch }))
   }
+
+  const handleMapLocationSelect = useCallback((lat: number, lng: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      business_location_latitude: lat,
+      business_location_longitude: lng,
+      map_location_selected: true,
+    }))
+  }, [])
 
   const renderProvinceCityFields = (focusRing: string) => (
     <>
@@ -318,6 +335,14 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setError('انتخاب شهر الزامی است')
       return
     }
+    if (!formData.gender) {
+      setError('انتخاب جنسیت الزامی است')
+      return
+    }
+    if (!formData.birth_date) {
+      setError('انتخاب تاریخ تولد الزامی است')
+      return
+    }
     setIsLoading(true)
     setError('')
     const timestamp = Date.now().toString().slice(-4)
@@ -330,8 +355,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       phone_number: formData.phone_number,
       password: '',
       password_confirm: '',
-      gender: '',
-      birth_date: '',
+      gender: formData.gender,
+      birth_date: formData.birth_date,
       address: '',
       city_id: parseInt(formData.city_id),
     })
@@ -345,6 +370,14 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   }
 
   const submitBusinessRegistration = async () => {
+    if (!formData.business_phone.trim()) {
+      setError('تلفن ثابت کسب‌وکار الزامی است')
+      return
+    }
+    if (!formData.map_location_selected || formData.business_location_latitude == null) {
+      setError('انتخاب موقعیت روی نقشه الزامی است')
+      return
+    }
     if (!formData.address.trim()) {
       setError('آدرس کامل الزامی است')
       return
@@ -397,7 +430,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       })
 
       await apiService.updateFullBusinessProfile({
-        business_phone: formData.business_phone || undefined,
+        business_phone: formData.business_phone.trim(),
         instagram_link: formData.instagram_link || undefined,
         website_link: formData.website_link || undefined,
         address: formData.address.trim(),
@@ -619,6 +652,23 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 {renderProvinceCityFields('focus:ring-2 focus:ring-blue-500')}
+                <select
+                  value={formData.gender}
+                  onChange={(e) => patchForm({ gender: e.target.value as '' | 'male' | 'female' })}
+                  className="w-full px-3 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="">انتخاب جنسیت *</option>
+                  <option value="male">مرد</option>
+                  <option value="female">زن</option>
+                </select>
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">تاریخ تولد *</p>
+                  <PersianDatePicker
+                    value={formData.birth_date}
+                    onChange={(date) => patchForm({ birth_date: date })}
+                    accentClass="bg-blue-600"
+                  />
+                </div>
               </div>
               <div className="flex gap-2 mt-5">
                 <button onClick={() => setStep('role')} className="flex-1 py-3 border rounded-xl text-gray-600">
@@ -739,17 +789,17 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           {step === 'business-3' && (
             <>
               {renderProgress(3, 3, 'bg-emerald-600')}
-              <h2 className="text-lg font-bold text-center mb-4">وب‌سایت و مکان</h2>
-              <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+              <h2 className="text-lg font-bold text-center mb-4">تماس، مکان و آدرس</h2>
+              <div className="space-y-3">
                 <input
-                  placeholder="تلفن ثابت (اختیاری)"
+                  placeholder="تلفن ثابت کسب‌وکار *"
                   dir="ltr"
                   value={formData.business_phone}
                   onChange={(e) => patchForm({ business_phone: e.target.value })}
-                  className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none"
+                  className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-400"
                 />
                 <input
-                  placeholder="instagram.com/yourname"
+                  placeholder="instagram.com/yourname (اختیاری)"
                   dir="ltr"
                   value={formData.instagram_link}
                   onChange={(e) => patchForm({ instagram_link: e.target.value })}
@@ -762,27 +812,33 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   onChange={(e) => patchForm({ website_link: e.target.value })}
                   className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none"
                 />
-                <div className="rounded-xl overflow-hidden border border-gray-200">
-                  <LocationPicker
-                    isDark={false}
-                    initialLat={formData.business_location_latitude ?? 35.6892}
-                    initialLng={formData.business_location_longitude ?? 51.389}
-                    onLocationSelect={(lat, lng) =>
-                      patchForm({
-                        business_location_latitude: lat,
-                        business_location_longitude: lng,
-                      })
-                    }
-                  />
-                </div>
                 <textarea
                   placeholder="آدرس کامل *"
                   rows={2}
                   value={formData.address}
                   onChange={(e) => patchForm({ address: e.target.value })}
-                  className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none resize-none"
+                  className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none resize-none focus:ring-2 focus:ring-emerald-400"
                 />
               </div>
+              <div className="mt-4 rounded-xl overflow-hidden border border-gray-200">
+                <LocationPicker
+                  isDark={false}
+                  initialLat={
+                    formData.map_location_selected && formData.business_location_latitude != null
+                      ? formData.business_location_latitude
+                      : mapInitialCenter.current.lat
+                  }
+                  initialLng={
+                    formData.map_location_selected && formData.business_location_longitude != null
+                      ? formData.business_location_longitude
+                      : mapInitialCenter.current.lng
+                  }
+                  onLocationSelect={handleMapLocationSelect}
+                />
+              </div>
+              {formData.map_location_selected && (
+                <p className="text-xs text-emerald-600 text-center mt-2">موقعیت روی نقشه انتخاب شد</p>
+              )}
               <div className="flex gap-2 mt-5">
                 <button onClick={() => setStep('business-2')} className="flex-1 py-3 border rounded-xl text-gray-600">
                   قبلی

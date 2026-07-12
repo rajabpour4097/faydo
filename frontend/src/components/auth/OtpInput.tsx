@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 interface OtpInputProps {
   value: string
   onChange: (code: string) => void
+  onComplete?: (code: string) => void
   disabled?: boolean
 }
 
 const OTP_LENGTH = 6
 
-export const OtpInput = ({ value, onChange, disabled = false }: OtpInputProps) => {
+export const OtpInput = ({ value, onChange, onComplete, disabled = false }: OtpInputProps) => {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
   const [digits, setDigits] = useState<string[]>(() =>
     Array.from({ length: OTP_LENGTH }, (_, i) => value[i] || '')
@@ -31,7 +32,10 @@ export const OtpInput = ({ value, onChange, disabled = false }: OtpInputProps) =
         } as CredentialRequestOptions)) as OTPCredential | null
         if (cred?.code) {
           const code = cred.code.replace(/\D/g, '').slice(0, OTP_LENGTH)
-          if (code.length === OTP_LENGTH) onChange(code)
+          if (code.length === OTP_LENGTH) {
+            onChange(code)
+            onComplete?.(code)
+          }
         }
       } catch {
         // User dismissed or browser doesn't support — manual entry still works
@@ -39,11 +43,15 @@ export const OtpInput = ({ value, onChange, disabled = false }: OtpInputProps) =
     })()
 
     return () => ac.abort()
-  }, [onChange])
+  }, [onChange, onComplete])
 
   const emitChange = (nextDigits: string[]) => {
     setDigits(nextDigits)
-    onChange(nextDigits.join(''))
+    const code = nextDigits.join('')
+    onChange(code)
+    if (code.length === OTP_LENGTH && /^\d{6}$/.test(code)) {
+      onComplete?.(code)
+    }
   }
 
   const handleChange = (index: number, raw: string) => {

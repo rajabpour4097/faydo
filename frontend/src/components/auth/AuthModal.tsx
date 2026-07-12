@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { API_BASE_URL, apiService, ServiceCategoryItem } from '../../services/api'
 import { AuthServiceSlider } from './AuthServiceSlider'
@@ -71,7 +71,40 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [error, setError] = useState('')
   const [categories, setCategories] = useState<ServiceCategoryItem[]>([])
   const [cities, setCities] = useState<{ id: number; name: string }[]>([])
+  const [lookupsLoading, setLookupsLoading] = useState(false)
+  const [lookupsError, setLookupsError] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
+  const verifyingOtpRef = useRef(false)
+
+  const loadRegistrationLookups = useCallback(async () => {
+    setLookupsLoading(true)
+    setLookupsError('')
+    try {
+      const [catResp, cityResp] = await Promise.all([
+        apiService.getServiceCategories(),
+        apiService.getAllCities(),
+      ])
+
+      if (catResp.data) {
+        setCategories(catResp.data)
+      } else if (catResp.error) {
+        setLookupsError(catResp.error)
+      }
+
+      if (cityResp.data) {
+        const flat = cityResp.data.flatMap((p) =>
+          (p.cities || []).map((c) => ({ id: c.id, name: `${c.name} (${p.name})` }))
+        )
+        setCities(flat)
+      } else if (cityResp.error) {
+        setLookupsError((prev) => prev || cityResp.error || '')
+      }
+    } catch {
+      setLookupsError('خطا در بارگذاری شهرها و دسته‌بندی‌ها')
+    } finally {
+      setLookupsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isOpen) {
@@ -85,21 +118,15 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
   useEffect(() => {
     if (!isOpen) return
-    const loadLookups = async () => {
-      const [catResp, cityResp] = await Promise.all([
-        apiService.getServiceCategories(),
-        apiService.getAllCities(),
-      ])
-      if (catResp.data) setCategories(catResp.data)
-      if (cityResp.data) {
-        const flat = cityResp.data.flatMap((p) =>
-          (p.cities || []).map((c) => ({ id: c.id, name: `${c.name} (${p.name})` }))
-        )
-        setCities(flat)
-      }
+    loadRegistrationLookups()
+  }, [isOpen, loadRegistrationLookups])
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (step === 'customer-register' || step === 'business-1' || step === 'business-2') {
+      loadRegistrationLookups()
     }
-    loadLookups()
-  }, [isOpen])
+  }, [step, isOpen, loadRegistrationLookups])
 
   const patchForm = (patch: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...patch }))
@@ -159,11 +186,14 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
   }
 
-  const verifyOTP = async () => {
-    if (formData.otp_code.length !== 6) {
+  const verifyOTP = useCallback(async (codeOverride?: string) => {
+    const code = codeOverride ?? formData.otp_code
+    if (code.length !== 6) {
       setError('کد ۶ رقمی را کامل وارد کنید')
       return
     }
+    if (verifyingOtpRef.current) return
+    verifyingOtpRef.current = true
     setIsLoading(true)
     setError('')
     try {
@@ -172,7 +202,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone_number: formData.phone_number,
-          otp_code: formData.otp_code,
+          otp_code: code,
         }),
       })
       const otpData = await otpResponse.json()
@@ -199,8 +229,9 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setError('خطا در تایید کد')
     } finally {
       setIsLoading(false)
+      verifyingOtpRef.current = false
     }
-  }
+  }, [formData.phone_number, formData.otp_code])
 
   const submitCustomerRegistration = async () => {
     if (!formData.first_name.trim() || !formData.last_name.trim()) {
@@ -421,6 +452,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               <OtpInput
                 value={formData.otp_code}
                 onChange={(code) => patchForm({ otp_code: code })}
+                onComplete={(code) => verifyOTP(code)}
                 disabled={isLoading}
               />
               <div className="flex gap-2 mt-5">
@@ -431,7 +463,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   بازگشت
                 </button>
                 <button
-                  onClick={verifyOTP}
+                  onClick={() => verifyOTP()}
                   disabled={isLoading || formData.otp_code.length !== 6}
                   className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50"
                 >
@@ -513,13 +545,25 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 <select
                   value={formData.city_id}
                   onChange={(e) => patchForm({ city_id: e.target.value })}
-                  className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  disabled={lookupsLoading}
+                  className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:opacity-60"
                 >
-                  <option value="">انتخاب شهر *</option>
+                  <option value="">
+                    {lookupsLoading ? 'در حال بارگذاری شهرها...' : cities.length === 0 ? 'شهری یافت نشد' : 'انتخاب شهر *'}
+                  </option>
                   {cities.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+                {lookupsError && (
+                  <button
+                    type="button"
+                    onClick={loadRegistrationLookups}
+                    className="text-xs text-blue-600 hover:text-blue-700 w-full text-center"
+                  >
+                    بارگذاری مجدد لیست شهرها
+                  </button>
+                )}
               </div>
               <div className="flex gap-2 mt-5">
                 <button onClick={() => setStep('role')} className="flex-1 py-3 border rounded-xl text-gray-600">
@@ -550,13 +594,25 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 <select
                   value={formData.category_id}
                   onChange={(e) => patchForm({ category_id: e.target.value })}
-                  className="w-full px-3 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-red-400 outline-none"
+                  disabled={lookupsLoading}
+                  className="w-full px-3 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-red-400 outline-none disabled:opacity-60"
                 >
-                  <option value="">نوع فعالیت *</option>
+                  <option value="">
+                    {lookupsLoading ? 'در حال بارگذاری...' : categories.length === 0 ? 'نوع فعالیتی یافت نشد' : 'نوع فعالیت *'}
+                  </option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+                {lookupsError && (
+                  <button
+                    type="button"
+                    onClick={loadRegistrationLookups}
+                    className="text-xs text-blue-600 hover:text-blue-700 w-full text-center"
+                  >
+                    بارگذاری مجدد نوع فعالیت
+                  </button>
+                )}
                 <input
                   value={formData.phone_number}
                   readOnly
@@ -603,13 +659,25 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 <select
                   value={formData.city_id}
                   onChange={(e) => patchForm({ city_id: e.target.value })}
-                  className="w-full px-3 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-orange-400 outline-none"
+                  disabled={lookupsLoading}
+                  className="w-full px-3 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-orange-400 outline-none disabled:opacity-60"
                 >
-                  <option value="">انتخاب شهر *</option>
+                  <option value="">
+                    {lookupsLoading ? 'در حال بارگذاری شهرها...' : cities.length === 0 ? 'شهری یافت نشد' : 'انتخاب شهر *'}
+                  </option>
                   {cities.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+                {lookupsError && (
+                  <button
+                    type="button"
+                    onClick={loadRegistrationLookups}
+                    className="text-xs text-blue-600 hover:text-blue-700 w-full text-center"
+                  >
+                    بارگذاری مجدد لیست شهرها
+                  </button>
+                )}
               </div>
               <div className="flex gap-2 mt-5">
                 <button onClick={() => setStep('business-1')} className="flex-1 py-3 border rounded-xl text-gray-600">

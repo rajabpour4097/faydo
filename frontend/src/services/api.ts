@@ -493,6 +493,22 @@ class ApiService {
     }
   }
 
+  private isPublicEndpoint(endpoint: string, options: RequestInit): boolean {
+    if (endpoint.includes('/auth/login') || endpoint.includes('/auth/register') || endpoint.includes('/auth/refresh')
+      || endpoint.includes('/auth/send-otp') || endpoint.includes('/auth/verify-otp') || endpoint.includes('/auth/login-with-otp')) {
+      return true
+    }
+    const method = (options.method || 'GET').toUpperCase()
+    if (method === 'GET' && (
+      endpoint.includes('/locations/') ||
+      endpoint.includes('/service-categories') ||
+      endpoint.includes('/clubs')
+    )) {
+      return true
+    }
+    return false
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -500,8 +516,10 @@ class ApiService {
     // Update token from localStorage in case it changed
     this.updateToken()
     
+    const isPublic = this.isPublicEndpoint(endpoint, options)
+
     // Check if token is expired and try to refresh before making request
-    if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/auth/refresh')) {
+    if (!isPublic) {
       if (this.isTokenExpired()) {
         console.log('Token is expired, attempting refresh before request...')
         const refreshSuccess = await this.refreshToken()
@@ -524,7 +542,13 @@ class ApiService {
     }
 
     // Add authorization header for protected endpoints (exclude login/register)
-    if (this.accessToken && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/auth/refresh')) {
+    if (
+      this.accessToken &&
+      !isPublic &&
+      !endpoint.includes('/auth/login') &&
+      !endpoint.includes('/auth/register') &&
+      !endpoint.includes('/auth/refresh')
+    ) {
       config.headers = {
         ...config.headers,
         Authorization: `Bearer ${this.accessToken}`,

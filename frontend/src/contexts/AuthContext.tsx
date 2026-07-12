@@ -52,6 +52,7 @@ interface CustomerRegisterData {
   gender: 'male' | 'female' | ''
   birth_date: string
   address?: string
+  city_id?: number
 }
 
 interface BusinessRegisterData {

@@ -441,6 +441,7 @@ export interface CustomerRegisterRequest {
   gender: 'male' | 'female' | ''
   birth_date: string
   address?: string
+  city_id?: number
 }
 
 export interface BusinessRegisterRequest {
@@ -454,6 +455,8 @@ export interface BusinessRegisterRequest {
   address?: string
   business_location_latitude?: number
   business_location_longitude?: number
+  category?: number
+  city?: number
 }
 
 export interface AuthResponse {

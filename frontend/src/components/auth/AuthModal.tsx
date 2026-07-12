@@ -17,6 +17,7 @@ type AuthStep =
   | 'otp'
   | 'role'
   | 'customer-register'
+  | 'customer-2'
   | 'business-1'
   | 'business-2'
   | 'business-3'
@@ -160,7 +161,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
   useEffect(() => {
     if (!isOpen) return
-    if (step === 'customer-register' || step === 'business-1' || step === 'business-2') {
+    if (step === 'customer-register' || step === 'customer-2' || step === 'business-1' || step === 'business-2') {
       loadRegistrationLookups()
     }
   }, [step, isOpen, loadRegistrationLookups])
@@ -636,7 +637,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'customer-register' && (
             <>
-              {renderProgress(1, 1, 'bg-blue-600')}
+              {renderProgress(2, 1, 'bg-blue-600')}
               <h2 className="text-lg font-bold text-center mb-4">اطلاعات مشتری</h2>
               <div className="space-y-3">
                 <input
@@ -652,6 +653,35 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 {renderProvinceCityFields('focus:ring-2 focus:ring-blue-500')}
+              </div>
+              <div className="flex gap-2 mt-5">
+                <button onClick={() => setStep('role')} className="flex-1 py-3 border rounded-xl text-gray-600">
+                  قبلی
+                </button>
+                <button
+                  onClick={() => {
+                    if (!formData.first_name.trim() || !formData.last_name.trim()) {
+                      setError('نام و نام خانوادگی الزامی است')
+                      return
+                    }
+                    if (!formData.province_id) { setError('انتخاب استان الزامی است'); return }
+                    if (!formData.city_id) { setError('انتخاب شهر الزامی است'); return }
+                    setError('')
+                    setStep('customer-2')
+                  }}
+                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold"
+                >
+                  مرحله بعد
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 'customer-2' && (
+            <>
+              {renderProgress(2, 2, 'bg-blue-600')}
+              <h2 className="text-lg font-bold text-center mb-4">جنسیت و تاریخ تولد</h2>
+              <div className="space-y-3">
                 <select
                   value={formData.gender}
                   onChange={(e) => patchForm({ gender: e.target.value as '' | 'male' | 'female' })}
@@ -671,7 +701,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 </div>
               </div>
               <div className="flex gap-2 mt-5">
-                <button onClick={() => setStep('role')} className="flex-1 py-3 border rounded-xl text-gray-600">
+                <button onClick={() => setStep('customer-register')} className="flex-1 py-3 border rounded-xl text-gray-600">
                   قبلی
                 </button>
                 <button

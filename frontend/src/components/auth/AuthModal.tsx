@@ -5,7 +5,10 @@ import { AuthServiceSlider } from './AuthServiceSlider'
 import { OtpInput } from './OtpInput'
 import { LocationPicker } from '../LocationPicker'
 import { PersianDatePicker } from '../PersianDatePicker'
+import { normalizeDigits, roundCoordinate } from '../../utils/digits'
 import { User, Building2, Check } from 'lucide-react'
+
+const OTP_EXPIRY_SECONDS = 300
 
 interface AuthModalProps {
   isOpen: boolean
@@ -86,6 +89,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [citiesLoading, setCitiesLoading] = useState(false)
   const [lookupsError, setLookupsError] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
+  const [otpCountdown, setOtpCountdown] = useState<number | null>(null)
   const verifyingOtpRef = useRef(false)
   const mapInitialCenter = useRef({ lat: 35.6892, lng: 51.389 })
 
@@ -151,8 +155,17 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setFormData(INITIAL_FORM)
       setError('')
       setIsNewUser(false)
+      setOtpCountdown(null)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (step !== 'otp') return
+    const timer = window.setInterval(() => {
+      setOtpCountdown((prev) => (prev != null && prev > 0 ? prev - 1 : prev))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [step])
 
   useEffect(() => {
     if (!isOpen) return
@@ -173,8 +186,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const handleMapLocationSelect = useCallback((lat: number, lng: number) => {
     setFormData((prev) => ({
       ...prev,
-      business_location_latitude: lat,
-      business_location_longitude: lng,
+      business_location_latitude: roundCoordinate(lat),
+      business_location_longitude: roundCoordinate(lng),
       map_location_selected: true,
     }))
   }, [])
@@ -265,7 +278,10 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         body: JSON.stringify({ phone_number: formData.phone_number }),
       })
       const data = await response.json()
-      if (data.success) return true
+      if (data.success) {
+        setOtpCountdown(OTP_EXPIRY_SECONDS)
+        return true
+      }
       setError(data.message || 'خطا در ارسال کد تایید')
       return false
     } catch {
@@ -277,7 +293,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   }
 
   const verifyOTP = useCallback(async (codeOverride?: string) => {
-    const code = codeOverride ?? formData.otp_code
+    const code = normalizeDigits(codeOverride ?? formData.otp_code, 6)
     if (code.length !== 6) {
       setError('کد ۶ رقمی را کامل وارد کنید')
       return
@@ -371,10 +387,6 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   }
 
   const submitBusinessRegistration = async () => {
-    if (!formData.business_phone.trim()) {
-      setError('تلفن ثابت کسب‌وکار الزامی است')
-      return
-    }
     if (!formData.map_location_selected || formData.business_location_latitude == null) {
       setError('انتخاب موقعیت روی نقشه الزامی است')
       return
@@ -401,8 +413,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     if (formData.category_id) registerPayload.category = parseInt(formData.category_id)
     if (formData.city_id) registerPayload.city = parseInt(formData.city_id)
     if (formData.business_location_latitude != null) {
-      registerPayload.business_location_latitude = formData.business_location_latitude
-      registerPayload.business_location_longitude = formData.business_location_longitude
+      registerPayload.business_location_latitude = roundCoordinate(formData.business_location_latitude)
+      registerPayload.business_location_longitude = roundCoordinate(formData.business_location_longitude!)
     }
 
     try {
@@ -431,12 +443,16 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       })
 
       await apiService.updateFullBusinessProfile({
-        business_phone: formData.business_phone.trim(),
+        business_phone: formData.business_phone.trim() || undefined,
         instagram_link: formData.instagram_link || undefined,
         website_link: formData.website_link || undefined,
         address: formData.address.trim(),
-        business_location_latitude: formData.business_location_latitude ?? undefined,
-        business_location_longitude: formData.business_location_longitude ?? undefined,
+        business_location_latitude: formData.business_location_latitude != null
+          ? roundCoordinate(formData.business_location_latitude)
+          : undefined,
+        business_location_longitude: formData.business_location_longitude != null
+          ? roundCoordinate(formData.business_location_longitude)
+          : undefined,
       })
 
       const u = data.user
@@ -530,7 +546,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   inputMode="numeric"
                   maxLength={11}
                   value={formData.phone_number}
-                  onChange={(e) => patchForm({ phone_number: e.target.value.replace(/\D/g, '') })}
+                  onChange={(e) => patchForm({ phone_number: normalizeDigits(e.target.value, 11) })}
                   className="block w-full pr-10 pl-3 py-3.5 border border-gray-200 rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   placeholder="09123456789"
                   dir="ltr"
@@ -564,10 +580,11 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 onChange={(code) => patchForm({ otp_code: code })}
                 onComplete={(code) => verifyOTP(code)}
                 disabled={isLoading}
+                remainingSeconds={otpCountdown}
               />
               <div className="flex gap-2 mt-5">
                 <button
-                  onClick={() => { setStep('phone'); patchForm({ otp_code: '' }) }}
+                  onClick={() => { setStep('phone'); patchForm({ otp_code: '' }); setOtpCountdown(null) }}
                   className="flex-1 py-3 border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50"
                 >
                   بازگشت
@@ -822,10 +839,10 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               <h2 className="text-lg font-bold text-center mb-4">تماس، مکان و آدرس</h2>
               <div className="space-y-3">
                 <input
-                  placeholder="تلفن ثابت کسب‌وکار *"
+                  placeholder="تلفن ثابت کسب‌وکار (اختیاری)"
                   dir="ltr"
                   value={formData.business_phone}
-                  onChange={(e) => patchForm({ business_phone: e.target.value })}
+                  onChange={(e) => patchForm({ business_phone: normalizeDigits(e.target.value, 11) })}
                   className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-400"
                 />
                 <input

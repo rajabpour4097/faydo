@@ -1364,7 +1364,7 @@ const DesktopProfile = () => {
               <h3 className={`font-semibold text-sm ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>پروفایل ناقص است</h3>
               <p className={`text-sm mt-0.5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
                 {user?.type === 'business'
-                  ? 'نام کسب‌وکار، دسته‌بندی، آدرس، موقعیت مکانی، شهر و شماره تلفن را تکمیل کنید.'
+                  ? 'نام کسب‌وکار، دسته‌بندی، آدرس، موقعیت مکانی و شهر را تکمیل کنید.'
                   : 'نام، نام خانوادگی، جنسیت، تاریخ تولد و شهر را تکمیل کنید.'}
               </p>
             </div>
@@ -1446,8 +1446,8 @@ const DesktopProfile = () => {
                 onEdit={() => openEditModal('category', 'دسته‌بندی کسب‌وکار را انتخاب نمایید', getCurrentValue('category'))} />
               <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
                 onEdit={() => openEditModal('city', 'شهر کسب‌وکار را انتخاب نمایید', getCurrentValue('city'))} />
-              <Field label="شماره تلفن کسب‌وکار" value={getCurrentValue('businessPhone')} editable isRequired icon={icons.phone}
-                onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید', getCurrentValue('businessPhone'))} />
+              <Field label="شماره تلفن کسب‌وکار" value={getCurrentValue('businessPhone')} editable icon={icons.phone}
+                onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید (اختیاری)', getCurrentValue('businessPhone'))} />
               <Field label="موقعیت مکانی" value={getCurrentValue('location') ? 'تنظیم شده ✓' : ''} editable isRequired icon={icons.location}
                 onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))} />
               <div className="md:col-span-2">
@@ -1940,8 +1940,8 @@ const MobileProfile = () => {
                 onEdit={() => openEditModal('category', 'دسته‌بندی کسب‌وکار را انتخاب نمایید', getCurrentValue('category'))} />
               <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
                 onEdit={() => openEditModal('city', 'شهر کسب‌وکار را انتخاب نمایید', getCurrentValue('city'))} />
-              <Field label="شماره تلفن کسب‌وکار" value={getCurrentValue('businessPhone')} editable isRequired icon={icons.phone}
-                onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید', getCurrentValue('businessPhone'))} />
+              <Field label="شماره تلفن کسب‌وکار" value={getCurrentValue('businessPhone')} editable icon={icons.phone}
+                onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید (اختیاری)', getCurrentValue('businessPhone'))} />
               <Field label="موقعیت مکانی" value={getCurrentValue('location') ? 'تنظیم شده ✓' : ''} editable isRequired icon={icons.location}
                 onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))} />
               <Field label="آدرس" value={getCurrentValue('address')} editable isRequired icon={icons.address}

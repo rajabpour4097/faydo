@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
+import { normalizeDigits, toEnglishDigits } from '../../utils/digits'
 
 interface OtpInputProps {
   value: string
   onChange: (code: string) => void
   onComplete?: (code: string) => void
   disabled?: boolean
+  remainingSeconds?: number | null
 }
 
 const OTP_LENGTH = 6
 
-export const OtpInput = ({ value, onChange, onComplete, disabled = false }: OtpInputProps) => {
+export const OtpInput = ({ value, onChange, onComplete, disabled = false, remainingSeconds = null }: OtpInputProps) => {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
   const [digits, setDigits] = useState<string[]>(() =>
     Array.from({ length: OTP_LENGTH }, (_, i) => value[i] || '')
@@ -31,7 +33,7 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false }: OtpI
           signal: ac.signal,
         } as CredentialRequestOptions)) as OTPCredential | null
         if (cred?.code) {
-          const code = cred.code.replace(/\D/g, '').slice(0, OTP_LENGTH)
+          const code = normalizeDigits(cred.code, OTP_LENGTH)
           if (code.length === OTP_LENGTH) {
             onChange(code)
             onComplete?.(code)
@@ -55,7 +57,7 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false }: OtpI
   }
 
   const handleChange = (index: number, raw: string) => {
-    const digit = raw.replace(/\D/g, '').slice(-1)
+    const digit = normalizeDigits(raw, 1).slice(-1)
     const next = [...digits]
     next[index] = digit
     emitChange(next)
@@ -72,7 +74,7 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false }: OtpI
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH)
+    const pasted = normalizeDigits(e.clipboardData.getData('text'), OTP_LENGTH)
     if (!pasted) return
     const next = Array.from({ length: OTP_LENGTH }, (_, i) => pasted[i] || '')
     emitChange(next)
@@ -91,7 +93,7 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false }: OtpI
         aria-hidden
         value={value}
         onChange={(e) => {
-          const code = e.target.value.replace(/\D/g, '').slice(0, OTP_LENGTH)
+          const code = normalizeDigits(e.target.value, OTP_LENGTH)
           emitChange(Array.from({ length: OTP_LENGTH }, (_, i) => code[i] || ''))
         }}
       />
@@ -111,9 +113,13 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false }: OtpI
           />
         ))}
       </div>
-      <p className="text-xs text-center text-gray-500">
-        کد از پیامک به‌صورت خودکار پر می‌شود؛ در صورت نیاز دستی وارد کنید.
-      </p>
+      {remainingSeconds != null && (
+        <p className={`text-xs text-center ${remainingSeconds > 0 ? 'text-gray-500' : 'text-red-500'}`}>
+          {remainingSeconds > 0
+            ? `مهلت ورود کد: ${String(Math.floor(remainingSeconds / 60)).padStart(2, '0')}:${String(remainingSeconds % 60).padStart(2, '0')}`
+            : 'مهلت کد به پایان رسید؛ «ارسال مجدد کد» را بزنید'}
+        </p>
+      )}
     </div>
   )
 }

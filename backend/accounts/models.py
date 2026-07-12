@@ -263,8 +263,7 @@ class BusinessProfile(models.Model):
             self.address and self.address.strip() and
             self.business_location_latitude and
             self.business_location_longitude and
-            self.city and
-            self.business_phone and self.business_phone.strip()
+            self.city
         )
 
 class CustomerProfile(models.Model):

@@ -30,6 +30,7 @@ interface FormData {
   // customer
   first_name: string
   last_name: string
+  province_id: string
   city_id: string
   // business
   business_name: string
@@ -50,6 +51,7 @@ const INITIAL_FORM: FormData = {
   password: '',
   first_name: '',
   last_name: '',
+  province_id: '',
   city_id: '',
   business_name: '',
   category_id: '',
@@ -70,8 +72,10 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [categories, setCategories] = useState<ServiceCategoryItem[]>([])
+  const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([])
   const [cities, setCities] = useState<{ id: number; name: string }[]>([])
   const [lookupsLoading, setLookupsLoading] = useState(false)
+  const [citiesLoading, setCitiesLoading] = useState(false)
   const [lookupsError, setLookupsError] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
   const verifyingOtpRef = useRef(false)
@@ -80,9 +84,9 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setLookupsLoading(true)
     setLookupsError('')
     try {
-      const [catResp, cityResp] = await Promise.all([
+      const [catResp, provResp] = await Promise.all([
         apiService.getServiceCategories(),
-        apiService.getAllCities(),
+        apiService.getProvinces(),
       ])
 
       if (catResp.data) {
@@ -91,20 +95,45 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         setLookupsError(catResp.error)
       }
 
-      if (cityResp.data) {
-        const flat = cityResp.data.flatMap((p) =>
-          (p.cities || []).map((c) => ({ id: c.id, name: `${c.name} (${p.name})` }))
-        )
-        setCities(flat)
-      } else if (cityResp.error) {
-        setLookupsError((prev) => prev || cityResp.error || '')
+      if (provResp.data) {
+        setProvinces(provResp.data.map((p) => ({ id: p.id, name: p.name })))
+      } else if (provResp.error) {
+        setLookupsError((prev) => prev || provResp.error || '')
       }
     } catch {
-      setLookupsError('خطا در بارگذاری شهرها و دسته‌بندی‌ها')
+      setLookupsError('خطا در بارگذاری استان‌ها و دسته‌بندی‌ها')
     } finally {
       setLookupsLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (!formData.province_id) {
+      setCities([])
+      return
+    }
+
+    const loadCities = async () => {
+      setCitiesLoading(true)
+      setLookupsError('')
+      try {
+        const resp = await apiService.getCitiesByProvince(parseInt(formData.province_id, 10))
+        if (resp.data?.cities) {
+          setCities(resp.data.cities.map((c) => ({ id: c.id, name: c.name })))
+        } else if (resp.error) {
+          setLookupsError(resp.error)
+          setCities([])
+        }
+      } catch {
+        setLookupsError('خطا در دریافت شهرها')
+        setCities([])
+      } finally {
+        setCitiesLoading(false)
+      }
+    }
+
+    loadCities()
+  }, [formData.province_id])
 
   useEffect(() => {
     if (!isOpen) {
@@ -131,6 +160,49 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const patchForm = (patch: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...patch }))
   }
+
+  const renderProvinceCityFields = (focusRing: string) => (
+    <>
+      <select
+        value={formData.province_id}
+        onChange={(e) => patchForm({ province_id: e.target.value, city_id: '' })}
+        disabled={lookupsLoading}
+        className={`w-full px-3 py-3 border border-gray-200 rounded-xl bg-white outline-none disabled:opacity-60 ${focusRing}`}
+      >
+        <option value="">
+          {lookupsLoading ? 'در حال بارگذاری استان‌ها...' : provinces.length === 0 ? 'استانی یافت نشد' : 'انتخاب استان *'}
+        </option>
+        {provinces.map((p) => (
+          <option key={p.id} value={p.id}>{p.name}</option>
+        ))}
+      </select>
+      {formData.province_id && (
+        <select
+          value={formData.city_id}
+          onChange={(e) => patchForm({ city_id: e.target.value })}
+          disabled={citiesLoading}
+          className={`w-full px-3 py-3 border border-gray-200 rounded-xl bg-white outline-none disabled:opacity-60 ${focusRing}`}
+        >
+          <option value="">
+            {citiesLoading ? 'در حال بارگذاری شهرها...' : cities.length === 0 ? 'شهری یافت نشد' : 'انتخاب شهر *'}
+          </option>
+          {cities.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+      )}
+      <p className="text-xs text-gray-500 text-center">ابتدا استان و سپس شهر خود را انتخاب کنید.</p>
+      {lookupsError && (
+        <button
+          type="button"
+          onClick={loadRegistrationLookups}
+          className="text-xs text-blue-600 hover:text-blue-700 w-full text-center"
+        >
+          بارگذاری مجدد
+        </button>
+      )}
+    </>
+  )
 
   const completeLogin = (loginData: {
     user: Record<string, unknown>
@@ -236,6 +308,10 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const submitCustomerRegistration = async () => {
     if (!formData.first_name.trim() || !formData.last_name.trim()) {
       setError('نام و نام خانوادگی الزامی است')
+      return
+    }
+    if (!formData.province_id) {
+      setError('انتخاب استان الزامی است')
       return
     }
     if (!formData.city_id) {
@@ -542,28 +618,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   onChange={(e) => patchForm({ last_name: e.target.value })}
                   className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 />
-                <select
-                  value={formData.city_id}
-                  onChange={(e) => patchForm({ city_id: e.target.value })}
-                  disabled={lookupsLoading}
-                  className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:opacity-60"
-                >
-                  <option value="">
-                    {lookupsLoading ? 'در حال بارگذاری شهرها...' : cities.length === 0 ? 'شهری یافت نشد' : 'انتخاب شهر *'}
-                  </option>
-                  {cities.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                {lookupsError && (
-                  <button
-                    type="button"
-                    onClick={loadRegistrationLookups}
-                    className="text-xs text-blue-600 hover:text-blue-700 w-full text-center"
-                  >
-                    بارگذاری مجدد لیست شهرها
-                  </button>
-                )}
+                {renderProvinceCityFields('focus:ring-2 focus:ring-blue-500')}
               </div>
               <div className="flex gap-2 mt-5">
                 <button onClick={() => setStep('role')} className="flex-1 py-3 border rounded-xl text-gray-600">
@@ -656,28 +711,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   onChange={(e) => patchForm({ last_name: e.target.value })}
                   className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-400"
                 />
-                <select
-                  value={formData.city_id}
-                  onChange={(e) => patchForm({ city_id: e.target.value })}
-                  disabled={lookupsLoading}
-                  className="w-full px-3 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-orange-400 outline-none disabled:opacity-60"
-                >
-                  <option value="">
-                    {lookupsLoading ? 'در حال بارگذاری شهرها...' : cities.length === 0 ? 'شهری یافت نشد' : 'انتخاب شهر *'}
-                  </option>
-                  {cities.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                {lookupsError && (
-                  <button
-                    type="button"
-                    onClick={loadRegistrationLookups}
-                    className="text-xs text-blue-600 hover:text-blue-700 w-full text-center"
-                  >
-                    بارگذاری مجدد لیست شهرها
-                  </button>
-                )}
+                {renderProvinceCityFields('focus:ring-2 focus:ring-orange-400')}
               </div>
               <div className="flex gap-2 mt-5">
                 <button onClick={() => setStep('business-1')} className="flex-1 py-3 border rounded-xl text-gray-600">
@@ -689,6 +723,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       setError('نام و نام خانوادگی الزامی است')
                       return
                     }
+                    if (!formData.province_id) { setError('انتخاب استان الزامی است'); return }
                     if (!formData.city_id) { setError('انتخاب شهر الزامی است'); return }
                     setError('')
                     setStep('business-3')

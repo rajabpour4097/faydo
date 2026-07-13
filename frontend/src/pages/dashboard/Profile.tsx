@@ -1001,62 +1001,166 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
   )
 }
 
-const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequired = false, icon }: { 
-  label: string; 
-  value?: string; 
-  editable?: boolean; 
-  onEdit?: () => void;
-  isPhone?: boolean;
-  isRequired?: boolean;
-  icon?: React.ReactNode;
-  valueLeftMargin?: boolean;
+const ProfileHero = ({
+  user,
+  profileImage,
+  onImageUpload,
+  fileInputRef,
+  onImageChange,
+  isMobile = false,
+}: {
+  user: ReturnType<typeof useAuth>['user']
+  profileImage: string | null
+  onImageUpload: () => void
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  isMobile?: boolean
 }) => {
-  const { isDark } = useTheme()
-  const isEmpty = isRequired && (!value || value.trim() === '')
-  
+  const isBusiness = user?.type === 'business'
+  const gradient = isBusiness
+    ? 'bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600'
+    : 'bg-gradient-to-br from-teal-500 via-teal-600 to-cyan-600'
+
   return (
-    <div className={`group relative flex items-center gap-3 rounded-2xl px-4 py-4 transition-all duration-200 ${
-      isEmpty 
-        ? (isDark ? 'bg-red-900/20 border-2 border-red-500/40' : 'bg-red-50 border-2 border-red-200')
-        : (isDark
-            ? 'bg-slate-800/70 border border-slate-700/60 hover:border-slate-600'
-            : 'bg-gray-50 border border-gray-100 hover:border-gray-200 hover:bg-white')
-    }`}>
+    <div className={`${isMobile ? 'mx-4 mt-3' : ''} rounded-3xl overflow-hidden shadow-md ${gradient}`}>
+      <div className={`flex items-center gap-4 ${isMobile ? 'px-5 py-6' : 'px-8 py-8'}`}>
+        <div className="relative flex-shrink-0">
+          <div
+            className={`${isMobile ? 'w-20 h-20' : 'w-24 h-24'} rounded-full ring-4 ring-white/30 overflow-hidden bg-white/20 flex items-center justify-center shadow-lg`}
+          >
+            {profileImage ? (
+              <img src={getFullImageUrl(profileImage)} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className={`${isMobile ? 'text-3xl' : 'text-4xl'}`}>{isBusiness ? '🏢' : '👤'}</span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onImageUpload}
+            className="absolute bottom-0 left-0 w-7 h-7 bg-white text-teal-600 rounded-full flex items-center justify-center shadow-md border border-teal-100"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={onImageChange} className="hidden" />
+        </div>
+        <div className="flex-1 min-w-0 text-white">
+          <h2 className={`font-bold leading-tight truncate ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+            {user?.name || '—'}
+          </h2>
+          <span className="inline-flex items-center gap-1.5 mt-1.5 text-sm text-white/90">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            {isBusiness ? 'کسب‌وکار' : 'مشتری'}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const ProfileSectionCard = ({
+  title,
+  icon,
+  children,
+  className = '',
+}: {
+  title: string
+  icon: React.ReactNode
+  children: React.ReactNode
+  className?: string
+}) => (
+  <div className={`rounded-2xl p-4 bg-white shadow-sm border border-gray-100 ${className}`}>
+    <div className="flex items-center gap-2.5 mb-4">
+      <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 flex-shrink-0">
+        {icon}
+      </div>
+      <h3 className="text-sm font-bold text-gray-900">{title}</h3>
+    </div>
+    <div className="space-y-2.5">{children}</div>
+  </div>
+)
+
+const PasswordSection = ({ onOpen, isMobile = false }: { onOpen: () => void; isMobile?: boolean }) => (
+  <div className={`rounded-2xl p-4 bg-white shadow-sm border border-gray-100 ${isMobile ? 'mx-4' : ''}`}>
+    <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-100 bg-gray-50/80">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 flex-shrink-0">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-gray-900">رمز عبور</p>
+          <p className="text-xs text-gray-500 mt-0.5">تنظیم یا تغییر رمز ورود</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex-shrink-0 px-4 py-2 rounded-full border-2 border-teal-500 text-teal-600 text-xs font-semibold bg-white hover:bg-teal-50 transition-colors"
+      >
+        تغییر رمز عبور
+      </button>
+    </div>
+  </div>
+)
+
+const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequired = false, icon }: {
+  label: string
+  value?: string
+  editable?: boolean
+  onEdit?: () => void
+  isPhone?: boolean
+  isRequired?: boolean
+  icon?: React.ReactNode
+}) => {
+  const isEmpty = isRequired && (!value || value.trim() === '')
+  const displayValue = isPhone && value
+    ? value.replace(/(.{4})(.{3})(.{4})/, '$1 $2 $3')
+    : (value || (isEmpty ? 'تکمیل نشده' : '—'))
+
+  const inner = (
+    <>
       {icon && (
-        <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-          isEmpty
-            ? 'bg-red-100 dark:bg-red-900/40 text-red-500'
-            : isDark ? 'bg-slate-700 text-slate-400' : 'bg-white text-gray-500 shadow-sm'
-        }`}>
+        <div
+          className={`flex-shrink-0 w-11 h-11 rounded-xl border-2 flex items-center justify-center ${
+            isEmpty ? 'border-red-200 bg-red-50 text-red-500' : 'border-teal-200 bg-teal-50 text-teal-600'
+          }`}
+        >
           {icon}
         </div>
       )}
-      <div className="flex-1 min-w-0">
-        <div className={`text-xs font-medium mb-0.5 ${
-          isEmpty ? (isDark ? 'text-red-400' : 'text-red-500') : (isDark ? 'text-slate-400' : 'text-gray-500')
-        }`}>
-          {label}{isEmpty && <span className="mr-1 text-red-500">*</span>}
-        </div>
-        <div className={`text-sm font-semibold truncate ${
-          isEmpty ? (isDark ? 'text-red-300' : 'text-red-500') : (isDark ? 'text-white' : 'text-gray-900')
-        }`}>
-          {isPhone && value ? value.replace(/(.{4})(.{3})(.{4})/, '$1$2$3') : (value || (isEmpty ? 'تکمیل نشده' : '—'))}
-        </div>
+      <div className="flex-1 min-w-0 text-right">
+        <p className={`text-xs font-medium ${isEmpty ? 'text-red-500' : 'text-gray-500'}`}>
+          {label}
+          {isEmpty && <span className="mr-1">*</span>}
+        </p>
+        <p className={`text-sm font-semibold mt-0.5 truncate ${isEmpty ? 'text-red-500' : 'text-gray-900'}`}>
+          {displayValue}
+        </p>
       </div>
-      {editable && (
-        <button
-          onClick={onEdit}
-          className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all ${
-            isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white' : 'bg-white text-gray-500 hover:text-gray-700 shadow-sm hover:shadow'
-          }`}
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        </button>
-      )}
-    </div>
+    </>
   )
+
+  const rowClass = `flex items-center gap-3 w-full p-3.5 rounded-2xl border transition-colors ${
+    isEmpty
+      ? 'border-red-200 bg-red-50/50'
+      : 'border-gray-100 bg-white hover:border-teal-100'
+  } ${editable ? 'cursor-pointer active:bg-gray-50' : ''}`
+
+  if (editable && onEdit) {
+    return (
+      <button type="button" onClick={onEdit} className={`${rowClass} text-right`}>
+        {inner}
+      </button>
+    )
+  }
+
+  return <div className={rowClass}>{inner}</div>
 }
 
 const DesktopProfile = () => {
@@ -1371,150 +1475,85 @@ const DesktopProfile = () => {
           </div>
         )}
 
-        {/* Hero Card */}
-        <div className={`rounded-2xl overflow-hidden ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-          <div className={`h-28 ${user?.type === 'business'
-            ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600'
-            : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500'}`}
-          />
-          <div className="px-6 pb-6">
-            <div className="flex items-center gap-4 -mt-12">
-              <div className="relative flex-shrink-0">
-                <div className="w-24 h-24 rounded-2xl ring-4 ring-white dark:ring-slate-800 overflow-hidden bg-gray-200 flex items-center justify-center shadow-md">
-                  {profileImage ? (
-                    <img src={getFullImageUrl(profileImage)} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-4xl">{user?.type === 'business' ? '🏢' : '👤'}</span>
-                  )}
-                </div>
-                <button
-                  onClick={handleImageUpload}
-                  className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-              </div>
-              <div className="flex-1 min-w-0 pb-1">
-                <h2 className={`text-xl font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {user?.name || '—'}
-                </h2>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                  user?.type === 'business'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                    : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
-                }`}>
-                  {user?.type === 'business' ? '🏢 کسب‌وکار' : '👤 مشتری'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Hero */}
+        <ProfileHero
+          user={user}
+          profileImage={profileImage}
+          onImageUpload={handleImageUpload}
+          fileInputRef={fileInputRef}
+          onImageChange={handleImageChange}
+        />
 
-        {/* Info Cards */}
-        <div className={`rounded-2xl p-6 ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-          <h3 className={`text-sm font-semibold mb-4 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>اطلاعات پایه</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {user?.type === 'business' ? (
-              <Field label="نام کسب‌وکار" value={getCurrentValue('businessName')} editable isRequired icon={icons.user}
-                onEdit={() => openEditModal('businessName', 'نام کسب‌وکار را وارد نمایید', getCurrentValue('businessName'))} />
-            ) : (
-              <>
-                <Field label="نام" value={getCurrentValue('firstName')} editable isRequired icon={icons.user}
-                  onEdit={() => openEditModal('firstName', 'نام را وارد نمایید', getCurrentValue('firstName'))} />
-                <Field label="نام خانوادگی" value={getCurrentValue('lastName')} editable isRequired icon={icons.user}
-                  onEdit={() => openEditModal('lastName', 'نام خانوادگی را وارد نمایید', getCurrentValue('lastName'))} />
-              </>
-            )}
-            <Field label="شماره موبایل" value={getCurrentValue('phone')} editable isPhone icon={icons.phone}
-              onEdit={() => openEditModal('phone', 'شماره موبایل را وارد نمایید', getCurrentValue('phone'), true)} />
-            <Field label="ایمیل" value={getCurrentValue('email')} editable icon={icons.email}
-              onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))} />
-            <Field label="نوع کاربری" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} icon={icons.type} />
-          </div>
-        </div>
+        {/* Account Info */}
+        <ProfileSectionCard
+          title="اطلاعات حساب کاربری"
+          icon={icons.user}
+        >
+          {user?.type === 'business' ? (
+            <Field label="نام کسب‌وکار" value={getCurrentValue('businessName')} editable isRequired icon={icons.user}
+              onEdit={() => openEditModal('businessName', 'نام کسب‌وکار را وارد نمایید', getCurrentValue('businessName'))} />
+          ) : (
+            <>
+              <Field label="نام" value={getCurrentValue('firstName')} editable isRequired icon={icons.user}
+                onEdit={() => openEditModal('firstName', 'نام را وارد نمایید', getCurrentValue('firstName'))} />
+              <Field label="نام خانوادگی" value={getCurrentValue('lastName')} editable isRequired icon={icons.user}
+                onEdit={() => openEditModal('lastName', 'نام خانوادگی را وارد نمایید', getCurrentValue('lastName'))} />
+            </>
+          )}
+          <Field label="شماره موبایل" value={getCurrentValue('phone')} editable isPhone icon={icons.phone}
+            onEdit={() => openEditModal('phone', 'شماره موبایل را وارد نمایید', getCurrentValue('phone'), true)} />
+          <Field label="ایمیل" value={getCurrentValue('email')} editable icon={icons.email}
+            onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))} />
+          <Field label="نوع کاربری" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} icon={icons.type} />
+        </ProfileSectionCard>
 
-        {/* Business or Customer specific fields */}
         {user?.type === 'business' ? (
-          <div className={`rounded-2xl p-6 ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-            <h3 className={`text-sm font-semibold mb-4 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>اطلاعات کسب‌وکار</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Field label="دسته‌بندی" value={getCurrentValue('category')} editable isRequired icon={icons.category}
-                onEdit={() => openEditModal('category', 'دسته‌بندی کسب‌وکار را انتخاب نمایید', getCurrentValue('category'))} />
-              <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
-                onEdit={() => openEditModal('city', 'شهر کسب‌وکار را انتخاب نمایید', getCurrentValue('city'))} />
-              <Field label="شماره تلفن کسب‌وکار" value={getCurrentValue('businessPhone')} editable icon={icons.phone}
-                onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید (اختیاری)', getCurrentValue('businessPhone'))} />
-              <Field label="موقعیت مکانی" value={getCurrentValue('location') ? 'تنظیم شده ✓' : ''} editable isRequired icon={icons.location}
-                onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))} />
-              <div className="md:col-span-2">
-                <Field label="آدرس" value={getCurrentValue('address')} editable isRequired icon={icons.address}
-                  onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))} />
-              </div>
-            </div>
-            {/* Gallery button */}
-            <div className={`mt-4 flex items-center justify-between p-4 rounded-xl ${isDark ? 'bg-slate-700/50 border border-slate-600/50' : 'bg-gray-50 border border-gray-100'}`}>
+          <ProfileSectionCard title="اطلاعات کسب‌وکار" icon={icons.category}>
+            <Field label="دسته‌بندی" value={getCurrentValue('category')} editable isRequired icon={icons.category}
+              onEdit={() => openEditModal('category', 'دسته‌بندی کسب‌وکار را انتخاب نمایید', getCurrentValue('category'))} />
+            <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
+              onEdit={() => openEditModal('city', 'شهر کسب‌وکار را انتخاب نمایید', getCurrentValue('city'))} />
+            <Field label="شماره تلفن کسب‌وکار" value={getCurrentValue('businessPhone')} editable icon={icons.phone}
+              onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید (اختیاری)', getCurrentValue('businessPhone'))} />
+            <Field label="موقعیت مکانی" value={getCurrentValue('location') ? 'تنظیم شده ✓' : ''} editable isRequired icon={icons.location}
+              onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))} />
+            <Field label="آدرس" value={getCurrentValue('address')} editable isRequired icon={icons.address}
+              onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))} />
+            <div className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 bg-gray-50/80 mt-1">
               <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isDark ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-11 h-11 rounded-xl border-2 border-teal-200 bg-teal-50 flex items-center justify-center text-teal-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div>
-                  <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>گالری تصاویر</p>
-                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>آپلود و مدیریت تصاویر کسب‌وکار</p>
+                  <p className="text-sm font-bold text-gray-900">گالری تصاویر</p>
+                  <p className="text-xs text-gray-500">آپلود و مدیریت تصاویر کسب‌وکار</p>
                 </div>
               </div>
-              <button onClick={() => setShowGalleryModal(true)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-xl transition-colors font-medium">
+              <button
+                type="button"
+                onClick={() => setShowGalleryModal(true)}
+                className="px-4 py-2 rounded-full border-2 border-teal-500 text-teal-600 text-xs font-semibold bg-white hover:bg-teal-50"
+              >
                 مدیریت گالری
               </button>
             </div>
-          </div>
+          </ProfileSectionCard>
         ) : (
-          <div className={`rounded-2xl p-6 ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-            <h3 className={`text-sm font-semibold mb-4 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>اطلاعات شخصی</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Field label="جنسیت" value={getCurrentValue('gender')} editable isRequired icon={icons.gender}
-                onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))} />
-              <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable isRequired icon={icons.calendar}
-                onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))} />
-              <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
-                onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))} />
-              <Field label="آدرس" value={getCurrentValue('address')} editable icon={icons.address}
-                onEdit={() => openEditModal('address', 'آدرس خود را وارد کنید', getCurrentValue('address'))} />
-            </div>
-          </div>
+          <ProfileSectionCard title="اطلاعات شخصی" icon={icons.gender}>
+            <Field label="جنسیت" value={getCurrentValue('gender')} editable isRequired icon={icons.gender}
+              onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))} />
+            <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable isRequired icon={icons.calendar}
+              onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))} />
+            <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
+              onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))} />
+            <Field label="آدرس" value={getCurrentValue('address')} editable icon={icons.address}
+              onEdit={() => openEditModal('address', 'آدرس خود را وارد کنید', getCurrentValue('address'))} />
+          </ProfileSectionCard>
         )}
 
-        {/* Security Section */}
-        <div className={`rounded-2xl p-6 ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-          <h3 className={`text-sm font-semibold mb-4 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>امنیت حساب</h3>
-          <div className={`flex items-center justify-between p-4 rounded-xl ${isDark ? 'bg-slate-700/50 border border-slate-600/50' : 'bg-gray-50 border border-gray-100'}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isDark ? 'bg-purple-900/40' : 'bg-purple-100'}`}>
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <div>
-                <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>رمز عبور</p>
-                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                  تنظیم رمز عبور برای ورود با شماره موبایل + رمز
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowPasswordModal(true)}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-xl transition-colors font-medium"
-            >
-              تنظیم رمز عبور
-            </button>
-          </div>
-        </div>
+        <PasswordSection onOpen={() => setShowPasswordModal(true)} />
 
         <EditModal
           isOpen={editModal.isOpen}
@@ -1848,160 +1887,96 @@ const MobileProfile = () => {
 
   return (
     <MobileDashboardLayout>
-      <div className="space-y-4 pb-6">
+      <div className="min-h-full bg-[#f0f2f5] space-y-4 pb-6">
 
-        {/* Completion Banner */}
         {user?.isProfileComplete === false && (
-          <div className={`mx-4 mt-4 rounded-2xl p-4 flex items-start gap-3 ${isDark ? 'bg-amber-900/20 border border-amber-700/50' : 'bg-amber-50 border border-amber-200'}`}>
-            <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+          <div className="mx-4 mt-3 rounded-2xl p-4 flex items-start gap-3 bg-amber-50 border border-amber-200">
+            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </div>
             <div>
-              <h3 className={`font-semibold text-sm ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>پروفایل ناقص</h3>
-              <p className={`text-xs mt-0.5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
+              <h3 className="font-semibold text-sm text-amber-800">پروفایل ناقص</h3>
+              <p className="text-xs mt-0.5 text-amber-700">
                 {user?.type === 'business' ? 'اطلاعات کسب‌وکار را تکمیل کنید' : 'اطلاعات شخصی را تکمیل کنید'}
               </p>
             </div>
           </div>
         )}
 
-        {/* Hero Card */}
-        <div className={`mx-4 rounded-2xl overflow-hidden ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-          <div className={`h-24 ${user?.type === 'business'
-            ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600'
-            : 'bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500'}`}
-          />
-          <div className="px-4 pb-4">
-            <div className="flex items-center gap-3 -mt-8">
-              <div className="relative flex-shrink-0">
-                <div className="size-16 rounded-xl ring-4 ring-white dark:ring-slate-800 overflow-hidden bg-gray-200 flex items-center justify-center shadow-md">
-                  {profileImage ? (
-                    <img src={getFullImageUrl(profileImage)} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl">{user?.type === 'business' ? '🏢' : '👤'}</span>
-                  )}
-                </div>
-                <button onClick={handleImageUpload}
-                  className="absolute -bottom-1 -right-1 w-6 h-6 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center shadow transition-colors">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-              </div>
-              <div className="flex-1 min-w-0 pb-1">
-                <h2 className={`font-bold text-base leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {user?.name || '—'}
-                </h2>
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                  user?.type === 'business'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                    : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
-                }`}>
-                  {user?.type === 'business' ? '🏢 کسب‌وکار' : '👤 مشتری'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProfileHero
+          user={user}
+          profileImage={profileImage}
+          onImageUpload={handleImageUpload}
+          fileInputRef={fileInputRef}
+          onImageChange={handleImageChange}
+          isMobile
+        />
 
-        {/* Base Info */}
-        <div className={`mx-4 rounded-2xl p-4 ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-          <h3 className={`text-xs font-semibold mb-3 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>اطلاعات پایه</h3>
-          <div className="space-y-2">
-            {user?.type === 'business' ? (
-              <Field label="نام کسب‌وکار" value={getCurrentValue('businessName')} editable isRequired icon={icons.user}
-                onEdit={() => openEditModal('businessName', 'نام کسب‌وکار را وارد نمایید', getCurrentValue('businessName'))} />
-            ) : (
-              <>
-                <Field label="نام" value={getCurrentValue('firstName')} editable isRequired icon={icons.user}
-                  onEdit={() => openEditModal('firstName', 'نام را وارد نمایید', getCurrentValue('firstName'))} />
-                <Field label="نام خانوادگی" value={getCurrentValue('lastName')} editable isRequired icon={icons.user}
-                  onEdit={() => openEditModal('lastName', 'نام خانوادگی را وارد نمایید', getCurrentValue('lastName'))} />
-              </>
-            )}
-            <Field label="شماره موبایل" value={getCurrentValue('phone')} editable isPhone icon={icons.phone}
-              onEdit={() => openEditModal('phone', 'شماره موبایل را وارد نمایید', getCurrentValue('phone'), true)} />
-            <Field label="ایمیل" value={getCurrentValue('email')} editable icon={icons.email}
-              onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))} />
-            <Field label="نوع کاربری" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} icon={icons.type} />
-          </div>
-        </div>
+        <ProfileSectionCard title="اطلاعات حساب کاربری" icon={icons.user} className="mx-4">
+          {user?.type === 'business' ? (
+            <Field label="نام کسب‌وکار" value={getCurrentValue('businessName')} editable isRequired icon={icons.user}
+              onEdit={() => openEditModal('businessName', 'نام کسب‌وکار را وارد نمایید', getCurrentValue('businessName'))} />
+          ) : (
+            <>
+              <Field label="نام" value={getCurrentValue('firstName')} editable isRequired icon={icons.user}
+                onEdit={() => openEditModal('firstName', 'نام را وارد نمایید', getCurrentValue('firstName'))} />
+              <Field label="نام خانوادگی" value={getCurrentValue('lastName')} editable isRequired icon={icons.user}
+                onEdit={() => openEditModal('lastName', 'نام خانوادگی را وارد نمایید', getCurrentValue('lastName'))} />
+            </>
+          )}
+          <Field label="شماره موبایل" value={getCurrentValue('phone')} editable isPhone icon={icons.phone}
+            onEdit={() => openEditModal('phone', 'شماره موبایل را وارد نمایید', getCurrentValue('phone'), true)} />
+          <Field label="ایمیل" value={getCurrentValue('email')} editable icon={icons.email}
+            onEdit={() => openEditModal('email', 'ایمیل را وارد نمایید', getCurrentValue('email'))} />
+          <Field label="نوع کاربری" value={user?.type === 'business' ? 'کسب‌وکار' : 'مشتری'} icon={icons.type} />
+        </ProfileSectionCard>
 
-        {/* Business or Customer-specific */}
         {user?.type === 'business' ? (
-          <div className={`mx-4 rounded-2xl p-4 ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-            <h3 className={`text-xs font-semibold mb-3 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>اطلاعات کسب‌وکار</h3>
-            <div className="space-y-2">
-              <Field label="دسته‌بندی" value={getCurrentValue('category')} editable isRequired icon={icons.category}
-                onEdit={() => openEditModal('category', 'دسته‌بندی کسب‌وکار را انتخاب نمایید', getCurrentValue('category'))} />
-              <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
-                onEdit={() => openEditModal('city', 'شهر کسب‌وکار را انتخاب نمایید', getCurrentValue('city'))} />
-              <Field label="شماره تلفن کسب‌وکار" value={getCurrentValue('businessPhone')} editable icon={icons.phone}
-                onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید (اختیاری)', getCurrentValue('businessPhone'))} />
-              <Field label="موقعیت مکانی" value={getCurrentValue('location') ? 'تنظیم شده ✓' : ''} editable isRequired icon={icons.location}
-                onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))} />
-              <Field label="آدرس" value={getCurrentValue('address')} editable isRequired icon={icons.address}
-                onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))} />
-            </div>
-            {/* Gallery row */}
-            <div className={`mt-3 flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-slate-700/50 border border-slate-600/50' : 'bg-gray-50 border border-gray-100'}`}>
-              <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-blue-900/40' : 'bg-blue-100'}`}>
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <ProfileSectionCard title="اطلاعات کسب‌وکار" icon={icons.category} className="mx-4">
+            <Field label="دسته‌بندی" value={getCurrentValue('category')} editable isRequired icon={icons.category}
+              onEdit={() => openEditModal('category', 'دسته‌بندی کسب‌وکار را انتخاب نمایید', getCurrentValue('category'))} />
+            <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
+              onEdit={() => openEditModal('city', 'شهر کسب‌وکار را انتخاب نمایید', getCurrentValue('city'))} />
+            <Field label="شماره تلفن کسب‌وکار" value={getCurrentValue('businessPhone')} editable icon={icons.phone}
+              onEdit={() => openEditModal('businessPhone', 'شماره تلفن کسب‌وکار را وارد نمایید (اختیاری)', getCurrentValue('businessPhone'))} />
+            <Field label="موقعیت مکانی" value={getCurrentValue('location') ? 'تنظیم شده ✓' : ''} editable isRequired icon={icons.location}
+              onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))} />
+            <Field label="آدرس" value={getCurrentValue('address')} editable isRequired icon={icons.address}
+              onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))} />
+            <div className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 bg-gray-50/80">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 rounded-xl border-2 border-teal-200 bg-teal-50 flex items-center justify-center text-teal-600 flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>گالری تصاویر</p>
+                <p className="text-sm font-bold text-gray-900">گالری تصاویر</p>
               </div>
-              <button onClick={() => setShowGalleryModal(true)}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors font-medium">
+              <button
+                type="button"
+                onClick={() => setShowGalleryModal(true)}
+                className="px-3 py-1.5 rounded-full border-2 border-teal-500 text-teal-600 text-xs font-semibold bg-white"
+              >
                 مدیریت
               </button>
             </div>
-          </div>
+          </ProfileSectionCard>
         ) : (
-          <div className={`mx-4 rounded-2xl p-4 ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-            <h3 className={`text-xs font-semibold mb-3 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>اطلاعات شخصی</h3>
-            <div className="space-y-2">
-              <Field label="جنسیت" value={getCurrentValue('gender')} editable isRequired icon={icons.gender}
-                onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))} />
-              <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable isRequired icon={icons.calendar}
-                onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))} />
-              <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
-                onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))} />
-              <Field label="آدرس" value={getCurrentValue('address')} editable icon={icons.address}
-                onEdit={() => openEditModal('address', 'آدرس خود را وارد کنید', getCurrentValue('address'))} />
-            </div>
-          </div>
+          <ProfileSectionCard title="اطلاعات شخصی" icon={icons.gender} className="mx-4">
+            <Field label="جنسیت" value={getCurrentValue('gender')} editable isRequired icon={icons.gender}
+              onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))} />
+            <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable isRequired icon={icons.calendar}
+              onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))} />
+            <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
+              onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))} />
+            <Field label="آدرس" value={getCurrentValue('address')} editable icon={icons.address}
+              onEdit={() => openEditModal('address', 'آدرس خود را وارد کنید', getCurrentValue('address'))} />
+          </ProfileSectionCard>
         )}
 
-        {/* Security Section */}
-        <div className={`mx-4 rounded-2xl p-4 ${isDark ? 'bg-slate-800/70' : 'bg-white border border-gray-100'} shadow-sm`}>
-          <h3 className={`text-xs font-semibold mb-3 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>امنیت حساب</h3>
-          <div className={`flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-slate-700/50 border border-slate-600/50' : 'bg-gray-50 border border-gray-100'}`}>
-            <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-purple-900/40' : 'bg-purple-100'}`}>
-                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <div>
-                <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>رمز عبور</p>
-                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>ورود با شماره + رمز</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowPasswordModal(true)}
-              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-colors font-medium"
-            >
-              تنظیم رمز
-            </button>
-          </div>
-        </div>
+        <PasswordSection onOpen={() => setShowPasswordModal(true)} isMobile />
 
         <EditModal
           isOpen={editModal.isOpen}

@@ -1091,7 +1091,7 @@ const ProfileSectionCard = ({
       </div>
       <h3 className="text-sm font-bold text-gray-900">{title}</h3>
     </div>
-    <div className="space-y-2">{children}</div>
+    <div className="space-y-1.5">{children}</div>
   </div>
 )
 
@@ -1099,8 +1099,8 @@ const PasswordSection = ({ onOpen, isMobile = false }: { onOpen: () => void; isM
   <div className={`rounded-2xl p-3 bg-white shadow-sm border border-gray-100 ${isMobile ? 'mx-4' : ''}`}>
     <div className="flex items-center justify-between gap-2 py-2.5 px-3 rounded-xl border border-gray-100 bg-gray-50/80">
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="w-9 h-9 rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0] flex-shrink-0">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-[25px] h-[25px] rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0] flex-shrink-0">
+          <svg className="w-[10px] h-[10px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
@@ -1137,7 +1137,7 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
     <>
       {icon && (
         <div
-          className={`flex-shrink-0 w-9 h-9 rounded-full border flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5 ${
+          className={`flex-shrink-0 w-[25px] h-[25px] rounded-full border flex items-center justify-center [&_svg]:w-[10px] [&_svg]:h-[10px] ${
             isEmpty
               ? 'border-red-200 bg-red-50 text-red-400'
               : 'border-[#b8e6dc] bg-[#e8f7f4] text-[#3daba0]'
@@ -1147,20 +1147,20 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
         </div>
       )}
       <div className="flex-1 min-w-0 text-right">
-        <p className={`text-[11px] font-medium leading-tight ${isEmpty ? 'text-red-500' : 'text-gray-400'}`}>
+        <p className={`text-[10px] font-medium leading-tight ${isEmpty ? 'text-red-500' : 'text-gray-400'}`}>
           {label}
           {isEmpty && <span className="mr-1">*</span>}
         </p>
         {isPhone && value ? (
           <p
-            className={`text-[13px] font-semibold mt-0.5 truncate tabular-nums ${isEmpty ? 'text-red-500' : 'text-gray-900'}`}
+            className={`text-[12px] font-semibold mt-0.5 truncate tabular-nums ${isEmpty ? 'text-red-500' : 'text-gray-900'}`}
             dir="ltr"
             style={{ unicodeBidi: 'plaintext', textAlign: 'right' }}
           >
             {displayValue}
           </p>
         ) : (
-          <p className={`text-[13px] font-semibold mt-0.5 truncate ${isEmpty ? 'text-red-500' : 'text-gray-900'}`}>
+          <p className={`text-[12px] font-semibold mt-0.5 truncate ${isEmpty ? 'text-red-500' : 'text-gray-900'}`}>
             {displayValue}
           </p>
         )}
@@ -1168,7 +1168,7 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
     </>
   )
 
-  const rowClass = `flex items-center gap-2.5 w-full py-2.5 px-3 rounded-xl border transition-colors ${
+  const rowClass = `flex items-center gap-2 w-full py-[9px] px-[11px] rounded-[10px] border transition-colors ${
     isEmpty
       ? 'border-red-200 bg-red-50/40'
       : 'border-gray-100/90 bg-white hover:border-[#b8e6dc]'
@@ -1543,8 +1543,8 @@ const DesktopProfile = () => {
               onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))} />
             <div className="flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-100 bg-gray-50/80 mt-1">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0]">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-[25px] h-[25px] rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0]">
+                  <svg className="w-[10px] h-[10px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -1969,8 +1969,8 @@ const MobileProfile = () => {
               onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))} />
             <div className="flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-100 bg-gray-50/80">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0] flex-shrink-0">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-[25px] h-[25px] rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0] flex-shrink-0">
+                  <svg className="w-[10px] h-[10px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>

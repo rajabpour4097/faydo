@@ -7,6 +7,7 @@ import { CustomIcon } from '../ui/CustomIcon'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { QRScannerModal } from '../scanner/QRScannerModal'
 import { DashboardMobileHeader } from './DashboardMobileHeader'
+import { DashboardMobileBottomNav } from './DashboardMobileBottomNav'
 
 interface MobileDashboardLayoutProps {
   children: ReactNode
@@ -102,10 +103,14 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
 
   const bottomNavItems = getBottomNavItems()
 
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string) => {
+    if (path === '/dashboard') return location.pathname === '/dashboard'
+    return location.pathname === path || location.pathname.startsWith(`${path}/`)
+  }
   const notificationCount =
     pendingCount + (user?.type === 'business' ? eliteGiftPendingCount : 0)
   const useNewHeader = user?.type === 'customer' || user?.type === 'business'
+  const useNewBottomNav = useNewHeader
 
   return (
     <div
@@ -282,11 +287,19 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
       </div>
 
       {/* Main Content */}
-      <main className="pb-20">
+      <main className={useNewBottomNav ? 'pb-24' : 'pb-20'}>
         {children}
       </main>
 
-      {/* Bottom Navigation */}
+      {useNewBottomNav ? (
+        <DashboardMobileBottomNav
+          userType={user!.type as 'customer' | 'business'}
+          isActive={isActive}
+          onScanClick={() => setScannerOpen(true)}
+          pendingCount={pendingCount + (user?.type === 'business' ? eliteGiftPendingCount : 0)}
+          isDark={isDark}
+        />
+      ) : (
       <nav className={`fixed bottom-0 left-0 right-0 border-t ${
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
       }`}>
@@ -382,6 +395,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
           })}
         </div>
       </nav>
+      )}
 
       {/* QR Scanner Modal */}
       <QRScannerModal

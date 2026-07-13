@@ -42,9 +42,15 @@ export const DashboardMobileHeader = ({
   const displayName = getDisplayName(user)
   const isCustomer = user?.type === 'customer'
 
-  const actionBtnClass = `w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border ${
-    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-gray-100 text-gray-700'
-  }`
+  const actionBtnClass = isCustomer
+    ? `w-8 h-8 rounded-lg flex items-center justify-center shadow-sm border ${
+        isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-gray-100 text-gray-700'
+      }`
+    : `w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border ${
+        isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-gray-100 text-gray-700'
+      }`
+
+  const actionIconClass = isCustomer ? 'w-4 h-4' : 'w-5 h-5'
 
   return (
     <header
@@ -53,61 +59,88 @@ export const DashboardMobileHeader = ({
       }`}
       style={{ direction: 'ltr' }}
     >
-      <div className="flex items-center justify-between px-4 py-3 gap-3">
+      <div
+        className={`grid grid-cols-3 items-center px-3 gap-1 ${isCustomer ? 'py-2' : 'py-3'}`}
+      >
         {/* Left: menu + notifications */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 justify-start">
           <button onClick={onMenuOpen} className={actionBtnClass} aria-label="منو">
-            <Menu className="w-5 h-5" />
+            <Menu className={actionIconClass} />
           </button>
           <Link to="/dashboard/transactions" className={`relative ${actionBtnClass}`} aria-label="اعلان‌ها">
-            <Bell className="w-5 h-5" />
+            <Bell className={actionIconClass} />
             {notificationCount > 0 && (
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-teal-500 rounded-full ring-2 ring-white" />
+              <span
+                className={`absolute bg-teal-500 rounded-full ring-2 ring-white ${
+                  isCustomer ? 'top-2 right-2 w-1.5 h-1.5' : 'top-2.5 right-2.5 w-2 h-2'
+                }`}
+              />
             )}
           </Link>
         </div>
 
-        {/* Center: logo */}
-        <div className="flex-1 flex justify-center min-w-0">
+        {/* Center: logo — always true center via equal grid columns */}
+        <div className="flex justify-center min-w-0">
           <FaydoLogo size="sm" />
         </div>
 
         {/* Right: profile */}
-        <div className="relative flex-shrink-0">
-          <button onClick={onUserMenuToggle} className="flex items-center gap-2 min-w-0">
-            {isCustomer && (
-              <div className="flex-shrink-0">
-                <MembershipTierBadge compact />
-              </div>
-            )}
-            <div className="text-right min-w-0 max-w-[110px]">
+        <div className="relative flex justify-end min-w-0 overflow-hidden">
+          <button
+            onClick={onUserMenuToggle}
+            className={`flex items-center min-w-0 max-w-full ${isCustomer ? 'gap-1.5' : 'gap-2'}`}
+          >
+            <div
+              className={`text-right min-w-0 overflow-hidden ${
+                isCustomer ? 'flex-1' : 'max-w-[110px]'
+              }`}
+            >
               <p
-                className={`text-sm font-semibold truncate leading-tight ${
-                  isDark ? 'text-white' : 'text-[#0D1B3E]'
-                }`}
+                className={`font-semibold truncate leading-tight ${
+                  isCustomer ? 'text-[11px] sm:text-xs' : 'text-sm'
+                } ${isDark ? 'text-white' : 'text-[#0D1B3E]'}`}
               >
                 {displayName}
               </p>
-              <p
-                className={`text-[10px] mt-0.5 ${
-                  isDark ? 'text-slate-400' : 'text-gray-500'
-                }`}
-              >
-                {getRoleLabel(user?.type)}
-              </p>
+              {isCustomer ? (
+                <div className="flex items-center justify-end gap-1 mt-0.5 min-w-0">
+                  <MembershipTierBadge micro />
+                  <span
+                    className={`text-[8px] sm:text-[9px] leading-none flex-shrink-0 ${
+                      isDark ? 'text-slate-400' : 'text-gray-500'
+                    }`}
+                  >
+                    {getRoleLabel(user?.type)}
+                  </span>
+                </div>
+              ) : (
+                <p
+                  className={`text-[10px] mt-0.5 leading-tight ${
+                    isDark ? 'text-slate-400' : 'text-gray-500'
+                  }`}
+                >
+                  {getRoleLabel(user?.type)}
+                </p>
+              )}
             </div>
             <div className="relative flex-shrink-0">
               {user?.avatar ? (
                 <img
                   src={user.avatar}
                   alt=""
-                  className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                  className={`rounded-full object-cover border-2 border-white shadow-sm ${
+                    isCustomer ? 'w-8 h-8' : 'w-10 h-10'
+                  }`}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
                   }}
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0D1B3E] to-[#1a3a6b] flex items-center justify-center text-white text-sm font-bold border-2 border-white shadow-sm">
+                <div
+                  className={`rounded-full bg-gradient-to-br from-[#0D1B3E] to-[#1a3a6b] flex items-center justify-center text-white font-bold border-2 border-white shadow-sm ${
+                    isCustomer ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm'
+                  }`}
+                >
                   {displayName.charAt(0)}
                 </div>
               )}
@@ -116,7 +149,7 @@ export const DashboardMobileHeader = ({
 
           {userMenuOpen && (
             <div
-              className="absolute top-12 right-0 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 py-2 z-50"
+              className="absolute top-11 right-0 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 py-2 z-50"
               style={{ direction: 'rtl' }}
             >
               <div className="px-4 py-2 border-b border-gray-100 dark:border-slate-700">

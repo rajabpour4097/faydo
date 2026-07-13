@@ -1001,6 +1001,17 @@ const EditModal = ({ isOpen, onClose, title, currentValue, onSave, isPhone = fal
   )
 }
 
+function formatPhoneDisplay(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length === 11 && digits.startsWith('09')) {
+    return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`
+  }
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+  }
+  return digits || phone
+}
+
 const ProfileHero = ({
   user,
   profileImage,
@@ -1023,23 +1034,23 @@ const ProfileHero = ({
 
   return (
     <div className={`${isMobile ? 'mx-4 mt-3' : ''} rounded-3xl overflow-hidden shadow-md ${gradient}`}>
-      <div className={`flex items-center gap-4 ${isMobile ? 'px-5 py-6' : 'px-8 py-8'}`}>
+      <div className={`flex items-center gap-3 ${isMobile ? 'px-4 py-4' : 'px-8 py-7'}`}>
         <div className="relative flex-shrink-0">
           <div
-            className={`${isMobile ? 'w-20 h-20' : 'w-24 h-24'} rounded-full ring-4 ring-white/30 overflow-hidden bg-white/20 flex items-center justify-center shadow-lg`}
+            className={`${isMobile ? 'w-[4.25rem] h-[4.25rem]' : 'w-20 h-20'} rounded-full ring-[3px] ring-white/30 overflow-hidden bg-white/20 flex items-center justify-center shadow-lg`}
           >
             {profileImage ? (
               <img src={getFullImageUrl(profileImage)} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <span className={`${isMobile ? 'text-3xl' : 'text-4xl'}`}>{isBusiness ? '🏢' : '👤'}</span>
+              <span className={`${isMobile ? 'text-2xl' : 'text-3xl'}`}>{isBusiness ? '🏢' : '👤'}</span>
             )}
           </div>
           <button
             type="button"
             onClick={onImageUpload}
-            className="absolute bottom-0 left-0 w-7 h-7 bg-white text-teal-600 rounded-full flex items-center justify-center shadow-md border border-teal-100"
+            className="absolute bottom-0 left-0 w-6 h-6 bg-white text-teal-600 rounded-full flex items-center justify-center shadow-md border border-teal-100"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
@@ -1047,11 +1058,11 @@ const ProfileHero = ({
           <input ref={fileInputRef} type="file" accept="image/*" onChange={onImageChange} className="hidden" />
         </div>
         <div className="flex-1 min-w-0 text-white">
-          <h2 className={`font-bold leading-tight truncate ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+          <h2 className={`font-bold leading-tight truncate ${isMobile ? 'text-base' : 'text-xl'}`}>
             {user?.name || '—'}
           </h2>
-          <span className="inline-flex items-center gap-1.5 mt-1.5 text-sm text-white/90">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span className="inline-flex items-center gap-1 mt-1 text-xs text-white/90">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             {isBusiness ? 'کسب‌وکار' : 'مشتری'}
@@ -1073,35 +1084,35 @@ const ProfileSectionCard = ({
   children: React.ReactNode
   className?: string
 }) => (
-  <div className={`rounded-2xl p-4 bg-white shadow-sm border border-gray-100 ${className}`}>
-    <div className="flex items-center gap-2.5 mb-4">
-      <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 flex-shrink-0">
+  <div className={`rounded-2xl p-3 bg-white shadow-sm border border-gray-100 ${className}`}>
+    <div className="flex items-center gap-2 mb-3">
+      <div className="w-7 h-7 rounded-lg bg-[#e8f7f4] border border-[#b8e6dc] flex items-center justify-center text-[#3daba0] flex-shrink-0 [&_svg]:w-3.5 [&_svg]:h-3.5">
         {icon}
       </div>
       <h3 className="text-sm font-bold text-gray-900">{title}</h3>
     </div>
-    <div className="space-y-2.5">{children}</div>
+    <div className="space-y-2">{children}</div>
   </div>
 )
 
 const PasswordSection = ({ onOpen, isMobile = false }: { onOpen: () => void; isMobile?: boolean }) => (
-  <div className={`rounded-2xl p-4 bg-white shadow-sm border border-gray-100 ${isMobile ? 'mx-4' : ''}`}>
-    <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-100 bg-gray-50/80">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 flex-shrink-0">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div className={`rounded-2xl p-3 bg-white shadow-sm border border-gray-100 ${isMobile ? 'mx-4' : ''}`}>
+    <div className="flex items-center justify-between gap-2 py-2.5 px-3 rounded-xl border border-gray-100 bg-gray-50/80">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className="w-9 h-9 rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0] flex-shrink-0">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-gray-900">رمز عبور</p>
-          <p className="text-xs text-gray-500 mt-0.5">تنظیم یا تغییر رمز ورود</p>
+          <p className="text-[13px] font-bold text-gray-900">رمز عبور</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">تنظیم یا تغییر رمز ورود</p>
         </div>
       </div>
       <button
         type="button"
         onClick={onOpen}
-        className="flex-shrink-0 px-4 py-2 rounded-full border-2 border-teal-500 text-teal-600 text-xs font-semibold bg-white hover:bg-teal-50 transition-colors"
+        className="flex-shrink-0 px-3 py-1.5 rounded-full border border-[#3daba0] text-[#3daba0] text-[11px] font-semibold bg-white hover:bg-[#e8f7f4] transition-colors"
       >
         تغییر رمز عبور
       </button>
@@ -1119,37 +1130,48 @@ const Field = ({ label, value, editable = false, onEdit, isPhone = false, isRequ
   icon?: React.ReactNode
 }) => {
   const isEmpty = isRequired && (!value || value.trim() === '')
-  const displayValue = isPhone && value
-    ? value.replace(/(.{4})(.{3})(.{4})/, '$1 $2 $3')
-    : (value || (isEmpty ? 'تکمیل نشده' : '—'))
+  const plainValue = value || (isEmpty ? 'تکمیل نشده' : '—')
+  const displayValue = isPhone && value ? formatPhoneDisplay(value) : plainValue
 
   const inner = (
     <>
       {icon && (
         <div
-          className={`flex-shrink-0 w-11 h-11 rounded-xl border-2 flex items-center justify-center ${
-            isEmpty ? 'border-red-200 bg-red-50 text-red-500' : 'border-teal-200 bg-teal-50 text-teal-600'
+          className={`flex-shrink-0 w-9 h-9 rounded-full border flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5 ${
+            isEmpty
+              ? 'border-red-200 bg-red-50 text-red-400'
+              : 'border-[#b8e6dc] bg-[#e8f7f4] text-[#3daba0]'
           }`}
         >
           {icon}
         </div>
       )}
       <div className="flex-1 min-w-0 text-right">
-        <p className={`text-xs font-medium ${isEmpty ? 'text-red-500' : 'text-gray-500'}`}>
+        <p className={`text-[11px] font-medium leading-tight ${isEmpty ? 'text-red-500' : 'text-gray-400'}`}>
           {label}
           {isEmpty && <span className="mr-1">*</span>}
         </p>
-        <p className={`text-sm font-semibold mt-0.5 truncate ${isEmpty ? 'text-red-500' : 'text-gray-900'}`}>
-          {displayValue}
-        </p>
+        {isPhone && value ? (
+          <p
+            className={`text-[13px] font-semibold mt-0.5 truncate tabular-nums ${isEmpty ? 'text-red-500' : 'text-gray-900'}`}
+            dir="ltr"
+            style={{ unicodeBidi: 'plaintext', textAlign: 'right' }}
+          >
+            {displayValue}
+          </p>
+        ) : (
+          <p className={`text-[13px] font-semibold mt-0.5 truncate ${isEmpty ? 'text-red-500' : 'text-gray-900'}`}>
+            {displayValue}
+          </p>
+        )}
       </div>
     </>
   )
 
-  const rowClass = `flex items-center gap-3 w-full p-3.5 rounded-2xl border transition-colors ${
+  const rowClass = `flex items-center gap-2.5 w-full py-2.5 px-3 rounded-xl border transition-colors ${
     isEmpty
-      ? 'border-red-200 bg-red-50/50'
-      : 'border-gray-100 bg-white hover:border-teal-100'
+      ? 'border-red-200 bg-red-50/40'
+      : 'border-gray-100/90 bg-white hover:border-[#b8e6dc]'
   } ${editable ? 'cursor-pointer active:bg-gray-50' : ''}`
 
   if (editable && onEdit) {
@@ -1519,10 +1541,10 @@ const DesktopProfile = () => {
               onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))} />
             <Field label="آدرس" value={getCurrentValue('address')} editable isRequired icon={icons.address}
               onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))} />
-            <div className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 bg-gray-50/80 mt-1">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl border-2 border-teal-200 bg-teal-50 flex items-center justify-center text-teal-600">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-100 bg-gray-50/80 mt-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0]">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -1945,10 +1967,10 @@ const MobileProfile = () => {
               onEdit={() => openEditModal('location', 'موقعیت کسب‌وکار را روی نقشه انتخاب نمایید', getCurrentValue('location'))} />
             <Field label="آدرس" value={getCurrentValue('address')} editable isRequired icon={icons.address}
               onEdit={() => openEditModal('address', 'آدرس کسب‌وکار را وارد نمایید', getCurrentValue('address'))} />
-            <div className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 bg-gray-50/80">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-11 h-11 rounded-xl border-2 border-teal-200 bg-teal-50 flex items-center justify-center text-teal-600 flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center justify-between py-2.5 px-3 rounded-xl border border-gray-100 bg-gray-50/80">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-full border border-[#b8e6dc] bg-[#e8f7f4] flex items-center justify-center text-[#3daba0] flex-shrink-0">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>

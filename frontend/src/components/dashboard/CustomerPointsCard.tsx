@@ -5,7 +5,6 @@ import { apiService, PointsSummary, MembershipLevel } from '../../services/api'
 import {
   MEMBERSHIP_TIERS,
   NEXT_TIER_LABEL,
-  TIER_ORDER,
 } from '../../constants/membershipTiers'
 import goldMedal from '../../assets/dashboard/gold-medal.png'
 import cashbackIcon from '../../assets/dashboard/cashback-wallet.png'
@@ -76,80 +75,6 @@ function TierCoinPedestal({
         className="relative z-10 w-[78px] h-[78px] object-contain drop-shadow-[0_10px_18px_rgba(15,23,42,0.18)] -mb-1"
         draggable={false}
       />
-    </div>
-  )
-}
-
-function TierTimeline({
-  current,
-  isDark,
-}: {
-  current: MembershipLevel
-  isDark: boolean
-}) {
-  return (
-    <div className="relative px-2 py-1">
-      <div
-        className={`absolute top-[28px] left-8 right-8 h-px border-t border-dashed ${
-          isDark ? 'border-slate-600' : 'border-gray-300'
-        }`}
-      />
-      <div className="relative grid grid-cols-4 gap-1">
-        {TIER_ORDER.map((tier) => {
-          const info = MEMBERSHIP_TIERS[tier]
-          const active = tier === current
-          return (
-            <div
-              key={tier}
-              className={`flex flex-col items-center gap-1.5 py-2 px-1 rounded-2xl transition-all ${
-                active
-                  ? isDark
-                    ? 'bg-slate-800 shadow-lg ring-1 ring-slate-600'
-                    : 'bg-white shadow-[0_8px_24px_rgba(15,23,42,0.08)]'
-                  : ''
-              }`}
-            >
-              <div
-                className={`flex items-center justify-center ${
-                  info.hasBuiltInPedestal ? 'w-14 h-14' : 'w-12 h-12 rounded-full'
-                } ${
-                  active
-                    ? ''
-                    : isDark
-                      ? 'bg-slate-800/60'
-                      : info.hasBuiltInPedestal
-                        ? ''
-                        : 'bg-white/70'
-                }`}
-              >
-                <img
-                  src={info.icon}
-                  alt={info.label}
-                  className={`object-contain ${
-                    info.hasBuiltInPedestal
-                      ? 'w-14 h-14'
-                      : tier === 'vip'
-                        ? 'w-9 h-9'
-                        : 'w-11 h-11'
-                  } ${active ? '' : 'opacity-80'}`}
-                  draggable={false}
-                />
-              </div>
-              <span
-                className={`text-[11px] font-bold ${
-                  active
-                    ? 'text-teal-500'
-                    : isDark
-                      ? 'text-slate-400'
-                      : 'text-gray-400'
-                }`}
-              >
-                {info.label}
-              </span>
-            </div>
-          )
-        })}
-      </div>
     </div>
   )
 }
@@ -291,11 +216,6 @@ export const CustomerPointsCard = ({
           }`}
         />
         <div
-          className={`rounded-[24px] h-24 ${
-            isDark ? 'bg-slate-800' : 'bg-white'
-          }`}
-        />
-        <div
           className={`rounded-[24px] h-40 ${
             isDark ? 'bg-slate-800' : 'bg-white'
           }`}
@@ -411,9 +331,6 @@ export const CustomerPointsCard = ({
           />
         </div>
       </div>
-
-      {/* تایم‌لاین سطوح */}
-      <TierTimeline current={tier} isDark={isDark} />
 
       {/* آمار تفصیلی */}
       <div

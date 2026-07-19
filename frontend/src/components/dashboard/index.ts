@@ -1,3 +1,7 @@
 export { DashboardCard } from './DashboardCard'
 export { StatCard } from './StatCard'
 export { IsometricShape } from './IsometricShape'
+export { CustomerHeroSection } from './CustomerHeroSection'
+export { CustomerPointsCard } from './CustomerPointsCard'
+export { QuickAccessMenu } from './QuickAccessMenu'
+export { MembershipTierBadge } from './MembershipTierBadge'

@@ -1,149 +1,156 @@
 import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
-import { useNotification } from '../../contexts/NotificationContext'
-import { useAuth } from '../../contexts/AuthContext'
+import qrScanIcon from '../../assets/dashboard/qr-scan.png'
+import clubsIcon from '../../assets/dashboard/clubs-shield.png'
+import heartIcon from '../../assets/dashboard/heart.png'
+import walletIcon from '../../assets/dashboard/wallet.png'
 
-interface QuickAccessMenuItem {
+interface QuickAccessItem {
   id: string
   title: string
+  subtitle: string
   icon: string
   href: string
-  color: string
+  bg: string
+  bgDark: string
   isActive: boolean
-  badge?: number
 }
 
-const MENU_ITEMS: QuickAccessMenuItem[] = [
+const MENU_ITEMS: QuickAccessItem[] = [
   {
-    id: 'explore',
-    title: 'کشف تجربیات',
-    icon: '🔍',
-    href: '/explore',
-    color: 'from-primary-500 to-primary-600',
-    isActive: true
+    id: 'qr-scan',
+    title: 'اسکن QR',
+    subtitle: 'سریع و هوشمند',
+    icon: qrScanIcon,
+    href: '/qr-scan',
+    bg: '#e8f8f6',
+    bgDark: 'rgba(20, 184, 166, 0.12)',
+    isActive: true,
   },
   {
     id: 'clubs',
     title: 'باشگاه‌ها',
-    icon: '🎯',
+    subtitle: 'مکان‌های ویژه',
+    icon: clubsIcon,
     href: '/clubs',
-    color: 'from-purple-500 to-pink-500',
-    isActive: true
-  },
-  {
-    id: 'qr-scan',
-    title: 'اسکن QR',
-    icon: '📷',
-    href: '/qr-scan',
-    color: 'from-accent-500 to-accent-600',
-    isActive: false
-  },
-  {
-    id: 'wallet',
-    title: 'کیف پول',
-    icon: '💰',
-    href: '/wallet',
-    color: 'from-success-500 to-success-600',
-    isActive: false
-  },
-  {
-    id: 'history',
-    title: 'تراکنش‌های من',
-    icon: '📋',
-    href: '/dashboard/transactions',
-    color: 'from-blue-500 to-blue-600',
-    isActive: true
+    bg: '#fdecee',
+    bgDark: 'rgba(239, 68, 68, 0.12)',
+    isActive: true,
   },
   {
     id: 'favorites',
     title: 'علاقه‌مندی‌ها',
-    icon: '❤️',
+    subtitle: 'لیست مورد علاقه',
+    icon: heartIcon,
     href: '/favorites',
-    color: 'from-danger-400 to-danger-500',
-    isActive: false
+    bg: '#f3eefc',
+    bgDark: 'rgba(139, 92, 246, 0.14)',
+    isActive: false,
   },
   {
-    id: 'clubs',
-    title: 'باشگاه‌ها',
-    icon: '🎯',
-    href: '/clubs',
-    color: 'from-warning-500 to-warning-600',
-    isActive: false
+    id: 'wallet',
+    title: 'کیف پول',
+    subtitle: 'مدیریت موجودی',
+    icon: walletIcon,
+    href: '/wallet',
+    bg: '#eaf7f1',
+    bgDark: 'rgba(16, 185, 129, 0.12)',
+    isActive: false,
   },
-  {
-    id: 'challenges',
-    title: 'چالش‌ها',
-    icon: '🏆',
-    href: '/challenges',
-    color: 'from-purple-500 to-purple-600',
-    isActive: false
-  },
-  {
-    id: 'support',
-    title: 'پشتیبانی',
-    icon: '💬',
-    href: '/support',
-    color: 'from-teal-500 to-teal-600',
-    isActive: false
-  },
-  {
-    id: 'settings',
-    title: 'تنظیمات',
-    icon: '⚙️',
-    href: '/settings',
-    color: 'from-slate-500 to-slate-600',
-    isActive: false
-  }
 ]
+
+function ArrowButton({ disabled }: { disabled?: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center w-7 h-7 rounded-full bg-white shadow-sm ${
+        disabled ? 'opacity-60' : ''
+      }`}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M14 6L8 12L14 18"
+          stroke="#94a3b8"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  )
+}
 
 export const QuickAccessMenu = () => {
   const { isDark } = useTheme()
-  const { user } = useAuth()
-  const { pendingCount } = useNotification()
-
-  // آپدیت badge در آیتم history
-  const menuItems = MENU_ITEMS.map(item => {
-    if (item.id === 'history' && user?.type === 'customer') {
-      return { ...item, badge: pendingCount > 0 ? pendingCount : undefined }
-    }
-    return item
-  })
 
   return (
-    <div className={`rounded-2xl p-6 ${
-      isDark ? 'bg-slate-800' : 'bg-white'
-    } shadow-lg`}>
-      
-      {/* 3x3 Grid */}
-      <div className="grid grid-cols-3 gap-4">
-        {menuItems.map((item) => (
-          item.isActive ? (
-            <Link
-              key={item.id}
-              to={item.href}
-              className={`flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 relative`}
-            >
-              <span className="text-3xl mb-2">{item.icon}</span>
-              <span className="text-xs font-medium text-center">{item.title}</span>
-              {/* Badge for pending count */}
-              {item.badge && item.badge > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center shadow-lg">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          ) : (
+    <section>
+      <div className="flex items-center gap-2 mb-3 px-0.5">
+        <span className="w-2 h-2 rounded-full bg-teal-400" />
+        <h3
+          className={`text-[15px] font-bold ${
+            isDark ? 'text-white' : 'text-gray-800'
+          }`}
+        >
+          دسترسی سریع
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {MENU_ITEMS.map((item) => {
+          const style = {
+            backgroundColor: isDark ? item.bgDark : item.bg,
+          }
+
+          const body = (
             <div
-              key={item.id}
-              className={`flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-md opacity-75 cursor-not-allowed`}
-              title="به زودی"
+              className={`relative h-[132px] rounded-[22px] p-3.5 flex flex-col transition-transform duration-200 ${
+                item.isActive ? 'hover:-translate-y-0.5 active:scale-[0.98]' : 'opacity-80'
+              }`}
+              style={style}
             >
-              <span className="text-3xl mb-2">{item.icon}</span>
-              <span className="text-xs font-medium text-center">{item.title}</span>
+              <img
+                src={item.icon}
+                alt=""
+                className="w-11 h-11 object-contain mb-2"
+                draggable={false}
+              />
+              <div className="mt-auto">
+                <p
+                  className={`text-[14px] font-extrabold leading-tight ${
+                    isDark ? 'text-white' : 'text-gray-800'
+                  }`}
+                >
+                  {item.title}
+                </p>
+                <p
+                  className={`text-[11px] mt-0.5 ${
+                    isDark ? 'text-slate-400' : 'text-gray-400'
+                  }`}
+                >
+                  {item.subtitle}
+                </p>
+              </div>
+              <div className="absolute bottom-3 left-3">
+                <ArrowButton disabled={!item.isActive} />
+              </div>
             </div>
           )
-        ))}
+
+          if (!item.isActive) {
+            return (
+              <div key={item.id} title="به زودی" className="cursor-not-allowed">
+                {body}
+              </div>
+            )
+          }
+
+          return (
+            <Link key={item.id} to={item.href} className="block">
+              {body}
+            </Link>
+          )
+        })}
       </div>
-    </div>
+    </section>
   )
 }

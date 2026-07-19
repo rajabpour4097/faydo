@@ -329,3 +329,11 @@ body {
 .quick-access-item:active {
   transform: scale(0.98);
 }
+
+/* Customer middle-section polish */
+.points-gradient-number {
+  background: linear-gradient(135deg, #f97316 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

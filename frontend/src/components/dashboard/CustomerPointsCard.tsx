@@ -8,7 +8,6 @@ import {
 } from '../../constants/membershipTiers'
 import goldMedal from '../../assets/dashboard/gold-medal.png'
 import cashbackIcon from '../../assets/dashboard/cashback-wallet.png'
-import fireIcon from '../../assets/dashboard/fire.png'
 
 interface CustomerPointsCardProps {
   points?: number
@@ -189,7 +188,6 @@ export const CustomerPointsCard = ({
 
   const totalPoints = summary?.total_points ?? propPoints
   const pts6m = summary?.points_6months ?? propPoints
-  const activeScore = summary?.active_score ?? 0
   const tier = (summary?.membership_level ??
     propLevel ??
     (pts6m >= 5000
@@ -215,7 +213,7 @@ export const CustomerPointsCard = ({
           }`}
         />
         <div
-          className={`rounded-[24px] h-40 ${
+          className={`rounded-[24px] h-20 ${
             isDark ? 'bg-slate-800' : 'bg-white'
           }`}
         />
@@ -346,10 +344,8 @@ export const CustomerPointsCard = ({
 
       {/* آمار تفصیلی */}
       <div
-        className={`rounded-[24px] px-4 py-2 divide-y ${
-          isDark
-            ? 'bg-slate-800 divide-slate-700'
-            : 'bg-white divide-gray-100'
+        className={`rounded-[24px] px-4 py-2 ${
+          isDark ? 'bg-slate-800' : 'bg-white'
         }`}
         style={{ boxShadow: cardShadow }}
       >
@@ -361,15 +357,6 @@ export const CustomerPointsCard = ({
           progress={cashbackTomans > 0 ? 72 : 8}
           isDark={isDark}
           href="/wallet"
-        />
-        <MetricRow
-          icon={fireIcon}
-          label="امتیاز فعالیت"
-          value={`${activeScore.toLocaleString('fa-IR')} / ۱۰۰ امتیاز`}
-          barColor="linear-gradient(90deg, #f97316, #ef4444)"
-          progress={activeScore}
-          isDark={isDark}
-          href="/dashboard/transactions"
         />
       </div>
     </div>

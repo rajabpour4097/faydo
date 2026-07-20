@@ -709,11 +709,10 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   <option value="female">زن</option>
                 </select>
                 <div>
-                  <p className="text-sm text-gray-600 mb-2">تاریخ تولد *</p>
                   <PersianDatePicker
                     value={formData.birth_date}
                     onChange={(date) => patchForm({ birth_date: date })}
-                    accentClass="bg-blue-600"
+                    placeholder="تاریخ تولد *"
                   />
                 </div>
               </div>

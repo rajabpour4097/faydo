@@ -337,3 +337,7 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+.persian-wheel-scroll::-webkit-scrollbar {
+  display: none;
+}

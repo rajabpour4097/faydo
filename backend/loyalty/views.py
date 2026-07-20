@@ -669,6 +669,7 @@ def points_history(request):
         return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
 
     from loyalty.models import PointsEvent
+    from loyalty.services import get_event_breakdown
     customer = request.user.customerprofile
     events = PointsEvent.objects.filter(customer=customer).order_by('-created_at')
 
@@ -679,6 +680,7 @@ def points_history(request):
 
     data = []
     for ev in events[offset: offset + page_size]:
+        breakdown = get_event_breakdown(ev)
         data.append({
             'id':                 ev.id,
             'event_type':         ev.event_type,
@@ -686,6 +688,9 @@ def points_history(request):
             'points_delta':       ev.points_delta,
             'active_score_delta': ev.active_score_delta,
             'description':        ev.description,
+            'metadata':           ev.metadata or {},
+            'breakdown':          breakdown,
+            'is_composite':       len(breakdown) > 1,
             'created_at':         ev.created_at.isoformat(),
         })
 

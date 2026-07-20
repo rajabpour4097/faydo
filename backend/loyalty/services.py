@@ -361,6 +361,58 @@ def run_active_score_weekly_decay():
         CustomerProfile.objects.filter(pk=customer.pk).update(active_score=new_score)
 
 
+def get_event_breakdown(event):
+    """
+    جزئیات امتیاز ترکیبی برای نمایش در تاریخچه.
+    برای رویدادهای تک‌بخشی لیست خالی برمی‌گردد.
+    """
+    meta = event.metadata or {}
+    breakdown = []
+    et = event.event_type
+
+    if et in ('first_purchase', 'purchase', 'birthday_purchase'):
+        amount = float(meta.get('amount') or 0)
+        is_first = meta.get('is_first', et == 'first_purchase')
+        is_birthday = meta.get('is_birthday', et == 'birthday_purchase')
+        base = PointsConfig.FIRST_PURCHASE if is_first else PointsConfig.REPEAT_PURCHASE
+        amount_pts = int(amount * PointsConfig.PURCHASE_AMOUNT_RATE)
+        subtotal = base + amount_pts
+
+        base_label = 'امتیاز پایه (اولین خرید)' if is_first else 'امتیاز پایه (خرید مجدد)'
+        breakdown.append({'label': base_label, 'points': base})
+        if amount_pts > 0:
+            breakdown.append({
+                'label': f'امتیاز بر اساس مبلغ ({int(amount):,} تومان)',
+                'points': amount_pts,
+            })
+        if is_birthday and subtotal > 0:
+            breakdown.append({
+                'label': 'پاداش روز تولد (×۲)',
+                'points': subtotal,
+            })
+
+    elif et == 'referral_bonus':
+        purchase_amount = float(meta.get('purchase_amount') or 0)
+        breakdown.append({'label': 'پاداش ثابت دعوت موفق', 'points': PointsConfig.REFERRAL_BONUS})
+        amount_pts = int(purchase_amount * PointsConfig.REFERRAL_PURCHASE_RATE)
+        if amount_pts > 0:
+            breakdown.append({
+                'label': f'درصد از خرید معرف‌شونده ({int(purchase_amount):,} تومان)',
+                'points': amount_pts,
+            })
+
+    elif et == 'referral_purchase':
+        breakdown.append({'label': 'هدیه ثبت‌نام از طریق دعوت', 'points': PointsConfig.REFERRAL_GIFT})
+
+    elif et == 'expiry':
+        breakdown.append({'label': 'انقضای امتیاز به‌دلیل عدم فعالیت', 'points': event.points_delta})
+
+    elif et == 'decay':
+        breakdown.append({'label': 'کاهش امتیاز عدم فعالیت', 'points': event.points_delta})
+
+    return breakdown
+
+
 def get_points_summary(customer):
     """
     خلاصه امتیازات برای dashboard

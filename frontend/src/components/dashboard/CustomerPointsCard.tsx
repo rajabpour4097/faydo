@@ -261,17 +261,30 @@ export const CustomerPointsCard = ({
             >
               امتیاز کل شما
             </p>
-            <div
-              className="text-[42px] font-black leading-none tracking-tight mt-0.5"
-              style={{
-                background: 'linear-gradient(135deg, #f97316 0%, #a855f7 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
+            <Link
+              to="/dashboard/points"
+              className="block hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer group"
+              aria-label="مشاهده جزئیات امتیازات"
             >
-              {totalPoints.toLocaleString('fa-IR')}
-            </div>
+              <div
+                className="text-[42px] font-black leading-none tracking-tight mt-0.5"
+                style={{
+                  background: 'linear-gradient(135deg, #f97316 0%, #a855f7 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                {totalPoints.toLocaleString('fa-IR')}
+              </div>
+              <p
+                className={`text-[10px] font-medium mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+                  isDark ? 'text-teal-400' : 'text-teal-600'
+                }`}
+              >
+                مشاهده جزئیات ←
+              </p>
+            </Link>
             <p
               className={`text-[12px] font-bold mt-0.5 ${
                 isDark ? 'text-slate-300' : 'text-gray-500'

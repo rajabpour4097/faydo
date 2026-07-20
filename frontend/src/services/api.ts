@@ -334,6 +334,11 @@ export interface PointsSummary {
   last_activity: string | null
 }
 
+export interface PointsBreakdownItem {
+  label: string
+  points: number
+}
+
 export interface PointsEvent {
   id: number
   event_type: string
@@ -341,6 +346,9 @@ export interface PointsEvent {
   points_delta: number
   active_score_delta: number
   description: string | null
+  metadata?: Record<string, unknown>
+  breakdown?: PointsBreakdownItem[]
+  is_composite?: boolean
   created_at: string
 }
 

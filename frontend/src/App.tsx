@@ -27,6 +27,7 @@ import { ServiceCategoryManagement } from './pages/dashboard/ServiceCategoryMana
 import { BusinessTransactionsPage } from './pages/business/BusinessTransactionsPage'
 import { EliteGiftClaimsPage } from './pages/business/EliteGiftClaimsPage'
 import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsPage'
+import { CustomerPointsDetailsPage } from './pages/customer/CustomerPointsDetailsPage'
 import { useAuth } from './contexts/AuthContext'
 
 // Dashboard Router Component
@@ -76,6 +77,11 @@ const DashboardRouter = () => {
       <Route path="transactions" element={
         <ProfileGuard>
           {isBusinessUser ? <BusinessTransactionsPage /> : <CustomerTransactionsPage />}
+        </ProfileGuard>
+      } />
+      <Route path="points" element={
+        <ProfileGuard>
+          {isBusinessUser ? <Navigate to="/dashboard" /> : <CustomerPointsDetailsPage />}
         </ProfileGuard>
       } />
       <Route path="elite-gift-claims" element={

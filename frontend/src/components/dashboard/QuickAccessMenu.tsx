@@ -14,6 +14,7 @@ interface QuickAccessItem {
   bg: string
   bgDark: string
   isActive: boolean
+  iconClassName?: string
 }
 
 /** ترتیب بصری چپ→راست مطابق طراحی */
@@ -27,6 +28,8 @@ const MENU_ITEMS: QuickAccessItem[] = [
     bg: '#E7F6F8',
     bgDark: 'rgba(20, 184, 166, 0.14)',
     isActive: true,
+    iconClassName:
+      'w-[37px] h-[37px] drop-shadow-[0_4px_10px_rgba(20,184,166,0.18)]',
   },
   {
     id: 'clubs',
@@ -60,14 +63,17 @@ const MENU_ITEMS: QuickAccessItem[] = [
   },
 ]
 
+const DEFAULT_ICON =
+  'w-8 h-8 drop-shadow-[0_3px_8px_rgba(15,23,42,0.1)]'
+
 function ArrowButton() {
   return (
-    <span className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-full bg-white shadow-[0_2px_8px_rgba(15,23,42,0.1)]">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <span className="inline-flex items-center justify-center w-[13px] h-[13px] rounded-full bg-white shadow-[0_1px_4px_rgba(15,23,42,0.08)]">
+      <svg width="6" height="6" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
           d="M9 6L15 12L9 18"
           stroke="#C0C6D0"
-          strokeWidth="2.2"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -81,7 +87,7 @@ export const QuickAccessMenu = () => {
 
   return (
     <section>
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-2.5">
         <span className="w-2 h-2 rounded-full bg-[#2DD4BF] flex-shrink-0" />
         <h3
           className={`text-[15px] font-extrabold ${
@@ -92,48 +98,51 @@ export const QuickAccessMenu = () => {
         </h3>
       </div>
 
-      {/* ردیف افقی ۴تایی دقیقاً مطابق طراحی */}
       <div
-        className={`rounded-[22px] p-2.5 ${
+        className={`rounded-[20px] p-2 ${
           isDark ? 'bg-slate-800' : 'bg-white'
         }`}
         style={{
           boxShadow: isDark
             ? '0 8px 24px rgba(0,0,0,0.25)'
-            : '0 8px 24px rgba(15, 23, 42, 0.05)',
+            : '0 8px 22px rgba(15, 23, 42, 0.05)',
         }}
       >
-        <div className="grid grid-cols-4 gap-2" dir="ltr">
+        <div className="grid grid-cols-4 gap-1.5" dir="ltr">
           {MENU_ITEMS.map((item) => {
             const card = (
               <div
                 dir="rtl"
-                className={`relative flex flex-col items-center min-h-[128px] rounded-[18px] px-1.5 pt-3 pb-2 transition-transform duration-200 ${
+                className={`relative flex flex-col items-center rounded-[16px] px-1 pt-2 pb-1.5 transition-transform duration-200 ${
                   item.isActive
                     ? 'hover:-translate-y-0.5 active:scale-[0.98]'
                     : 'opacity-70 cursor-not-allowed'
                 }`}
                 style={{
                   backgroundColor: isDark ? item.bgDark : item.bg,
+                  minHeight: '104px',
                 }}
               >
                 <img
                   src={item.icon}
                   alt=""
-                  className="w-10 h-10 object-contain mb-2 drop-shadow-[0_4px_10px_rgba(15,23,42,0.12)]"
+                  className={`object-contain mb-1 ${
+                    item.iconClassName ?? DEFAULT_ICON
+                  }`}
                   draggable={false}
                 />
 
-                <div className="text-center px-0.5 flex-1 w-full">
+                {/* فضای رزرو برای فلش پایین-چپ تا متن روی هم نیفتد */}
+                <div className="text-center w-full flex-1 px-0.5 pb-4 pl-4">
                   <p
-                    className={`text-[11px] font-extrabold leading-tight ${
+                    className={`text-[10px] font-extrabold leading-tight ${
                       isDark ? 'text-white' : 'text-[#1F2937]'
                     }`}
                   >
                     {item.title}
                   </p>
                   <p
-                    className={`text-[9px] mt-0.5 leading-snug ${
+                    className={`text-[7.5px] mt-0.5 leading-[1.35] ${
                       isDark ? 'text-slate-400' : 'text-[#9CA3AF]'
                     }`}
                   >
@@ -141,7 +150,7 @@ export const QuickAccessMenu = () => {
                   </p>
                 </div>
 
-                <div className="absolute bottom-2 left-2">
+                <div className="absolute bottom-1.5 left-1.5">
                   <ArrowButton />
                 </div>
               </div>

@@ -9,7 +9,6 @@ import {
 import goldMedal from '../../assets/dashboard/gold-medal.png'
 import cashbackIcon from '../../assets/dashboard/cashback-wallet.png'
 import fireIcon from '../../assets/dashboard/fire.png'
-import levelChartIcon from '../../assets/dashboard/level-chart.png'
 
 interface CustomerPointsCardProps {
   points?: number
@@ -358,18 +357,6 @@ export const CustomerPointsCard = ({
           progress={activeScore}
           isDark={isDark}
           href="/dashboard/transactions"
-        />
-        <MetricRow
-          icon={levelChartIcon}
-          label="مانده تا سطح بعدی"
-          value={
-            isVip
-              ? 'سطح نهایی'
-              : `${pointsToNext.toLocaleString('fa-IR')} امتیاز`
-          }
-          barColor="linear-gradient(90deg, #60a5fa, #3b82f6)"
-          progress={isVip ? 100 : progressPct}
-          isDark={isDark}
         />
       </div>
     </div>

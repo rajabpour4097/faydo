@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useQrScanner } from '../../contexts/QrScannerContext'
 import qrScanIcon from '../../assets/dashboard/qr-scan.png'
 import clubsIcon from '../../assets/dashboard/clubs-shield.png'
 import heartIcon from '../../assets/dashboard/heart.png'
@@ -10,7 +11,8 @@ interface QuickAccessItem {
   title: string
   subtitle: string
   icon: string
-  href: string
+  href?: string
+  action?: 'scan'
   bg: string
   bgDark: string
   isActive: boolean
@@ -24,7 +26,7 @@ const MENU_ITEMS: QuickAccessItem[] = [
     title: 'اسکن QR',
     subtitle: 'سریع و هوشمند',
     icon: qrScanIcon,
-    href: '/qr-scan',
+    action: 'scan',
     bg: '#E7F6F8',
     bgDark: 'rgba(20, 184, 166, 0.14)',
     isActive: true,
@@ -36,7 +38,7 @@ const MENU_ITEMS: QuickAccessItem[] = [
     title: 'باشگاه‌ها',
     subtitle: 'مکان‌های ویژه',
     icon: clubsIcon,
-    href: '/clubs',
+    href: '/dashboard/clubs',
     bg: '#FDECEE',
     bgDark: 'rgba(239, 68, 68, 0.12)',
     isActive: true,
@@ -82,6 +84,87 @@ function ArrowButton() {
   )
 }
 
+function QuickAccessCard({
+  item,
+  isDark,
+}: {
+  item: QuickAccessItem
+  isDark: boolean
+}) {
+  const qrScanner = useQrScanner()
+
+  const card = (
+    <div
+      dir="rtl"
+      className={`relative flex flex-col items-center rounded-[16px] px-1 pt-2 pb-1.5 transition-transform duration-200 ${
+        item.isActive
+          ? 'hover:-translate-y-0.5 active:scale-[0.98]'
+          : 'opacity-70 cursor-not-allowed'
+      }`}
+      style={{
+        backgroundColor: isDark ? item.bgDark : item.bg,
+        minHeight: '104px',
+      }}
+    >
+      <img
+        src={item.icon}
+        alt=""
+        className={`object-contain mb-1 ${
+          item.iconClassName ?? DEFAULT_ICON
+        }`}
+        draggable={false}
+      />
+
+      <div className="text-center w-full flex-1 px-0.5 pb-4 pl-4">
+        <p
+          className={`text-[10px] font-extrabold leading-tight ${
+            isDark ? 'text-white' : 'text-[#1F2937]'
+          }`}
+        >
+          {item.title}
+        </p>
+        <p
+          className={`text-[7.5px] mt-0.5 leading-[1.35] ${
+            isDark ? 'text-slate-400' : 'text-[#9CA3AF]'
+          }`}
+        >
+          {item.subtitle}
+        </p>
+      </div>
+
+      <div className="absolute bottom-1.5 left-1.5">
+        <ArrowButton />
+      </div>
+    </div>
+  )
+
+  if (!item.isActive) {
+    return (
+      <div title="به زودی" className="min-w-0">
+        {card}
+      </div>
+    )
+  }
+
+  if (item.action === 'scan') {
+    return (
+      <button
+        type="button"
+        onClick={() => qrScanner?.openScanner()}
+        className="block min-w-0 w-full text-right"
+      >
+        {card}
+      </button>
+    )
+  }
+
+  return (
+    <Link to={item.href!} className="block min-w-0">
+      {card}
+    </Link>
+  )
+}
+
 export const QuickAccessMenu = () => {
   const { isDark } = useTheme()
 
@@ -109,67 +192,9 @@ export const QuickAccessMenu = () => {
         }}
       >
         <div className="grid grid-cols-4 gap-1.5" dir="ltr">
-          {MENU_ITEMS.map((item) => {
-            const card = (
-              <div
-                dir="rtl"
-                className={`relative flex flex-col items-center rounded-[16px] px-1 pt-2 pb-1.5 transition-transform duration-200 ${
-                  item.isActive
-                    ? 'hover:-translate-y-0.5 active:scale-[0.98]'
-                    : 'opacity-70 cursor-not-allowed'
-                }`}
-                style={{
-                  backgroundColor: isDark ? item.bgDark : item.bg,
-                  minHeight: '104px',
-                }}
-              >
-                <img
-                  src={item.icon}
-                  alt=""
-                  className={`object-contain mb-1 ${
-                    item.iconClassName ?? DEFAULT_ICON
-                  }`}
-                  draggable={false}
-                />
-
-                {/* فضای رزرو برای فلش پایین-چپ تا متن روی هم نیفتد */}
-                <div className="text-center w-full flex-1 px-0.5 pb-4 pl-4">
-                  <p
-                    className={`text-[10px] font-extrabold leading-tight ${
-                      isDark ? 'text-white' : 'text-[#1F2937]'
-                    }`}
-                  >
-                    {item.title}
-                  </p>
-                  <p
-                    className={`text-[7.5px] mt-0.5 leading-[1.35] ${
-                      isDark ? 'text-slate-400' : 'text-[#9CA3AF]'
-                    }`}
-                  >
-                    {item.subtitle}
-                  </p>
-                </div>
-
-                <div className="absolute bottom-1.5 left-1.5">
-                  <ArrowButton />
-                </div>
-              </div>
-            )
-
-            if (!item.isActive) {
-              return (
-                <div key={item.id} title="به زودی">
-                  {card}
-                </div>
-              )
-            }
-
-            return (
-              <Link key={item.id} to={item.href} className="block min-w-0">
-                {card}
-              </Link>
-            )
-          })}
+          {MENU_ITEMS.map((item) => (
+            <QuickAccessCard key={item.id} item={item} isDark={isDark} />
+          ))}
         </div>
       </div>
     </section>

@@ -6,6 +6,7 @@ import { useNotification } from '../../contexts/NotificationContext'
 import { CustomIcon } from '../ui/CustomIcon'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { QRScannerModal } from '../scanner/QRScannerModal'
+import { QrScannerProvider } from '../../contexts/QrScannerContext'
 import { DashboardMobileHeader } from './DashboardMobileHeader'
 import { DashboardMobileBottomNav } from './DashboardMobileBottomNav'
 
@@ -113,6 +114,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   const useNewBottomNav = useNewHeader
 
   return (
+    <QrScannerProvider openScanner={() => setScannerOpen(true)}>
     <div
       className={`min-h-screen font-persian ${
         isDark ? 'bg-slate-900' : useNewHeader ? 'bg-[#f5f6f8]' : 'bg-gray-50'
@@ -404,5 +406,6 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
         onScanSuccess={handleScanSuccess}
       />
     </div>
+    </QrScannerProvider>
   )
 }

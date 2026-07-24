@@ -1,5 +1,5 @@
 import type { Package } from '../services/api'
-import { EXPLORE_SAMPLE_ASSETS, SAMPLE_ID_TO_ASSET_KEY } from './exploreSampleAssets'
+import { EXPLORE_SAMPLE_ASSETS } from './exploreSampleAssets'
 
 /** وقتی تعداد کسب‌وکار واقعی به این عدد برسد، نمونه‌ها کاملاً حذف می‌شوند */
 export const EXPLORE_SAMPLE_REAL_THRESHOLD = 12

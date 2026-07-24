@@ -141,29 +141,39 @@ export const ExplorePromoSlider: React.FC<ExplorePromoSliderProps> = ({ packages
       >
         {/* متن — سمت چپ */}
         <div
-          dir="rtl"
-          className="absolute inset-y-0 left-0 z-[2] flex w-[56%] flex-col justify-center pb-7 pl-4 pr-1 pt-2 text-right"
+          dir="ltr"
+          className="absolute inset-y-0 left-[18px] z-[2] flex w-[46%] flex-col items-start justify-center pb-7 pt-2 text-left"
         >
-          <div className="mb-2 inline-flex w-fit items-center gap-1 self-start rounded-full bg-white/20 px-2.5 py-0.5 backdrop-blur-sm">
+          <div
+            dir="rtl"
+            className="mb-2 inline-flex w-fit items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-left backdrop-blur-sm"
+          >
             <span className="text-[10px] font-medium text-white">پیشنهاد ویژه امروز</span>
             <span className="text-[10px] leading-none">⭐</span>
           </div>
 
-          <h3 className="mb-1 text-[17px] font-extrabold leading-[1.35] text-white line-clamp-2">
+          <h3
+            dir="rtl"
+            className="mb-1 w-full text-left text-[17px] font-extrabold leading-[1.35] text-white line-clamp-2"
+          >
             {giftTitle}
           </h3>
 
-          <p className="mb-2.5 text-[11px] font-medium text-white/90 line-clamp-1">
+          <p
+            dir="rtl"
+            className="mb-2.5 w-full text-left text-[11px] font-medium text-white/90 line-clamp-1"
+          >
             در {current.business_name}
           </p>
 
           <button
+            dir="rtl"
             type="button"
             onClick={(e) => {
               e.stopPropagation()
               openPackage(current)
             }}
-            className="inline-flex w-fit items-center gap-1 self-start rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-[#0d9488] shadow-sm active:scale-95 transition-transform"
+            className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-3 py-1.5 text-left text-[11px] font-bold text-[#0d9488] shadow-sm transition-transform active:scale-95"
           >
             <span>مشاهده هدیه</span>
             <svg className="h-3 w-3 shrink-0 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,19 +182,36 @@ export const ExplorePromoSlider: React.FC<ExplorePromoSliderProps> = ({ packages
           </button>
         </div>
 
-        {/* تصویر محصول — سمت راست، برش‌خورده پایین */}
-        <div className="pointer-events-none absolute bottom-0 right-0 z-[1] h-full w-[48%]">
+        {/* تصویر تمام‌قد بنر — بدون قاب داخلی و محوشده در گرادیان */}
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[58%] overflow-hidden"
+          style={{
+            WebkitMaskImage:
+              'linear-gradient(to right, transparent 0%, rgba(0,0,0,.75) 20%, #000 42%, #000 100%)',
+            maskImage:
+              'linear-gradient(to right, transparent 0%, rgba(0,0,0,.75) 20%, #000 42%, #000 100%)',
+          }}
+        >
           {heroImage ? (
             <img
               src={heroImage}
-              alt=""
-              className="absolute bottom-[-4px] right-0 h-[168px] w-auto max-w-[220px] object-contain object-bottom drop-shadow-[0_10px_20px_rgba(0,0,0,0.3)]"
+              alt={current.business_name}
+              className="h-full w-full scale-[1.03] object-cover object-center"
               draggable={false}
             />
           ) : (
             <div className="absolute bottom-4 right-6 text-5xl opacity-50">🎁</div>
           )}
         </div>
+
+        {/* امتداد نرم گرادیان روی مرز عکس و متن */}
+        <div
+          className="pointer-events-none absolute inset-y-0 right-[40%] z-[1] w-[18%]"
+          style={{
+            background:
+              'linear-gradient(to right, transparent 0%, rgba(0,0,0,.06) 100%)',
+          }}
+        />
 
         {/* نقطه‌های اسلایدر — پایین وسط */}
         {slides.length > 1 && (

@@ -26,10 +26,14 @@ interface FilterState {
 }
 
 function buildLogoUrl(pkg: Package): string {
+  if (isSamplePackage(pkg)) return pkg.business_logo || ''
   return getFullImageUrl(pkg.business_logo)
 }
 
 function buildCoverUrl(pkg: Package): string {
+  if (isSamplePackage(pkg)) {
+    return pkg.business_image || pkg.gallery_images?.[0] || pkg.business_logo || ''
+  }
   return getFullImageUrl(pkg.business_image || pkg.gallery_images?.[0] || pkg.business_logo)
 }
 
@@ -332,47 +336,81 @@ const ExploreCustomerView: React.FC = () => {
 
   const MobileLayout = () => (
     <MobileDashboardLayout>
-      <div className="pb-28" style={{ direction: 'rtl' }}>
-        {/* Banner slider */}
+      <div className="pb-28 bg-white dark:bg-slate-900" style={{ direction: 'rtl' }}>
+        {/* بنر اسلایدر */}
         <div className="px-4 pt-3">
           <ExplorePromoSlider packages={packages} />
         </div>
 
-        {/* Search — without filter button */}
-        <div className="px-4 pt-4">
+        {/* جستجو — تمام‌عرض، بدون دکمه فیلتر */}
+        <div className="px-4 pt-3">
           <div
-            className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${
-              isDark ? 'bg-slate-800' : 'bg-gray-100'
+            className={`flex items-center gap-2.5 rounded-full border px-4 py-3 ${
+              isDark
+                ? 'border-slate-700 bg-slate-800'
+                : 'border-gray-200 bg-white shadow-[0_1px_4px_rgba(15,23,42,0.05)]'
             }`}
           >
-            <svg className="h-5 w-5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              className="h-[18px] w-[18px] shrink-0 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
             <input
-              type="text"
+              type="search"
               placeholder="جستجوی باشگاه، هدیه یا برند..."
               value={filters.search}
-              onChange={e => setFilters(prev => ({ ...prev, search: e.target.value, exploreCategoryId: null, categories: [] }))}
-              className={`flex-1 bg-transparent text-sm focus:outline-none ${
-                isDark ? 'text-white placeholder:text-slate-500' : 'text-gray-900 placeholder:text-gray-400'
+              onChange={e =>
+                setFilters(prev => ({
+                  ...prev,
+                  search: e.target.value,
+                  exploreCategoryId: null,
+                  categories: [],
+                }))
+              }
+              className={`min-w-0 flex-1 bg-transparent text-right text-[13px] leading-normal focus:outline-none ${
+                isDark
+                  ? 'text-white placeholder:text-slate-500'
+                  : 'text-gray-800 placeholder:text-gray-400'
               }`}
             />
             {filters.search && (
               <button
                 type="button"
-                onClick={() => setFilters(prev => ({ ...prev, search: '', exploreCategoryId: null, categories: [] }))}
-                className="text-gray-400"
+                aria-label="پاک کردن جستجو"
+                onClick={() =>
+                  setFilters(prev => ({
+                    ...prev,
+                    search: '',
+                    exploreCategoryId: null,
+                    categories: [],
+                  }))
+                }
+                className="shrink-0 text-gray-400 hover:text-gray-600"
               >
                 <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             )}
           </div>
         </div>
 
-        {/* 10 category icons — 2×5 */}
-        <div className="px-3 pt-5 pb-2">
+        {/* ۱۰ آیکون دسته‌بندی */}
+        <div className="px-3 pt-4 pb-2">
           <div className="grid grid-cols-5 gap-y-4 gap-x-1">
             {EXPLORE_CATEGORIES.map(cat => {
               const active = filters.exploreCategoryId === cat.id

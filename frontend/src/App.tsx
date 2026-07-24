@@ -13,6 +13,7 @@ import { About } from './pages/About'
 import { Contact } from './pages/Contact'
 import { TestUsers } from './pages/TestUsers'
 import { Explore } from './pages/Explore'
+import { ExploreSectionList } from './pages/ExploreSectionList'
 import { Clubs } from './pages/Clubs'
 import { ClubDetail } from './pages/ClubDetail'
 import { BusinessDetail } from './pages/BusinessDetail'
@@ -52,6 +53,11 @@ const DashboardRouter = () => {
       <Route path="explore" element={
         <ProfileGuard>
           <Explore />
+        </ProfileGuard>
+      } />
+      <Route path="explore/:section" element={
+        <ProfileGuard>
+          <ExploreSectionList />
         </ProfileGuard>
       } />
       <Route path="clubs" element={

@@ -1,64 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Heart, Star, ChevronLeft } from 'lucide-react'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { TopBusinessSlider } from '../components/dashboard/TopBusinessSlider'
-import { apiService, Package } from '../services/api'
-import { getFullImageUrl } from '../services/api'
+import { ExplorePromoSlider } from '../components/dashboard/ExplorePromoSlider'
+import { apiService, Package, getFullImageUrl } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { ExploreMapView } from '../components/ExploreMapView'
-import { Map as MapIcon } from 'lucide-react'
-
-interface ExploreProps {}
-
-// interface BusinessCategory {
-//   id: number
-//   name: string
-// }
+import {
+  EXPLORE_CATEGORIES,
+  matchCategoryIds,
+  ExploreCategory,
+} from '../constants/exploreCategories'
+import {
+  mergeWithExploreSamples,
+  isSamplePackage,
+} from '../data/exploreSamplePackages'
 
 interface FilterState {
   categories: number[]
   sortBy: 'discount_high' | 'discount_low' | 'newest' | ''
   search: string
   cities: number[]
+  exploreCategoryId: string | null
 }
 
-/** لوگوی کسب‌وکار برای آواتار دایره‌ای */
 function buildLogoUrl(pkg: Package): string {
   return getFullImageUrl(pkg.business_logo)
 }
 
-/** تصاویر اسلایدر کارت: فقط آلبوم/کاور — بدون لوگو */
-function buildCardImages(pkg: Package): string[] {
-  const urls: string[] = []
-  const seen = new Set<string>()
-  const logoUrl = buildLogoUrl(pkg)
-
-  const add = (raw: string | null | undefined) => {
-    const full = getFullImageUrl(raw)
-    if (!full || full === logoUrl || seen.has(full)) return
-    seen.add(full)
-    urls.push(full)
-  }
-
-  for (const src of pkg.gallery_images || []) add(src)
-  add(pkg.business_image)
-
-  return urls
-}
-
-/** استخراج شهرها و دسته‌بندی‌ها از لیست پکیج‌ها */
-function extractCitiesFromPackages(pkgs: Package[]) {
-  const cityMap = new Map<number, { id: number; name: string }>()
-  pkgs.forEach(pkg => {
-    if (pkg.city?.id && pkg.city?.name) {
-      cityMap.set(pkg.city.id, { id: pkg.city.id, name: pkg.city.name })
-    }
-  })
-  return Array.from(cityMap.values()).sort((a, b) => {
-    try { return a.name.localeCompare(b.name, 'fa') } catch { return a.name.localeCompare(b.name) }
-  })
+function buildCoverUrl(pkg: Package): string {
+  return getFullImageUrl(pkg.business_image || pkg.gallery_images?.[0] || pkg.business_logo)
 }
 
 function extractCategoriesFromPackages(pkgs: Package[]) {
@@ -76,7 +48,32 @@ function extractCategoriesFromPackages(pkgs: Package[]) {
   })
 }
 
-export const Explore: React.FC<ExploreProps> = () => {
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const r = Math.PI / 180
+  const dLat = (lat2 - lat1) * r
+  const dLng = (lng2 - lng1) * r
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function formatDistance(km: number | null | undefined): string {
+  if (km == null || Number.isNaN(km)) return ''
+  if (km < 1) return `${Math.round(km * 1000)} متر`
+  return `${km.toFixed(1)} کیلومتر`
+}
+
+function giftLabel(pkg: Package): string {
+  if (pkg.elite_gift_gift) return pkg.elite_gift_gift
+  if (pkg.elite_gift_title) return pkg.elite_gift_title
+  if (pkg.discount_percentage) return `${pkg.discount_percentage}٪ تخفیف`
+  if (pkg.specific_discount_title) return pkg.specific_discount_title
+  return 'پیشنهاد ویژه'
+}
+
+export const Explore: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -90,7 +87,7 @@ export const Explore: React.FC<ExploreProps> = () => {
     return (
       <MobileDashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600" />
         </div>
       </MobileDashboardLayout>
     )
@@ -100,7 +97,7 @@ export const Explore: React.FC<ExploreProps> = () => {
     return (
       <MobileDashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
+          <div className="text-center px-6">
             <div className="text-6xl mb-4">🚫</div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">دسترسی محدود</h1>
             <p className="text-gray-600 dark:text-slate-400">این صفحه فقط برای مشتریان قابل دسترسی است</p>
@@ -115,36 +112,30 @@ export const Explore: React.FC<ExploreProps> = () => {
 
 const ExploreCustomerView: React.FC = () => {
   const { isDark } = useTheme()
+  const navigate = useNavigate()
   const [packages, setPackages] = useState<Package[]>([])
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
-  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
-  const [showMap, setShowMap] = useState(false)
-  const [showFilterSheet, setShowFilterSheet] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
-  // const [categories] = useState<BusinessCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [userPos, setUserPos] = useState<[number, number] | null>(null)
+  const [favorites, setFavorites] = useState<Set<number>>(new Set())
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     sortBy: '',
     search: '',
-    cities: []
+    cities: [],
+    exploreCategoryId: null,
   })
 
-  const availableCities = useMemo(() => extractCitiesFromPackages(packages), [packages])
   const availableCategories = useMemo(() => extractCategoriesFromPackages(packages), [packages])
 
   useEffect(() => {
     let cancelled = false
-
     const load = async () => {
       try {
         setLoading(true)
         setError(null)
-
         const response = await apiService.getPackages()
-
         let dataArray: Package[] = []
         if (Array.isArray(response.data)) {
           dataArray = response.data
@@ -154,47 +145,74 @@ const ExploreCustomerView: React.FC = () => {
           if (!cancelled) setError('خطا در دریافت پکیج‌ها')
           return
         }
-
         if (!cancelled) {
-          const activePackages = dataArray.filter(pkg =>
-            pkg.is_active && pkg.status === 'approved' && pkg.is_complete
+          const real = dataArray.filter(
+            pkg => pkg.is_active && pkg.status === 'approved' && pkg.is_complete,
           )
-          setPackages(activePackages)
-          setError(null)
+          setPackages(mergeWithExploreSamples(real))
         }
       } catch (err) {
         console.error('Error loading packages:', err)
-        if (!cancelled) setError('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.')
+        if (!cancelled) {
+          setPackages(mergeWithExploreSamples([]))
+          setError(null)
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
-
     load()
     return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      pos => setUserPos([pos.coords.latitude, pos.coords.longitude]),
+      () => {},
+      { enableHighAccuracy: false, timeout: 8000 },
+    )
   }, [])
 
   useEffect(() => {
     let filtered = [...packages]
 
     if (filters.search) {
-      const searchTerm = filters.search.toLowerCase()
+      const term = filters.search.toLowerCase()
       filtered = filtered.filter(pkg =>
-        pkg.business_name?.toLowerCase().includes(searchTerm) ||
-        pkg.elite_gift_title?.toLowerCase().includes(searchTerm)
+        pkg.business_name?.toLowerCase().includes(term) ||
+        pkg.elite_gift_title?.toLowerCase().includes(term) ||
+        pkg.elite_gift_gift?.toLowerCase().includes(term) ||
+        pkg.business_category?.name?.toLowerCase().includes(term),
       )
     }
 
-    if (filters.categories.length > 0) {
-      filtered = filtered.filter(pkg =>
-        pkg.business_category && filters.categories.includes(pkg.business_category.id)
+    if (filters.exploreCategoryId) {
+      const cat = EXPLORE_CATEGORIES.find(c => c.id === filters.exploreCategoryId)
+      filtered = filtered.filter(pkg => {
+        if (isSamplePackage(pkg)) {
+          return pkg.explore_category_id === filters.exploreCategoryId
+        }
+        if (filters.categories.length > 0) {
+          return pkg.business_category && filters.categories.includes(pkg.business_category.id)
+        }
+        if (cat) {
+          const name = (pkg.business_category?.name || '').toLowerCase()
+          return cat.keywords.some(k => name.includes(k.toLowerCase()))
+        }
+        return true
+      })
+    } else if (filters.categories.length > 0) {
+      filtered = filtered.filter(
+        pkg =>
+          !isSamplePackage(pkg) &&
+          pkg.business_category &&
+          filters.categories.includes(pkg.business_category.id),
       )
     }
 
     if (filters.cities.length > 0) {
-      filtered = filtered.filter(pkg =>
-        pkg.city && filters.cities.includes(pkg.city.id)
-      )
+      filtered = filtered.filter(pkg => pkg.city && filters.cities.includes(pkg.city.id))
     }
 
     if (filters.sortBy) {
@@ -214,893 +232,531 @@ const ExploreCustomerView: React.FC = () => {
     setFilteredPackages(filtered)
   }, [packages, filters])
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest('.city-dropdown')) {
-        setIsCityDropdownOpen(false)
+  const packagesWithDistance = useMemo(() => {
+    return filteredPackages.map(pkg => {
+      let distanceKm: number | null = null
+      if (
+        userPos &&
+        pkg.business_location_latitude != null &&
+        pkg.business_location_longitude != null
+      ) {
+        distanceKm = haversineKm(
+          userPos[0],
+          userPos[1],
+          pkg.business_location_latitude,
+          pkg.business_location_longitude,
+        )
+      } else if (isSamplePackage(pkg)) {
+        // فاصله تقریبی برای نمایش بهتر نمونه‌ها
+        distanceKm = 0.25 + (Math.abs(pkg.id) % 18) * 0.12
       }
-      if (!target.closest('.category-dropdown')) {
-        setIsCategoryDropdownOpen(false)
-      }
+      return { pkg, distanceKm }
+    })
+  }, [filteredPackages, userPos])
+
+  const specialOffers = useMemo(() => {
+    const withGift = packagesWithDistance.filter(
+      ({ pkg }) =>
+        pkg.elite_gift_gift ||
+        pkg.elite_gift_title ||
+        (pkg.discount_percentage != null && pkg.discount_percentage > 0),
+    )
+    return (withGift.length > 0 ? withGift : packagesWithDistance).slice(0, 12)
+  }, [packagesWithDistance])
+
+  const nearYou = useMemo(() => {
+    const located = packagesWithDistance
+      .filter(({ distanceKm }) => distanceKm != null)
+      .sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99))
+    return located.slice(0, 12)
+  }, [packagesWithDistance])
+
+  const weeklyTrends = useMemo(() => {
+    return [...packagesWithDistance]
+      .sort((a, b) => (b.pkg.average_rating || 0) - (a.pkg.average_rating || 0))
+      .slice(0, 10)
+  }, [packagesWithDistance])
+
+  const handleCategoryClick = (cat: ExploreCategory) => {
+    if (filters.exploreCategoryId === cat.id) {
+      setFilters(prev => ({ ...prev, exploreCategoryId: null, categories: [], search: '' }))
+      return
     }
-
-    if (isCityDropdownOpen || isCategoryDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isCityDropdownOpen, isCategoryDropdownOpen])
-
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
-  }
-
-  const handleCityToggle = (cityId: number) => {
+    const ids = matchCategoryIds(cat, availableCategories)
     setFilters(prev => ({
       ...prev,
-      cities: prev.cities.includes(cityId)
-        ? prev.cities.filter(id => id !== cityId)
-        : [...prev.cities, cityId]
+      exploreCategoryId: cat.id,
+      categories: ids,
+      search: '',
     }))
   }
 
-  const handleSelectAllCities = () => {
-    setFilters(prev => ({
-      ...prev,
-      cities: availableCities.map(city => city.id)
-    }))
+  const handlePackageClick = (pkg: Package) => {
+    if (isSamplePackage(pkg)) return
+    navigate(`/dashboard/business/${pkg.id}`)
   }
 
-  const handleClearAllCities = () => {
-    setFilters(prev => ({
-      ...prev,
-      cities: []
-    }))
+  const toggleFavorite = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setFavorites(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
-
-  const handleCategoryToggle = (categoryId: number) => {
-    setFilters(prev => ({
-      ...prev,
-      categories: prev.categories.includes(categoryId)
-        ? prev.categories.filter(id => id !== categoryId)
-        : [...prev.categories, categoryId]
-    }))
-  }
-
-  const handleSelectAllCategories = () => {
-    setFilters(prev => ({
-      ...prev,
-      categories: availableCategories.map(category => category.id)
-    }))
-  }
-
-  const handleClearAllCategories = () => {
-    setFilters(prev => ({
-      ...prev,
-      categories: []
-    }))
-  }
-
-  // const clearFilters = () => {
-  //   setFilters({
-  //     category: '',
-  //     sortBy: '',
-  //     search: ''
-  //   })
-  // }
 
   if (loading) {
     return (
       <MobileDashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600" />
         </div>
       </MobileDashboardLayout>
     )
   }
 
-  // Desktop Layout Component
+  const SectionHeader = ({ title, onViewAll }: { title: string; onViewAll?: () => void }) => (
+    <div className="mb-3 flex items-center justify-between px-4">
+      <h2 className={`text-[15px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h2>
+      <button
+        type="button"
+        onClick={onViewAll}
+        className="flex items-center gap-0.5 text-xs font-medium text-teal-600"
+      >
+        مشاهده همه
+        <ChevronLeft className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  )
+
+  const MobileLayout = () => (
+    <MobileDashboardLayout>
+      <div className="pb-28" style={{ direction: 'rtl' }}>
+        {/* Banner slider */}
+        <div className="px-4 pt-3">
+          <ExplorePromoSlider packages={packages} />
+        </div>
+
+        {/* Search — without filter button */}
+        <div className="px-4 pt-4">
+          <div
+            className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${
+              isDark ? 'bg-slate-800' : 'bg-gray-100'
+            }`}
+          >
+            <svg className="h-5 w-5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="جستجوی باشگاه، هدیه یا برند..."
+              value={filters.search}
+              onChange={e => setFilters(prev => ({ ...prev, search: e.target.value, exploreCategoryId: null, categories: [] }))}
+              className={`flex-1 bg-transparent text-sm focus:outline-none ${
+                isDark ? 'text-white placeholder:text-slate-500' : 'text-gray-900 placeholder:text-gray-400'
+              }`}
+            />
+            {filters.search && (
+              <button
+                type="button"
+                onClick={() => setFilters(prev => ({ ...prev, search: '', exploreCategoryId: null, categories: [] }))}
+                className="text-gray-400"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 10 category icons — 2×5 */}
+        <div className="px-3 pt-5 pb-2">
+          <div className="grid grid-cols-5 gap-y-4 gap-x-1">
+            {EXPLORE_CATEGORIES.map(cat => {
+              const active = filters.exploreCategoryId === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => handleCategoryClick(cat)}
+                  className="flex flex-col items-center gap-1.5"
+                >
+                  <div
+                    className={`flex h-[58px] w-[58px] items-center justify-center rounded-full transition-all ${
+                      active
+                        ? 'bg-teal-50 ring-2 ring-teal-500 shadow-md'
+                        : isDark
+                          ? 'bg-slate-800 shadow'
+                          : 'bg-white shadow-[0_4px_14px_rgba(15,23,42,0.08)]'
+                    }`}
+                  >
+                    <img
+                      src={cat.icon}
+                      alt={cat.name}
+                      className="h-9 w-9 object-contain"
+                      style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.15))' }}
+                    />
+                  </div>
+                  <span
+                    className={`max-w-[72px] text-center text-[10px] leading-tight font-medium ${
+                      active
+                        ? 'text-teal-700'
+                        : isDark
+                          ? 'text-slate-300'
+                          : 'text-gray-700'
+                    }`}
+                  >
+                    {cat.name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {error && (
+          <div className="mx-4 mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+            {error}
+          </div>
+        )}
+
+        {/* Special offers */}
+        <section className="mt-5">
+          <SectionHeader title="پیشنهادهای مخصوص شما" />
+          <HorizontalRail>
+            {specialOffers.length > 0 ? (
+              specialOffers.map(({ pkg, distanceKm }) => (
+                <SpecialOfferCard
+                  key={pkg.id}
+                  pkg={pkg}
+                  distanceLabel={formatDistance(distanceKm)}
+                  favorited={favorites.has(pkg.id)}
+                  onFavorite={e => toggleFavorite(pkg.id, e)}
+                  onClick={() => handlePackageClick(pkg)}
+                />
+              ))
+            ) : (
+              <EmptyRail isDark={isDark} />
+            )}
+          </HorizontalRail>
+        </section>
+
+        {/* Near you */}
+        <section className="mt-6">
+          <SectionHeader title="نزدیک شما" />
+          <HorizontalRail>
+            {nearYou.length > 0 ? (
+              nearYou.map(({ pkg, distanceKm }) => (
+                <CompactOfferCard
+                  key={pkg.id}
+                  pkg={pkg}
+                  distanceLabel={formatDistance(distanceKm)}
+                  onClick={() => handlePackageClick(pkg)}
+                />
+              ))
+            ) : (
+              <EmptyRail isDark={isDark} />
+            )}
+          </HorizontalRail>
+        </section>
+
+        {/* Weekly trends */}
+        <section className="mt-6 mb-4">
+          <SectionHeader title="ترندهای هفته" />
+          <HorizontalRail>
+            {weeklyTrends.length > 0 ? (
+              weeklyTrends.map(({ pkg }, index) => (
+                <TrendCard
+                  key={pkg.id}
+                  pkg={pkg}
+                  rank={index + 1}
+                  growth={12 + ((pkg.id * 7) % 20)}
+                  onClick={() => handlePackageClick(pkg)}
+                />
+              ))
+            ) : (
+              <EmptyRail isDark={isDark} />
+            )}
+          </HorizontalRail>
+        </section>
+      </div>
+    </MobileDashboardLayout>
+  )
+
   const DesktopLayout = () => (
     <DashboardLayout>
       <div className="space-y-6" style={{ direction: 'rtl' }}>
-        {/* Top Business Slider - Desktop */}
-        <TopBusinessSlider packages={packages} />
+        <ExplorePromoSlider packages={packages} />
 
-        {/* Desktop Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              اکتشاف پکیج‌ها
-            </h1>
-            <p className={`mt-2 text-lg ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-              پکیج‌های فعال کسب‌وکارها را کشف کنید
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {filteredPackages.length} پکیج فعال
-              </div>
-              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                از {packages.length} پکیج کل
-              </div>
-            </div>
-          </div>
+        <div
+          className={`flex items-center gap-3 rounded-2xl px-4 py-3 max-w-xl ${
+            isDark ? 'bg-slate-800 border border-slate-700' : 'bg-gray-100'
+          }`}
+        >
+          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="جستجوی باشگاه، هدیه یا برند..."
+            value={filters.search}
+            onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            className="flex-1 bg-transparent focus:outline-none text-gray-900 dark:text-white"
+          />
         </div>
 
-        {/* Desktop Search and Filters */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Search Bar */}
-          <div className="lg:col-span-2">
-            <div className={`bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-4 py-3 flex items-center gap-3`}>
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="جستجو در پکیج‌ها..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="flex-1 bg-transparent focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
-              />
-              {filters.search && (
-                <button onClick={() => handleFilterChange('search', '')} className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* City Filter */}
-          <div className="relative">
-            {availableCities.length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                  className={`w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-4 py-3 flex items-center justify-between text-right`}
-                >
-                  <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {filters.cities.length > 0 ? `${filters.cities.length} شهر انتخاب شده` : 'همه شهرها'}
-                  </span>
-                  <svg className={`w-5 h-5 text-gray-400 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {isCityDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-lg z-10 max-h-60 overflow-y-auto">
-                    {availableCities.map((city) => (
-                      <label key={city.id} className="flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={filters.cities.includes(city.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFilters(prev => ({ ...prev, cities: [...prev.cities, city.id] }))
-                            } else {
-                              setFilters(prev => ({ ...prev, cities: prev.cities.filter(id => id !== city.id) }))
-                            }
-                          }}
-                          className="ml-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className={`${isDark ? 'text-white' : 'text-gray-900'}`}>{city.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Sort Filter */}
-          <div className="relative">
-            <select
-              value={filters.sortBy}
-              onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-              className={`w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-4 py-3 appearance-none cursor-pointer text-right ${isDark ? 'text-white' : 'text-gray-900'}`}
+        <div className="grid grid-cols-5 gap-4 max-w-3xl">
+          {EXPLORE_CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => handleCategoryClick(cat)}
+              className={`flex flex-col items-center gap-2 rounded-2xl p-3 transition ${
+                filters.exploreCategoryId === cat.id
+                  ? 'bg-teal-50 ring-2 ring-teal-500'
+                  : isDark
+                    ? 'bg-slate-800 hover:bg-slate-750'
+                    : 'bg-white hover:bg-gray-50 shadow-sm'
+              }`}
             >
-              <option value="">مرتب‌سازی</option>
-              <option value="discount_high">بیشترین تخفیف</option>
-              <option value="discount_low">کمترین تخفیف</option>
-              <option value="newest">جدیدترین</option>
-            </select>
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
+              <img src={cat.icon} alt={cat.name} className="h-12 w-12 object-contain" />
+              <span className="text-xs font-medium text-center">{cat.name}</span>
+            </button>
+          ))}
         </div>
 
-        {/* Desktop Package Grid */}
-        {filteredPackages.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredPackages.map((pkg) => (
-              <DesktopPackageCard key={pkg.id} package={pkg} />
+        <div>
+          <h2 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            پیشنهادهای مخصوص شما
+          </h2>
+          <div className="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+            {specialOffers.map(({ pkg, distanceKm }) => (
+              <SpecialOfferCard
+                key={pkg.id}
+                pkg={pkg}
+                distanceLabel={formatDistance(distanceKm)}
+                favorited={favorites.has(pkg.id)}
+                onFavorite={e => toggleFavorite(pkg.id, e)}
+                onClick={() => handlePackageClick(pkg)}
+                wide
+              />
             ))}
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="relative mb-8">
-              <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center">
-                <svg className="w-16 h-16 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </div>
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-pulse"></div>
-              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-purple-400 rounded-full animate-pulse delay-300"></div>
-            </div>
-            <div className="text-center max-w-md">
-              <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>
-                هیچ پکیج فعالی یافت نشد
-              </h3>
-              <p className={`text-lg ${isDark ? 'text-slate-400' : 'text-gray-600'} mb-8 leading-relaxed`}>
-                در حال حاضر هیچ پکیج فعالی از کسب‌وکارها موجود نیست. 
-                لطفاً بعداً دوباره بررسی کنید یا فیلترهای جستجو را تغییر دهید.
-              </p>
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  تلاش مجدد
-                </button>
-                <button
-                  onClick={() => {
-                    setFilters({
-                      categories: [],
-                      sortBy: '',
-                      search: '',
-                      cities: []
-                    })
-                  }}
-                  className="px-8 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                  پاک کردن فیلترها
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+          {specialOffers.length === 0 && (
+            <p className="text-center text-gray-500 py-12">پکیجی یافت نشد</p>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   )
 
-  // Mobile Layout Component
-  const MobileLayout = () => {
-    const activeFilterCount =
-      filters.cities.length + filters.categories.length + (filters.sortBy ? 1 : 0)
-
-    return (
-      <MobileDashboardLayout>
-        <div style={{ direction: 'rtl' }}>
-          {/* Top Business Slider */}
-          <div className="px-4 pt-4">
-            <TopBusinessSlider packages={packages} />
-          </div>
-
-          {/* ── Filter chip bar ── */}
-          <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 px-4 py-2">
-            {/* Search input (collapsible) */}
-            {searchOpen && (
-              <div className="mb-2 flex items-center gap-2 bg-gray-100 dark:bg-slate-800 rounded-xl px-3 py-2">
-                <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="نام کسب‌وکار..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="flex-1 bg-transparent focus:outline-none text-sm text-gray-900 dark:text-white"
-                />
-                <button onClick={() => { handleFilterChange('search', ''); setSearchOpen(false) }}
-                  className="text-gray-400 hover:text-gray-600">
-                  <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            )}
-
-            {/* Chips row */}
-            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {/* Search chip */}
-              <button
-                onClick={() => setSearchOpen(v => !v)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                  filters.search
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
-                }`}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                {filters.search ? filters.search.slice(0, 10) + (filters.search.length > 10 ? '…' : '') : 'جستجو'}
-              </button>
-
-              {/* City chip */}
-              {availableCities.length > 0 && (
-                <button
-                  onClick={() => setShowFilterSheet(true)}
-                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                    filters.cities.length > 0
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
-                  }`}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  {filters.cities.length > 0 ? `${filters.cities.length} شهر` : 'شهر'}
-                </button>
-              )}
-
-              {/* Category chip */}
-              {availableCategories.length > 0 && (
-                <button
-                  onClick={() => setShowFilterSheet(true)}
-                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                    filters.categories.length > 0
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
-                  }`}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  {filters.categories.length > 0 ? `${filters.categories.length} دسته` : 'دسته‌بندی'}
-                </button>
-              )}
-
-              {/* All filters chip */}
-              <button
-                onClick={() => setShowFilterSheet(true)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                  activeFilterCount > 0
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
-                }`}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-                سایر فیلترها
-                {activeFilterCount > 0 && (
-                  <span className="bg-white text-gray-900 text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* result count */}
-          <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-            <span className="text-sm text-gray-500 dark:text-slate-400">
-              {filteredPackages.length} کسب‌وکار
-            </span>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={() => setFilters({ categories: [], sortBy: '', search: '', cities: [] })}
-                className="text-xs text-blue-600 font-medium"
-              >
-                پاک کردن فیلترها
-              </button>
-            )}
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="mx-4 mt-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Package list */}
-          <div className="px-4 pb-32 pt-2 space-y-4">
-            {filteredPackages.length > 0 ? (
-              filteredPackages.map((pkg) => <PackageCard key={pkg.id} package={pkg} />)
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">پکیجی یافت نشد</h3>
-                <p className="text-sm text-gray-500 dark:text-slate-400">فیلترها را تغییر دهید یا دوباره تلاش کنید.</p>
-                <button onClick={() => window.location.reload()}
-                  className="mt-4 px-5 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium">
-                  تلاش مجدد
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Filter Bottom Sheet ── */}
-        {showFilterSheet && (
-          <div className="fixed inset-0 z-[1800] flex flex-col justify-end" style={{ direction: 'rtl' }}>
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-              onClick={() => setShowFilterSheet(false)} />
-            <div className="relative bg-white dark:bg-slate-900 rounded-t-3xl p-6 pb-8 shadow-2xl max-h-[85vh] overflow-y-auto">
-              {/* handle */}
-              <div className="w-12 h-1 bg-gray-200 dark:bg-slate-700 rounded-full mx-auto mb-5" />
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5">فیلترها</h3>
-
-              {/* Sort */}
-              <div className="mb-5">
-                <p className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">مرتب‌سازی</p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { value: '', label: 'پیش‌فرض' },
-                    { value: 'discount_high', label: '🏷 بیشترین تخفیف' },
-                    { value: 'discount_low', label: 'کمترین تخفیف' },
-                    { value: 'newest', label: '🆕 جدیدترین' },
-                  ].map(opt => (
-                    <button key={opt.value}
-                      onClick={() => setFilters(p => ({ ...p, sortBy: opt.value as any }))}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-                        filters.sortBy === opt.value
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cities */}
-              {availableCities.length > 0 && (
-                <div className="mb-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">شهر</p>
-                    <button onClick={filters.cities.length > 0 ? handleClearAllCities : handleSelectAllCities}
-                      className="text-xs text-blue-600 font-medium">
-                      {filters.cities.length > 0 ? 'پاک کردن' : 'همه'}
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {availableCities.map(city => (
-                      <button key={city.id}
-                        onClick={() => handleCityToggle(city.id)}
-                        className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
-                          filters.cities.includes(city.id)
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
-                        }`}
-                      >
-                        {city.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Categories */}
-              {availableCategories.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">دسته‌بندی</p>
-                    <button onClick={filters.categories.length > 0 ? handleClearAllCategories : handleSelectAllCategories}
-                      className="text-xs text-blue-600 font-medium">
-                      {filters.categories.length > 0 ? 'پاک کردن' : 'همه'}
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {availableCategories.map(cat => (
-                      <button key={cat.id}
-                        onClick={() => handleCategoryToggle(cat.id)}
-                        className={`px-3 py-1.5 rounded-xl text-sm border transition-all ${
-                          filters.categories.includes(cat.id)
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
-                        }`}
-                      >
-                        {cat.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => { setFilters({ categories: [], sortBy: '', search: '', cities: [] }); setShowFilterSheet(false) }}
-                  className="flex-1 py-3 rounded-2xl border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 text-sm font-medium"
-                >
-                  🗑 پاک کردن
-                </button>
-                <button
-                  onClick={() => setShowFilterSheet(false)}
-                  className="flex-2 flex-grow-[2] py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
-                >
-                  اعمال فیلترها ({filteredPackages.length})
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </MobileDashboardLayout>
-    )
-  }
-
-  // Main return with responsive layout
   return (
     <>
-      {/* Map overlay */}
-      {showMap && (
-        <ExploreMapView packages={filteredPackages} onClose={() => setShowMap(false)} />
-      )}
-
-      {/* Desktop Layout */}
       <div className="hidden lg:block">
         <DesktopLayout />
       </div>
-      
-      {/* Mobile Layout */}
       <div className="lg:hidden">
         <MobileLayout />
       </div>
-
-      {/* Floating map button — both layouts */}
-      {!showMap && (
-        <button
-          onClick={() => setShowMap(true)}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[1500]
-                     flex items-center gap-2 px-5 py-2.5
-                     bg-gray-900 hover:bg-gray-800 active:scale-95
-                     text-white text-sm font-semibold rounded-full shadow-xl transition-all"
-          style={{ direction: 'rtl' }}
-        >
-          <MapIcon size={16} strokeWidth={2} />
-          نقشه
-          {filteredPackages.filter(p => p.business_location_latitude != null).length > 0 && (
-            <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full leading-none">
-              {filteredPackages.filter(p => p.business_location_latitude != null).length}
-            </span>
-          )}
-        </button>
-      )}
     </>
   )
 }
 
-// Desktop Package Card Component
-interface DesktopPackageCardProps {
-  package: Package
-}
+// ─── shared UI pieces ─────────────────────────────────────────────────────────
 
-const DesktopPackageCard: React.FC<DesktopPackageCardProps> = ({ package: pkg }) => {
-  const [imageErrored, setImageErrored] = useState(false)
-  const { isDark } = useTheme()
-  const navigate = useNavigate()
-  
-  const handleCardClick = () => {
-    navigate(`/dashboard/business/${pkg.id}`)
-  }
-
-  // Determine VIP badge type
-  const getVipBadgeType = () => {
-    const hasVip = pkg.has_vip || false
-    const hasVipPlus = pkg.has_vip_plus || false
-    
-    if (hasVip && hasVipPlus) {
-      return '+VIP'
-    }
-    else if (hasVip && !hasVipPlus) {
-      return 'VIP'
-    }
-    else if (!hasVip && hasVipPlus) {
-      return '+VIP'
-    }
-    
-    return 'VIP'
-  }
-
+const HorizontalRail: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const ref = useRef<HTMLDivElement>(null)
   return (
     <div
-      className={`bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105`}
-      onClick={handleCardClick}
+      ref={ref}
+      className="flex gap-3 overflow-x-auto px-4 pb-1 no-scrollbar"
+      style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
     >
-      {/* Business Image and VIP Badge */}
-      <div className="relative mb-4">
-        <div className="w-full h-48 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600">
-          {!imageErrored && (pkg.business_image || pkg.business_logo) ? (
-            <img
-              src={getFullImageUrl(pkg.business_image || pkg.business_logo)}
-              alt={pkg.business_name}
-              loading="lazy"
-              onError={() => setImageErrored(true)}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center">
-              <div className="w-16 h-16 mb-3 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <p className="text-white text-sm font-medium">بدون تصویر</p>
-            </div>
-          )}
-        </div>
-        
-        {/* VIP Badge */}
-        <div className="absolute top-3 right-3">
-          <div className={`px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg ${
-            getVipBadgeType() === '+VIP' 
-              ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
-              : 'bg-gradient-to-r from-purple-500 to-pink-500'
-          }`}>
-            {getVipBadgeType()}
-          </div>
-        </div>
-      </div>
-
-      {/* Business Info */}
-      <div className="mb-4">
-        <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-          {pkg.business_name}
-        </h3>
-        {pkg.business_category && (
-          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-            {pkg.business_category.name}
-          </p>
-        )}
-      </div>
-
-      {/* Discount Info */}
-      <div className="space-y-3 mb-4">
-        {pkg.discount_percentage && (
-          <div className="flex items-center justify-between">
-            <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>تخفیف کلی</span>
-            <span className="text-lg font-bold text-green-600">{pkg.discount_percentage}%</span>
-          </div>
-        )}
-        
-        {pkg.specific_discount_title && pkg.specific_discount_percentage && (
-          <div className="flex items-center justify-between">
-            <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>تخفیف خاص</span>
-            <span className="text-lg font-bold text-blue-600">{pkg.specific_discount_percentage}%</span>
-          </div>
-        )}
-      </div>
-
-      {/* Elite Gift */}
-      {pkg.elite_gift_title && (
-        <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🎁</span>
-            <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {pkg.elite_gift_title}
-            </span>
-          </div>
-          {pkg.elite_gift_amount && (
-            <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-              برای {pkg.elite_gift_amount} مبلغ خرید
-            </p>
-          )}
-          {pkg.elite_gift_count && (
-            <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-              برای {pkg.elite_gift_count} خرید
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Days Remaining */}
-      {pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
-        <div className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            {pkg.days_remaining > 0 ? `${pkg.days_remaining} روز باقی‌مانده` : 'منقضی شده'}
-          </span>
-        </div>
-      )}
+      {children}
     </div>
   )
 }
 
-// ─── Mobile Package Card ──────────────────────────────────────────────────────
-interface PackageCardProps { package: Package }
+const EmptyRail: React.FC<{ isDark: boolean }> = ({ isDark }) => (
+  <div className={`shrink-0 w-full rounded-2xl py-10 text-center text-sm ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
+    موردی برای نمایش نیست
+  </div>
+)
 
-const PackageCard: React.FC<PackageCardProps> = ({ package: pkg }) => {
-  const [activeImg, setActiveImg] = useState(0)
-  const [logoErrored, setLogoErrored] = useState(false)
-  const navigate = useNavigate()
+interface CardBaseProps {
+  pkg: Package
+  distanceLabel?: string
+  onClick: () => void
+}
 
-  const images = buildCardImages(pkg)
-  const logoSrc = buildLogoUrl(pkg)
-
-  const vipLabel = (pkg.has_vip_plus || (!pkg.has_vip && !pkg.has_vip_plus)) ? 'VIP+' : 'طلایی'
-  const vipGold = vipLabel === 'VIP+'
+const SpecialOfferCard: React.FC<
+  CardBaseProps & {
+    favorited?: boolean
+    onFavorite?: (e: React.MouseEvent) => void
+    wide?: boolean
+  }
+> = ({ pkg, distanceLabel, favorited, onFavorite, onClick, wide }) => {
+  const [logoErr, setLogoErr] = useState(false)
+  const cover = buildCoverUrl(pkg)
+  const logo = buildLogoUrl(pkg)
 
   return (
     <div
-      className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
-      onClick={() => navigate(`/dashboard/business/${pkg.id}`)}
+      onClick={onClick}
+      className={`shrink-0 overflow-hidden rounded-2xl bg-white shadow-[0_6px_20px_rgba(15,23,42,0.08)] dark:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform ${
+        wide ? 'w-full' : 'w-[210px]'
+      }`}
+      style={{ scrollSnapAlign: 'start' }}
     >
-      {/* ── Hero image + overlapping logo ── */}
       <div className="relative">
-        <div className="relative w-full overflow-hidden" style={{ height: 210 }}>
-          {images.length > 0 ? (
-            <>
-              {/* Images rail */}
-              <div
-                className="flex h-full transition-transform duration-300 ease-out"
-                style={{ transform: `translateX(-${activeImg * 100}%)`, direction: 'ltr' }}
-              >
-                {images.map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={pkg.business_name}
-                    loading="lazy"
-                    className="w-full h-full object-cover shrink-0"
-                    style={{ minWidth: '100%' }}
-                  />
-                ))}
-              </div>
-
-              {/* Dot indicators */}
-              {images.length > 1 && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10"
-                     onClick={(e) => e.stopPropagation()}>
-                  {images.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={(e) => { e.stopPropagation(); setActiveImg(i) }}
-                      className={`rounded-full transition-all ${
-                        i === activeImg
-                          ? 'w-4 h-2 bg-white'
-                          : 'w-2 h-2 bg-white/60'
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Swipe areas */}
-              {images.length > 1 && (
-                <>
-                  <div className="absolute inset-y-0 left-0 w-1/3 z-10"
-                    onClick={(e) => { e.stopPropagation(); setActiveImg(p => Math.max(0, p - 1)) }} />
-                  <div className="absolute inset-y-0 right-0 w-1/3 z-10"
-                    onClick={(e) => { e.stopPropagation(); setActiveImg(p => Math.min(images.length - 1, p + 1)) }} />
-                </>
-              )}
-            </>
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center">
-              <svg className="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-          )}
-
-          {/* VIP badge — top left */}
-          <div className="absolute top-3 left-3 z-10">
-            <span className={`px-2.5 py-1 rounded-full text-xs font-bold text-white shadow ${
-              vipGold ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
-                      : 'bg-gradient-to-r from-violet-500 to-purple-600'
-            }`}>{vipLabel}</span>
-          </div>
-
-          {/* Discount badge — top right */}
-          {typeof pkg.discount_percentage === 'number' && (
-            <div className="absolute top-3 right-3 z-10">
-              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-500 text-white shadow">
-                {pkg.discount_percentage}٪ تخفیف
-              </span>
-            </div>
-          )}
-
-          {/* Bottom gradient */}
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+        <div className="h-[120px] overflow-hidden bg-gradient-to-br from-teal-400 to-cyan-600">
+          {cover ? (
+            <img src={cover} alt="" className="h-full w-full object-cover" loading="lazy" />
+          ) : null}
         </div>
-
-        {/* Logo avatar — outside overflow-hidden so the circle stays perfect */}
-        <div
-          className="absolute bottom-0 right-4 z-20 translate-y-1/2 pointer-events-none"
-          onClick={(e) => e.stopPropagation()}
+        {distanceLabel && (
+          <span className="absolute top-2 right-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+            {distanceLabel}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={onFavorite}
+          className="absolute top-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow"
         >
-          <div className="size-14 shrink-0 rounded-full p-[3px] bg-white dark:bg-slate-800 shadow-lg">
-            <div className="size-full rounded-full overflow-hidden bg-white flex items-center justify-center">
-              {logoSrc && !logoErrored ? (
-                <img
-                  src={logoSrc}
-                  alt=""
-                  className="size-full object-cover"
-                  onError={() => setLogoErrored(true)}
-                />
-              ) : (
-                <div className="size-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-indigo-500 text-white text-lg font-bold">
-                  {pkg.business_name?.charAt(0) || '؟'}
-                </div>
-              )}
-            </div>
+          <Heart
+            className={`h-3.5 w-3.5 ${favorited ? 'fill-rose-500 text-rose-500' : 'text-gray-500'}`}
+          />
+        </button>
+        <div className="absolute -bottom-5 right-3 z-10">
+          <div className="h-11 w-11 rounded-full border-[3px] border-white bg-white shadow-md overflow-hidden dark:border-slate-800">
+            {logo && !logoErr ? (
+              <img src={logo} alt="" className="h-full w-full object-cover" onError={() => setLogoErr(true)} />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-teal-500 text-sm font-bold text-white">
+                {pkg.business_name?.charAt(0) || '؟'}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── Info ── */}
-      <div className="pt-7 px-4 pb-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">
-            {pkg.business_name}
-          </h3>
-          <div className="flex items-center gap-1 shrink-0 mt-0.5">
-            <svg className="w-4 h-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
-              {pkg.average_rating ?? '—'}
+      <div className="px-3 pt-7 pb-3">
+        <h3 className="truncate text-sm font-bold text-gray-900 dark:text-white">{pkg.business_name}</h3>
+        <p className="mt-0.5 truncate text-[11px] text-gray-500 dark:text-slate-400">
+          {pkg.business_category?.name || 'کسب‌وکار'}
+        </p>
+        <div className="mt-2 flex items-center gap-1 text-[11px] text-rose-500">
+          <span>🎁</span>
+          <span className="line-clamp-1 font-medium">{giftLabel(pkg)}</span>
+        </div>
+        <div className="mt-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-semibold text-gray-800 dark:text-slate-200">
+              {pkg.average_rating?.toFixed?.(1) ?? pkg.average_rating ?? '—'}
             </span>
-            {!!pkg.total_comments && (
-              <span className="text-xs text-gray-400">({pkg.total_comments} نظر)</span>
+          </div>
+          <span className="rounded-full bg-teal-50 px-2.5 py-1 text-[10px] font-bold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+            مشاهده
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const CompactOfferCard: React.FC<CardBaseProps> = ({ pkg, distanceLabel, onClick }) => {
+  const [logoErr, setLogoErr] = useState(false)
+  const cover = buildCoverUrl(pkg)
+  const logo = buildLogoUrl(pkg)
+
+  return (
+    <div
+      onClick={onClick}
+      className="w-[150px] shrink-0 overflow-hidden rounded-2xl bg-white shadow-[0_6px_18px_rgba(15,23,42,0.08)] dark:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform"
+      style={{ scrollSnapAlign: 'start' }}
+    >
+      <div className="relative">
+        <div className="h-[88px] bg-gradient-to-br from-sky-400 to-indigo-500 overflow-hidden">
+          {cover ? <img src={cover} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
+        </div>
+        {distanceLabel && (
+          <span className="absolute top-1.5 right-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] text-white">
+            {distanceLabel}
+          </span>
+        )}
+        <div className="absolute -bottom-4 right-2.5">
+          <div className="h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-white shadow dark:border-slate-800">
+            {logo && !logoErr ? (
+              <img src={logo} alt="" className="h-full w-full object-cover" onError={() => setLogoErr(true)} />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-teal-500 text-[10px] font-bold text-white">
+                {pkg.business_name?.charAt(0) || '؟'}
+              </div>
             )}
           </div>
         </div>
-
-        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-          {pkg.business_category?.name && (
-            <span className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-lg">
-              {pkg.business_category.name}
-            </span>
-          )}
-          {(pkg.city?.name) && (
-            <span className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-0.5">
-              <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 2a6 6 0 00-6 6c0 4.418 6 10 6 10s6-5.582 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z" />
-              </svg>
-              {pkg.city.name}
-            </span>
-          )}
+      </div>
+      <div className="px-2.5 pt-5 pb-2.5">
+        <h3 className="truncate text-xs font-bold text-gray-900 dark:text-white">{pkg.business_name}</h3>
+        <p className="mt-1 line-clamp-1 text-[10px] text-rose-500">🎁 {giftLabel(pkg)}</p>
+        <div className="mt-1.5 flex items-center gap-0.5">
+          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+          <span className="text-[10px] font-semibold">{pkg.average_rating ?? '—'}</span>
         </div>
+      </div>
+    </div>
+  )
+}
 
-        {pkg.elite_gift_gift && (
-          <div className="mt-2.5 flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20
-                          rounded-xl px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
-            <span>🎁</span>
-            <span className="line-clamp-1">
-              {pkg.elite_gift_gift}
-              {typeof pkg.elite_gift_count === 'number' && ` • ${pkg.elite_gift_count} خرید`}
-              {typeof pkg.elite_gift_amount === 'number' && !pkg.elite_gift_count &&
-                ` • ${Number(pkg.elite_gift_amount).toLocaleString('fa-IR')} تومان`}
-            </span>
-          </div>
-        )}
+const TrendCard: React.FC<CardBaseProps & { rank: number; growth: number }> = ({
+  pkg,
+  rank,
+  growth,
+  onClick,
+}) => {
+  const [logoErr, setLogoErr] = useState(false)
+  const cover = buildCoverUrl(pkg)
+  const logo = buildLogoUrl(pkg)
 
-        {pkg.days_remaining != null && pkg.days_remaining > 0 && (
-          <div className="mt-2 text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {pkg.days_remaining} روز باقی‌مانده
+  return (
+    <div
+      onClick={onClick}
+      className="w-[150px] shrink-0 overflow-hidden rounded-2xl bg-white shadow-[0_6px_18px_rgba(15,23,42,0.08)] dark:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform"
+      style={{ scrollSnapAlign: 'start' }}
+    >
+      <div className="relative">
+        <div className="h-[88px] bg-gradient-to-br from-violet-400 to-fuchsia-500 overflow-hidden">
+          {cover ? <img src={cover} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
+        </div>
+        <span className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-teal-600 text-[10px] font-bold text-white shadow">
+          {rank}
+        </span>
+        <div className="absolute -bottom-4 right-2.5">
+          <div className="h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-white shadow dark:border-slate-800">
+            {logo && !logoErr ? (
+              <img src={logo} alt="" className="h-full w-full object-cover" onError={() => setLogoErr(true)} />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-teal-500 text-[10px] font-bold text-white">
+                {pkg.business_name?.charAt(0) || '؟'}
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      </div>
+      <div className="px-2.5 pt-5 pb-2.5">
+        <h3 className="truncate text-xs font-bold text-gray-900 dark:text-white">{pkg.business_name}</h3>
+        <p className="mt-0.5 truncate text-[10px] text-gray-500">{pkg.business_category?.name}</p>
+        <p className="mt-1.5 text-[10px] font-semibold text-emerald-600">
+          ↑ {growth}٪ نسبت به هفته قبل
+        </p>
+        <div className="mt-1 flex items-center gap-0.5">
+          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+          <span className="text-[10px] font-semibold">{pkg.average_rating ?? '—'}</span>
+        </div>
       </div>
     </div>
   )

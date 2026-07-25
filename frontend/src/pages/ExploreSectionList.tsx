@@ -10,6 +10,7 @@ import {
   TrendCard,
 } from '../components/explore/ExploreSectionCards'
 import { useExplorePackages } from '../hooks/useExplorePackages'
+import { useFavorites } from '../contexts/FavoritesContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { EXPLORE_CATEGORIES, ExploreCategory, matchCategoryIds } from '../constants/exploreCategories'
@@ -54,7 +55,7 @@ const ExploreSectionListView: React.FC = () => {
   const { section } = useParams<{ section: string }>()
   const navigate = useNavigate()
   const { isDark } = useTheme()
-  const [favorites, setFavorites] = useState<Set<number>>(new Set())
+  const { isFavorite, toggleFavorite } = useFavorites()
   const [filterOpen, setFilterOpen] = useState(false)
 
   if (!isExploreSectionSlug(section)) {
@@ -98,16 +99,6 @@ const ExploreSectionListView: React.FC = () => {
   const handlePackageClick = (pkg: Package) => {
     if (isSamplePackage(pkg)) return
     navigate(`/dashboard/business/${pkg.id}`)
-  }
-
-  const toggleFavorite = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setFavorites(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
   }
 
   if (loading) {
@@ -313,8 +304,8 @@ const ExploreSectionListView: React.FC = () => {
                 key={pkg.id}
                 pkg={pkg}
                 distanceLabel={formatDistance(distanceKm)}
-                favorited={favorites.has(pkg.id)}
-                onFavorite={e => toggleFavorite(pkg.id, e)}
+                favorited={isFavorite(pkg.id)}
+                onFavorite={e => toggleFavorite(pkg, e)}
                 onClick={() => handlePackageClick(pkg)}
                 inGrid
               />
@@ -327,6 +318,8 @@ const ExploreSectionListView: React.FC = () => {
                 key={pkg.id}
                 pkg={pkg}
                 distanceLabel={formatDistance(distanceKm)}
+                favorited={isFavorite(pkg.id)}
+                onFavorite={e => toggleFavorite(pkg, e)}
                 onClick={() => handlePackageClick(pkg)}
                 inGrid
               />
@@ -340,6 +333,8 @@ const ExploreSectionListView: React.FC = () => {
                 pkg={pkg}
                 rank={index + 1}
                 growth={trendGrowth(pkg)}
+                favorited={isFavorite(pkg.id)}
+                onFavorite={e => toggleFavorite(pkg, e)}
                 onClick={() => handlePackageClick(pkg)}
                 inGrid
               />

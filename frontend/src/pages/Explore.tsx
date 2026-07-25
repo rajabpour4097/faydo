@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
@@ -11,6 +11,7 @@ import {
   TrendCard,
 } from '../components/explore/ExploreSectionCards'
 import { useExplorePackages } from '../hooks/useExplorePackages'
+import { useFavorites } from '../contexts/FavoritesContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { Package } from '../services/api'
@@ -66,7 +67,7 @@ export const Explore: React.FC = () => {
 const ExploreCustomerView: React.FC = () => {
   const { isDark } = useTheme()
   const navigate = useNavigate()
-  const [favorites, setFavorites] = useState<Set<number>>(new Set())
+  const { isFavorite, toggleFavorite } = useFavorites()
 
   const {
     packages,
@@ -101,16 +102,6 @@ const ExploreCustomerView: React.FC = () => {
   const handlePackageClick = (pkg: Package) => {
     if (isSamplePackage(pkg)) return
     navigate(`/dashboard/business/${pkg.id}`)
-  }
-
-  const toggleFavorite = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setFavorites(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
   }
 
   if (loading) {
@@ -264,8 +255,8 @@ const ExploreCustomerView: React.FC = () => {
                   key={pkg.id}
                   pkg={pkg}
                   distanceLabel={formatDistance(distanceKm)}
-                  favorited={favorites.has(pkg.id)}
-                  onFavorite={e => toggleFavorite(pkg.id, e)}
+                  favorited={isFavorite(pkg.id)}
+                  onFavorite={e => toggleFavorite(pkg, e)}
                   onClick={() => handlePackageClick(pkg)}
                   inGrid
                 />
@@ -293,6 +284,8 @@ const ExploreCustomerView: React.FC = () => {
                   key={pkg.id}
                   pkg={pkg}
                   distanceLabel={formatDistance(distanceKm)}
+                  favorited={isFavorite(pkg.id)}
+                  onFavorite={e => toggleFavorite(pkg, e)}
                   onClick={() => handlePackageClick(pkg)}
                   inGrid
                 />
@@ -321,6 +314,8 @@ const ExploreCustomerView: React.FC = () => {
                   pkg={pkg}
                   rank={index + 1}
                   growth={trendGrowth(pkg)}
+                  favorited={isFavorite(pkg.id)}
+                  onFavorite={e => toggleFavorite(pkg, e)}
                   onClick={() => handlePackageClick(pkg)}
                   inGrid
                 />
@@ -392,8 +387,8 @@ const ExploreCustomerView: React.FC = () => {
                 key={pkg.id}
                 pkg={pkg}
                 distanceLabel={formatDistance(distanceKm)}
-                favorited={favorites.has(pkg.id)}
-                onFavorite={e => toggleFavorite(pkg.id, e)}
+                favorited={isFavorite(pkg.id)}
+                onFavorite={e => toggleFavorite(pkg, e)}
                 onClick={() => handlePackageClick(pkg)}
                 wide
               />
@@ -418,6 +413,8 @@ const ExploreCustomerView: React.FC = () => {
                 key={pkg.id}
                 pkg={pkg}
                 distanceLabel={formatDistance(distanceKm)}
+                favorited={isFavorite(pkg.id)}
+                onFavorite={e => toggleFavorite(pkg, e)}
                 onClick={() => handlePackageClick(pkg)}
                 inGrid
               />
@@ -440,6 +437,8 @@ const ExploreCustomerView: React.FC = () => {
                 pkg={pkg}
                 rank={index + 1}
                 growth={trendGrowth(pkg)}
+                favorited={isFavorite(pkg.id)}
+                onFavorite={e => toggleFavorite(pkg, e)}
                 onClick={() => handlePackageClick(pkg)}
                 inGrid
               />

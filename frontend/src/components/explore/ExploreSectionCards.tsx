@@ -8,6 +8,32 @@ interface CardBaseProps {
   distanceLabel?: string
   onClick: () => void
   inGrid?: boolean
+  favorited?: boolean
+  onFavorite?: (e: React.MouseEvent) => void
+}
+
+const FavoriteHeartButton: React.FC<{
+  favorited?: boolean
+  onFavorite?: (e: React.MouseEvent) => void
+  size?: 'lg' | 'sm'
+}> = ({ favorited, onFavorite, size = 'lg' }) => {
+  const btnClass = size === 'lg' ? 'h-6 w-6 top-1.5 left-1.5' : 'h-[18px] w-[18px] top-1 left-1'
+  const iconClass = size === 'lg' ? 'h-3.5 w-3.5' : 'h-3 w-3'
+
+  return (
+    <button
+      type="button"
+      onClick={onFavorite}
+      aria-label={favorited ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'}
+      className={`absolute z-10 flex items-center justify-center rounded-full bg-white/90 shadow ${btnClass}`}
+    >
+      <Heart
+        className={`${iconClass} ${
+          favorited ? 'fill-rose-500 text-rose-500' : 'text-gray-600'
+        }`}
+      />
+    </button>
+  )
 }
 
 export const ExploreSectionHeader: React.FC<{
@@ -73,17 +99,7 @@ export const SpecialOfferCard: React.FC<
             {distanceLabel}
           </span>
         ) : null}
-        <button
-          type="button"
-          onClick={onFavorite}
-          className="absolute top-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 shadow"
-        >
-          <Heart
-            className={`h-3.5 w-3.5 ${
-              favorited ? 'fill-rose-500 text-rose-500' : 'text-gray-600'
-            }`}
-          />
-        </button>
+        <FavoriteHeartButton favorited={favorited} onFavorite={onFavorite} size="lg" />
         <div className="absolute -bottom-5 left-1/2 z-10 -translate-x-1/2">
           <div className="h-11 w-11 overflow-hidden rounded-full border-[3px] border-white bg-white shadow-md dark:border-slate-800">
             {logo && !logoErr ? (
@@ -134,6 +150,8 @@ export const CompactOfferCard: React.FC<CardBaseProps> = ({
   distanceLabel,
   onClick,
   inGrid,
+  favorited,
+  onFavorite,
 }) => {
   const [logoErr, setLogoErr] = useState(false)
   const cover = buildCoverUrl(pkg)
@@ -157,6 +175,7 @@ export const CompactOfferCard: React.FC<CardBaseProps> = ({
             {distanceLabel}
           </span>
         ) : null}
+        <FavoriteHeartButton favorited={favorited} onFavorite={onFavorite} size="sm" />
         <div className="absolute -bottom-[18px] left-1/2 -translate-x-1/2">
           <div className="h-9 w-9 overflow-hidden rounded-full border-[2.5px] border-white bg-white shadow dark:border-slate-800">
             {logo && !logoErr ? (
@@ -201,6 +220,8 @@ export const TrendCard: React.FC<CardBaseProps & { rank: number; growth: number 
   growth,
   onClick,
   inGrid,
+  favorited,
+  onFavorite,
 }) => {
   const [logoErr, setLogoErr] = useState(false)
   const cover = buildCoverUrl(pkg)
@@ -222,6 +243,7 @@ export const TrendCard: React.FC<CardBaseProps & { rank: number; growth: number 
         <span className="absolute top-1 right-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-teal-600 text-[8px] font-bold text-white shadow">
           {rank}
         </span>
+        <FavoriteHeartButton favorited={favorited} onFavorite={onFavorite} size="sm" />
         <div className="absolute -bottom-[18px] left-1/2 -translate-x-1/2">
           <div className="h-9 w-9 overflow-hidden rounded-full border-[2.5px] border-white bg-white shadow dark:border-slate-800">
             {logo && !logoErr ? (

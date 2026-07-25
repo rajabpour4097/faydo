@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { FavoritesProvider } from './contexts/FavoritesContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { Layout } from './components/layout/Layout'
@@ -29,6 +30,7 @@ import { BusinessTransactionsPage } from './pages/business/BusinessTransactionsP
 import { EliteGiftClaimsPage } from './pages/business/EliteGiftClaimsPage'
 import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsPage'
 import { CustomerPointsDetailsPage } from './pages/customer/CustomerPointsDetailsPage'
+import { CustomerFavoritesPage } from './pages/customer/CustomerFavoritesPage'
 import { useAuth } from './contexts/AuthContext'
 
 // Dashboard Router Component
@@ -90,6 +92,11 @@ const DashboardRouter = () => {
           {isBusinessUser ? <Navigate to="/dashboard" /> : <CustomerPointsDetailsPage />}
         </ProfileGuard>
       } />
+      <Route path="favorites" element={
+        <ProfileGuard>
+          {isBusinessUser ? <Navigate to="/dashboard" /> : <CustomerFavoritesPage />}
+        </ProfileGuard>
+      } />
       <Route path="elite-gift-claims" element={
         <ProfileGuard>
           {isBusinessUser ? <EliteGiftClaimsPage /> : <Navigate to="/dashboard" />}
@@ -115,6 +122,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <FavoritesProvider>
         <NotificationProvider>
           <Router>
             {/* Auto Notification برای نمایش خودکار modal نظردهی */}
@@ -141,6 +149,7 @@ function App() {
             </Routes>
           </Router>
         </NotificationProvider>
+        </FavoritesProvider>
       </AuthProvider>
     </ThemeProvider>
   )

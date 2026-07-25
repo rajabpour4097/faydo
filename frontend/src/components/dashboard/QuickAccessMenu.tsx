@@ -48,10 +48,10 @@ const MENU_ITEMS: QuickAccessItem[] = [
     title: 'علاقه‌مندی‌ها',
     subtitle: 'لیست مورد علاقه',
     icon: heartIcon,
-    href: '/favorites',
+    href: '/dashboard/favorites',
     bg: '#F3EEFC',
     bgDark: 'rgba(139, 92, 246, 0.14)',
-    isActive: false,
+    isActive: true,
   },
   {
     id: 'wallet',

@@ -3,11 +3,11 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from .models import CustomerLoyalty, Transaction, EliteGiftClaim
+from .models import CustomerLoyalty, Transaction, EliteGiftClaim, CustomerFavorite
 from .serializers import (
     CustomerLoyaltySerializer, TransactionSerializer,
     TransactionCreateSerializer, BusinessInfoSerializer,
-    TransactionCommentSerializer
+    TransactionCommentSerializer, CustomerFavoriteSerializer,
 )
 from accounts.models import BusinessProfile
 
@@ -731,6 +731,86 @@ def award_favorite_business(request):
     from loyalty.services import award_favorite
     award_favorite(request.user.customerprofile, business_id)
     return Response({'message': 'امتیاز علاقه‌مندی ثبت شد'})
+
+
+class CustomerFavoriteViewSet(viewsets.ModelViewSet):
+    """
+    مدیریت علاقه‌مندی‌های مشتری
+    GET    /api/loyalty/favorites/
+    POST   /api/loyalty/favorites/  { "package_id": 123 }
+    DELETE /api/loyalty/favorites/{id}/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = CustomerFavoriteSerializer
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+    pagination_class = None
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role != 'customer':
+            return CustomerFavorite.objects.none()
+        return (
+            CustomerFavorite.objects.filter(customer=user.customerprofile)
+            .select_related(
+                'package',
+                'package__business',
+                'package__business__category',
+                'package__business__user',
+            )
+            .prefetch_related('package__business__gallery_images')
+        )
+
+    def list(self, request, *args, **kwargs):
+        if request.user.role != 'customer':
+            return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
+        return super().list(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        if request.user.role != 'customer':
+            return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
+
+        package_id = request.data.get('package_id')
+        if not package_id:
+            return Response({'detail': 'package_id الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from packages.models import Package
+        from loyalty.services import award_favorite
+
+        try:
+            package_id = int(package_id)
+        except (TypeError, ValueError):
+            return Response({'detail': 'package_id نامعتبر است'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if package_id <= 0:
+            return Response({'detail': 'پکیج نامعتبر است'}, status=status.HTTP_400_BAD_REQUEST)
+
+        package = get_object_or_404(Package, id=package_id)
+        if package.status != 'approved' or not package.is_active or not package.is_complete:
+            return Response({'detail': 'این پکیج قابل افزودن به علاقه‌مندی نیست'}, status=status.HTTP_400_BAD_REQUEST)
+
+        customer = request.user.customerprofile
+        favorite, created = CustomerFavorite.objects.get_or_create(
+            customer=customer,
+            package=package,
+        )
+
+        if created:
+            award_favorite(customer, package.business_id)
+
+        serializer = self.get_serializer(favorite)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        if request.user.role != 'customer':
+            return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
+        favorite = self.get_object()
+        if favorite.customer_id != request.user.customerprofile.id:
+            return Response({'detail': 'دسترسی غیرمجاز'}, status=status.HTTP_403_FORBIDDEN)
+        favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])

@@ -633,3 +633,36 @@ class EliteGiftClaim(BaseModel):
         self.status = 'used'
         self.used_at = timezone.now()
         self.save()
+
+
+class CustomerFavorite(BaseModel):
+    """علاقه‌مندی مشتری به پکیج/کسب‌وکار"""
+    customer = models.ForeignKey(
+        CustomerProfile,
+        on_delete=models.CASCADE,
+        related_name='favorite_packages',
+        verbose_name='مشتری',
+    )
+    package = models.ForeignKey(
+        Package,
+        on_delete=models.CASCADE,
+        related_name='customer_favorites',
+        verbose_name='پکیج',
+    )
+
+    class Meta:
+        verbose_name = 'علاقه‌مندی'
+        verbose_name_plural = 'علاقه‌مندی‌ها'
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['customer', 'package'],
+                name='unique_customer_package_favorite',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['customer', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.customer} → {self.package.business.name if self.package.business_id else self.package_id}'

@@ -352,6 +352,19 @@ export interface PointsEvent {
   created_at: string
 }
 
+export interface CustomerFavoriteItem {
+  id: number
+  package_id: number
+  business_id: number
+  business_name: string
+  category_name: string
+  logo_url: string
+  cover_url: string
+  gift_text: string
+  rating: number | null
+  added_at: string
+}
+
 export interface PointsHistoryResponse {
   count: number
   page: number
@@ -1187,6 +1200,30 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ business_id: businessId }),
     })
+  }
+
+  async getCustomerFavorites(): Promise<ApiResponse<CustomerFavoriteItem[]>> {
+    const resp = await this.request<CustomerFavoriteItem[] | { results: CustomerFavoriteItem[] }>(
+      '/loyalty/favorites/',
+    )
+    if (resp.data && !Array.isArray(resp.data) && Array.isArray(resp.data.results)) {
+      return { data: resp.data.results }
+    }
+    if (Array.isArray(resp.data)) {
+      return { data: resp.data }
+    }
+    return { error: resp.error }
+  }
+
+  async addCustomerFavorite(packageId: number): Promise<ApiResponse<CustomerFavoriteItem>> {
+    return this.request<CustomerFavoriteItem>('/loyalty/favorites/', {
+      method: 'POST',
+      body: JSON.stringify({ package_id: packageId }),
+    })
+  }
+
+  async removeCustomerFavorite(favoriteId: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/loyalty/favorites/${favoriteId}/`, { method: 'DELETE' })
   }
 
   // ─── Business Dashboard ────────────────────────────────────────────

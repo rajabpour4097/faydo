@@ -405,3 +405,80 @@ class EliteGiftClaimCreateSerializer(serializers.Serializer):
         )
         
         return claim
+
+
+class CustomerFavoriteSerializer(serializers.ModelSerializer):
+    package_id = serializers.IntegerField(source='package.id', read_only=True)
+    business_id = serializers.IntegerField(source='package.business.id', read_only=True)
+    business_name = serializers.CharField(source='package.business.name', read_only=True)
+    category_name = serializers.SerializerMethodField()
+    logo_url = serializers.SerializerMethodField()
+    cover_url = serializers.SerializerMethodField()
+    gift_text = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    added_at = serializers.DateTimeField(source='created_at', read_only=True)
+
+    class Meta:
+        from loyalty.models import CustomerFavorite
+        model = CustomerFavorite
+        fields = [
+            'id',
+            'package_id',
+            'business_id',
+            'business_name',
+            'category_name',
+            'logo_url',
+            'cover_url',
+            'gift_text',
+            'rating',
+            'added_at',
+        ]
+        read_only_fields = fields
+
+    def _package_serializer(self, package):
+        from packages.serializers import PackageListSerializer
+        return PackageListSerializer(package, context=self.context)
+
+    def get_category_name(self, obj):
+        business = obj.package.business
+        if business and business.category:
+            return business.category.name
+        return 'کسب‌وکار'
+
+    def get_logo_url(self, obj):
+        return self._package_serializer(obj.package).get_business_logo(obj.package)
+
+    def get_cover_url(self, obj):
+        ser = self._package_serializer(obj.package)
+        cover = ser.get_business_image(obj.package)
+        if cover:
+            return cover
+        gallery = ser.get_gallery_images(obj.package)
+        if gallery:
+            return gallery[0]
+        return ser.get_business_logo(obj.package)
+
+    def get_gift_text(self, obj):
+        pkg = obj.package
+        try:
+            if hasattr(pkg, 'elite_gift') and pkg.elite_gift and pkg.elite_gift.gift:
+                return pkg.elite_gift.gift
+        except Exception:
+            pass
+        try:
+            if hasattr(pkg, 'specific_discount') and pkg.specific_discount and pkg.specific_discount.title:
+                return pkg.specific_discount.title
+        except Exception:
+            pass
+        try:
+            if hasattr(pkg, 'discount_all') and pkg.discount_all and pkg.discount_all.percentage:
+                return f'{pkg.discount_all.percentage}٪ تخفیف'
+        except Exception:
+            pass
+        return 'پیشنهاد ویژه'
+
+    def get_rating(self, obj):
+        try:
+            return obj.package.get_average_rating()
+        except Exception:
+            return None

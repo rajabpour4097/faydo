@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomerLoyalty, Transaction, EliteGiftClaim, PointsEvent
+from .models import CustomerLoyalty, Transaction, EliteGiftClaim, PointsEvent, CustomerFavorite
 
 
 @admin.register(PointsEvent)
@@ -136,3 +136,20 @@ class EliteGiftClaimAdmin(admin.ModelAdmin):
         
         self.message_user(request, f'{count} درخواست به عنوان استفاده شده علامت‌گذاری شد.')
     mark_as_used.short_description = 'علامت‌گذاری به عنوان استفاده شده'
+
+
+@admin.register(CustomerFavorite)
+class CustomerFavoriteAdmin(admin.ModelAdmin):
+    list_display = ['customer', 'package', 'get_business_name', 'created_at']
+    list_filter = ['created_at']
+    search_fields = [
+        'customer__user__first_name',
+        'customer__user__last_name',
+        'package__business__name',
+    ]
+    readonly_fields = ['created_at', 'modified_at']
+    raw_id_fields = ['customer', 'package']
+
+    @admin.display(description='کسب‌وکار')
+    def get_business_name(self, obj):
+        return obj.package.business.name if obj.package.business_id else '—'

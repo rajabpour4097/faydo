@@ -4,16 +4,18 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   ReactNode,
 } from 'react'
-import { Package } from '../services/api'
+import { CustomerFavoriteItem, Package } from '../services/api'
 import { apiService } from '../services/api'
 import { useAuth } from './AuthContext'
 import { buildCoverUrl, buildLogoUrl, giftLabel } from '../utils/exploreHelpers'
 import { isSamplePackage } from '../data/exploreSamplePackages'
 
 export interface FavoriteBusiness {
+  id: number
   packageId: number
   businessId: number
   businessName: string
@@ -29,34 +31,38 @@ export interface FavoriteBusiness {
 interface FavoritesContextType {
   favorites: FavoriteBusiness[]
   favoriteIds: Set<number>
+  loading: boolean
   isFavorite: (packageId: number) => boolean
   toggleFavorite: (pkg: Package, e?: React.MouseEvent) => void
   removeFavorite: (packageId: number) => void
+  refreshFavorites: () => Promise<void>
 }
 
 const FavoritesContext = createContext<FavoritesContextType | null>(null)
 
-function storageKey(userId: number) {
+function legacyStorageKey(userId: number) {
   return `faydo_favorites_${userId}`
 }
 
-function loadFavorites(userId: number): FavoriteBusiness[] {
-  try {
-    const raw = localStorage.getItem(storageKey(userId))
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
+function mapApiFavorite(item: CustomerFavoriteItem): FavoriteBusiness {
+  return {
+    id: item.id,
+    packageId: item.package_id,
+    businessId: item.business_id,
+    businessName: item.business_name,
+    categoryName: item.category_name,
+    logoUrl: item.logo_url,
+    coverUrl: item.cover_url,
+    giftText: item.gift_text,
+    rating: item.rating ?? undefined,
+    isSample: false,
+    addedAt: item.added_at,
   }
 }
 
-function saveFavorites(userId: number, items: FavoriteBusiness[]) {
-  localStorage.setItem(storageKey(userId), JSON.stringify(items))
-}
-
-function toFavoriteEntry(pkg: Package): FavoriteBusiness {
+function toLocalFavoriteEntry(pkg: Package): FavoriteBusiness {
   return {
+    id: -Math.abs(pkg.id),
     packageId: pkg.id,
     businessId: pkg.business_id,
     businessName: pkg.business_name || 'کسب‌وکار',
@@ -87,7 +93,7 @@ export function favoriteToPackage(fav: FavoriteBusiness): Package {
     modified_at: fav.addedAt,
   } as Package
   if (fav.isSample) {
-    ;(pkg as Package & { is_sample?: boolean; explore_category_id?: string }).is_sample = true
+    ;(pkg as Package & { is_sample?: boolean }).is_sample = true
   }
   return pkg
 }
@@ -95,24 +101,78 @@ export function favoriteToPackage(fav: FavoriteBusiness): Package {
 export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth()
   const [favorites, setFavorites] = useState<FavoriteBusiness[]>([])
+  const [loading, setLoading] = useState(false)
+  const migratedRef = useRef(false)
 
-  useEffect(() => {
-    if (user?.type === 'customer' && user.id) {
-      setFavorites(loadFavorites(user.id))
-    } else {
+  const refreshFavorites = useCallback(async () => {
+    if (user?.type !== 'customer' || !user.id) {
       setFavorites([])
+      return
+    }
+
+    setLoading(true)
+    try {
+      const resp = await apiService.getCustomerFavorites()
+      const serverItems = (resp.data ?? []).map(mapApiFavorite)
+      setFavorites(prev => {
+        const samples = prev.filter(f => f.isSample)
+        const sampleIds = new Set(samples.map(f => f.packageId))
+        const merged = [
+          ...samples,
+          ...serverItems.filter(f => !sampleIds.has(f.packageId)),
+        ]
+        return merged
+      })
+
+      if (!migratedRef.current) {
+        migratedRef.current = true
+        try {
+          const raw = localStorage.getItem(legacyStorageKey(user.id))
+          if (raw) {
+            const legacy = JSON.parse(raw) as FavoriteBusiness[]
+            if (Array.isArray(legacy)) {
+              const serverPackageIds = new Set(serverItems.map(f => f.packageId))
+              for (const item of legacy) {
+                if (item.isSample || item.packageId <= 0) continue
+                if (!serverPackageIds.has(item.packageId)) {
+                  await apiService.addCustomerFavorite(item.packageId)
+                }
+              }
+              localStorage.removeItem(legacyStorageKey(user.id))
+              const refreshed = await apiService.getCustomerFavorites()
+              if (refreshed.data) {
+                setFavorites(prev => {
+                  const samples = prev.filter(f => f.isSample)
+                  const sampleIds = new Set(samples.map(f => f.packageId))
+                  return [
+                    ...samples,
+                    ...refreshed.data!.map(mapApiFavorite).filter(
+                      f => !sampleIds.has(f.packageId),
+                    ),
+                  ]
+                })
+              }
+            }
+          }
+        } catch {
+          // ignore legacy migration errors
+        }
+      }
+    } catch {
+      setFavorites(prev => prev.filter(f => f.isSample))
+    } finally {
+      setLoading(false)
     }
   }, [user?.id, user?.type])
 
-  const persist = useCallback(
-    (next: FavoriteBusiness[]) => {
-      setFavorites(next)
-      if (user?.type === 'customer' && user.id) {
-        saveFavorites(user.id, next)
-      }
-    },
-    [user?.id, user?.type],
-  )
+  useEffect(() => {
+    migratedRef.current = false
+    if (user?.type === 'customer' && user.id) {
+      refreshFavorites()
+    } else {
+      setFavorites([])
+    }
+  }, [user?.id, user?.type, refreshFavorites])
 
   const favoriteIds = useMemo(
     () => new Set(favorites.map(f => f.packageId)),
@@ -125,39 +185,74 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
   )
 
   const removeFavorite = useCallback(
-    (packageId: number) => {
-      persist(favorites.filter(f => f.packageId !== packageId))
+    async (packageId: number) => {
+      const target = favorites.find(f => f.packageId === packageId)
+      if (!target) return
+
+      setFavorites(prev => prev.filter(f => f.packageId !== packageId))
+
+      if (target.isSample || target.id <= 0) return
+
+      const resp = await apiService.removeCustomerFavorite(target.id)
+      if (resp.error) {
+        await refreshFavorites()
+      }
     },
-    [favorites, persist],
+    [favorites, refreshFavorites],
   )
 
   const toggleFavorite = useCallback(
     (pkg: Package, e?: React.MouseEvent) => {
       e?.stopPropagation()
-      if (favoriteIds.has(pkg.id)) {
-        removeFavorite(pkg.id)
+
+      if (isSamplePackage(pkg)) {
+        if (favoriteIds.has(pkg.id)) {
+          setFavorites(prev => prev.filter(f => f.packageId !== pkg.id))
+        } else {
+          setFavorites(prev => [
+            toLocalFavoriteEntry(pkg),
+            ...prev.filter(f => f.packageId !== pkg.id),
+          ])
+        }
         return
       }
 
-      const entry = toFavoriteEntry(pkg)
-      persist([entry, ...favorites.filter(f => f.packageId !== pkg.id)])
-
-      if (!isSamplePackage(pkg) && pkg.business_id) {
-        apiService.awardFavoriteBusiness(pkg.business_id).catch(() => {})
+      if (favoriteIds.has(pkg.id)) {
+        void removeFavorite(pkg.id)
+        return
       }
+
+      const optimistic = toLocalFavoriteEntry(pkg)
+      optimistic.id = 0
+      optimistic.isSample = false
+      setFavorites(prev => [optimistic, ...prev.filter(f => f.packageId !== pkg.id)])
+
+      void (async () => {
+        const resp = await apiService.addCustomerFavorite(pkg.id)
+        if (resp.data) {
+          setFavorites(prev => [
+            mapApiFavorite(resp.data!),
+            ...prev.filter(f => f.packageId !== pkg.id),
+          ])
+        } else {
+          await refreshFavorites()
+        }
+      })()
     },
-    [favoriteIds, favorites, persist, removeFavorite],
+    [favoriteIds, removeFavorite, refreshFavorites],
   )
 
   const value = useMemo(
     () => ({
       favorites,
       favoriteIds,
+      loading,
       isFavorite,
       toggleFavorite,
       removeFavorite,
+      refreshFavorites,
     }),
-    [favorites, favoriteIds, isFavorite, toggleFavorite, removeFavorite],
+    [favorites, favoriteIds, loading, isFavorite, toggleFavorite, removeFavorite, refreshFavorites],
   )
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>

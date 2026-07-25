@@ -33,7 +33,7 @@ export const CustomerFavoritesPage: React.FC = () => {
 const CustomerFavoritesView: React.FC = () => {
   const { isDark } = useTheme()
   const navigate = useNavigate()
-  const { favorites, isFavorite, toggleFavorite } = useFavorites()
+  const { favorites, loading, isFavorite, toggleFavorite } = useFavorites()
   const [search, setSearch] = useState('')
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
@@ -202,7 +202,11 @@ const CustomerFavoritesView: React.FC = () => {
       </div>
 
       <div className="px-4 pt-4">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600" />
+          </div>
+        ) : filtered.length === 0 ? (
           <div
             className={`rounded-2xl py-16 text-center ${
               isDark ? 'text-slate-400' : 'text-gray-400'

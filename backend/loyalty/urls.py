@@ -6,12 +6,14 @@ from .views import (
     elite_gift_progress,
     points_summary, points_history,
     award_story_share, award_favorite_business,
+    CustomerFavoriteViewSet,
 )
 
 router = DefaultRouter()
 router.register(r'loyalties', CustomerLoyaltyViewSet, basename='loyalty')
 router.register(r'transactions', TransactionViewSet, basename='transaction')
 router.register(r'elite-gift-claims', EliteGiftClaimViewSet, basename='elite-gift-claim')
+router.register(r'favorites', CustomerFavoriteViewSet, basename='customer-favorite')
 
 urlpatterns = [
     path('', include(router.urls)),

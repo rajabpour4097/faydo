@@ -24,8 +24,11 @@ import {
 } from '../constants/exploreCategories'
 import { isSamplePackage } from '../data/exploreSamplePackages'
 import {
+  DEFAULT_EXPLORE_FILTERS,
   EXPLORE_PREVIEW_LIMITS,
   formatDistance,
+  hasActiveExploreFilters,
+  isExploreCitySelected,
   trendGrowth,
 } from '../utils/exploreHelpers'
 
@@ -119,14 +122,17 @@ const ExploreCustomerView: React.FC = () => {
     return fromData.length > 0 ? fromData : FALLBACK_POPULAR_CITIES
   }, [packages])
 
-  const handleSelectCity = (cityId: number) => {
+  const handleSelectCity = (cityId: number, cityName: string) => {
+    if (isExploreCitySelected(filters, cityId, cityName)) {
+      handleClearCity()
+      return
+    }
     if (cityId < 0) {
-      const city = FALLBACK_POPULAR_CITIES.find(c => c.id === cityId)
-      if (!city) return
       setFilters(prev => ({
         ...prev,
-        search: city.name,
+        search: '',
         cities: [],
+        selectedCityName: cityName,
         exploreCategoryId: null,
         categories: [],
       }))
@@ -135,22 +141,53 @@ const ExploreCustomerView: React.FC = () => {
     setFilters(prev => ({
       ...prev,
       cities: [cityId],
+      selectedCityName: cityName,
       search: '',
       exploreCategoryId: null,
       categories: [],
     }))
   }
 
+  const handleClearCity = () => {
+    setFilters(prev => ({
+      ...prev,
+      cities: [],
+      selectedCityName: null,
+      search:
+        prev.selectedCityName && (!prev.search || prev.search === prev.selectedCityName)
+          ? ''
+          : prev.search,
+    }))
+  }
+
+  const handleResetFilters = () => {
+    setFilters({ ...DEFAULT_EXPLORE_FILTERS })
+  }
+
+  const activeFilterParts: string[] = []
+  if (filters.selectedCityName) activeFilterParts.push(filters.selectedCityName)
+  else if (filters.search) activeFilterParts.push(filters.search)
+  if (filters.hasGiftOnly) activeFilterParts.push('با هدیه')
+  if (filters.nearMeOnly) activeFilterParts.push('نزدیک من')
+  if (filters.highRatedOnly) activeFilterParts.push('امتیاز بالا')
+  if (filters.sortBy === 'distance') activeFilterParts.push('نزدیک‌ترین')
+  else if (filters.sortBy === 'rating') activeFilterParts.push('بیشترین امتیاز')
+  else if (filters.sortBy === 'discount_high') activeFilterParts.push('بیشترین تخفیف')
+  else if (filters.sortBy === 'newest') activeFilterParts.push('جدیدترین')
+
   const searchFieldLabel =
-    filters.search ||
-    (filters.cities.length === 1
-      ? packages.find(p => p.city?.id === filters.cities[0])?.city?.name || 'فیلتر شهر فعال'
-      : '') ||
-    'جستجوی باشگاه، هدیه یا برند...'
+    activeFilterParts.length > 0
+      ? activeFilterParts.join(' · ')
+      : 'جستجوی باشگاه، هدیه یا برند...'
 
   const handleCategoryClick = (cat: ExploreCategory) => {
     if (filters.exploreCategoryId === cat.id) {
-      setFilters(prev => ({ ...prev, exploreCategoryId: null, categories: [], search: '' }))
+      setFilters(prev => ({
+        ...prev,
+        exploreCategoryId: null,
+        categories: [],
+        search: prev.selectedCityName ? prev.search : '',
+      }))
       return
     }
     const ids = matchCategoryIds(cat, availableCategories)
@@ -158,7 +195,7 @@ const ExploreCustomerView: React.FC = () => {
       ...prev,
       exploreCategoryId: cat.id,
       categories: ids,
-      search: '',
+      search: prev.selectedCityName ? prev.search : '',
     }))
   }
 
@@ -210,7 +247,7 @@ const ExploreCustomerView: React.FC = () => {
             </svg>
             <span
               className={`min-w-0 flex-1 truncate text-[13px] ${
-                filters.search || filters.cities.length
+                activeFilterParts.length > 0
                   ? isDark
                     ? 'text-white'
                     : 'text-gray-800'
@@ -221,6 +258,25 @@ const ExploreCustomerView: React.FC = () => {
             >
               {searchFieldLabel}
             </span>
+            {hasActiveExploreFilters(filters) ? (
+              <button
+                type="button"
+                aria-label="پاک کردن فیلترها"
+                onClick={e => {
+                  e.stopPropagation()
+                  handleResetFilters()
+                }}
+                className="shrink-0 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-700"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            ) : null}
           </button>
         </div>
 
@@ -369,18 +425,27 @@ const ExploreCustomerView: React.FC = () => {
       <ExploreSearchOverlay
         open={searchOverlayOpen}
         onClose={() => setSearchOverlayOpen(false)}
-        search={filters.search}
+        filters={filters}
         onSearchChange={value =>
           setFilters(prev => ({
             ...prev,
             search: value,
+            selectedCityName: null,
+            cities: [],
             exploreCategoryId: null,
             categories: [],
-            cities: [],
           }))
         }
         popularCities={popularCities}
         onSelectCity={handleSelectCity}
+        onClearCity={handleClearCity}
+        onSortChange={sortBy => setFilters(prev => ({ ...prev, sortBy }))}
+        onGiftOnlyChange={hasGiftOnly => setFilters(prev => ({ ...prev, hasGiftOnly }))}
+        onNearMeOnlyChange={nearMeOnly => setFilters(prev => ({ ...prev, nearMeOnly }))}
+        onHighRatedOnlyChange={highRatedOnly =>
+          setFilters(prev => ({ ...prev, highRatedOnly }))
+        }
+        onResetFilters={handleResetFilters}
         onOpenMap={() => setMapOpen(true)}
         isDark={isDark}
       />
@@ -414,6 +479,25 @@ const ExploreCustomerView: React.FC = () => {
           <span className={`flex-1 truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {searchFieldLabel}
           </span>
+          {hasActiveExploreFilters(filters) ? (
+            <button
+              type="button"
+              aria-label="پاک کردن فیلترها"
+              onClick={e => {
+                e.stopPropagation()
+                handleResetFilters()
+              }}
+              className="shrink-0 rounded-full p-1 text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          ) : null}
         </button>
 
         <div className="grid grid-cols-5 gap-4 max-w-3xl">
@@ -513,18 +597,27 @@ const ExploreCustomerView: React.FC = () => {
       <ExploreSearchOverlay
         open={searchOverlayOpen}
         onClose={() => setSearchOverlayOpen(false)}
-        search={filters.search}
+        filters={filters}
         onSearchChange={value =>
           setFilters(prev => ({
             ...prev,
             search: value,
+            selectedCityName: null,
+            cities: [],
             exploreCategoryId: null,
             categories: [],
-            cities: [],
           }))
         }
         popularCities={popularCities}
         onSelectCity={handleSelectCity}
+        onClearCity={handleClearCity}
+        onSortChange={sortBy => setFilters(prev => ({ ...prev, sortBy }))}
+        onGiftOnlyChange={hasGiftOnly => setFilters(prev => ({ ...prev, hasGiftOnly }))}
+        onNearMeOnlyChange={nearMeOnly => setFilters(prev => ({ ...prev, nearMeOnly }))}
+        onHighRatedOnlyChange={highRatedOnly =>
+          setFilters(prev => ({ ...prev, highRatedOnly }))
+        }
+        onResetFilters={handleResetFilters}
         onOpenMap={() => setMapOpen(true)}
         isDark={isDark}
       />

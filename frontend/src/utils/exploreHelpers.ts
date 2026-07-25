@@ -6,7 +6,45 @@ export interface ExploreFilterState {
   sortBy: 'discount_high' | 'discount_low' | 'newest' | 'distance' | 'rating' | ''
   search: string
   cities: number[]
+  selectedCityName: string | null
   exploreCategoryId: string | null
+  hasGiftOnly: boolean
+  nearMeOnly: boolean
+  highRatedOnly: boolean
+}
+
+export const DEFAULT_EXPLORE_FILTERS: ExploreFilterState = {
+  categories: [],
+  sortBy: '',
+  search: '',
+  cities: [],
+  selectedCityName: null,
+  exploreCategoryId: null,
+  hasGiftOnly: false,
+  nearMeOnly: false,
+  highRatedOnly: false,
+}
+
+export function hasActiveExploreFilters(filters: ExploreFilterState): boolean {
+  return Boolean(
+    filters.search ||
+      filters.cities.length > 0 ||
+      filters.selectedCityName ||
+      filters.sortBy ||
+      filters.hasGiftOnly ||
+      filters.nearMeOnly ||
+      filters.highRatedOnly ||
+      filters.exploreCategoryId ||
+      filters.categories.length > 0,
+  )
+}
+
+export function isExploreCitySelected(
+  filters: ExploreFilterState,
+  cityId: number,
+  cityName: string,
+): boolean {
+  return filters.cities[0] === cityId || filters.selectedCityName === cityName
 }
 
 export const EXPLORE_PREVIEW_LIMITS = {

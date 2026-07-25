@@ -10,18 +10,14 @@ import {
   buildNearYou,
   buildSpecialOffers,
   buildWeeklyTrends,
+  DEFAULT_EXPLORE_FILTERS,
   extractCategoriesFromPackages,
   ExploreFilterState,
+  haversineKm,
   PackageWithDistance,
 } from '../utils/exploreHelpers'
 
-const defaultFilters: ExploreFilterState = {
-  categories: [],
-  sortBy: '',
-  search: '',
-  cities: [],
-  exploreCategoryId: null,
-}
+const defaultFilters: ExploreFilterState = DEFAULT_EXPLORE_FILTERS
 
 export function useExplorePackages(initialFilters: Partial<ExploreFilterState> = {}) {
   const [packages, setPackages] = useState<Package[]>([])
@@ -128,6 +124,43 @@ export function useExplorePackages(initialFilters: Partial<ExploreFilterState> =
 
     if (filters.cities.length > 0) {
       filtered = filtered.filter(pkg => pkg.city && filters.cities.includes(pkg.city.id))
+    } else if (filters.selectedCityName) {
+      const cityTerm = filters.selectedCityName.toLowerCase()
+      filtered = filtered.filter(pkg => pkg.city?.name?.toLowerCase().includes(cityTerm))
+    }
+
+    if (filters.hasGiftOnly) {
+      filtered = filtered.filter(
+        pkg =>
+          pkg.elite_gift_gift ||
+          pkg.elite_gift_title ||
+          (pkg.discount_percentage != null && pkg.discount_percentage > 0),
+      )
+    }
+
+    if (filters.highRatedOnly) {
+      filtered = filtered.filter(pkg => (pkg.average_rating ?? 0) >= 4)
+    }
+
+    if (filters.nearMeOnly && userPos) {
+      const NEARBY_KM = 5
+      filtered = filtered.filter(pkg => {
+        if (isSamplePackage(pkg)) return true
+        if (
+          pkg.business_location_latitude == null ||
+          pkg.business_location_longitude == null
+        ) {
+          return false
+        }
+        return (
+          haversineKm(
+            userPos[0],
+            userPos[1],
+            pkg.business_location_latitude,
+            pkg.business_location_longitude,
+          ) <= NEARBY_KM
+        )
+      })
     }
 
     if (filters.sortBy) {

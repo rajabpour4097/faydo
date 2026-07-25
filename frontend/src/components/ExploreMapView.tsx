@@ -75,12 +75,16 @@ function haversineKm(
 interface ExploreMapViewProps {
   packages: Package[]
   onClose: () => void
+  initialUserPosition?: [number, number] | null
+  autoLocateOnOpen?: boolean
 }
 
 // ─── main component ───────────────────────────────────────────────────────────
 export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
   packages,
   onClose,
+  initialUserPosition = null,
+  autoLocateOnOpen = true,
 }) => {
   const navigate = useNavigate()
   const mapRef = useRef<L.Map | null>(null)
@@ -95,10 +99,16 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
     (p) => p.business_location_latitude != null && p.business_location_longitude != null,
   )
 
-  const defaultCenter: [number, number] =
-    locatedPackages.length > 0
-      ? [locatedPackages[0].business_location_latitude!, locatedPackages[0].business_location_longitude!]
-      : [35.6892, 51.389]
+  const mapCenter: [number, number] =
+    initialUserPosition ??
+    (locatedPackages.length > 0
+      ? [
+          locatedPackages[0].business_location_latitude!,
+          locatedPackages[0].business_location_longitude!,
+        ]
+      : [35.6892, 51.389])
+
+  const mapZoom = initialUserPosition ? 14 : locatedPackages.length > 1 ? 11 : 13
 
   const isNear = useCallback(
     (pkg: Package) => {
@@ -110,21 +120,39 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
 
   const nearCount = userPos ? locatedPackages.filter(isNear).length : 0
 
-  const handleLocate = () => {
-    if (!navigator.geolocation) { alert('مرورگر شما از موقعیت مکانی پشتیبانی نمی‌کند.'); return }
+  const handleLocate = useCallback(() => {
+    if (!navigator.geolocation) {
+      alert('مرورگر شما از موقعیت مکانی پشتیبانی نمی‌کند.')
+      return
+    }
     setIsLocating(true)
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const pos: [number, number] = [coords.latitude, coords.longitude]
         setUserPos(pos)
         setFlyTarget(pos)
-        setFlyZoom(13)
+        setFlyZoom(14)
         setIsLocating(false)
       },
-      () => { alert('خطا در دریافت موقعیت.'); setIsLocating(false) },
+      () => {
+        alert('خطا در دریافت موقعیت.')
+        setIsLocating(false)
+      },
       { enableHighAccuracy: true, timeout: 10000 },
     )
-  }
+  }, [])
+
+  useEffect(() => {
+    if (initialUserPosition) {
+      setUserPos(initialUserPosition)
+      setFlyTarget(initialUserPosition)
+      setFlyZoom(14)
+      return
+    }
+    if (autoLocateOnOpen) {
+      handleLocate()
+    }
+  }, [initialUserPosition, autoLocateOnOpen, handleLocate])
 
   return (
     <div className="fixed inset-0 z-[2000] flex flex-col" style={{ direction: 'ltr' }}>
@@ -158,8 +186,8 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
 
       {/* ── map ── */}
       <MapContainer
-        center={defaultCenter}
-        zoom={locatedPackages.length > 1 ? 11 : 13}
+        center={mapCenter}
+        zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >

@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { ExplorePromoSlider } from '../components/dashboard/ExplorePromoSlider'
+import { ExploreSearchOverlay } from '../components/explore/ExploreSearchOverlay'
+import { ExploreMapView } from '../components/ExploreMapView'
 import {
   CompactOfferCard,
   ExploreEmptySection,
@@ -64,15 +66,27 @@ export const Explore: React.FC = () => {
   return <ExploreCustomerView />
 }
 
+const FALLBACK_POPULAR_CITIES = [
+  { id: -1, name: 'تهران' },
+  { id: -2, name: 'مشهد' },
+  { id: -3, name: 'اصفهان' },
+  { id: -4, name: 'شیراز' },
+  { id: -5, name: 'رشت' },
+  { id: -6, name: 'کرج' },
+]
+
 const ExploreCustomerView: React.FC = () => {
   const { isDark } = useTheme()
   const navigate = useNavigate()
   const { isFavorite, toggleFavorite } = useFavorites()
+  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false)
+  const [mapOpen, setMapOpen] = useState(false)
 
   const {
     packages,
     loading,
     error,
+    userPos,
     filters,
     setFilters,
     availableCategories,
@@ -84,6 +98,55 @@ const ExploreCustomerView: React.FC = () => {
   const specialOffersPreview = specialOffers.slice(0, EXPLORE_PREVIEW_LIMITS.special)
   const nearYouPreview = nearYou.slice(0, EXPLORE_PREVIEW_LIMITS.nearYou)
   const weeklyTrendsPreview = weeklyTrends.slice(0, EXPLORE_PREVIEW_LIMITS.trends)
+
+  const popularCities = useMemo(() => {
+    const counts = new Map<number, { id: number; name: string; count: number }>()
+    packages.forEach(pkg => {
+      if (pkg.city?.id && pkg.city?.name && !isSamplePackage(pkg)) {
+        const existing = counts.get(pkg.city.id) ?? {
+          id: pkg.city.id,
+          name: pkg.city.name,
+          count: 0,
+        }
+        existing.count += 1
+        counts.set(pkg.city.id, existing)
+      }
+    })
+    const fromData = [...counts.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+      .map(({ id, name }) => ({ id, name }))
+    return fromData.length > 0 ? fromData : FALLBACK_POPULAR_CITIES
+  }, [packages])
+
+  const handleSelectCity = (cityId: number) => {
+    if (cityId < 0) {
+      const city = FALLBACK_POPULAR_CITIES.find(c => c.id === cityId)
+      if (!city) return
+      setFilters(prev => ({
+        ...prev,
+        search: city.name,
+        cities: [],
+        exploreCategoryId: null,
+        categories: [],
+      }))
+      return
+    }
+    setFilters(prev => ({
+      ...prev,
+      cities: [cityId],
+      search: '',
+      exploreCategoryId: null,
+      categories: [],
+    }))
+  }
+
+  const searchFieldLabel =
+    filters.search ||
+    (filters.cities.length === 1
+      ? packages.find(p => p.city?.id === filters.cities[0])?.city?.name || 'فیلتر شهر فعال'
+      : '') ||
+    'جستجوی باشگاه، هدیه یا برند...'
 
   const handleCategoryClick = (cat: ExploreCategory) => {
     if (filters.exploreCategoryId === cat.id) {
@@ -122,8 +185,10 @@ const ExploreCustomerView: React.FC = () => {
         </div>
 
         <div className="px-4 pt-3">
-          <div
-            className={`flex items-center gap-2.5 rounded-full border px-4 py-3 ${
+          <button
+            type="button"
+            onClick={() => setSearchOverlayOpen(true)}
+            className={`flex w-full items-center gap-2.5 rounded-full border px-4 py-3 text-right ${
               isDark
                 ? 'border-slate-700 bg-slate-800'
                 : 'border-gray-200 bg-white shadow-[0_1px_4px_rgba(15,23,42,0.05)]'
@@ -143,48 +208,20 @@ const ExploreCustomerView: React.FC = () => {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-            <input
-              type="search"
-              placeholder="جستجوی باشگاه، هدیه یا برند..."
-              value={filters.search}
-              onChange={e =>
-                setFilters(prev => ({
-                  ...prev,
-                  search: e.target.value,
-                  exploreCategoryId: null,
-                  categories: [],
-                }))
-              }
-              className={`min-w-0 flex-1 bg-transparent text-right text-[13px] leading-normal focus:outline-none ${
-                isDark
-                  ? 'text-white placeholder:text-slate-500'
-                  : 'text-gray-800 placeholder:text-gray-400'
+            <span
+              className={`min-w-0 flex-1 truncate text-[13px] ${
+                filters.search || filters.cities.length
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-gray-800'
+                  : isDark
+                    ? 'text-slate-500'
+                    : 'text-gray-400'
               }`}
-            />
-            {filters.search ? (
-              <button
-                type="button"
-                aria-label="پاک کردن جستجو"
-                onClick={() =>
-                  setFilters(prev => ({
-                    ...prev,
-                    search: '',
-                    exploreCategoryId: null,
-                    categories: [],
-                  }))
-                }
-                className="shrink-0 text-gray-400 hover:text-gray-600"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            ) : null}
-          </div>
+            >
+              {searchFieldLabel}
+            </span>
+          </button>
         </div>
 
         <div className="px-3 pt-4 pb-2">
@@ -328,6 +365,34 @@ const ExploreCustomerView: React.FC = () => {
           )}
         </section>
       </div>
+
+      <ExploreSearchOverlay
+        open={searchOverlayOpen}
+        onClose={() => setSearchOverlayOpen(false)}
+        search={filters.search}
+        onSearchChange={value =>
+          setFilters(prev => ({
+            ...prev,
+            search: value,
+            exploreCategoryId: null,
+            categories: [],
+            cities: [],
+          }))
+        }
+        popularCities={popularCities}
+        onSelectCity={handleSelectCity}
+        onOpenMap={() => setMapOpen(true)}
+        isDark={isDark}
+      />
+
+      {mapOpen ? (
+        <ExploreMapView
+          packages={packages}
+          onClose={() => setMapOpen(false)}
+          initialUserPosition={userPos}
+          autoLocateOnOpen={!userPos}
+        />
+      ) : null}
     </MobileDashboardLayout>
   )
 
@@ -336,22 +401,20 @@ const ExploreCustomerView: React.FC = () => {
       <div className="space-y-6 overflow-x-hidden" style={{ direction: 'rtl' }}>
         <ExplorePromoSlider packages={packages} />
 
-        <div
-          className={`flex items-center gap-3 rounded-2xl px-4 py-3 max-w-xl ${
+        <button
+          type="button"
+          onClick={() => setSearchOverlayOpen(true)}
+          className={`flex items-center gap-3 rounded-2xl px-4 py-3 max-w-xl w-full text-right ${
             isDark ? 'bg-slate-800 border border-slate-700' : 'bg-gray-100'
           }`}
         >
-          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-5 w-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input
-            type="text"
-            placeholder="جستجوی باشگاه، هدیه یا برند..."
-            value={filters.search}
-            onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            className="flex-1 bg-transparent focus:outline-none text-gray-900 dark:text-white"
-          />
-        </div>
+          <span className={`flex-1 truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {searchFieldLabel}
+          </span>
+        </button>
 
         <div className="grid grid-cols-5 gap-4 max-w-3xl">
           {EXPLORE_CATEGORIES.map(cat => (
@@ -446,6 +509,34 @@ const ExploreCustomerView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ExploreSearchOverlay
+        open={searchOverlayOpen}
+        onClose={() => setSearchOverlayOpen(false)}
+        search={filters.search}
+        onSearchChange={value =>
+          setFilters(prev => ({
+            ...prev,
+            search: value,
+            exploreCategoryId: null,
+            categories: [],
+            cities: [],
+          }))
+        }
+        popularCities={popularCities}
+        onSelectCity={handleSelectCity}
+        onOpenMap={() => setMapOpen(true)}
+        isDark={isDark}
+      />
+
+      {mapOpen ? (
+        <ExploreMapView
+          packages={packages}
+          onClose={() => setMapOpen(false)}
+          initialUserPosition={userPos}
+          autoLocateOnOpen={!userPos}
+        />
+      ) : null}
     </DashboardLayout>
   )
 

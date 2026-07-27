@@ -96,7 +96,7 @@ export const DashboardMobileHeader = ({
             >
               <p
                 className={`font-semibold truncate leading-tight ${
-                  isCustomer ? 'text-[11px] sm:text-xs' : 'text-sm'
+                  isCustomer ? 'text-[12.1px] sm:text-[13.2px]' : 'text-sm'
                 } ${isDark ? 'text-white' : 'text-[#0D1B3E]'}`}
               >
                 {displayName}

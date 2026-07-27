@@ -32,25 +32,23 @@ function TierCoinPedestal({
   icon,
   label,
   hasBuiltInPedestal = false,
+  labelClassName = '',
 }: {
   icon: string
   label: string
   hasBuiltInPedestal?: boolean
+  labelClassName?: string
 }) {
-  if (hasBuiltInPedestal) {
-    return (
-      <div className="relative flex items-center justify-center w-[120px] h-[120px] flex-shrink-0">
-        <img
-          src={icon}
-          alt={label}
-          className="w-full h-full object-contain drop-shadow-[0_12px_22px_rgba(15,23,42,0.16)]"
-          draggable={false}
-        />
-      </div>
-    )
-  }
-
-  return (
+  const coin = hasBuiltInPedestal ? (
+    <div className="relative flex items-center justify-center w-[120px] h-[120px] flex-shrink-0">
+      <img
+        src={icon}
+        alt={label}
+        className="w-full h-full object-contain drop-shadow-[0_12px_22px_rgba(15,23,42,0.16)]"
+        draggable={false}
+      />
+    </div>
+  ) : (
     <div className="relative flex flex-col items-center justify-end w-[108px] h-[108px] flex-shrink-0">
       <div
         className="absolute bottom-1 w-[72px] h-[22px] rounded-full"
@@ -73,6 +71,13 @@ function TierCoinPedestal({
         className="relative z-10 w-[78px] h-[78px] object-contain drop-shadow-[0_10px_18px_rgba(15,23,42,0.18)] -mb-1"
         draggable={false}
       />
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col items-center flex-shrink-0">
+      {coin}
+      <p className={`text-[13px] font-bold mt-1.5 ${labelClassName}`}>{label}</p>
     </div>
   )
 }
@@ -338,6 +343,7 @@ export const CustomerPointsCard = ({
             icon={tierInfo.heroIcon ?? tierInfo.icon}
             label={tierInfo.label}
             hasBuiltInPedestal={tierInfo.hasBuiltInPedestal}
+            labelClassName={tierInfo.badgeText}
           />
         </div>
       </div>

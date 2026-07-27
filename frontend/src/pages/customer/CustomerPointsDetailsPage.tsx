@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import moment from 'moment-jalaali'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
@@ -39,7 +38,16 @@ const EVENT_STYLES: Record<
 const DEFAULT_STYLE = { emoji: '✨', bg: 'bg-teal-500/10', ring: 'ring-teal-500/20' }
 
 function formatEventDate(iso: string) {
-  return moment(iso).format('jD jMMMM jYYYY · HH:mm')
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+
+  return new Intl.DateTimeFormat('fa-IR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
 function formatPoints(value: number) {

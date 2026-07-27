@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Bell, Menu } from 'lucide-react'
 import { FaydoLogo } from '../brand/FaydoLogo'
-import { MembershipTierBadge } from '../dashboard/MembershipTierBadge'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface DashboardMobileHeaderProps {
@@ -102,26 +101,13 @@ export const DashboardMobileHeader = ({
               >
                 {displayName}
               </p>
-              {isCustomer ? (
-                <div className="flex items-center justify-end gap-1 mt-0.5 min-w-0">
-                  <MembershipTierBadge micro />
-                  <span
-                    className={`text-[8px] sm:text-[9px] leading-none flex-shrink-0 ${
-                      isDark ? 'text-slate-400' : 'text-gray-500'
-                    }`}
-                  >
-                    {getRoleLabel(user?.type)}
-                  </span>
-                </div>
-              ) : (
-                <p
-                  className={`text-[10px] mt-0.5 leading-tight ${
-                    isDark ? 'text-slate-400' : 'text-gray-500'
-                  }`}
-                >
-                  {getRoleLabel(user?.type)}
-                </p>
-              )}
+              <p
+                className={`mt-0.5 leading-tight ${
+                  isCustomer ? 'text-[8px] sm:text-[9px]' : 'text-[10px]'
+                } ${isDark ? 'text-slate-400' : 'text-gray-500'}`}
+              >
+                {getRoleLabel(user?.type)}
+              </p>
             </div>
             <div className="relative flex-shrink-0">
               {user?.avatar ? (

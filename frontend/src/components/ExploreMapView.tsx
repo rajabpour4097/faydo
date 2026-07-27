@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import {
   MapContainer,
   TileLayer,
@@ -14,9 +15,57 @@ import { getFullImageUrl } from '../services/api'
 import { useNavigate } from 'react-router-dom'
 
 // ─── tile providers ───────────────────────────────────────────────────────────
-const STREET_TILE = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+const STREET_TILE = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 const SATELLITE_TILE =
   'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+
+function toCoord(value: unknown): number | null {
+  if (value == null || value === '') return null
+  const num = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(num) ? num : null
+}
+
+function normalizePackageLocation(pkg: Package) {
+  const lat = toCoord(pkg.business_location_latitude)
+  const lng = toCoord(pkg.business_location_longitude)
+  if (lat == null || lng == null) return null
+  return { ...pkg, business_location_latitude: lat, business_location_longitude: lng }
+}
+
+class MapErrorBoundary extends Component<
+  { children: ReactNode; onClose: () => void },
+  { hasError: boolean }
+> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          className="fixed inset-0 z-[2000] flex flex-col items-center justify-center bg-white px-6 text-center"
+          style={{ height: '100dvh', direction: 'rtl' }}
+        >
+          <p className="text-gray-800 font-bold mb-2">خطا در بارگذاری نقشه</p>
+          <p className="text-sm text-gray-500 mb-4">
+            لطفاً صفحه را رفرش کنید یا دوباره تلاش کنید.
+          </p>
+          <button
+            type="button"
+            onClick={this.props.onClose}
+            className="px-5 py-2 rounded-xl bg-teal-600 text-white text-sm font-bold"
+          >
+            بازگشت
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 // ─── inner component: exposes map instance via ref ────────────────────────────
 const MapRefCapture: React.FC<{
@@ -25,10 +74,32 @@ const MapRefCapture: React.FC<{
   zoom: number
 }> = ({ mapRef, target, zoom }) => {
   const map = useMap()
-  useEffect(() => { mapRef.current = map }, [map])
+  useEffect(() => { mapRef.current = map }, [map, mapRef])
   useEffect(() => {
     if (target) map.flyTo(target, zoom, { animate: true, duration: 1 })
   }, [target, zoom, map])
+  return null
+}
+
+const MapInvalidateSize: React.FC = () => {
+  const map = useMap()
+
+  useEffect(() => {
+    const invalidate = () => {
+      window.requestAnimationFrame(() => map.invalidateSize())
+    }
+
+    const timer = window.setTimeout(invalidate, 0)
+    window.addEventListener('resize', invalidate)
+    window.visualViewport?.addEventListener('resize', invalidate)
+
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('resize', invalidate)
+      window.visualViewport?.removeEventListener('resize', invalidate)
+    }
+  }, [map])
+
   return null
 }
 
@@ -88,6 +159,7 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
 }) => {
   const navigate = useNavigate()
   const mapRef = useRef<L.Map | null>(null)
+  const [isMapReady, setIsMapReady] = useState(false)
   const [isSatellite, setIsSatellite] = useState(false)
   const [isLocating, setIsLocating] = useState(false)
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
@@ -95,9 +167,9 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
   const [flyZoom, setFlyZoom] = useState(15)
   const NEARBY_KM = 5
 
-  const locatedPackages = packages.filter(
-    (p) => p.business_location_latitude != null && p.business_location_longitude != null,
-  )
+  const locatedPackages = packages
+    .map(normalizePackageLocation)
+    .filter((pkg): pkg is Package => pkg != null)
 
   const mapCenter: [number, number] =
     initialUserPosition ??
@@ -109,6 +181,18 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
       : [35.6892, 51.389])
 
   const mapZoom = initialUserPosition ? 14 : locatedPackages.length > 1 ? 11 : 13
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const timer = window.setTimeout(() => setIsMapReady(true), 0)
+
+    return () => {
+      window.clearTimeout(timer)
+      document.body.style.overflow = prevOverflow
+      setIsMapReady(false)
+    }
+  }, [])
 
   const isNear = useCallback(
     (pkg: Package) => {
@@ -154,8 +238,11 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
     }
   }, [initialUserPosition, autoLocateOnOpen, handleLocate])
 
-  return (
-    <div className="fixed inset-0 z-[2000] flex flex-col" style={{ direction: 'ltr' }}>
+  const content = (
+    <div
+      className="fixed inset-0 z-[2000] flex flex-col bg-gray-100"
+      style={{ height: '100dvh', direction: 'ltr' }}
+    >
 
       {/* ── top bar ── */}
       <div
@@ -185,54 +272,66 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
       </div>
 
       {/* ── map ── */}
-      <MapContainer
-        center={mapCenter}
-        zoom={mapZoom}
-        style={{ height: '100%', width: '100%' }}
-        zoomControl={false}
-      >
-        <TileLayer
-          key={isSatellite ? 'sat' : 'street'}
-          url={isSatellite ? SATELLITE_TILE : STREET_TILE}
-          attribution={isSatellite ? '© Esri' : '© OpenStreetMap © CARTO'}
-        />
-
-        <MapRefCapture mapRef={mapRef} target={flyTarget} zoom={flyZoom} />
-
-        {/* user dot + radius circle */}
-        {userPos && (
-          <>
-            <Marker position={userPos} icon={userDot} />
-            <CircleMarker
-              center={userPos}
-              radius={60}
-              pathOptions={{
-                color: '#3b82f6',
-                fillColor: '#3b82f6',
-                fillOpacity: 0.07,
-                weight: 1.5,
-                dashArray: '6 4',
-              }}
-            />
-          </>
-        )}
-
-        {/* business markers */}
-        {locatedPackages.map((pkg) => (
-          <Marker
-            key={pkg.id}
-            position={[pkg.business_location_latitude!, pkg.business_location_longitude!]}
-            icon={makeBusinessIcon(isNear(pkg))}
+      <div className="relative flex-1 min-h-0 w-full">
+        {!isMapReady ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <p className="text-sm text-gray-500" style={{ direction: 'rtl' }}>
+              در حال بارگذاری نقشه...
+            </p>
+          </div>
+        ) : (
+          <MapContainer
+            center={mapCenter}
+            zoom={mapZoom}
+            className="absolute inset-0 h-full w-full z-0"
+            zoomControl={false}
           >
-            <Popup minWidth={210} maxWidth={250}>
-              <BusinessPopup
-                pkg={pkg}
-                onNavigate={() => { onClose(); navigate(`/dashboard/business/${pkg.id}`) }}
-              />
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+            <TileLayer
+              key={isSatellite ? 'sat' : 'street'}
+              url={isSatellite ? SATELLITE_TILE : STREET_TILE}
+              attribution={isSatellite ? '© Esri' : '© OpenStreetMap contributors'}
+              {...(!isSatellite ? { subdomains: ['a', 'b', 'c'] } : {})}
+            />
+
+            <MapRefCapture mapRef={mapRef} target={flyTarget} zoom={flyZoom} />
+            <MapInvalidateSize />
+
+            {/* user dot + radius circle */}
+            {userPos && (
+              <>
+                <Marker position={userPos} icon={userDot} />
+                <CircleMarker
+                  center={userPos}
+                  radius={60}
+                  pathOptions={{
+                    color: '#3b82f6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.07,
+                    weight: 1.5,
+                    dashArray: '6 4',
+                  }}
+                />
+              </>
+            )}
+
+            {/* business markers */}
+            {locatedPackages.map((pkg) => (
+              <Marker
+                key={pkg.id}
+                position={[pkg.business_location_latitude!, pkg.business_location_longitude!]}
+                icon={makeBusinessIcon(isNear(pkg))}
+              >
+                <Popup minWidth={210} maxWidth={250}>
+                  <BusinessPopup
+                    pkg={pkg}
+                    onNavigate={() => { onClose(); navigate(`/dashboard/business/${pkg.id}`) }}
+                  />
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        )}
+      </div>
 
       {/* ── floating controls (right) ── */}
       <div className="absolute bottom-8 right-4 z-[2001] flex flex-col gap-2">
@@ -294,6 +393,11 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
         </div>
       )}
     </div>
+  )
+
+  return createPortal(
+    <MapErrorBoundary onClose={onClose}>{content}</MapErrorBoundary>,
+    document.body,
   )
 }
 

@@ -15,6 +15,9 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['leaflet', 'react-leaflet'],
+  },
   server: {
     host: '0.0.0.0', // Listen on all network interfaces
     port: 5173,

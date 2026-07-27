@@ -454,11 +454,27 @@ def update_customer_profile_view(request):
     except CustomerProfile.DoesNotExist:
         return Response({'error': 'Customer profile not found'}, status=status.HTTP_404_NOT_FOUND)
     
-    # Update customer profile fields
+    # Update customer profile fields (gender and birth_date are immutable once set)
     if 'gender' in request.data:
-        customer_profile.gender = request.data['gender']
+        new_gender = request.data['gender'] or None
+        if customer_profile.gender:
+            if new_gender != customer_profile.gender:
+                return Response(
+                    {'error': 'جنسیت پس از ثبت نام قابل تغییر نیست'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            customer_profile.gender = new_gender
     if 'birth_date' in request.data:
-        customer_profile.birth_date = request.data['birth_date'] or None
+        new_birth_date = request.data['birth_date'] or None
+        if customer_profile.birth_date:
+            if new_birth_date != str(customer_profile.birth_date):
+                return Response(
+                    {'error': 'تاریخ تولد پس از ثبت نام قابل تغییر نیست'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            customer_profile.birth_date = new_birth_date
     if 'address' in request.data:
         customer_profile.address = request.data['address']
     if 'city_id' in request.data:

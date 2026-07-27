@@ -24,6 +24,9 @@ interface EditModalProps {
   isLocation?: boolean
 }
 
+const isGenderSet = (gender?: string) => gender === 'male' || gender === 'female'
+const isBirthDateSet = (birthDate?: string) => !!birthDate?.trim()
+
 // ─── Set Password Modal ────────────────────────────────────────────────────
 const SetPasswordModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { isDark } = useTheme()
@@ -1564,9 +1567,9 @@ const DesktopProfile = () => {
           </ProfileSectionCard>
         ) : (
           <ProfileSectionCard title="اطلاعات شخصی" icon={icons.gender}>
-            <Field label="جنسیت" value={getCurrentValue('gender')} editable isRequired icon={icons.gender}
+            <Field label="جنسیت" value={getCurrentValue('gender')} editable={!isGenderSet(user?.profile?.gender)} isRequired icon={icons.gender}
               onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))} />
-            <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable isRequired icon={icons.calendar}
+            <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable={!isBirthDateSet(user?.profile?.birth_date)} isRequired icon={icons.calendar}
               onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))} />
             <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
               onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))} />
@@ -1987,9 +1990,9 @@ const MobileProfile = () => {
           </ProfileSectionCard>
         ) : (
           <ProfileSectionCard title="اطلاعات شخصی" icon={icons.gender} className="mx-4">
-            <Field label="جنسیت" value={getCurrentValue('gender')} editable isRequired icon={icons.gender}
+            <Field label="جنسیت" value={getCurrentValue('gender')} editable={!isGenderSet(user?.profile?.gender)} isRequired icon={icons.gender}
               onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))} />
-            <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable isRequired icon={icons.calendar}
+            <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable={!isBirthDateSet(user?.profile?.birth_date)} isRequired icon={icons.calendar}
               onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))} />
             <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
               onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))} />

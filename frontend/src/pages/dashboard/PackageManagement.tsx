@@ -2003,7 +2003,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
           return (
           <div
             key={amenity.id}
-            className={`flex items-center justify-between py-2.5 px-3 rounded-lg border transition-colors duration-200 ${
+            className={`flex items-center justify-between py-1.5 px-2 rounded-md border transition-colors duration-200 ${
               isSelected
                 ? isDark
                   ? 'border-indigo-500 bg-indigo-900/30'
@@ -2013,7 +2013,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                   : 'border-gray-200 bg-gray-50'
             }`}
           >
-            <span className={`text-sm ${
+            <span className={`text-xs leading-tight ${
               isSelected
                 ? isDark ? 'text-indigo-200 font-medium' : 'text-indigo-900 font-medium'
                 : isDark ? 'text-slate-400' : 'text-gray-500'
@@ -2024,6 +2024,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
               id={`amenity-${amenity.id}`}
               checked={isSelected}
               onChange={(checked) => toggleAmenity(amenity.id, checked)}
+              size="sm"
             />
           </div>
         )}
@@ -2044,7 +2045,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                   <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     امکانات عمومی
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {generalAmenities.length > 0
                       ? generalAmenities.map(renderAmenityRow)
                       : (
@@ -2063,7 +2064,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                         </span>
                       )}
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {specificAmenities.map(renderAmenityRow)}
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { apiService, Package, VipExperienceCategory, AmenityItem } from '../../services/api'
@@ -1090,6 +1090,8 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<number[]>([])
   const [businessTypeLabel, setBusinessTypeLabel] = useState<string | null>(null)
   const [workingHoursSchedule, setWorkingHoursSchedule] = useState(DEFAULT_SCHEDULE)
+  const stepsContainerRef = useRef<HTMLDivElement>(null)
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([])
   // const [isEditing] = useState(!!editingPackageId)
   
   const [formData, setFormData] = useState({
@@ -1267,6 +1269,17 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
       loadWorkingHours()
     }
   }, [currentStep, packageId])
+
+  useEffect(() => {
+    const activeStepEl = stepRefs.current[currentStep - 1]
+    if (activeStepEl) {
+      activeStepEl.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      })
+    }
+  }, [currentStep])
 
 
   const durationOptions = [
@@ -2215,7 +2228,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                       </div>
                     )}
                     {selectedAmenityIds.length > 0 && (
-                      <p>امکانات انتخاب\u200cشده: {selectedAmenityIds.length} مورد</p>
+                      <p>امکانات انتخاب شده: {selectedAmenityIds.length} مورد</p>
                     )}
                     <p>ساعات کاری: {workingHoursSchedule.filter(d => !d.is_closed).length} روز فعال</p>
                     {formData.duration && (
@@ -2250,43 +2263,63 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         </div>
 
         {/* Progress Steps */}
-        <div className="p-3 border-b border-gray-200 overflow-x-auto">
-          <div className="flex items-center justify-between min-w-[520px]">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex flex-col items-center flex-1 min-w-0">
-                <div className={`text-[10px] font-medium mb-1 truncate max-w-full px-0.5 ${
-                  currentStep >= step.id 
-                    ? isDark ? 'text-white' : 'text-gray-900' 
-                    : isDark ? 'text-slate-400' : 'text-gray-500'
-                }`}>
-                  {step.title}
-                </div>
-                <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
-                  currentStep >= step.id 
-                    ? 'bg-blue-600 text-white' 
-                    : isDark 
-                      ? 'bg-slate-700 text-slate-400' 
-                      : 'bg-gray-200 text-gray-500'
-                }`}>
-                  {currentStep > step.id ? (
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : currentStep === step.id ? (
-                    <span className="text-[10px] font-bold">{step.id}</span>
-                  ) : (
-                    <span className="text-[10px]">{step.icon}</span>
+        <div className="px-3 pt-2 pb-3 border-b border-gray-200">
+          <p className={`text-center text-xs font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {steps.find(s => s.id === currentStep)?.title}
+            <span className={`font-normal mr-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+              (مرحله {currentStep} از {steps.length})
+            </span>
+          </p>
+          <div
+            ref={stepsContainerRef}
+            className="overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="flex items-center justify-center gap-0.5 min-w-max mx-auto px-1">
+              {steps.map((step, index) => (
+                <React.Fragment key={step.id}>
+                  <div
+                    ref={(el) => { stepRefs.current[index] = el }}
+                    className="flex flex-col items-center w-11 shrink-0"
+                  >
+                    <div className={`flex items-center justify-center w-6 h-6 rounded-full mb-0.5 ${
+                      currentStep > step.id
+                        ? 'bg-blue-600 text-white'
+                        : currentStep === step.id
+                          ? 'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-1'
+                          : isDark
+                            ? 'bg-slate-700 text-slate-400'
+                            : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {currentStep > step.id ? (
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : currentStep === step.id ? (
+                        <span className="text-[10px] font-bold">{step.id}</span>
+                      ) : (
+                        <span className="text-[10px]">{step.icon}</span>
+                      )}
+                    </div>
+                    <span className={`text-[9px] leading-tight text-center truncate w-full ${
+                      currentStep === step.id
+                        ? isDark ? 'text-white font-semibold' : 'text-blue-700 font-semibold'
+                        : currentStep > step.id
+                          ? isDark ? 'text-slate-300' : 'text-gray-600'
+                          : isDark ? 'text-slate-500' : 'text-gray-400'
+                    }`}>
+                      {step.title}
+                    </span>
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className={`h-0.5 w-3 shrink-0 mb-3 ${
+                      currentStep > step.id
+                        ? 'bg-blue-600'
+                        : isDark ? 'bg-slate-600' : 'bg-gray-300'
+                    }`} />
                   )}
-                </div>
-                {index < steps.length - 1 && (
-                  <div className={`w-full max-w-[36px] h-0.5 mx-1 mt-3 ${
-                    currentStep > step.id 
-                      ? 'bg-blue-600' 
-                      : isDark ? 'bg-slate-600' : 'bg-gray-300'
-                  }`} />
-                )}
-              </div>
-            ))}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -1271,14 +1271,14 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
   }, [currentStep, packageId])
 
   useEffect(() => {
+    const container = stepsContainerRef.current
     const activeStepEl = stepRefs.current[currentStep - 1]
-    if (activeStepEl) {
-      activeStepEl.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
-      })
-    }
+    if (!container || !activeStepEl) return
+
+    requestAnimationFrame(() => {
+      const targetLeft = activeStepEl.offsetLeft - (container.clientWidth - activeStepEl.clientWidth) / 2
+      container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' })
+    })
   }, [currentStep])
 
 
@@ -2272,9 +2272,10 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
           </p>
           <div
             ref={stepsContainerRef}
+            dir="ltr"
             className="overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            <div className="flex items-center justify-center gap-0.5 min-w-max mx-auto px-1">
+            <div className="flex items-center justify-start gap-0.5 min-w-max px-1" dir="rtl">
               {steps.map((step, index) => (
                 <React.Fragment key={step.id}>
                   <div

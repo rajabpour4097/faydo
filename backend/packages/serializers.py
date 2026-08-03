@@ -143,6 +143,12 @@ class PackageListSerializer(serializers.ModelSerializer):
     # تصاویر گالری (حداکثر ۵ عکس)
     gallery_images = serializers.SerializerMethodField()
 
+    # اطلاعات تکمیلی پروفایل کسب‌وکار
+    business_description = serializers.SerializerMethodField()
+    business_address = serializers.SerializerMethodField()
+    business_phone = serializers.SerializerMethodField()
+    club_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Package
         fields = [
@@ -155,6 +161,7 @@ class PackageListSerializer(serializers.ModelSerializer):
             'average_rating', 'total_comments',
             'business_location_latitude', 'business_location_longitude',
             'gallery_images',
+            'business_description', 'business_address', 'business_phone', 'club_name',
         ]
         read_only_fields = ['id', 'created_at', 'modified_at']
     
@@ -354,7 +361,7 @@ class PackageListSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             images = list(
                 business_profile.gallery_images
-                .order_by('-is_featured', 'order', '-created_at')[:5]
+                .order_by('-is_featured', 'order', '-created_at')[:4]
             )
             result = []
             for img in images:
@@ -367,6 +374,32 @@ class PackageListSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting gallery images: {e}")
             return []
+
+    def get_business_description(self, obj):
+        try:
+            return obj.business.description or ''
+        except Exception:
+            return ''
+
+    def get_business_address(self, obj):
+        try:
+            return obj.business.address or ''
+        except Exception:
+            return ''
+
+    def get_business_phone(self, obj):
+        try:
+            return obj.business.business_phone or ''
+        except Exception:
+            return ''
+
+    def get_club_name(self, obj):
+        try:
+            from packages.club_utils import resolve_business_club
+            club = resolve_business_club(obj.business)
+            return club.name if club else ''
+        except Exception:
+            return ''
 
 
 class PackageDetailSerializer(serializers.ModelSerializer):

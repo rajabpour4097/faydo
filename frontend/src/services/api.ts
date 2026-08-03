@@ -204,6 +204,10 @@ export interface Package {
   gallery_images?: string[]
   business_location_latitude?: number
   business_location_longitude?: number
+  business_description?: string
+  business_address?: string
+  business_phone?: string
+  club_name?: string
   business_category?: {
     id: number
     name: string

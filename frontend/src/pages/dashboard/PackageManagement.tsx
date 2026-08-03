@@ -1998,23 +1998,35 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
       }
 
       case 4: {
-        const renderAmenityRow = (amenity: AmenityItem) => (
+        const renderAmenityRow = (amenity: AmenityItem) => {
+          const isSelected = selectedAmenityIds.includes(amenity.id)
+          return (
           <div
             key={amenity.id}
-            className={`flex items-center justify-between py-2.5 px-3 rounded-lg border ${
-              isDark ? 'border-slate-600 bg-slate-700/40' : 'border-gray-200 bg-white'
+            className={`flex items-center justify-between py-2.5 px-3 rounded-lg border transition-colors duration-200 ${
+              isSelected
+                ? isDark
+                  ? 'border-indigo-500 bg-indigo-900/30'
+                  : 'border-indigo-300 bg-indigo-50'
+                : isDark
+                  ? 'border-slate-600 bg-slate-700/40'
+                  : 'border-gray-200 bg-gray-50'
             }`}
           >
-            <span className={`text-sm ${isDark ? 'text-slate-200' : 'text-gray-800'}`}>
+            <span className={`text-sm ${
+              isSelected
+                ? isDark ? 'text-indigo-200 font-medium' : 'text-indigo-900 font-medium'
+                : isDark ? 'text-slate-400' : 'text-gray-500'
+            }`}>
               {amenity.name}
             </span>
             <ToggleSwitch
               id={`amenity-${amenity.id}`}
-              checked={selectedAmenityIds.includes(amenity.id)}
+              checked={isSelected}
               onChange={(checked) => toggleAmenity(amenity.id, checked)}
             />
           </div>
-        )
+        )}
 
         return (
           <div className="space-y-4">
@@ -2032,9 +2044,6 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                   <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     امکانات عمومی
                   </h3>
-                  <p className={`text-xs mb-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                    مواردی مانند ساعت کاری، شماره تماس، آدرس، نقشه، امتیاز، نظرات، شبکه\u200cهای اجتماعی و عکس\u200cها از پروفایل کسب\u200cوکار به\u200cصورت خودکار نمایش داده می\u200cشوند.
-                  </p>
                   <div className="space-y-2">
                     {generalAmenities.length > 0
                       ? generalAmenities.map(renderAmenityRow)
@@ -2137,7 +2146,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                   )}
 
                   {day.is_closed && (
-                    <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>این روز تعطیل ثبت می\u200cشود.</p>
+                    <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>این روز تعطیل ثبت میشود.</p>
                   )}
                 </div>
               ))}

@@ -2084,37 +2084,37 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
               </p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {workingHoursSchedule.map((day) => (
                 <div
                   key={day.weekday}
-                  className={`rounded-lg border p-3 ${isDark ? 'border-slate-600 bg-slate-700/40' : 'border-gray-200 bg-gray-50'}`}
+                  className={`rounded-md border py-1.5 px-2 ${isDark ? 'border-slate-600 bg-slate-700/40' : 'border-gray-200 bg-gray-50'}`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-xs font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {day.weekday_display}
                     </span>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
+                    <label className="flex items-center gap-1 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={day.is_closed}
                         onChange={(e) => updateWorkingHour(day.weekday, 'is_closed', e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className={`text-xs ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>تعطیل</span>
+                      <span className={`text-[10px] ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>تعطیل</span>
                     </label>
                   </div>
 
                   {!day.is_closed && (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1.5">
                       <div>
-                        <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        <label className={`block text-[10px] mb-0.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                           ساعت شروع
                         </label>
                         <select
                           value={day.start_time}
                           onChange={(e) => updateWorkingHour(day.weekday, 'start_time', e.target.value)}
-                          className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-1.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             isDark
                               ? 'bg-slate-600 border-slate-500 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
@@ -2126,13 +2126,13 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                         </select>
                       </div>
                       <div>
-                        <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        <label className={`block text-[10px] mb-0.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                           ساعت پایان
                         </label>
                         <select
                           value={day.end_time}
                           onChange={(e) => updateWorkingHour(day.weekday, 'end_time', e.target.value)}
-                          className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-1.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             isDark
                               ? 'bg-slate-600 border-slate-500 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
@@ -2147,7 +2147,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                   )}
 
                   {day.is_closed && (
-                    <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>این روز تعطیل ثبت میشود.</p>
+                    <p className={`text-[10px] ${isDark ? 'text-red-400' : 'text-red-600'}`}>این روز تعطیل ثبت می\u200cشود.</p>
                   )}
                 </div>
               ))}

@@ -256,6 +256,32 @@ export interface VipExperience {
   modified_at: string
 }
 
+export interface AmenityItem {
+  id: number
+  name: string
+  slug: string
+  business_type: string
+  order: number
+  is_selected?: boolean
+}
+
+export interface PackageAmenitiesData {
+  business_type: string | null
+  business_type_label?: string | null
+  general_amenities: AmenityItem[]
+  specific_amenities: AmenityItem[]
+  selected_amenity_ids: number[]
+}
+
+export interface WorkingHoursEntry {
+  weekday: number
+  weekday_display: string
+  start_time: string
+  end_time: string
+  is_closed: boolean
+  is_break?: boolean
+}
+
 export interface Comment {
   id: number
   text: string
@@ -1082,6 +1108,34 @@ class ApiService {
     })
   }
 
+  async getPackageAmenities(packageId: number): Promise<ApiResponse<PackageAmenitiesData>> {
+    return this.request<PackageAmenitiesData>(`/packages/packages/${packageId}/amenities/`)
+  }
+
+  async savePackageAmenities(
+    packageId: number,
+    amenityIds: number[]
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/packages/packages/${packageId}/amenities/`, {
+      method: 'POST',
+      body: JSON.stringify({ amenity_ids: amenityIds }),
+    })
+  }
+
+  async getPackageWorkingHours(packageId: number): Promise<ApiResponse<{ schedule: WorkingHoursEntry[] }>> {
+    return this.request<{ schedule: WorkingHoursEntry[] }>(`/packages/packages/${packageId}/working_hours/`)
+  }
+
+  async savePackageWorkingHours(
+    packageId: number,
+    schedule: { weekday: number; start_time: string | null; end_time: string | null; is_closed: boolean }[]
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/packages/packages/${packageId}/working_hours/`, {
+      method: 'POST',
+      body: JSON.stringify({ schedule }),
+    })
+  }
+
   async finalizePackage(packageId: number, durationMonths: number, agree: boolean): Promise<ApiResponse<{ message: string; id: number; start_date: string; end_date: string; status: string }>> {
     return this.request<{ message: string; id: number; start_date: string; end_date: string; status: string }>(`/packages/packages/${packageId}/finalize/`, {
       method: 'POST',
@@ -1104,6 +1158,8 @@ class ApiService {
     specific_discount: { title: string; percentage: number; description: string } | null;
     elite_gift: { gift: string; amount: number | null; count: number | null } | null;
     vip_experiences: { id: number; name: string; vip_type: string; description?: string }[];
+    selected_amenity_ids?: number[];
+    working_hours?: { weekday: number; weekday_display: string; start_time: string | null; end_time: string | null; is_closed: boolean }[];
   }>> {
     return this.request(`/packages/packages/${packageId}/status/`)
   }

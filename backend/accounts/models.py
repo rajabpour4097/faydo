@@ -477,3 +477,67 @@ class BusinessWorkingHours(BaseModel):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class Amenity(BaseModel):
+    """Catalog of business amenities (general + category-specific)."""
+
+    BUSINESS_TYPE_CHOICES = [
+        ('general', 'عمومی'),
+        ('cafe', 'کافه'),
+        ('restaurant', 'رستوران'),
+        ('bakery', 'بیکری و شیرینی\u200cپزی'),
+        ('medical', 'کلینیک درمانی'),
+        ('beauty', 'مراکز زیبایی'),
+        ('gym', 'باشگاه ورزشی'),
+        ('boutique', 'مزون'),
+        ('pets', 'پت\u200cشاپ'),
+        ('salon', 'آرایشگاه'),
+        ('playground', 'خانه بازی'),
+    ]
+
+    name = models.CharField(max_length=255, verbose_name='نام')
+    slug = models.SlugField(max_length=255, unique=True, verbose_name='شناسه')
+    business_type = models.CharField(
+        max_length=20,
+        choices=BUSINESS_TYPE_CHOICES,
+        default='general',
+        verbose_name='نوع کسب\u200cوکار',
+    )
+    order = models.PositiveIntegerField(default=0, verbose_name='ترتیب نمایش')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+
+    class Meta:
+        verbose_name = 'امکانات'
+        verbose_name_plural = 'امکانات'
+        ordering = ['business_type', 'order', 'name']
+
+    def __str__(self):
+        return self.name
+
+
+class BusinessAmenity(BaseModel):
+    """Selected amenities for a business profile."""
+
+    business_profile = models.ForeignKey(
+        BusinessProfile,
+        on_delete=models.CASCADE,
+        related_name='selected_amenities',
+        verbose_name='پروفایل کسب\u200cوکار',
+    )
+    amenity = models.ForeignKey(
+        Amenity,
+        on_delete=models.CASCADE,
+        related_name='business_selections',
+        verbose_name='امکانات',
+    )
+    is_enabled = models.BooleanField(default=True, verbose_name='فعال')
+
+    class Meta:
+        verbose_name = 'امکانات انتخاب\u200cشده'
+        verbose_name_plural = 'امکانات انتخاب\u200cشده'
+        unique_together = ['business_profile', 'amenity']
+
+    def __str__(self):
+        status = 'فعال' if self.is_enabled else 'غیرفعال'
+        return f"{self.business_profile.name} - {self.amenity.name} ({status})"

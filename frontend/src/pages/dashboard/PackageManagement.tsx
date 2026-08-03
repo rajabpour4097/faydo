@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { apiService, Package, VipExperienceCategory } from '../../services/api'
+import { apiService, Package, VipExperienceCategory, AmenityItem } from '../../services/api'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { useTheme } from '../../contexts/ThemeContext'
+import { ToggleSwitch } from '../../components/ui/ToggleSwitch'
 
 // ─── Helpers for currency formatting ───────────────────────────────────────
 /**
@@ -31,6 +32,37 @@ const parseAmount = (value: string): number => {
   const stripped = stripFormat(value)
   return stripped ? parseFloat(stripped) : 0
 }
+
+const WEEKDAYS = [
+  { weekday: 0, label: 'شنبه' },
+  { weekday: 1, label: 'یکشنبه' },
+  { weekday: 2, label: 'دوشنبه' },
+  { weekday: 3, label: 'سه\u200cشنبه' },
+  { weekday: 4, label: 'چهارشنبه' },
+  { weekday: 5, label: 'پنج\u200cشنبه' },
+  { weekday: 6, label: 'جمعه' },
+]
+
+const TIME_OPTIONS: string[] = (() => {
+  const options: string[] = []
+  for (let h = 0; h < 24; h++) {
+    for (const m of [0, 30]) {
+      options.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+    }
+  }
+  return options
+})()
+
+const DEFAULT_SCHEDULE = WEEKDAYS.map(({ weekday, label }) => ({
+  weekday,
+  weekday_display: label,
+  start_time: '09:00',
+  end_time: '22:00',
+  is_closed: false,
+}))
+
+const formatTimeForApi = (time: string) => (time.length === 5 ? `${time}:00` : time)
+const formatTimeForDisplay = (time: string) => (time ? time.slice(0, 5) : '09:00')
 // ────────────────────────────────────────────────────────────────────────────
 
 interface PackageManagementProps {}
@@ -1052,6 +1084,12 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [packageId] = useState<number | null>(editingPackageId || null)
+  const [amenitiesLoading, setAmenitiesLoading] = useState(false)
+  const [generalAmenities, setGeneralAmenities] = useState<AmenityItem[]>([])
+  const [specificAmenities, setSpecificAmenities] = useState<AmenityItem[]>([])
+  const [selectedAmenityIds, setSelectedAmenityIds] = useState<number[]>([])
+  const [businessTypeLabel, setBusinessTypeLabel] = useState<string | null>(null)
+  const [workingHoursSchedule, setWorkingHoursSchedule] = useState(DEFAULT_SCHEDULE)
   // const [isEditing] = useState(!!editingPackageId)
   
   const [formData, setFormData] = useState({
@@ -1136,6 +1174,34 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
             vipDescription: vipExp?.description || '',
           }))
         }
+
+        if (data.selected_amenity_ids) {
+          setSelectedAmenityIds(data.selected_amenity_ids)
+        }
+
+        if (data.working_hours && data.working_hours.length > 0) {
+          setWorkingHoursSchedule(
+            WEEKDAYS.map(({ weekday, label }) => {
+              const entry = data.working_hours!.find(h => h.weekday === weekday)
+              if (entry) {
+                return {
+                  weekday,
+                  weekday_display: entry.weekday_display || label,
+                  start_time: formatTimeForDisplay(entry.start_time || '09:00'),
+                  end_time: formatTimeForDisplay(entry.end_time || '22:00'),
+                  is_closed: entry.is_closed,
+                }
+              }
+              return {
+                weekday,
+                weekday_display: label,
+                start_time: '09:00',
+                end_time: '22:00',
+                is_closed: false,
+              }
+            })
+          )
+        }
       }
     } catch (err) {
       setError('خطا در بارگذاری داده‌های پکیج')
@@ -1148,8 +1214,59 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
     { id: 1, title: 'تخفیف', icon: '💰' },
     { id: 2, title: 'هدیه', icon: '🎁' },
     { id: 3, title: 'VIP', icon: '⭐' },
-    { id: 4, title: 'تایید', icon: '✅' },
+    { id: 4, title: 'امکانات', icon: '✨' },
+    { id: 5, title: 'ساعات', icon: '🕐' },
+    { id: 6, title: 'تایید', icon: '✅' },
   ]
+
+  const loadAmenities = async () => {
+    if (!packageId) return
+    try {
+      setAmenitiesLoading(true)
+      const response = await apiService.getPackageAmenities(packageId)
+      if (response.data) {
+        setGeneralAmenities(response.data.general_amenities)
+        setSpecificAmenities(response.data.specific_amenities)
+        if (response.data.selected_amenity_ids.length > 0) {
+          setSelectedAmenityIds(response.data.selected_amenity_ids)
+        }
+        setBusinessTypeLabel(response.data.business_type_label || response.data.business_type)
+      }
+    } catch {
+      setError('خطا در بارگذاری امکانات')
+    } finally {
+      setAmenitiesLoading(false)
+    }
+  }
+
+  const loadWorkingHours = async () => {
+    if (!packageId) return
+    try {
+      const response = await apiService.getPackageWorkingHours(packageId)
+      if (response.data?.schedule?.length) {
+        setWorkingHoursSchedule(
+          response.data.schedule.map(entry => ({
+            weekday: entry.weekday,
+            weekday_display: entry.weekday_display,
+            start_time: formatTimeForDisplay(entry.start_time),
+            end_time: formatTimeForDisplay(entry.end_time),
+            is_closed: entry.is_closed,
+          }))
+        )
+      }
+    } catch {
+      setError('خطا در بارگذاری ساعات کاری')
+    }
+  }
+
+  useEffect(() => {
+    if (currentStep === 4 && packageId) {
+      loadAmenities()
+    }
+    if (currentStep === 5 && packageId) {
+      loadWorkingHours()
+    }
+  }, [currentStep, packageId])
 
 
   const durationOptions = [
@@ -1186,7 +1303,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
 
 
   const nextStep = async () => {
-    if (currentStep < 4) {
+    if (currentStep < 6) {
       // ذخیره مرحله فعلی
       let saved = false
       switch (currentStep) {
@@ -1242,6 +1359,12 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
             return
           }
           saved = await saveVip()
+          break
+        case 4:
+          saved = await saveAmenities()
+          break
+        case 5:
+          saved = await saveWorkingHours()
           break
       }
       
@@ -1390,7 +1513,78 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
       }
       return true
     } catch (err) {
-      setError('خطا در ذخیره گزینه‌های طلایی و VIP')
+      setError('خطا در ذخیره گزینه\u200cهای طلایی و VIP')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleAmenity = (amenityId: number, enabled: boolean) => {
+    setSelectedAmenityIds(prev =>
+      enabled ? [...new Set([...prev, amenityId])] : prev.filter(id => id !== amenityId)
+    )
+  }
+
+  const saveAmenities = async () => {
+    if (!packageId) return false
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await apiService.savePackageAmenities(packageId, selectedAmenityIds)
+      if (response.error) {
+        setError(response.error)
+        return false
+      }
+      return true
+    } catch {
+      setError('خطا در ذخیره امکانات')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateWorkingHour = (
+    weekday: number,
+    field: 'start_time' | 'end_time' | 'is_closed',
+    value: string | boolean
+  ) => {
+    setWorkingHoursSchedule(prev =>
+      prev.map(day =>
+        day.weekday === weekday ? { ...day, [field]: value } : day
+      )
+    )
+  }
+
+  const saveWorkingHours = async () => {
+    if (!packageId) return false
+    try {
+      setLoading(true)
+      setError(null)
+
+      for (const day of workingHoursSchedule) {
+        if (!day.is_closed && day.start_time >= day.end_time) {
+          setError(`ساعت شروع ${day.weekday_display} باید کمتر از ساعت پایان باشد.`)
+          return false
+        }
+      }
+
+      const schedule = workingHoursSchedule.map(day => ({
+        weekday: day.weekday,
+        start_time: day.is_closed ? null : formatTimeForApi(day.start_time),
+        end_time: day.is_closed ? null : formatTimeForApi(day.end_time),
+        is_closed: day.is_closed,
+      }))
+
+      const response = await apiService.savePackageWorkingHours(packageId, schedule)
+      if (response.error) {
+        setError(response.error)
+        return false
+      }
+      return true
+    } catch {
+      setError('خطا در ذخیره ساعات کاری')
       return false
     } finally {
       setLoading(false)
@@ -1442,6 +1636,10 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
       case 3:
         return "سطح طلایی الزامی است. سطح VIP اختیاری است و در صورت تمایل می‌توانید آن را تکمیل کنید."
       case 4:
+        return "امکانات عمومی و اختصاصی کسب‌وکار خود را انتخاب کنید. این موارد در صفحه کسب‌وکار به مشتریان نمایش داده می‌شوند."
+      case 5:
+        return "ساعات کاری هفتگی را تنظیم کنید. برای روزهای تعطیل، گزینه «تعطیل» را فعال کنید."
+      case 6:
         return "در این بخش مدت زمان طرح و خلاصه‌ای از پکیج خود را مشاهده کنید."
       default:
         return ""
@@ -1799,7 +1997,155 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         )
       }
 
-      case 4:
+      case 4: {
+        const renderAmenityRow = (amenity: AmenityItem) => (
+          <div
+            key={amenity.id}
+            className={`flex items-center justify-between py-2.5 px-3 rounded-lg border ${
+              isDark ? 'border-slate-600 bg-slate-700/40' : 'border-gray-200 bg-white'
+            }`}
+          >
+            <span className={`text-sm ${isDark ? 'text-slate-200' : 'text-gray-800'}`}>
+              {amenity.name}
+            </span>
+            <ToggleSwitch
+              id={`amenity-${amenity.id}`}
+              checked={selectedAmenityIds.includes(amenity.id)}
+              onChange={(checked) => toggleAmenity(amenity.id, checked)}
+            />
+          </div>
+        )
+
+        return (
+          <div className="space-y-4">
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-teal-50'} rounded-lg p-3 border ${isDark ? 'border-slate-600' : 'border-teal-200'}`}>
+              <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-teal-800'}`}>
+                {getStepDescription(4)}
+              </p>
+            </div>
+
+            {amenitiesLoading ? (
+              <p className="text-xs text-gray-500 text-center py-4">در حال بارگذاری امکانات...</p>
+            ) : (
+              <>
+                <div>
+                  <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    امکانات عمومی
+                  </h3>
+                  <p className={`text-xs mb-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                    مواردی مانند ساعت کاری، شماره تماس، آدرس، نقشه، امتیاز، نظرات، شبکه\u200cهای اجتماعی و عکس\u200cها از پروفایل کسب\u200cوکار به\u200cصورت خودکار نمایش داده می\u200cشوند.
+                  </p>
+                  <div className="space-y-2">
+                    {generalAmenities.length > 0
+                      ? generalAmenities.map(renderAmenityRow)
+                      : (
+                        <p className="text-xs text-gray-500">امکانات عمومی یافت نشد.</p>
+                      )}
+                  </div>
+                </div>
+
+                {specificAmenities.length > 0 && (
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      امکانات اختصاصی
+                      {businessTypeLabel && (
+                        <span className={`text-xs font-normal mr-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                          ({businessTypeLabel})
+                        </span>
+                      )}
+                    </h3>
+                    <div className="space-y-2">
+                      {specificAmenities.map(renderAmenityRow)}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )
+      }
+
+      case 5:
+        return (
+          <div className="space-y-3">
+            <div className={`${isDark ? 'bg-slate-700' : 'bg-blue-50'} rounded-lg p-3 border ${isDark ? 'border-slate-600' : 'border-blue-200'}`}>
+              <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-blue-800'}`}>
+                {getStepDescription(5)}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {workingHoursSchedule.map((day) => (
+                <div
+                  key={day.weekday}
+                  className={`rounded-lg border p-3 ${isDark ? 'border-slate-600 bg-slate-700/40' : 'border-gray-200 bg-gray-50'}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {day.weekday_display}
+                    </span>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={day.is_closed}
+                        onChange={(e) => updateWorkingHour(day.weekday, 'is_closed', e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className={`text-xs ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>تعطیل</span>
+                    </label>
+                  </div>
+
+                  {!day.is_closed && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                          ساعت شروع
+                        </label>
+                        <select
+                          value={day.start_time}
+                          onChange={(e) => updateWorkingHour(day.weekday, 'start_time', e.target.value)}
+                          className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark
+                              ? 'bg-slate-600 border-slate-500 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          }`}
+                        >
+                          {TIME_OPTIONS.map(time => (
+                            <option key={`start-${day.weekday}-${time}`} value={time}>{time}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                          ساعت پایان
+                        </label>
+                        <select
+                          value={day.end_time}
+                          onChange={(e) => updateWorkingHour(day.weekday, 'end_time', e.target.value)}
+                          className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark
+                              ? 'bg-slate-600 border-slate-500 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          }`}
+                        >
+                          {TIME_OPTIONS.map(time => (
+                            <option key={`end-${day.weekday}-${time}`} value={time}>{time}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {day.is_closed && (
+                    <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>این روز تعطیل ثبت می\u200cشود.</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case 6:
         return (
           <div className="space-y-3">
             {/* راهنمایی مرحله */}
@@ -1858,6 +2204,10 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                         )}
                       </div>
                     )}
+                    {selectedAmenityIds.length > 0 && (
+                      <p>امکانات انتخاب\u200cشده: {selectedAmenityIds.length} مورد</p>
+                    )}
+                    <p>ساعات کاری: {workingHoursSchedule.filter(d => !d.is_closed).length} روز فعال</p>
                     {formData.duration && (
                       <p>مدت زمان: {durationOptions.find(opt => opt.value === formData.duration)?.label}</p>
                     )}
@@ -1890,18 +2240,18 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         </div>
 
         {/* Progress Steps */}
-        <div className="p-3 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+        <div className="p-3 border-b border-gray-200 overflow-x-auto">
+          <div className="flex items-center justify-between min-w-[520px]">
             {steps.map((step, index) => (
-              <div key={step.id} className="flex flex-col items-center">
-                <div className={`text-xs font-medium mb-1 ${
+              <div key={step.id} className="flex flex-col items-center flex-1 min-w-0">
+                <div className={`text-[10px] font-medium mb-1 truncate max-w-full px-0.5 ${
                   currentStep >= step.id 
                     ? isDark ? 'text-white' : 'text-gray-900' 
                     : isDark ? 'text-slate-400' : 'text-gray-500'
                 }`}>
                   {step.title}
                 </div>
-                <div className={`flex items-center justify-center w-7 h-7 rounded-full ${
+                <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
                   currentStep >= step.id 
                     ? 'bg-blue-600 text-white' 
                     : isDark 
@@ -1909,24 +2259,17 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                       : 'bg-gray-200 text-gray-500'
                 }`}>
                   {currentStep > step.id ? (
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   ) : currentStep === step.id ? (
-                    <span className="text-xs font-bold">{step.id}</span>
+                    <span className="text-[10px] font-bold">{step.id}</span>
                   ) : (
-                    <span className="text-xs">{step.icon}</span>
+                    <span className="text-[10px]">{step.icon}</span>
                   )}
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-20 h-0.5 mx-2 mt-3.5 ${
-                    currentStep > step.id 
-                      ? 'bg-blue-600' 
-                      : isDark ? 'bg-slate-600' : 'bg-gray-300'
-                  }`} />
-                )}
-                {index === steps.length - 1 && currentStep >= step.id && (
-                  <div className={`w-8 h-0.5 mx-2 mt-3.5 ${
+                  <div className={`w-full max-w-[36px] h-0.5 mx-1 mt-3 ${
                     currentStep > step.id 
                       ? 'bg-blue-600' 
                       : isDark ? 'bg-slate-600' : 'bg-gray-300'
@@ -1976,7 +2319,7 @@ const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
               انصراف
             </button>
             
-                {currentStep < 4 ? (
+                {currentStep < 6 ? (
                   <button
                     onClick={nextStep}
                     disabled={loading}

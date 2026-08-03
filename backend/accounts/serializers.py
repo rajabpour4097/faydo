@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import (
     User, Club, ServiceCategory, Province, City, BusinessProfile, CustomerProfile,
     ITManagerProfile, ProjectManagerProfile, SupporterProfile, FinancialManagerProfile,
-    BusinessGallery
+    BusinessGallery, Amenity, BusinessAmenity, BusinessWorkingHours,
 )
 
 
@@ -474,3 +474,45 @@ class BusinessGalleryCreateSerializer(serializers.ModelSerializer):
                 if existing_count >= 4:
                     raise serializers.ValidationError('حداکثر 4 تصویر می‌توانید آپلود کنید.')
         return attrs
+
+
+class AmenitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Amenity
+        fields = ['id', 'name', 'slug', 'business_type', 'order']
+
+
+class BusinessWorkingHoursSerializer(serializers.ModelSerializer):
+    weekday_display = serializers.CharField(source='get_weekday_display', read_only=True)
+
+    class Meta:
+        model = BusinessWorkingHours
+        fields = [
+            'id', 'weekday', 'weekday_display', 'start_time', 'end_time',
+            'is_closed', 'is_break',
+        ]
+
+
+class WorkingHoursEntrySerializer(serializers.Serializer):
+    weekday = serializers.IntegerField(min_value=0, max_value=6)
+    start_time = serializers.TimeField(required=False, allow_null=True)
+    end_time = serializers.TimeField(required=False, allow_null=True)
+    is_closed = serializers.BooleanField(default=False)
+
+    def validate(self, attrs):
+        is_closed = attrs.get('is_closed', False)
+        start_time = attrs.get('start_time')
+        end_time = attrs.get('end_time')
+        if not is_closed:
+            if not start_time or not end_time:
+                raise serializers.ValidationError('ساعت شروع و پایان الزامی است.')
+            if start_time >= end_time:
+                raise serializers.ValidationError('ساعت شروع باید کمتر از ساعت پایان باشد.')
+        return attrs
+
+
+class BusinessAmenitiesSaveSerializer(serializers.Serializer):
+    amenity_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_empty=True,
+    )

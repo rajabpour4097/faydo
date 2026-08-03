@@ -13,7 +13,14 @@ from .serializers import (
     PackageListSerializer, PackageDetailSerializer, PackageCreateUpdateSerializer,
     VipExperienceCategorySerializer, CommentSerializer, CommentCreateSerializer
 )
-from accounts.models import BusinessProfile, Club
+from accounts.models import BusinessProfile, Club, BusinessWorkingHours, BusinessAmenity, Amenity
+from accounts.amenity_utils import get_amenities_for_business, get_business_type_label
+from accounts.serializers import (
+    AmenitySerializer,
+    BusinessWorkingHoursSerializer,
+    WorkingHoursEntrySerializer,
+    BusinessAmenitiesSaveSerializer,
+)
 from .club_utils import (
     resolve_business_club,
     resolve_canonical_club,
@@ -417,6 +424,123 @@ class PackageViewSet(viewsets.ModelViewSet):
 
         return Response({"message": "گزینه‌های طلایی و VIP ذخیره شدند."})
 
+    @action(detail=True, methods=['get', 'post'])
+    def amenities(self, request, pk=None):
+        """Get or save business amenities during package creation."""
+        package = self.get_object()
+        business = package.business
+
+        if request.method == 'GET':
+            amenities_qs, business_type = get_amenities_for_business(business)
+            selected_ids = set(
+                business.selected_amenities.filter(is_enabled=True).values_list('amenity_id', flat=True)
+            )
+            general = []
+            specific = []
+            for amenity in amenities_qs:
+                item = AmenitySerializer(amenity).data
+                item['is_selected'] = amenity.id in selected_ids
+                if amenity.business_type == 'general':
+                    general.append(item)
+                else:
+                    specific.append(item)
+            return Response({
+                'business_type': business_type,
+                'business_type_label': get_business_type_label(business_type),
+                'general_amenities': general,
+                'specific_amenities': specific,
+                'selected_amenity_ids': list(selected_ids),
+            })
+
+        serializer = BusinessAmenitiesSaveSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        amenity_ids = serializer.validated_data['amenity_ids']
+
+        amenities_qs, _ = get_amenities_for_business(business)
+        allowed_ids = set(amenities_qs.values_list('id', flat=True))
+        invalid = set(amenity_ids) - allowed_ids
+        if invalid:
+            return Response(
+                {'error': 'برخی امکانات برای این کسب\u200cوکار مجاز نیستند.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        business.selected_amenities.all().delete()
+        for amenity_id in amenity_ids:
+            BusinessAmenity.objects.create(
+                business_profile=business,
+                amenity_id=amenity_id,
+                is_enabled=True,
+            )
+
+        return Response({'message': 'امکانات خاص ذخیره شد.'})
+
+    @action(detail=True, methods=['get', 'post'])
+    def working_hours(self, request, pk=None):
+        """Get or save business working hours during package creation."""
+        package = self.get_object()
+        business = package.business
+
+        if request.method == 'GET':
+            hours = business.working_hours.filter(is_break=False).order_by('weekday', 'start_time')
+            by_weekday = {h.weekday: h for h in hours}
+            schedule = []
+            for weekday, label in BusinessWorkingHours.WEEKDAY_CHOICES:
+                entry = by_weekday.get(weekday)
+                if entry:
+                    schedule.append(BusinessWorkingHoursSerializer(entry).data)
+                else:
+                    schedule.append({
+                        'weekday': weekday,
+                        'weekday_display': label,
+                        'start_time': '09:00:00',
+                        'end_time': '22:00:00',
+                        'is_closed': False,
+                        'is_break': False,
+                    })
+            return Response({'schedule': schedule})
+
+        entries = request.data.get('schedule', [])
+        if not isinstance(entries, list) or len(entries) == 0:
+            return Response(
+                {'error': 'ساعات کاری الزامی است.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        validated_entries = []
+        for entry in entries:
+            entry_serializer = WorkingHoursEntrySerializer(data=entry)
+            entry_serializer.is_valid(raise_exception=True)
+            validated_entries.append(entry_serializer.validated_data)
+
+        weekdays = [e['weekday'] for e in validated_entries]
+        if len(weekdays) != len(set(weekdays)):
+            return Response(
+                {'error': 'هر روز هفته فقط یک بار قابل ثبت است.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        business.working_hours.filter(is_break=False).delete()
+        for entry in validated_entries:
+            if entry['is_closed']:
+                BusinessWorkingHours.objects.create(
+                    business_profile=business,
+                    weekday=entry['weekday'],
+                    start_time='00:00:00',
+                    end_time='00:00:00',
+                    is_closed=True,
+                )
+            else:
+                BusinessWorkingHours.objects.create(
+                    business_profile=business,
+                    weekday=entry['weekday'],
+                    start_time=entry['start_time'],
+                    end_time=entry['end_time'],
+                    is_closed=False,
+                )
+
+        return Response({'message': 'ساعات کاری ذخیره شد.'})
+
     @action(detail=True, methods=['post'])
     def finalize(self, request, pk=None):
         """
@@ -493,7 +617,20 @@ class PackageViewSet(viewsets.ModelViewSet):
                     "description": exp.description or ""
                 }
                 for exp in package.experiences.all()
-            ]
+            ],
+            "selected_amenity_ids": list(
+                package.business.selected_amenities.filter(is_enabled=True).values_list('amenity_id', flat=True)
+            ),
+            "working_hours": [
+                {
+                    "weekday": h.weekday,
+                    "weekday_display": h.get_weekday_display(),
+                    "start_time": h.start_time.strftime('%H:%M') if h.start_time else None,
+                    "end_time": h.end_time.strftime('%H:%M') if h.end_time else None,
+                    "is_closed": h.is_closed,
+                }
+                for h in package.business.working_hours.filter(is_break=False).order_by('weekday')
+            ],
         })
     
     @action(detail=False, methods=['get'], url_path='business/(?P<business_id>[^/.]+)/comments')

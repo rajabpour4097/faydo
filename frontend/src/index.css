@@ -46,6 +46,16 @@
 }
 
 /* Static business location preview — no controls or attribution overlay */
+.business-map-preview.leaflet-container {
+  z-index: 0;
+}
+.business-map-preview .leaflet-pane {
+  z-index: 1 !important;
+}
+.business-map-preview .leaflet-top,
+.business-map-preview .leaflet-bottom {
+  z-index: 2 !important;
+}
 .business-map-preview .leaflet-control-container {
   display: none;
 }

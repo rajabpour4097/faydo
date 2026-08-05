@@ -22,7 +22,7 @@ export const ImageLightboxModal: React.FC<ImageLightboxModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/90 flex flex-col"
+      className="fixed inset-0 z-[1100] bg-black/90 flex flex-col"
       onClick={onClose}
     >
       <div className="flex items-center justify-between p-4 text-white" onClick={e => e.stopPropagation()}>

@@ -9,7 +9,7 @@ interface WorkingHoursModalProps {
 
 export const WorkingHoursModal: React.FC<WorkingHoursModalProps> = ({ schedule, onClose }) => {
   return (
-    <div className="fixed inset-0 z-[100] bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[1100] bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div
         className="bg-white dark:bg-slate-800 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}

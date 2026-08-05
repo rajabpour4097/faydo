@@ -32,7 +32,7 @@ export const AllReviewsModal: React.FC<AllReviewsModalProps> = ({
   onLike,
 }) => {
   return (
-    <div className="fixed inset-0 z-[100] bg-black/50 flex items-end sm:items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[1100] bg-black/50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
         className="bg-white dark:bg-slate-800 w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col"
         onClick={e => e.stopPropagation()}

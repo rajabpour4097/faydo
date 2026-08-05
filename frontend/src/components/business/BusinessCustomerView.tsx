@@ -69,6 +69,9 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
 
   const reviewCount = (pkg.total_comments || 0).toLocaleString('fa-IR')
 
+  const logoSize = 100
+  const logoOverlap = 48
+
   return (
     <div className="pb-6" dir="rtl">
       {/* ── Header block ── */}
@@ -95,15 +98,21 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
         <div className="px-4 pb-4 w-full" style={{ direction: 'ltr' }}>
           <div
             className="grid w-full gap-x-3"
-            style={{ gridTemplateColumns: '76px 1fr auto', gridTemplateRows: 'auto auto auto' }}
+            style={{ gridTemplateColumns: `${logoSize}px 1fr auto`, gridTemplateRows: 'auto auto auto' }}
           >
-            {/* Logo — spans 3 rows, col 1 */}
-            <div className="col-start-1 row-start-1 row-span-3 -mt-[38px] self-start z-10">
-              <div className="w-[76px] h-[76px] rounded-full border-[4px] border-white dark:border-slate-900 overflow-hidden bg-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+            {/* Logo — spans 3 rows, bottom slightly below club badge */}
+            <div
+              className="col-start-1 row-start-1 row-span-3 self-start z-10"
+              style={{ marginTop: -logoOverlap }}
+            >
+              <div
+                className="rounded-full border-[4px] border-white dark:border-slate-900 overflow-hidden bg-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                style={{ width: logoSize, height: logoSize }}
+              >
                 {logoUrl ? (
                   <img src={getFullImageUrl(logoUrl)} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-slate-900 flex items-center justify-center text-amber-400 font-bold text-2xl">
+                  <div className="w-full h-full bg-slate-900 flex items-center justify-center text-amber-400 font-bold text-3xl">
                     {(pkg.business_name || '?').charAt(0)}
                   </div>
                 )}

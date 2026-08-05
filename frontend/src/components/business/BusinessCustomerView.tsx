@@ -6,6 +6,7 @@ import {
 import { AmenityIcon } from '../../utils/amenityIcons'
 import { getTodayHoursLabel, isBusinessOpenNow, openNavigationApps } from '../../utils/workingHours'
 import { WorkingHoursModal } from './WorkingHoursModal'
+import { BusinessMapPreview } from './BusinessMapPreview'
 import { ImageLightboxModal } from './ImageLightboxModal'
 import { AllReviewsModal, ReviewItem } from './AllReviewsModal'
 import { Clock, MapPin, MessageSquare, ChevronLeft, Navigation, Gift, Tag, Star } from 'lucide-react'
@@ -324,13 +325,8 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
               )}
               {lat && lng && (
                 <>
-                  <div className="rounded-xl overflow-hidden h-32 mb-2 bg-gray-100 pointer-events-none">
-                    <iframe
-                      title="map"
-                      className="w-full h-full border-0 scale-105"
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.008}%2C${lat - 0.008}%2C${lng + 0.008}%2C${lat + 0.008}&layer=mapnik&marker=${lat}%2C${lng}`}
-                      scrolling="no"
-                    />
+                  <div className="rounded-xl overflow-hidden h-32 mb-2 bg-gray-100">
+                    <BusinessMapPreview lat={lat} lng={lng} />
                   </div>
                   <button
                     type="button"

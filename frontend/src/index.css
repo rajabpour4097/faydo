@@ -45,6 +45,11 @@
   left: auto !important;
 }
 
+/* Static business location preview — no controls or attribution overlay */
+.business-map-preview .leaflet-control-container {
+  display: none;
+}
+
 /* IRANYekan Font Face */
 @font-face {
   font-family: 'IRANYekan';

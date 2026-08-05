@@ -125,22 +125,21 @@ export const BusinessDetail: React.FC = () => {
   }
 
   const handleLikeComment = async (commentId: number) => {
-    try {
-      const response = await apiService.likeComment(commentId)
-      setComments(prev =>
-        prev.map(comment =>
-          comment.id === commentId
-            ? {
-                ...comment,
-                is_liked: response.data?.is_liked ?? comment.is_liked,
-                likes_count: response.data?.likes_count ?? comment.likes_count,
-              }
-            : comment
-        )
-      )
-    } catch {
-      // ignore
+    const response = await apiService.likeComment(commentId)
+    if (response.error || !response.data) {
+      return
     }
+    setComments(prev =>
+      prev.map(comment =>
+        comment.id === commentId
+          ? {
+              ...comment,
+              is_liked: response.data!.is_liked,
+              likes_count: response.data!.likes_count,
+            }
+          : comment
+      )
+    )
   }
 
   const loadingView = (

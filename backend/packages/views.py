@@ -859,6 +859,9 @@ class CommentViewSet(viewsets.ModelViewSet):
                 object_id=object_id
             )
         
+        if self.action in ('retrieve', 'update', 'partial_update', 'destroy', 'like'):
+            return Comment.objects.all()
+        
         return Comment.objects.none()
     
     def get_serializer_class(self):

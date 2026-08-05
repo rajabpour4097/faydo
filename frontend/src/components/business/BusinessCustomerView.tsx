@@ -135,7 +135,7 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
 
             {/* Row 2 col 2: club badge — directly under name */}
             {clubBadge && (
-              <span className="col-start-2 row-start-2 self-center inline-block text-[10px] font-semibold leading-none bg-red-500 text-white px-2 py-[5px] rounded-[5px] w-fit">
+              <span className="col-start-2 row-start-2 self-center inline-block text-[7px] font-semibold leading-none bg-red-500 text-white px-[6px] py-[4px] rounded-[3px] w-fit">
                 {clubBadge}
               </span>
             )}

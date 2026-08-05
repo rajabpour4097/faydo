@@ -8,7 +8,7 @@ import { getTodayHoursLabel, isBusinessOpenNow, openNavigationApps } from '../..
 import { WorkingHoursModal } from './WorkingHoursModal'
 import { ImageLightboxModal } from './ImageLightboxModal'
 import { AllReviewsModal, ReviewItem } from './AllReviewsModal'
-import { Clock, MapPin, MessageSquare, ChevronLeft, Navigation, Gift, Tag } from 'lucide-react'
+import { Clock, MapPin, MessageSquare, ChevronLeft, Navigation, Gift, Tag, Star } from 'lucide-react'
 
 interface BusinessCustomerViewProps {
   pkg: Package
@@ -91,50 +91,64 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
           </button>
         </div>
 
-        {/* Info row — logo overlaps banner; name & rating sit on white bg */}
-        <div className="px-4 pb-3">
-          <div className="flex items-start gap-3" dir="ltr">
-            {/* Logo (left) */}
-            <div className="w-[68px] h-[68px] -mt-[34px] rounded-full border-[3px] border-white dark:border-slate-900 overflow-hidden bg-white shadow-md shrink-0 relative z-10">
-              {logoUrl ? (
-                <img src={getFullImageUrl(logoUrl)} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-slate-800 flex items-center justify-center text-amber-400 font-bold text-xl">
-                  {(pkg.business_name || '?').charAt(0)}
-                </div>
-              )}
+        {/* Info — grid: logo | name / badge / tagline | rating (row 2, opposite badge) */}
+        <div className="px-4 pb-4 w-full" style={{ direction: 'ltr' }}>
+          <div
+            className="grid w-full gap-x-3"
+            style={{ gridTemplateColumns: '76px 1fr auto', gridTemplateRows: 'auto auto auto' }}
+          >
+            {/* Logo — spans 3 rows, col 1 */}
+            <div className="col-start-1 row-start-1 row-span-3 -mt-[38px] self-start z-10">
+              <div className="w-[76px] h-[76px] rounded-full border-[4px] border-white dark:border-slate-900 overflow-hidden bg-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+                {logoUrl ? (
+                  <img src={getFullImageUrl(logoUrl)} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-slate-900 flex items-center justify-center text-amber-400 font-bold text-2xl">
+                    {(pkg.business_name || '?').charAt(0)}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Name + badge + tagline (center) */}
-            <div className="flex-1 min-w-0 pt-1">
-              <h1 className="text-[20px] leading-snug font-bold text-gray-900 dark:text-white">
-                {pkg.business_name || 'کسب\u200cوکار'}
-              </h1>
-              {clubBadge && (
-                <span className="inline-block mt-1.5 text-[11px] font-semibold bg-red-500 text-white px-2 py-0.5 rounded-md">
-                  {clubBadge}
-                </span>
-              )}
-              {tagline && (
-                <p className="text-[12px] text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
-                  {tagline}
-                </p>
-              )}
-            </div>
+            {/* Row 1 col 2: business name */}
+            <h1
+              className="col-start-2 row-start-1 self-center text-[26px] leading-tight font-bold text-slate-800 dark:text-white pt-1 text-left ml-2"
+              style={{ textAlign: 'left' }}
+            >
+              {pkg.business_name || 'کسب\u200cوکار'}
+            </h1>
 
-            {/* Rating (right) */}
-            <div className="shrink-0 pt-1 text-right w-[52px]">
+            {/* Row 2 col 3: rating — far right, aligned with club badge */}
+            <div
+              className={`col-start-3 self-center text-right ${clubBadge ? 'row-start-2' : 'row-start-1'}`}
+            >
               <div className="flex items-center justify-end gap-0.5 leading-none">
-                <span className="text-amber-400 text-[15px]">★</span>
-                <span className="text-[20px] font-bold text-gray-900 dark:text-white">
+                <Star className="w-[15px] h-[15px] fill-amber-400 text-amber-400 shrink-0" />
+                <span className="text-[15px] font-bold text-slate-800 dark:text-white tabular-nums leading-none">
                   {ratingDisplay}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-400 mt-1 leading-none">
-                <span dir="ltr">({reviewCount}</span>
-                <span> نظر)</span>
+              <p className="text-[10px] text-gray-400 mt-[3px] leading-none whitespace-nowrap">
+                ({reviewCount} نظر)
               </p>
             </div>
+
+            {/* Row 2 col 2: club badge — directly under name */}
+            {clubBadge && (
+              <span className="col-start-2 row-start-2 self-center inline-block text-[10px] font-semibold leading-none bg-red-500 text-white px-2 py-[5px] rounded-[5px] w-fit">
+                {clubBadge}
+              </span>
+            )}
+
+            {/* Row 3 col 2: tagline — under badge */}
+            {tagline && (
+              <p
+                className={`col-start-2 self-start text-[11px] text-gray-500 dark:text-slate-400 mt-1 leading-[1.5] ${clubBadge ? 'row-start-3' : 'row-start-2'}`}
+                style={{ textAlign: 'left' }}
+              >
+                {tagline}
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -315,7 +329,7 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
                   <button
                     type="button"
                     onClick={() => openNavigationApps(lat, lng, pkg.business_name)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-medium"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium"
                   >
                     <Navigation className="w-4 h-4" />
                     مسیریابی

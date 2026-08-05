@@ -59,62 +59,91 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
     title: g.title,
   }))
 
-  return (
-    <div className="pb-4 -mx-1" dir="rtl">
-      {/* Hero Banner */}
-      <div className="relative h-44 rounded-2xl overflow-hidden mb-12 mx-1">
-        {bannerUrl ? (
-          <img src={getFullImageUrl(bannerUrl)} alt={pkg.business_name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard/explore')}
-          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-md"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-800 rotate-180" />
-        </button>
-      </div>
+  const clubBadge = pkg.club_name
+    ? (pkg.club_name.includes('عضو') ? pkg.club_name : `عضو ${pkg.club_name}`)
+    : null
 
-      {/* Logo + Info */}
-      <div className="px-3 -mt-16 relative z-10">
-        <div className="flex items-end gap-3 mb-3">
-          <div className="w-16 h-16 rounded-2xl border-4 border-white dark:border-slate-800 overflow-hidden bg-white shadow-lg shrink-0">
-            {logoUrl ? (
-              <img src={getFullImageUrl(logoUrl)} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-xl">
-                {pkg.business_name?.charAt(0)}
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0 pb-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">{pkg.business_name}</h1>
-                {pkg.club_name && (
-                  <span className="inline-block mt-1 text-[10px] font-medium bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-full">
-                    عضو {pkg.club_name}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1 shrink-0 bg-white dark:bg-slate-800 rounded-lg px-2 py-1 shadow-sm">
-                <span className="text-amber-400 text-sm">★</span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white">{pkg.average_rating || '—'}</span>
-                <span className="text-[10px] text-gray-400">({pkg.total_comments || 0} نظر)</span>
-              </div>
+  const ratingDisplay = pkg.average_rating != null
+    ? Number(pkg.average_rating).toFixed(1)
+    : '—'
+
+  const reviewCount = (pkg.total_comments || 0).toLocaleString('fa-IR')
+
+  return (
+    <div className="pb-6" dir="rtl">
+      {/* ── Header block ── */}
+      <section className="bg-white dark:bg-slate-900 mb-3">
+        {/* Banner */}
+        <div className="relative h-[130px] overflow-hidden">
+          {bannerUrl ? (
+            <img src={getFullImageUrl(bannerUrl)} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-800" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/explore')}
+            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center z-10"
+            aria-label="بازگشت"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-800 rotate-180" />
+          </button>
+        </div>
+
+        {/* Info row — logo overlaps banner; name & rating sit on white bg */}
+        <div className="px-4 pb-3">
+          <div className="flex items-start gap-3" dir="ltr">
+            {/* Logo (left) */}
+            <div className="w-[68px] h-[68px] -mt-[34px] rounded-full border-[3px] border-white dark:border-slate-900 overflow-hidden bg-white shadow-md shrink-0 relative z-10">
+              {logoUrl ? (
+                <img src={getFullImageUrl(logoUrl)} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-slate-800 flex items-center justify-center text-amber-400 font-bold text-xl">
+                  {(pkg.business_name || '?').charAt(0)}
+                </div>
+              )}
             </div>
-            {tagline && (
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 line-clamp-2">{tagline}</p>
-            )}
+
+            {/* Name + badge + tagline (center) */}
+            <div className="flex-1 min-w-0 pt-1">
+              <h1 className="text-[20px] leading-snug font-bold text-gray-900 dark:text-white">
+                {pkg.business_name || 'کسب\u200cوکار'}
+              </h1>
+              {clubBadge && (
+                <span className="inline-block mt-1.5 text-[11px] font-semibold bg-red-500 text-white px-2 py-0.5 rounded-md">
+                  {clubBadge}
+                </span>
+              )}
+              {tagline && (
+                <p className="text-[12px] text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
+                  {tagline}
+                </p>
+              )}
+            </div>
+
+            {/* Rating (right) */}
+            <div className="shrink-0 pt-1 text-right w-[52px]">
+              <div className="flex items-center justify-end gap-0.5 leading-none">
+                <span className="text-amber-400 text-[15px]">★</span>
+                <span className="text-[20px] font-bold text-gray-900 dark:text-white">
+                  {ratingDisplay}
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1 leading-none">
+                <span dir="ltr">({reviewCount}</span>
+                <span> نظر)</span>
+              </p>
+            </div>
           </div>
         </div>
+      </section>
+
+      <div className="px-3">
 
         {/* Gallery 4 images */}
         {displayGallery.length > 0 && (
-          <div className="grid grid-cols-4 gap-2 mb-4">
+          <div className="grid grid-cols-4 gap-1.5 mb-4">
             {displayGallery.map((img, idx) => (
               <button
                 key={img.id}
@@ -181,32 +210,38 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
 
         {/* Amenities + Working Hours */}
         {(amenities.length > 0 || workingHours.length > 0) && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="mb-4">
             {workingHours.length > 0 && (
               <button
                 type="button"
                 onClick={() => setShowHoursModal(true)}
-                className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2 min-w-[140px] flex-1"
+                className="w-full flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2.5 mb-2 text-right"
               >
-                <Clock className="w-4 h-4 text-teal-600 shrink-0" />
-                <div className="text-right flex-1 min-w-0">
-                  <p className="text-[10px] text-gray-500">ساعات کاری</p>
-                  <p className="text-xs font-semibold text-gray-800 dark:text-white" dir="ltr">{todayHours}</p>
-                  <p className={`text-[10px] ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
-                    {isOpen ? '● باز است' : '● بسته است'}
-                  </p>
+                <Clock className="w-5 h-5 text-teal-600 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-gray-500">ساعات کاری</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white" dir="ltr">{todayHours}</p>
                 </div>
+                <span className={`text-[11px] font-medium shrink-0 ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                  {isOpen ? '● باز است' : '● بسته است'}
+                </span>
               </button>
             )}
-            {amenities.map(amenity => (
-              <div
-                key={amenity.id}
-                className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2 min-w-[100px] flex-1 max-w-[calc(50%-4px)]"
-              >
-                <AmenityIcon name={amenity.name} slug={amenity.slug} className="w-4 h-4 text-teal-600 shrink-0" />
-                <span className="text-[11px] font-medium text-gray-700 dark:text-slate-200 leading-tight">{amenity.name}</span>
+            {amenities.length > 0 && (
+              <div className="grid grid-cols-3 gap-1.5">
+                {amenities.map(amenity => (
+                  <div
+                    key={amenity.id}
+                    className="flex flex-col items-center justify-center gap-1 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-2 py-2.5 min-h-[72px] text-center"
+                  >
+                    <AmenityIcon name={amenity.name} slug={amenity.slug} className="w-5 h-5 text-teal-600" />
+                    <span className="text-[10px] font-medium text-gray-700 dark:text-slate-200 leading-tight line-clamp-2">
+                      {amenity.name}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
 
@@ -269,11 +304,12 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
               )}
               {lat && lng && (
                 <>
-                  <div className="rounded-xl overflow-hidden h-32 mb-2 bg-gray-100">
+                  <div className="rounded-xl overflow-hidden h-32 mb-2 bg-gray-100 pointer-events-none">
                     <iframe
                       title="map"
-                      className="w-full h-full border-0"
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.01}%2C${lat - 0.01}%2C${lng + 0.01}%2C${lat + 0.01}&layer=mapnik&marker=${lat}%2C${lng}`}
+                      className="w-full h-full border-0 scale-105"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.008}%2C${lat - 0.008}%2C${lng + 0.008}%2C${lat + 0.008}&layer=mapnik&marker=${lat}%2C${lng}`}
+                      scrolling="no"
                     />
                   </div>
                   <button

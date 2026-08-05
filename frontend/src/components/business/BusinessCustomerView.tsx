@@ -60,7 +60,7 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
   }))
 
   const clubBadge = pkg.club_name
-    ? (pkg.club_name.includes('عضو') ? pkg.club_name : `عضو ${pkg.club_name}`)
+    ? (pkg.club_name.includes('عضو باشگاه') ? pkg.club_name : `عضو باشگاه ${pkg.club_name}`)
     : null
 
   const ratingDisplay = pkg.average_rating != null
@@ -111,14 +111,11 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
             </div>
 
             {/* Row 1 col 2: business name */}
-            <h1
-              className="col-start-2 row-start-1 self-center text-[26px] leading-tight font-bold text-slate-800 dark:text-white pt-1 text-left ml-2"
-              style={{ textAlign: 'left' }}
-            >
+            <h1 className="col-start-2 row-start-1 justify-self-start w-fit self-center text-[26px] leading-tight font-bold text-slate-800 dark:text-white pt-1">
               {pkg.business_name || 'کسب\u200cوکار'}
             </h1>
 
-            {/* Row 2 col 3: rating — far right, aligned with club badge */}
+            {/* Col 3: rating — aligned with club badge row */}
             <div
               className={`col-start-3 self-center text-right ${clubBadge ? 'row-start-2' : 'row-start-1'}`}
             >
@@ -133,22 +130,22 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
               </p>
             </div>
 
-            {/* Row 2 col 2: club badge — directly under name */}
+            {/* Row 2 col 2: club badge — left edge aligned with name */}
             {clubBadge && (
-              <span className="col-start-2 row-start-2 self-center inline-block text-[7px] font-semibold leading-none bg-red-500 text-white px-[6px] py-[4px] rounded-[3px] w-fit">
+              <span className="col-start-2 row-start-2 justify-self-start w-fit self-center inline-block text-[7px] font-semibold leading-none bg-red-500 text-white px-[6px] py-[4px] rounded-[3px]">
                 {clubBadge}
               </span>
             )}
 
-            {/* Row 3 col 2: tagline — under badge */}
+            {/* Row 3 col 2: tagline */}
             {tagline && (
               <p
-                className={`col-start-2 self-start text-[11px] text-gray-500 dark:text-slate-400 mt-1 leading-[1.5] ${clubBadge ? 'row-start-3' : 'row-start-2'}`}
-                style={{ textAlign: 'left' }}
+                className={`col-start-2 justify-self-start w-fit self-start text-[11px] text-gray-500 dark:text-slate-400 mt-1 leading-[1.5] ${clubBadge ? 'row-start-3' : 'row-start-2'}`}
               >
                 {tagline}
               </p>
             )}
+
           </div>
         </div>
       </section>

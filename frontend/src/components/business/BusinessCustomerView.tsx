@@ -179,9 +179,9 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
         )}
 
         {/* Discount Cards */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-4 items-stretch">
           {pkg.discount_percentage != null && (
-            <div className="bg-gradient-to-br from-white via-primary-50/50 to-teal-50/30 dark:from-slate-800 dark:via-primary-950/10 dark:to-teal-950/10 rounded-2xl border border-primary-50 dark:border-primary-900/20 p-3 relative overflow-hidden">
+            <div className="h-full bg-gradient-to-br from-white via-primary-50/50 to-teal-50/30 dark:from-slate-800 dark:via-primary-950/10 dark:to-teal-950/10 rounded-2xl border border-primary-50 dark:border-primary-900/20 p-3 relative overflow-hidden">
               <div className="flex items-center gap-1 text-[10px] text-primary-600 dark:text-primary-300 mb-2">
                 <Gift className="w-3 h-3" />
                 <span>تخفیف عمومی</span>
@@ -193,13 +193,15 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
             </div>
           )}
           {pkg.specific_discount_percentage != null && (
-            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-3 relative overflow-hidden text-white">
-              <div className="flex items-center gap-1 text-[10px] text-red-100 mb-2">
+            <div className="h-full bg-gradient-to-br from-danger-50/40 via-danger-100/60 to-red-100/45 dark:from-slate-800 dark:via-danger-900/25 dark:to-red-950/20 rounded-2xl border border-danger-100/80 dark:border-danger-800/30 p-3 relative overflow-hidden">
+              <div className="flex items-center gap-1 text-[10px] text-danger-600 dark:text-danger-300 mb-2">
                 <Tag className="w-3 h-3" />
                 <span>تخفیف ویژه</span>
               </div>
-              <div className="text-3xl font-black leading-none">{pkg.specific_discount_percentage}%</div>
-              <p className="text-[11px] text-red-100 mt-1 line-clamp-2">
+              <div className="text-3xl font-black text-danger-800 dark:text-danger-100 leading-none">
+                {pkg.specific_discount_percentage}%
+              </div>
+              <p className="text-[11px] text-danger-600/70 dark:text-danger-300/70 mt-1 line-clamp-2">
                 {pkg.specific_discount_title || 'تخفیف اختصاصی'}
               </p>
             </div>

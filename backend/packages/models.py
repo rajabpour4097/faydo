@@ -68,7 +68,7 @@ class CommentLike(BaseModel):
         unique_together = ['comment', 'user']  # یک کاربر فقط یک بار می‌تواند لایک کند
     
     def __str__(self):
-        return f'{self.user.username} liked {self.comment.id}'
+        return f'{self.user} liked {self.comment.id}'
     
 
 #Business Package

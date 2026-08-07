@@ -181,15 +181,15 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
         {/* Discount Cards */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           {pkg.discount_percentage != null && (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-3 relative overflow-hidden">
-              <div className="flex items-center gap-1 text-[10px] text-gray-500 mb-2">
+            <div className="bg-gradient-to-br from-white via-primary-50/50 to-teal-50/30 dark:from-slate-800 dark:via-primary-950/10 dark:to-teal-950/10 rounded-2xl border border-primary-50 dark:border-primary-900/20 p-3 relative overflow-hidden">
+              <div className="flex items-center gap-1 text-[10px] text-primary-600 dark:text-primary-300 mb-2">
                 <Gift className="w-3 h-3" />
                 <span>تخفیف عمومی</span>
               </div>
-              <div className="text-3xl font-black text-slate-800 dark:text-white leading-none">
+              <div className="text-3xl font-black text-primary-800 dark:text-primary-100 leading-none">
                 {pkg.discount_percentage}%
               </div>
-              <p className="text-[11px] text-gray-500 mt-1">تخفیف روی کل منو</p>
+              <p className="text-[11px] text-primary-600/70 dark:text-primary-300/70 mt-1">تخفیف روی کل منو</p>
             </div>
           )}
           {pkg.specific_discount_percentage != null && (

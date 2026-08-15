@@ -88,14 +88,24 @@ export function useExplorePackages(initialFilters: Partial<ExploreFilterState> =
     let filtered = [...packages]
 
     if (filters.search) {
-      const term = filters.search.toLowerCase()
-      filtered = filtered.filter(
-        pkg =>
-          pkg.business_name?.toLowerCase().includes(term) ||
-          pkg.elite_gift_title?.toLowerCase().includes(term) ||
-          pkg.elite_gift_gift?.toLowerCase().includes(term) ||
-          pkg.business_category?.name?.toLowerCase().includes(term),
-      )
+      const raw = filters.search.toLowerCase()
+      const terms = raw.split(/\s+/).filter(t => t.length >= 2)
+      filtered = filtered.filter(pkg => {
+        const hay = [
+          pkg.business_name,
+          pkg.elite_gift_title,
+          pkg.elite_gift_gift,
+          pkg.business_category?.name,
+          pkg.business_description,
+          pkg.club_name,
+          pkg.specific_discount_title,
+          pkg.specific_discount_description,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+        return hay.includes(raw) || terms.some(term => hay.includes(term))
+      })
     }
 
     if (filters.exploreCategoryId) {

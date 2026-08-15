@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { ExplorePromoSlider } from '../components/dashboard/ExplorePromoSlider'
@@ -81,6 +81,7 @@ const FALLBACK_POPULAR_CITIES = [
 const ExploreCustomerView: React.FC = () => {
   const { isDark } = useTheme()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { isFavorite, toggleFavorite } = useFavorites()
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false)
   const [mapOpen, setMapOpen] = useState(false)
@@ -97,6 +98,13 @@ const ExploreCustomerView: React.FC = () => {
     nearYou,
     weeklyTrends,
   } = useExplorePackages()
+
+  useEffect(() => {
+    const q = searchParams.get('q')?.trim()
+    if (!q) return
+    setFilters(prev => (prev.search === q ? prev : { ...prev, search: q }))
+    setSearchOverlayOpen(true)
+  }, [searchParams, setFilters])
 
   const specialOffersPreview = specialOffers.slice(0, EXPLORE_PREVIEW_LIMITS.special)
   const nearYouPreview = nearYou.slice(0, EXPLORE_PREVIEW_LIMITS.nearYou)

@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, Search } from 'lucide-react'
 import { ClubItem } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
-import tasteImage from '../../assets/clubs/taste.jpg'
-import wellnessImage from '../../assets/clubs/wellness.jpg'
-import lifestyleImage from '../../assets/clubs/lifestyle.jpg'
+import tasteImage from '../../assets/clubs/taste.png'
+import wellnessImage from '../../assets/clubs/wellness.png'
+import lifestyleImage from '../../assets/clubs/lifestyle.png'
 
 type ClubThemeKey = 'taste' | 'wellness' | 'lifestyle'
 
@@ -286,15 +286,11 @@ const ClubExperienceCard: React.FC<ClubExperienceCardProps> = ({
           </span>
         </div>
 
-        <div className="pointer-events-none absolute -left-3 bottom-0 top-0 w-[50%]">
+        <div className="pointer-events-none absolute left-0 bottom-0 top-0 flex w-[46%] items-end justify-start pb-1 pr-1">
           <img
             src={theme.image}
             alt=""
-            className="h-full w-full object-contain object-left"
-            style={{
-              WebkitMaskImage: 'linear-gradient(to right, #000 55%, transparent 100%)',
-              maskImage: 'linear-gradient(to right, #000 55%, transparent 100%)',
-            }}
+            className="max-h-[92%] max-w-[92%] object-contain object-left drop-shadow-sm"
           />
         </div>
       </div>

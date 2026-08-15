@@ -169,7 +169,7 @@ export const ExperienceClubsHome: React.FC<ExperienceClubsHomeProps> = ({ clubs 
         </p>
       </header>
 
-      <div className="space-y-3">
+      <div className="mx-auto w-[90%] space-y-3">
         {cards.map(({ theme, club, name, description }) => (
           <ClubExperienceCard
             key={theme.key}
@@ -255,26 +255,27 @@ const ClubExperienceCard: React.FC<ClubExperienceCardProps> = ({
       style={{
         background: isDark ? theme.darkGradient : theme.gradient,
         boxShadow: isDark ? '0 10px 24px rgba(0,0,0,0.28)' : theme.shadow,
-        minHeight: 158,
+        minHeight: 128,
+        height: 128,
       }}
     >
-      <div className="relative flex min-h-[158px] items-start pt-4 pb-4">
+      <div className="relative flex h-full min-h-[128px] items-center pt-2.5 pb-2.5">
         <div
-          className="relative z-20 mr-4 mt-0.5 flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-white"
+          className="relative z-20 mr-3 flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-white"
           style={{ boxShadow: `inset 0 0 0 1.5px ${theme.ringColor}` }}
         >
           <Icon color={theme.iconColor} />
         </div>
 
         <div className="relative z-20 min-w-0 flex-1 pl-[44%] pr-2.5">
-          <h3 className="text-[16px] font-bold leading-7" style={{ color: titleColor }}>
+          <h3 className="text-[14px] font-bold leading-6" style={{ color: titleColor }}>
             {name}
           </h3>
-          <p className={`mt-0.5 text-[11.5px] leading-5 ${isDark ? 'text-slate-300' : 'text-[#7A7A7A]'}`}>
+          <p className={`mt-0.5 text-[11px] leading-4 ${isDark ? 'text-slate-300' : 'text-[#7A7A7A]'}`}>
             {description}
           </p>
           <span
-            className="mt-2.5 inline-flex items-center gap-1 rounded-xl bg-white px-2.5 py-1 text-[11px] font-semibold"
+            className="mt-1.5 inline-flex items-center gap-1 rounded-xl bg-white px-2 py-0.5 text-[10.5px] font-semibold"
             style={{
               color: theme.iconColor,
               boxShadow: '0 4px 10px rgba(15, 23, 42, 0.06)',

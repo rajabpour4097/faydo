@@ -169,7 +169,7 @@ export const ExperienceClubsHome: React.FC<ExperienceClubsHomeProps> = ({ clubs 
         </p>
       </header>
 
-      <div className="mx-auto w-[90%] space-y-3">
+      <div className="mx-auto w-[99%] space-y-3">
         {cards.map(({ theme, club, name, description }) => (
           <ClubExperienceCard
             key={theme.key}

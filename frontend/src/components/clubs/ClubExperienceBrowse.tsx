@@ -13,15 +13,24 @@ import {
   MapPin,
   Percent,
   RefreshCw,
+  Check,
   Sparkle,
   Star,
   Tag,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
-import { ClubItem, Package, PackageExperienceOffer, VipExperienceCategory } from '../../services/api'
+import {
+  apiService,
+  ClubItem,
+  Package,
+  PackageExperienceOffer,
+  PointsSummary,
+  VipExperienceCategory,
+} from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useFavorites } from '../../contexts/FavoritesContext'
+import { MEMBERSHIP_TIERS, TIER_MIN_POINTS } from '../../constants/membershipTiers'
 import { buildCoverUrl, formatDistance, haversineKm } from '../../utils/exploreHelpers'
 import { mergeWithExploreSamples } from '../../data/exploreSamplePackages'
 import tasteImage from '../../assets/clubs/taste.png'
@@ -194,6 +203,7 @@ export const ClubExperienceBrowse: React.FC<ClubExperienceBrowseProps> = ({
   const [selectedExp, setSelectedExp] = useState<string>('all')
   const [sortBy, setSortBy] = useState<SortFilter>('suggested')
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
+  const [points, setPoints] = useState<PointsSummary | null>(null)
 
   const themeKey = clubThemeKey(club.name)
   const theme = CLUB_META[themeKey]
@@ -205,6 +215,12 @@ export const ClubExperienceBrowse: React.FC<ClubExperienceBrowseProps> = ({
       () => {},
       { enableHighAccuracy: false, timeout: 8000 },
     )
+  }, [])
+
+  useEffect(() => {
+    apiService.getPointsSummary().then(res => {
+      if (res.data) setPoints(res.data)
+    })
   }, [])
 
   useEffect(() => {
@@ -327,6 +343,8 @@ export const ClubExperienceBrowse: React.FC<ClubExperienceBrowseProps> = ({
           </TabBtn>
         </div>
 
+        {points && <ClubTierStatus tab={tab} summary={points} isDark={isDark} />}
+
         <div className="no-scrollbar -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pb-1">
           <Chip
             active={selectedExp === 'all'}
@@ -391,6 +409,89 @@ export const ClubExperienceBrowse: React.FC<ClubExperienceBrowseProps> = ({
             <p className={`py-10 text-center text-sm ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
               کسب‌وکاری برای این تجربه پیدا نشد
             </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ClubTierStatus({
+  tab,
+  summary,
+  isDark,
+}: {
+  tab: LevelTab
+  summary: PointsSummary
+  isDark: boolean
+}) {
+  const target = tab
+  const needed = TIER_MIN_POINTS[target]
+  const current = summary.points_6months ?? summary.total_points ?? 0
+  const rank: Record<string, number> = { bronze: 0, silver: 1, gold: 2, vip: 3 }
+  const reached =
+    current >= needed || (rank[summary.membership_level] ?? 0) >= rank[target]
+  const remaining = Math.max(0, needed - current)
+  const percent = reached ? 100 : Math.min(100, Math.round((current / needed) * 100))
+  const accent = tab === 'gold' ? '#C9A227' : '#6B4EA8'
+  const label = tab === 'gold' ? 'Gold' : 'VIP'
+  const icon = MEMBERSHIP_TIERS[target].icon
+
+  return (
+    <div
+      className="mb-3 overflow-hidden rounded-2xl px-3 py-2.5"
+      style={{
+        background: reached
+          ? tab === 'gold'
+            ? isDark
+              ? 'linear-gradient(135deg, #4A3D22 0%, #3A3220 100%)'
+              : 'linear-gradient(135deg, #FBF3DC 0%, #F6E9C4 55%, #FBF6E8 100%)'
+            : isDark
+              ? 'linear-gradient(135deg, #3A2A52 0%, #2C2438 100%)'
+              : 'linear-gradient(135deg, #F4ECFB 0%, #EDE3F8 55%, #F7F2FC 100%)'
+          : isDark
+            ? '#1e293b'
+            : '#F7F4EF',
+        boxShadow: reached
+          ? `inset 0 0 0 1px ${tab === 'gold' ? 'rgba(201, 162, 39, 0.28)' : 'rgba(107, 78, 168, 0.22)'}`
+          : isDark
+            ? 'inset 0 0 0 1px rgba(148,163,184,0.15)'
+            : 'inset 0 0 0 1px rgba(15,23,42,0.06)',
+      }}
+    >
+      <div className="flex items-center gap-2.5">
+        <img src={icon} alt="" className="h-9 w-9 object-contain" draggable={false} />
+        <div className="min-w-0 flex-1">
+          {reached ? (
+            <>
+              <p className="flex items-center gap-1 text-[12px] font-bold" style={{ color: accent }}>
+                <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                شما در سطح {label} هستید
+              </p>
+              <p className={`mt-0.5 text-[11px] ${isDark ? 'text-slate-400' : 'text-[#8A7A6A]'}`}>
+                {faNum(current)} امتیاز در ۶ ماه اخیر
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <p className={`text-[12px] font-bold ${isDark ? 'text-slate-100' : 'text-gray-800'}`}>
+                  {faNum(remaining)} امتیاز تا {label}
+                </p>
+                <span className="text-[10px] font-semibold" style={{ color: accent }}>
+                  {faNum(percent)}٪
+                </span>
+              </div>
+              <div className={`mt-1.5 h-1.5 overflow-hidden rounded-full ${isDark ? 'bg-slate-700' : 'bg-white'}`}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${percent}%`, background: accent }}
+                />
+              </div>
+              <p className={`mt-1 text-[10px] ${isDark ? 'text-slate-500' : 'text-[#9A8A7A]'}`}>
+                {faNum(current)} از {faNum(needed)} امتیاز
+              </p>
+            </>
           )}
         </div>
       </div>

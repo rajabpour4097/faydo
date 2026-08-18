@@ -8,6 +8,14 @@ import goldHero from '../assets/dashboard/tier-gold-full.png'
 
 export const TIER_ORDER: MembershipLevel[] = ['bronze', 'silver', 'gold', 'vip']
 
+/** حداقل امتیاز ۶ ماه اخیر برای هر سطح — مطابق backend/loyalty/services.py */
+export const TIER_MIN_POINTS: Record<MembershipLevel, number> = {
+  bronze: 0,
+  silver: 500,
+  gold: 2000,
+  vip: 5000,
+}
+
 export const NEXT_TIER_LABEL: Record<MembershipLevel, string> = {
   bronze: 'نقره‌ای',
   silver: 'طلایی',

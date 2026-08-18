@@ -1342,6 +1342,35 @@ class ApiService {
       body: JSON.stringify(data),
     })
   }
+
+  async smartSearchClubs(payload: {
+    query: string
+    catalog: {
+      id: number
+      name: string
+      club: string
+      category: string
+      city: string
+      gold: string
+      vip: string
+    }[]
+  }): Promise<
+    ApiResponse<{
+      ok: boolean
+      reason?: string
+      provider?: string
+      model?: string
+      intents?: string[]
+      prefer_tab?: 'gold' | 'vip'
+      keywords?: string[]
+      ranked_ids?: number[]
+    }>
+  > {
+    return this.request('/packages/packages/smart-search/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  }
 }
 
 export const apiService = new ApiService()

@@ -164,6 +164,89 @@ function isSmartQuery(normalizedQuery: string, tokens: string[], intents: Search
   return QUESTION_HINTS.some(hint => normalizedQuery.includes(normalize(hint)))
 }
 
+export function isDescriptiveQuery(query: string) {
+  const normalizedQuery = normalize(query)
+  if (!normalizedQuery) return false
+  const tokens = normalizedQuery.split(' ').filter(token => token.length >= 2)
+  return isSmartQuery(normalizedQuery, tokens, detectIntents(normalizedQuery))
+}
+
+export function toSearchCatalog(packages: Package[]) {
+  return packages.map(pkg => ({
+    id: pkg.id,
+    name: pkg.business_name,
+    club: pkg.club_name || '',
+    category: pkg.business_category?.name || '',
+    city: pkg.city?.name || '',
+    gold: pkg.gold_experiences?.[0]
+      ? `${pkg.gold_experiences[0].name}: ${pkg.gold_experiences[0].description || ''}`
+      : '',
+    vip: pkg.vip_experiences?.[0]
+      ? `${pkg.vip_experiences[0].name}: ${pkg.vip_experiences[0].description || ''}`
+      : '',
+  }))
+}
+
+const INTENT_LABELS: Record<string, string> = {
+  birthday: 'تولد و مناسبت',
+  welcome: 'خوشامدگویی',
+  gift: 'هدیه',
+  friend: 'دعوت از دوست',
+  early: 'دسترسی زودتر',
+  taste: 'کافه و رستوران',
+  wellness: 'تندرستی و زیبایی',
+  lifestyle: 'سبک زندگی',
+}
+
+export interface LlmSearchPayload {
+  ok?: boolean
+  ranked_ids?: number[]
+  intents?: string[]
+  prefer_tab?: SearchLevelTab
+  keywords?: string[]
+}
+
+export function applyLlmRanking(
+  query: string,
+  packages: Package[],
+  llm: LlmSearchPayload,
+): ClubSearchResult {
+  const byId = new Map(packages.map(pkg => [pkg.id, pkg]))
+  const rankedIds = (llm.ranked_ids || []).filter(id => byId.has(id))
+  const keywords = (llm.keywords || []).map(normalize).filter(Boolean)
+  const preferTab = llm.prefer_tab === 'vip' ? 'vip' : 'gold'
+  const intents = (llm.intents || [])
+    .map(id => ({ id, label: INTENT_LABELS[id] || id }))
+    .filter(item => item.label)
+
+  if (rankedIds.length === 0) {
+    const local = searchClubBusinesses([query, ...keywords].join(' '), packages)
+    return {
+      ...local,
+      mode: 'smart',
+      intents: intents.length ? intents : local.intents,
+    }
+  }
+
+  const hits: ClubSearchHit[] = rankedIds.map((id, index) => {
+    const pkg = byId.get(id)!
+    const match = bestOffer(pkg, preferTab, keywords)
+    return {
+      pkg,
+      score: 1000 - index * 10,
+      matchedTab: match.tab,
+      matchedName: match.offer?.name,
+      reasons: intents.map(item => item.label),
+    }
+  })
+
+  return {
+    hits,
+    intents,
+    mode: 'smart',
+  }
+}
+
 export function searchClubBusinesses(query: string, packages: Package[]): ClubSearchResult {
   const raw = query.trim()
   const normalizedQuery = normalize(raw)

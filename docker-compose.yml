@@ -14,6 +14,8 @@ services:
       - ALLOWED_HOSTS=*
       - SECRET_KEY=${SECRET_KEY:-your-super-secret-key-change-in-production}
       - DATABASE_URL=sqlite:///db.sqlite3
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
     volumes:
       - ./backend/db.sqlite3:/app/db.sqlite3
       - backend_static:/app/staticfiles

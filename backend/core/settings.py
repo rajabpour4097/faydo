@@ -220,3 +220,8 @@ SIMPLE_JWT = {
 MELIPAYAMAK_USERNAME = '09111127685'
 MELIPAYAMAK_PASSWORD = 'fhg61'
 MELIPAYAMAK_NUMBER = '50004000356655'
+
+# Groq LLM (free tier) for club smart search
+# Get a key from https://console.groq.com/keys
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')

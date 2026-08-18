@@ -10,7 +10,13 @@ import { useFavorites } from '../contexts/FavoritesContext'
 import { apiService, Package } from '../services/api'
 import { mergeWithExploreSamples } from '../data/exploreSamplePackages'
 import { formatDistance, haversineKm } from '../utils/exploreHelpers'
-import { CLUB_SEARCH_SUGGESTION, searchClubBusinesses } from '../utils/clubSmartSearch'
+import {
+  applyLlmRanking,
+  ClubSearchResult,
+  isDescriptiveQuery,
+  searchClubBusinesses,
+  toSearchCatalog,
+} from '../utils/clubSmartSearch'
 
 type SortFilter = 'suggested' | 'nearest' | 'rating' | 'popular'
 
@@ -28,6 +34,9 @@ export const ClubSearchResults: React.FC = () => {
 
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
+  const [ranking, setRanking] = useState(false)
+  const [usedLlm, setUsedLlm] = useState(false)
+  const [search, setSearch] = useState<ClubSearchResult>({ hits: [], intents: [], mode: 'simple' })
   const [sortBy, setSortBy] = useState<SortFilter>('suggested')
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
   const [draft, setDraft] = useState(query)
@@ -67,7 +76,41 @@ export const ClubSearchResults: React.FC = () => {
     )
   }, [])
 
-  const search = useMemo(() => searchClubBusinesses(query, packages), [query, packages])
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (!query || packages.length === 0) {
+        setSearch({ hits: [], intents: [], mode: 'simple' })
+        setUsedLlm(false)
+        setRanking(false)
+        return
+      }
+      if (!isDescriptiveQuery(query)) {
+        setSearch(searchClubBusinesses(query, packages))
+        setUsedLlm(false)
+        setRanking(false)
+        return
+      }
+      setRanking(true)
+      const llm = await apiService.smartSearchClubs({
+        query,
+        catalog: toSearchCatalog(packages),
+      })
+      if (cancelled) return
+      if (llm.data?.ok && (llm.data.ranked_ids?.length || llm.data.keywords?.length)) {
+        setSearch(applyLlmRanking(query, packages, llm.data))
+        setUsedLlm(true)
+      } else {
+        setSearch(searchClubBusinesses(query, packages))
+        setUsedLlm(false)
+      }
+      setRanking(false)
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [query, packages])
 
   const ranked = useMemo(() => {
     const withDistance = search.hits.map(hit => {
@@ -114,7 +157,7 @@ export const ClubSearchResults: React.FC = () => {
       <header className="px-1 pb-3 pt-1">
         <div className="flex items-center justify-between">
           <p className={`text-[13px] font-semibold ${isDark ? 'text-violet-300' : 'text-[#7B5CB8]'}`}>
-            {search.mode === 'smart' ? 'جستجوی هوشمند' : 'جستجوی ساده'}
+            {usedLlm ? 'جستجوی هوشمند با هوش مصنوعی' : search.mode === 'smart' ? 'جستجوی هوشمند' : 'جستجوی ساده'}
           </p>
           <button
             type="button"
@@ -192,10 +235,16 @@ export const ClubSearchResults: React.FC = () => {
         </FilterChip>
       </div>
 
-      <p className={`mb-3 flex items-center gap-1 text-[12px] ${isDark ? 'text-slate-400' : 'text-[#7A7A7A]'}`}>
-        <Sparkle className="h-3.5 w-3.5 text-orange-400" />
-        {faNum(ranked.length)} تجربه ویژه پیدا شد
-      </p>
+        {ranking ? (
+          <p className={`mb-3 text-[12px] ${isDark ? 'text-slate-400' : 'text-[#7A7A7A]'}`}>
+            در حال فهمیدن درخواست شما...
+          </p>
+        ) : (
+          <p className={`mb-3 flex items-center gap-1 text-[12px] ${isDark ? 'text-slate-400' : 'text-[#7A7A7A]'}`}>
+            <Sparkle className="h-3.5 w-3.5 text-orange-400" />
+            {faNum(ranked.length)} تجربه ویژه پیدا شد
+          </p>
+        )}
 
       <div className="space-y-3 pb-6">
         {ranked.map(({ pkg, distanceKm, matchedTab, matchedName }) => (
@@ -211,18 +260,11 @@ export const ClubSearchResults: React.FC = () => {
             isDark={isDark}
           />
         ))}
-        {ranked.length === 0 && !loading && (
+        {ranked.length === 0 && !loading && !ranking && (
           <div className={`rounded-2xl px-4 py-8 text-center ${isDark ? 'bg-slate-800' : 'bg-[#F7F4EF]'}`}>
             <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
               کسب‌وکاری برای این جستجو پیدا نشد
             </p>
-            <button
-              type="button"
-              onClick={() => navigate(`/dashboard/clubs/search?q=${encodeURIComponent(CLUB_SEARCH_SUGGESTION)}`)}
-              className="mt-3 text-[12px] font-semibold text-[#7B5CB8]"
-            >
-              پیشنهاد: {CLUB_SEARCH_SUGGESTION}
-            </button>
           </div>
         )}
       </div>

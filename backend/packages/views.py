@@ -636,6 +636,20 @@ class PackageViewSet(viewsets.ModelViewSet):
             ],
         })
     
+    @action(detail=False, methods=['post'], url_path='smart-search')
+    def smart_search(self, request):
+        """رتبه‌بندی توصیفی کسب‌وکارهای باشگاه با Groq. در نبود کلید، frontend به جستجوی محلی برمی‌گردد."""
+        query = (request.data.get('query') or '').strip()
+        catalog = request.data.get('catalog') or []
+        if not query:
+            return Response({'error': 'query is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(catalog, list):
+            return Response({'error': 'catalog must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+        catalog = catalog[:40]
+        from .llm_search import rank_catalog
+        result = rank_catalog(query, catalog)
+        return Response(result)
+
     @action(detail=False, methods=['get'], url_path='business/(?P<business_id>[^/.]+)/comments')
     def business_comments(self, request, business_id=None):
         """

@@ -147,11 +147,8 @@ export const ExperienceClubsHome: React.FC<ExperienceClubsHomeProps> = ({ clubs 
   const handleSmartSearch = (event: FormEvent) => {
     event.preventDefault()
     const term = query.trim()
-    if (!term) {
-      navigate('/dashboard/explore')
-      return
-    }
-    navigate(`/dashboard/explore?q=${encodeURIComponent(term)}`)
+    if (!term) return
+    navigate(`/dashboard/clubs/search?q=${encodeURIComponent(term)}`)
   }
 
   return (
@@ -205,8 +202,8 @@ export const ExperienceClubsHome: React.FC<ExperienceClubsHomeProps> = ({ clubs 
               type="search"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="مثلاً: برای تولدم کجاها می‌تونم برم که موسیقی زنده داشته باشه؟"
-              className={`w-full rounded-full border-0 py-3 pr-11 pl-4 text-[12px] leading-6 outline-none placeholder:text-[11.5px] ${
+              placeholder="یک کلمه بنویسید یا توصیف کنید؛ مثلاً امروز تولدمه کجا برم؟"
+              className={`w-full rounded-full border-0 py-3 pr-11 pl-12 text-[12px] leading-6 outline-none placeholder:text-[11.5px] ${
                 isDark
                   ? 'bg-slate-700 text-white placeholder:text-slate-400'
                   : 'bg-white text-gray-700 placeholder:text-[#C0C0C0]'
@@ -215,6 +212,13 @@ export const ExperienceClubsHome: React.FC<ExperienceClubsHomeProps> = ({ clubs 
                 boxShadow: isDark ? 'none' : '0 1px 3px rgba(15, 23, 42, 0.04)',
               }}
             />
+            <button
+              type="submit"
+              className="absolute left-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[#7B5CB8] text-white"
+              aria-label="جستجو"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </button>
           </label>
         </form>
       </section>

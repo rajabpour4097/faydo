@@ -714,3 +714,50 @@ function BusinessExperienceCard({
     </article>
   )
 }
+
+export function ClubBusinessCard({
+  pkg,
+  tab,
+  selectedName,
+  distanceLabel,
+  favorited,
+  onFavorite,
+  onClick,
+  isDark,
+}: {
+  pkg: Package
+  tab?: LevelTab
+  selectedName?: string
+  distanceLabel?: string
+  favorited: boolean
+  onFavorite: (e: React.MouseEvent) => void
+  onClick: () => void
+  isDark: boolean
+}) {
+  const theme = CLUB_META[clubThemeKey(pkg.club_name || pkg.business_category?.name)]
+  const gold = pkg.gold_experiences || []
+  const vip = pkg.vip_experiences || []
+  const resolvedTab: LevelTab =
+    tab ||
+    (selectedName && vip.some(offer => offer.name === selectedName)
+      ? 'vip'
+      : selectedName && gold.some(offer => offer.name === selectedName)
+        ? 'gold'
+        : gold.length
+          ? 'gold'
+          : 'vip')
+
+  return (
+    <BusinessExperienceCard
+      pkg={pkg}
+      theme={theme}
+      tab={resolvedTab}
+      selectedName={selectedName}
+      distanceLabel={distanceLabel}
+      favorited={favorited}
+      onFavorite={onFavorite}
+      onClick={onClick}
+      isDark={isDark}
+    />
+  )
+}

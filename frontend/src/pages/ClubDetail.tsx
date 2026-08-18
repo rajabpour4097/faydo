@@ -2,17 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { ExperienceModal } from '../components/clubs/ExperienceModal'
-import { BusinessDetailModal } from '../components/clubs/BusinessDetailModal'
-import { ClubLevelHome } from '../components/clubs/ClubLevelHome'
+import { ClubExperienceBrowse } from '../components/clubs/ClubExperienceBrowse'
 import { useAuth } from '../contexts/AuthContext'
-import {
-  apiService,
-  ClubItem,
-  VipExperienceCategory,
-  Package,
-  PointsSummary,
-} from '../services/api'
+import { apiService, ClubItem, VipExperienceCategory, Package } from '../services/api'
 
 export const ClubDetail: React.FC = () => {
   const { clubId } = useParams<{ clubId: string }>()
@@ -22,14 +14,8 @@ export const ClubDetail: React.FC = () => {
   const [club, setClub] = useState<ClubItem | null>(null)
   const [experiences, setExperiences] = useState<VipExperienceCategory[]>([])
   const [packages, setPackages] = useState<Package[]>([])
-  const [summary, setSummary] = useState<PointsSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const [selectedExperience, setSelectedExperience] = useState<VipExperienceCategory | null>(null)
-  const [selectedBusiness, setSelectedBusiness] = useState<Package | null>(null)
-  const [isExperienceModalOpen, setIsExperienceModalOpen] = useState(false)
-  const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false)
 
   useEffect(() => {
     if (user && user.type !== 'customer') {
@@ -51,11 +37,10 @@ export const ClubDetail: React.FC = () => {
     setLoading(true)
     setError(null)
 
-    const [clubsResp, expResp, pkgResp, pointsResp] = await Promise.all([
+    const [clubsResp, expResp, pkgResp] = await Promise.all([
       apiService.getClubs(),
       apiService.getVipExperienceCategoriesByClub(id),
       apiService.getPackages(),
-      apiService.getPointsSummary(),
     ])
 
     if (clubsResp.data) {
@@ -76,25 +61,12 @@ export const ClubDetail: React.FC = () => {
       setPackages(pkgResp.data.filter(pkg => pkg.is_active && pkg.status === 'approved'))
     }
 
-    if (pointsResp.data) setSummary(pointsResp.data)
-
     setLoading(false)
-  }
-
-  const handleExperienceClick = (experience: VipExperienceCategory) => {
-    setSelectedExperience(experience)
-    setIsExperienceModalOpen(true)
-  }
-
-  const handleBusinessClick = (business: Package) => {
-    setIsExperienceModalOpen(false)
-    setSelectedBusiness(business)
-    setIsBusinessModalOpen(true)
   }
 
   const LoadingView = () => (
     <div className="min-h-[50vh] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500" />
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500" />
     </div>
   )
 
@@ -141,14 +113,8 @@ export const ClubDetail: React.FC = () => {
   }
 
   const content = (
-    <div className="px-4 py-5">
-      <ClubLevelHome
-        club={club}
-        experiences={experiences}
-        packages={packages}
-        summary={summary}
-        onExperienceClick={handleExperienceClick}
-      />
+    <div className="px-4 py-3">
+      <ClubExperienceBrowse club={club} experiences={experiences} packages={packages} />
     </div>
   )
 
@@ -164,24 +130,6 @@ export const ClubDetail: React.FC = () => {
       <div className="lg:hidden">
         <MobileDashboardLayout>{content}</MobileDashboardLayout>
       </div>
-
-      <ExperienceModal
-        experience={selectedExperience}
-        isOpen={isExperienceModalOpen}
-        onClose={() => {
-          setIsExperienceModalOpen(false)
-          setSelectedExperience(null)
-        }}
-        onBusinessClick={handleBusinessClick}
-      />
-      <BusinessDetailModal
-        business={selectedBusiness}
-        isOpen={isBusinessModalOpen}
-        onClose={() => {
-          setIsBusinessModalOpen(false)
-          setSelectedBusiness(null)
-        }}
-      />
     </>
   )
 }

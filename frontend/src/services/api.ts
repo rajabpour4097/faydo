@@ -166,6 +166,12 @@ export interface VipExperienceCategory {
   modified_at?: string
 }
 
+export interface PackageExperienceOffer {
+  id: number
+  name: string
+  description?: string
+}
+
 export interface Package {
   id: number
   business_id: number
@@ -208,6 +214,8 @@ export interface Package {
   business_address?: string
   business_phone?: string
   club_name?: string
+  gold_experiences?: PackageExperienceOffer[]
+  vip_experiences?: PackageExperienceOffer[]
   business_category?: {
     id: number
     name: string

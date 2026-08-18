@@ -128,6 +128,8 @@ class PackageListSerializer(serializers.ModelSerializer):
     # اطلاعات نوع VIP برای نمایش badge
     has_vip = serializers.SerializerMethodField()
     has_vip_plus = serializers.SerializerMethodField()
+    gold_experiences = serializers.SerializerMethodField()
+    vip_experiences = serializers.SerializerMethodField()
     
     # روزهای باقی‌مانده تا پایان پکیج
     days_remaining = serializers.SerializerMethodField()
@@ -157,7 +159,8 @@ class PackageListSerializer(serializers.ModelSerializer):
             'business_logo', 'business_image', 'business_category', 'city',
             'discount_percentage', 'specific_discount_title', 'specific_discount_percentage', 'specific_discount_description',
             'elite_gift_title', 'elite_gift_gift', 'elite_gift_amount', 'elite_gift_count',
-            'vip_experiences_count', 'has_vip', 'has_vip_plus', 'days_remaining',
+            'vip_experiences_count', 'has_vip', 'has_vip_plus',
+            'gold_experiences', 'vip_experiences', 'days_remaining',
             'average_rating', 'total_comments',
             'business_location_latitude', 'business_location_longitude',
             'gallery_images',
@@ -232,6 +235,25 @@ class PackageListSerializer(serializers.ModelSerializer):
     def get_has_vip_plus(self, obj):
         """بررسی وجود تجربیات VIP+"""
         return obj.experiences.filter(vip_experience_category__vip_type='VIP+').exists()
+
+    def _experience_summaries(self, obj, vip_type):
+        items = []
+        for exp in obj.experiences.all():
+            cat = getattr(exp, 'vip_experience_category', None)
+            if not cat or cat.vip_type != vip_type:
+                continue
+            items.append({
+                'id': cat.id,
+                'name': cat.name,
+                'description': exp.description or cat.description or '',
+            })
+        return items
+
+    def get_gold_experiences(self, obj):
+        return self._experience_summaries(obj, 'VIP')
+
+    def get_vip_experiences(self, obj):
+        return self._experience_summaries(obj, 'VIP+')
     
     def get_days_remaining(self, obj):
         """روزهای باقی‌مانده تا پایان پکیج"""

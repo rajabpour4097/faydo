@@ -615,14 +615,8 @@ function OfferFrame({
           <Icon className="h-3.5 w-3.5 text-white" />
         </span>
         <div className="min-w-0 flex-1">
-          <p
-            className="text-[11px] font-extrabold tracking-wide"
-            style={{ color: isDark ? (isVip ? '#D4C4F0' : '#E8D08A') : isVip ? '#6B4EA8' : '#C9A227' }}
-          >
-            {isVip ? 'VIP' : 'Gold'}
-          </p>
           {offers[0] ? (
-            <p className={`mt-0.5 line-clamp-1 text-[11px] ${isDark ? 'text-slate-300' : isVip ? 'text-[#5A3F8A]' : 'text-[#8A7040]'}`}>
+            <p className={`line-clamp-2 text-[12px] font-semibold ${isDark ? 'text-slate-200' : isVip ? 'text-[#5A3F8A]' : 'text-[#8A7040]'}`}>
               {offers[0].description || offers[0].name}
             </p>
           ) : null}

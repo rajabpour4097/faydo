@@ -128,6 +128,35 @@ function ClubMark({ themeKey, color }: { themeKey: ClubThemeKey; color: string }
   return <ClocheIcon color={color} />
 }
 
+function sameExperience(a?: string, b?: string) {
+  if (!a || !b) return false
+  return normalizeName(a) === normalizeName(b)
+}
+
+function offersForTab(pkg: Package, tab: LevelTab): PackageExperienceOffer[] {
+  if (tab === 'gold') {
+    if (Array.isArray(pkg.gold_experiences)) return pkg.gold_experiences
+  } else if (Array.isArray(pkg.vip_experiences)) {
+    return pkg.vip_experiences
+  }
+
+  const wanted = tab === 'gold' ? 'VIP' : 'VIP+'
+  return (pkg.experiences || [])
+    .filter(exp => exp.vip_experience_category?.vip_type === wanted)
+    .map(exp => ({
+      id: exp.vip_experience_category?.id ?? exp.id,
+      name: exp.vip_experience_category?.name || '',
+      description: exp.description || exp.vip_experience_category?.description || '',
+    }))
+    .filter(exp => exp.name)
+}
+
+function pickTabOffers(pkg: Package, tab: LevelTab, selectedName?: string): PackageExperienceOffer[] {
+  const list = offersForTab(pkg, tab)
+  if (!selectedName) return list
+  return list.filter(item => sameExperience(item.name, selectedName))
+}
+
 function iconForName(name: string, tab: LevelTab): LucideIcon {
   const n = normalizeName(name)
   if (n.includes('پیشنهاد') || n.includes('تخفیف')) return Percent
@@ -204,13 +233,13 @@ export const ClubExperienceBrowse: React.FC<ClubExperienceBrowseProps> = ({
   }, [packages, club.name])
 
   const filtered = useMemo(() => {
-    const wantedType = tab === 'gold' ? 'gold_experiences' : 'vip_experiences'
     let list = clubPackages.filter(pkg => {
-      const offers = pkg[wantedType] || []
-      if (tab === 'gold' && !pkg.has_vip && offers.length === 0) return false
-      if (tab === 'vip' && !pkg.has_vip_plus && offers.length === 0) return false
-      if (selectedExp === 'all') return offers.length > 0 || (tab === 'gold' ? pkg.has_vip : pkg.has_vip_plus)
-      return offers.some(offer => offer.name === selectedMeta?.name || String(offer.id) === selectedExp)
+      const offers = offersForTab(pkg, tab)
+      if (offers.length === 0) return false
+      if (selectedExp === 'all') return true
+      return offers.some(
+        offer => sameExperience(offer.name, selectedMeta?.name) || String(offer.id) === selectedExp,
+      )
     })
 
     const withDistance = list.map(pkg => {
@@ -439,21 +468,6 @@ function FilterChip({
   )
 }
 
-function offerText(
-  pkg: Package,
-  tab: LevelTab,
-  selectedName?: string,
-): { gold?: PackageExperienceOffer; vip?: PackageExperienceOffer } {
-  const gold = pkg.gold_experiences || []
-  const vip = pkg.vip_experiences || []
-  const match = (list: PackageExperienceOffer[]) =>
-    selectedName ? list.find(item => item.name === selectedName) : list[0]
-  return {
-    gold: match(gold) || gold[0],
-    vip: match(vip) || vip[0],
-  }
-}
-
 function BusinessExperienceCard({
   pkg,
   theme,
@@ -476,7 +490,7 @@ function BusinessExperienceCard({
   isDark: boolean
 }) {
   const cover = buildCoverUrl(pkg)
-  const offers = offerText(pkg, tab, selectedName)
+  const offers = pickTabOffers(pkg, tab, selectedName)
   const rating = pkg.average_rating
   const comments = pkg.total_comments ?? 0
   const location = pkg.business_address || pkg.city?.name || pkg.business_category?.name
@@ -532,22 +546,27 @@ function BusinessExperienceCard({
         </div>
       </div>
 
-      <div className="mt-2 grid grid-cols-2 gap-1.5">
-        <div className="rounded-xl bg-[#EEE6F8] px-2.5 py-1.5">
+      {tab === 'vip' ? (
+        <div className="mt-2 rounded-xl bg-[#EEE6F8] px-2.5 py-2">
           <p className="text-[11px] font-bold text-[#6B4EA8]">VIP</p>
-          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-[#6B4EA8]">
-            <Crown className="h-3 w-3" />
-            <span className="line-clamp-1">{offers.vip?.description || offers.vip?.name || 'پیشنهاد VIP'}</span>
-          </p>
+          {offers.map(offer => (
+            <p key={`${offer.id}-${offer.name}`} className="mt-0.5 flex items-center gap-1 text-[10px] text-[#6B4EA8]">
+              <Crown className="h-3 w-3 shrink-0" />
+              <span className="line-clamp-1">{offer.description || offer.name}</span>
+            </p>
+          ))}
         </div>
-        <div className="rounded-xl bg-[#F8F1D8] px-2.5 py-1.5">
+      ) : (
+        <div className="mt-2 rounded-xl bg-[#F8F1D8] px-2.5 py-2">
           <p className="text-[11px] font-bold text-[#C9A227]">Gold</p>
-          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-[#8A7040]">
-            <Gift className="h-3 w-3" />
-            <span className="line-clamp-1">{offers.gold?.description || offers.gold?.name || 'پیشنهاد طلایی'}</span>
-          </p>
+          {offers.map(offer => (
+            <p key={`${offer.id}-${offer.name}`} className="mt-0.5 flex items-center gap-1 text-[10px] text-[#8A7040]">
+              <Gift className="h-3 w-3 shrink-0" />
+              <span className="line-clamp-1">{offer.description || offer.name}</span>
+            </p>
+          ))}
         </div>
-      </div>
+      )}
     </article>
   )
 }

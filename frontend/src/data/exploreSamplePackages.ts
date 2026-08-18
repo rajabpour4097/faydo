@@ -146,13 +146,16 @@ function sample(
     lat: number
     lng: number
     city?: string
-    hasVip?: boolean
+    gold?: boolean
+    vip?: boolean
   },
 ): SampleExplorePackage {
   const assets = EXPLORE_SAMPLE_ASSETS[assetKey]
   if (!assets) throw new Error(`Missing assets for ${assetKey}`)
   const clubData = SAMPLE_CLUB_BY_CATEGORY[exploreCategoryId]
   const addressCity = opts.city ?? 'تهران'
+  const includeGold = opts.gold !== false
+  const includeVip = opts.vip !== false
 
   return {
     id,
@@ -179,10 +182,10 @@ function sample(
     city: { id: id - 8000, name: addressCity },
     business_address: `${addressCity} - خیابان دریا`,
     club_name: clubData?.club,
-    has_vip: true,
-    has_vip_plus: opts.hasVip ?? true,
-    gold_experiences: clubData?.gold ?? [],
-    vip_experiences: clubData?.vip ?? [],
+    has_vip: includeGold,
+    has_vip_plus: includeVip,
+    gold_experiences: includeGold ? clubData?.gold ?? [] : [],
+    vip_experiences: includeVip ? clubData?.vip ?? [] : [],
     days_remaining: 45,
     is_sample: true,
     explore_category_id: exploreCategoryId,
@@ -199,6 +202,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     lat: 35.7219,
     lng: 51.4247,
     city: 'بابلسر',
+    gold: true,
+    vip: true,
   }),
   sample(-1002, 'burgerland', 'restaurant', 'رستوران', 'رستوران برگرلند', {
     gift: 'برگر دوبل رایگان',
@@ -206,7 +211,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.9,
     lat: 35.7589,
     lng: 51.4082,
-    hasVip: true,
+    gold: true,
+    vip: false,
   }),
   sample(-1003, 'bakery', 'bakery', 'شیرینی و بیکری', 'شیرینی سرای گلستان', {
     gift: 'یک جعبه شیرینی هدیه',
@@ -214,6 +220,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.7,
     lat: 35.6961,
     lng: 51.4231,
+    gold: false,
+    vip: true,
   }),
   sample(-1004, 'medical', 'medical', 'کلینیک درمانی', 'کلینیک دندانپزشکی نوین', {
     gift: 'معاینه رایگان',
@@ -221,6 +229,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.6,
     lat: 35.7342,
     lng: 51.3890,
+    gold: true,
+    vip: true,
   }),
   sample(-1005, 'beauty', 'beauty', 'مراکز زیبایی', 'سالن زیبایی آرتمیس', {
     gift: 'یک جلسه فیشیال رایگان',
@@ -228,6 +238,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.9,
     lat: 35.7745,
     lng: 51.3654,
+    gold: true,
+    vip: false,
   }),
   sample(-1006, 'gym', 'gym', 'باشگاه ورزشی', 'باشگاه فیت‌لند', {
     gift: 'یک جلسه بدنسازی رایگان',
@@ -235,6 +247,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.5,
     lat: 35.6892,
     lng: 51.3890,
+    gold: false,
+    vip: true,
   }),
   sample(-1007, 'salon', 'salon', 'آرایشگاه', 'آرایشگاه مردانه استایل', {
     gift: 'اصلاح و استایل رایگان',
@@ -242,6 +256,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.8,
     lat: 35.7156,
     lng: 51.4012,
+    gold: true,
+    vip: true,
   }),
   sample(-1008, 'boutique', 'boutique', 'مزون', 'مزون لباس زنانه نگار', {
     gift: '۱۵٪ تخفیف خرید اول',
@@ -249,6 +265,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.7,
     lat: 35.7421,
     lng: 51.3756,
+    gold: true,
+    vip: false,
   }),
   sample(-1009, 'pets', 'pets', 'پت شاپ', 'پت شاپ پاز', {
     gift: 'یک بسته تشویقی هدیه',
@@ -256,6 +274,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.9,
     lat: 35.7012,
     lng: 51.3456,
+    gold: false,
+    vip: true,
   }),
   sample(-1010, 'playground', 'playground', 'خانه بازی', 'خانه بازی کودک شاد', {
     gift: 'یک ساعت بازی رایگان',
@@ -263,6 +283,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.6,
     lat: 35.7654,
     lng: 51.4123,
+    gold: true,
+    vip: false,
   }),
   sample(-1011, 'cafe-book', 'cafe', 'کافه', 'کافه کتاب و هنر', {
     gift: 'یک نوشیدنی گرم رایگان',
@@ -270,6 +292,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.4,
     lat: 35.6789,
     lng: 51.4123,
+    gold: true,
+    vip: false,
   }),
   sample(-1012, 'restaurant-shamshad', 'restaurant', 'رستوران', 'رستوران سنتی شمشاد', {
     gift: 'یک پیش‌غذا رایگان',
@@ -277,6 +301,8 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     rating: 4.8,
     lat: 35.7312,
     lng: 51.4567,
+    gold: false,
+    vip: true,
   }),
 ]
 

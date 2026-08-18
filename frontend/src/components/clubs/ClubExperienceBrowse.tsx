@@ -134,21 +134,26 @@ function sameExperience(a?: string, b?: string) {
 }
 
 function offersForTab(pkg: Package, tab: LevelTab): PackageExperienceOffer[] {
+  let list: PackageExperienceOffer[] = []
   if (tab === 'gold') {
-    if (Array.isArray(pkg.gold_experiences)) return pkg.gold_experiences
+    if (Array.isArray(pkg.gold_experiences)) list = pkg.gold_experiences
   } else if (Array.isArray(pkg.vip_experiences)) {
-    return pkg.vip_experiences
+    list = pkg.vip_experiences
   }
 
-  const wanted = tab === 'gold' ? 'VIP' : 'VIP+'
-  return (pkg.experiences || [])
-    .filter(exp => exp.vip_experience_category?.vip_type === wanted)
-    .map(exp => ({
-      id: exp.vip_experience_category?.id ?? exp.id,
-      name: exp.vip_experience_category?.name || '',
-      description: exp.description || exp.vip_experience_category?.description || '',
-    }))
-    .filter(exp => exp.name)
+  if (list.length === 0) {
+    const wanted = tab === 'gold' ? 'VIP' : 'VIP+'
+    list = (pkg.experiences || [])
+      .filter(exp => exp.vip_experience_category?.vip_type === wanted)
+      .map(exp => ({
+        id: exp.vip_experience_category?.id ?? exp.id,
+        name: exp.vip_experience_category?.name || '',
+        description: exp.description || exp.vip_experience_category?.description || '',
+      }))
+      .filter(exp => exp.name)
+  }
+
+  return list.slice(0, 1)
 }
 
 function pickTabOffers(pkg: Package, tab: LevelTab, selectedName?: string): PackageExperienceOffer[] {
@@ -468,6 +473,64 @@ function FilterChip({
   )
 }
 
+function OfferFrame({
+  tab,
+  offers,
+  isDark,
+}: {
+  tab: LevelTab
+  offers: PackageExperienceOffer[]
+  isDark: boolean
+}) {
+  const isVip = tab === 'vip'
+  const Icon = isVip ? Crown : Gift
+
+  return (
+    <div
+      className="mt-2 overflow-hidden rounded-[14px] px-3 py-2"
+      style={{
+        background: isVip
+          ? isDark
+            ? 'linear-gradient(135deg, #3A2A52 0%, #2C2438 100%)'
+            : 'linear-gradient(135deg, #F4ECFB 0%, #EDE3F8 55%, #F7F2FC 100%)'
+          : isDark
+            ? 'linear-gradient(135deg, #4A3D22 0%, #3A3220 100%)'
+            : 'linear-gradient(135deg, #FBF3DC 0%, #F6E9C4 55%, #FBF6E8 100%)',
+        boxShadow: isVip
+          ? 'inset 0 0 0 1px rgba(107, 78, 168, 0.18)'
+          : 'inset 0 0 0 1px rgba(201, 162, 39, 0.22)',
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+          style={{
+            background: isVip ? '#6B4EA8' : '#C9A227',
+            boxShadow: isVip
+              ? '0 4px 10px rgba(107, 78, 168, 0.28)'
+              : '0 4px 10px rgba(201, 162, 39, 0.28)',
+          }}
+        >
+          <Icon className="h-3.5 w-3.5 text-white" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p
+            className="text-[11px] font-extrabold tracking-wide"
+            style={{ color: isDark ? (isVip ? '#D4C4F0' : '#E8D08A') : isVip ? '#6B4EA8' : '#C9A227' }}
+          >
+            {isVip ? 'VIP' : 'Gold'}
+          </p>
+          {offers[0] ? (
+            <p className={`mt-0.5 line-clamp-1 text-[11px] ${isDark ? 'text-slate-300' : isVip ? 'text-[#5A3F8A]' : 'text-[#8A7040]'}`}>
+              {offers[0].description || offers[0].name}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function BusinessExperienceCard({
   pkg,
   theme,
@@ -546,27 +609,7 @@ function BusinessExperienceCard({
         </div>
       </div>
 
-      {tab === 'vip' ? (
-        <div className="mt-2 rounded-xl bg-[#EEE6F8] px-2.5 py-2">
-          <p className="text-[11px] font-bold text-[#6B4EA8]">VIP</p>
-          {offers.map(offer => (
-            <p key={`${offer.id}-${offer.name}`} className="mt-0.5 flex items-center gap-1 text-[10px] text-[#6B4EA8]">
-              <Crown className="h-3 w-3 shrink-0" />
-              <span className="line-clamp-1">{offer.description || offer.name}</span>
-            </p>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-2 rounded-xl bg-[#F8F1D8] px-2.5 py-2">
-          <p className="text-[11px] font-bold text-[#C9A227]">Gold</p>
-          {offers.map(offer => (
-            <p key={`${offer.id}-${offer.name}`} className="mt-0.5 flex items-center gap-1 text-[10px] text-[#8A7040]">
-              <Gift className="h-3 w-3 shrink-0" />
-              <span className="line-clamp-1">{offer.description || offer.name}</span>
-            </p>
-          ))}
-        </div>
-      )}
+      {offers.length > 0 && <OfferFrame tab={tab} offers={offers} isDark={isDark} />}
     </article>
   )
 }

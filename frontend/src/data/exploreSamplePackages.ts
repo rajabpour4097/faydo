@@ -16,119 +16,72 @@ export function isSamplePackage(pkg: Package): pkg is SampleExplorePackage {
 
 const now = new Date().toISOString()
 
-const SAMPLE_CLUB_BY_CATEGORY: Record<string, { club: string; gold: PackageExperienceOffer[]; vip: PackageExperienceOffer[] }> = {
+const G = {
+  welcome: (description: string): PackageExperienceOffer => ({ id: -11, name: 'خوشامدگویی', description }),
+  gift: (description: string): PackageExperienceOffer => ({ id: -12, name: 'هدیه کوچک', description }),
+  attention: (description: string): PackageExperienceOffer => ({ id: -13, name: 'توجه ویژه', description }),
+  exclusive: (description: string): PackageExperienceOffer => ({ id: -14, name: 'پیشنهاد اختصاصی', description }),
+  returnScore: (description: string): PackageExperienceOffer => ({ id: -15, name: 'امتیاز بازگشت', description }),
+}
+
+const V = {
+  early: (description: string): PackageExperienceOffer => ({ id: -21, name: 'دسترسی زودتر', description }),
+  special: (description: string): PackageExperienceOffer => ({ id: -22, name: 'تجربه ویژه', description }),
+  birthday: (description: string): PackageExperienceOffer => ({ id: -23, name: 'روز خاص من', description }),
+  friend: (description: string): PackageExperienceOffer => ({ id: -24, name: 'دعوت از دوست', description }),
+  brand: (description: string): PackageExperienceOffer => ({ id: -25, name: 'هدیه برند', description }),
+}
+
+const SAMPLE_CLUB_BY_CATEGORY: Record<string, { club: string; gold?: PackageExperienceOffer; vip?: PackageExperienceOffer }> = {
   cafe: {
     club: 'باشگاه طعم‌ها',
-    gold: [
-      { id: -11, name: 'خوشامدگویی', description: 'نوشیدنی ولکام یا نان تازه کوچک' },
-      { id: -12, name: 'هدیه کوچک', description: 'کوپن دسر بعدی یا کارت برند' },
-      { id: -13, name: 'پیشنهاد اختصاصی', description: 'معرفی غذای روز یا نوشیدنی مخصوص فایدو' },
-    ],
-    vip: [
-      { id: -21, name: 'روز خاص من', description: 'دسر یا کیک تولد رایگان با تزئین ویژه' },
-      { id: -22, name: 'تجربه ویژه', description: 'سرو غذای شخصی‌سازی‌شده براساس سلیقه مشتری' },
-    ],
+    gold: G.welcome('نوشیدنی ولکام یا نان تازه کوچک'),
+    vip: V.birthday('دسر یا کیک تولد رایگان با تزئین ویژه'),
   },
   restaurant: {
     club: 'باشگاه طعم‌ها',
-    gold: [
-      { id: -11, name: 'توجه ویژه', description: 'رزرو میز با ویو بهتر' },
-      { id: -12, name: 'پیشنهاد اختصاصی', description: 'معرفی غذای روز فایدو' },
-      { id: -14, name: 'امتیاز بازگشت', description: 'کارت دعوت برای دفعه بعد' },
-    ],
-    vip: [
-      { id: -21, name: 'روز خاص من', description: 'کیک تولد ویژه' },
-      { id: -23, name: 'دعوت از دوست', description: 'یک آیتم اشتراکی رایگان برای همراه' },
-      { id: -24, name: 'هدیه برند', description: 'پک یادگاری برند رستوران' },
-    ],
+    gold: G.attention('رزرو میز با ویو بهتر'),
+    vip: V.friend('یک آیتم اشتراکی رایگان برای همراه'),
   },
   bakery: {
     club: 'باشگاه طعم‌ها',
-    gold: [
-      { id: -11, name: 'خوشامدگویی', description: 'نان تازه کوچک' },
-      { id: -12, name: 'هدیه کوچک', description: 'استیکر یا کارت برند' },
-    ],
-    vip: [
-      { id: -21, name: 'روز خاص من', description: 'دسر تولد رایگان' },
-      { id: -25, name: 'دسترسی زودتر', description: 'اولویت رزرو در تایم‌های شلوغ' },
-    ],
+    gold: G.gift('نان تازه کوچک یا کارت برند'),
+    vip: V.birthday('دسر تولد رایگان'),
   },
   medical: {
     club: 'باشگاه تندرستی',
-    gold: [
-      { id: -31, name: 'خوشامدگویی', description: 'مشاوره اولیه یا ارزیابی رایگان' },
-      { id: -32, name: 'توجه ویژه', description: 'پذیرش سریع‌تر در سالن انتظار' },
-    ],
-    vip: [
-      { id: -41, name: 'تجربه ویژه', description: 'یک جلسه خدمات خاص' },
-      { id: -42, name: 'روز خاص من', description: 'سرویس مخصوص تولد مشتری' },
-    ],
+    gold: G.welcome('مشاوره اولیه یا ارزیابی رایگان'),
+    vip: V.special('یک جلسه خدمات خاص'),
   },
   beauty: {
     club: 'باشگاه تندرستی',
-    gold: [
-      { id: -31, name: 'هدیه کوچک', description: 'پک تست محصولات مراقبتی' },
-      { id: -33, name: 'پیشنهاد اختصاصی', description: 'معرفی خدمت جدید مثل ماساژ' },
-    ],
-    vip: [
-      { id: -41, name: 'دسترسی زودتر', description: 'رزرو اولویت‌دار در روزهای شلوغ' },
-      { id: -43, name: 'هدیه برند', description: 'پک مراقبت با برند کلینیک' },
-    ],
+    gold: G.gift('پک تست محصولات مراقبتی'),
+    vip: V.early('رزرو اولویت‌دار در روزهای شلوغ'),
   },
   gym: {
     club: 'باشگاه تندرستی',
-    gold: [
-      { id: -31, name: 'خوشامدگویی', description: 'ارزیابی بدن رایگان' },
-      { id: -34, name: 'امتیاز بازگشت', description: 'کارت نوبت بعد با تخفیف بیشتر' },
-    ],
-    vip: [
-      { id: -44, name: 'دعوت از دوست', description: 'تمرین مشترک با همراه' },
-      { id: -41, name: 'تجربه ویژه', description: 'یک جلسه خدمات خاص' },
-    ],
+    gold: G.returnScore('کارت نوبت بعد با تخفیف بیشتر'),
+    vip: V.friend('تمرین مشترک با همراه'),
   },
   salon: {
     club: 'باشگاه سبک زندگی',
-    gold: [
-      { id: -51, name: 'خوشامدگویی', description: 'پذیرایی خوش‌آمد با نوشیدنی' },
-      { id: -52, name: 'توجه ویژه', description: 'نوبت‌دهی زودتر' },
-    ],
-    vip: [
-      { id: -61, name: 'روز خاص من', description: 'استایل یا پک تولد اختصاصی' },
-      { id: -62, name: 'تجربه ویژه', description: 'خدمات ویژه روز مشتری' },
-    ],
+    gold: G.welcome('پذیرایی خوش‌آمد با نوشیدنی'),
+    vip: V.birthday('استایل یا پک تولد اختصاصی'),
   },
   boutique: {
     club: 'باشگاه سبک زندگی',
-    gold: [
-      { id: -51, name: 'هدیه کوچک', description: 'اکسسوری کوچک یا نمونه محصول' },
-      { id: -53, name: 'پیشنهاد اختصاصی', description: 'معرفی محصول یا سبک جدید' },
-    ],
-    vip: [
-      { id: -63, name: 'دسترسی زودتر', description: 'شرکت در پیش‌نمایش کالکشن' },
-      { id: -64, name: 'هدیه برند', description: 'پک محصولات با برند فروشگاه' },
-    ],
+    gold: G.exclusive('معرفی محصول یا سبک جدید'),
+    vip: V.early('شرکت در پیش‌نمایش کالکشن'),
   },
   pets: {
     club: 'باشگاه سبک زندگی',
-    gold: [
-      { id: -51, name: 'خوشامدگویی', description: 'پذیرایی خوش‌آمد' },
-      { id: -54, name: 'امتیاز بازگشت', description: 'کارت دعوت برای خدمات بعدی' },
-    ],
-    vip: [
-      { id: -62, name: 'تجربه ویژه', description: 'خدمات ویژه روز مشتری' },
-      { id: -65, name: 'دعوت از دوست', description: 'هدیه دوتایی برای مشتری و همراه' },
-    ],
+    gold: G.returnScore('کارت دعوت برای خدمات بعدی'),
+    vip: V.special('خدمات ویژه روز مشتری'),
   },
   playground: {
     club: 'باشگاه سبک زندگی',
-    gold: [
-      { id: -51, name: 'توجه ویژه', description: 'نوبت‌دهی زودتر' },
-      { id: -52, name: 'هدیه کوچک', description: 'کوپن یا نمونه محصول' },
-    ],
-    vip: [
-      { id: -61, name: 'روز خاص من', description: 'تجربه ویژه تولد کودک' },
-      { id: -63, name: 'دسترسی زودتر', description: 'رزرو نوبت خاص' },
-    ],
+    gold: G.attention('نوبت‌دهی زودتر'),
+    vip: V.brand('پک یادگاری خانه بازی'),
   },
 }
 
@@ -184,8 +137,8 @@ function sample(
     club_name: clubData?.club,
     has_vip: includeGold,
     has_vip_plus: includeVip,
-    gold_experiences: includeGold ? clubData?.gold ?? [] : [],
-    vip_experiences: includeVip ? clubData?.vip ?? [] : [],
+    gold_experiences: includeGold && clubData?.gold ? [clubData.gold] : [],
+    vip_experiences: includeVip && clubData?.vip ? [clubData.vip] : [],
     days_remaining: 45,
     is_sample: true,
     explore_category_id: exploreCategoryId,

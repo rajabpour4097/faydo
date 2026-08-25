@@ -542,14 +542,20 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   </svg>
                 </div>
                 <input
-                  type="tel"
+                  type="text"
                   inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="tel"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  lang="en"
+                  dir="ltr"
                   maxLength={11}
                   value={formData.phone_number}
                   onChange={(e) => patchForm({ phone_number: normalizeDigits(e.target.value, 11) })}
                   className="block w-full pr-10 pl-3 py-3.5 border border-gray-200 rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   placeholder="09123456789"
-                  dir="ltr"
                 />
               </div>
               <button

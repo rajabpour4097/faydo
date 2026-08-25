@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { normalizeDigits, toEnglishDigits } from '../../utils/digits'
+import { normalizeDigits } from '../../utils/digits'
 
 interface OtpInputProps {
   value: string
@@ -57,11 +57,24 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false, remain
   }
 
   const handleChange = (index: number, raw: string) => {
-    const digit = normalizeDigits(raw, 1).slice(-1)
+    const cleaned = normalizeDigits(raw)
+    if (!cleaned) {
+      const next = [...digits]
+      next[index] = ''
+      emitChange(next)
+      return
+    }
+    if (cleaned.length >= OTP_LENGTH) {
+      const next = Array.from({ length: OTP_LENGTH }, (_, i) => cleaned[i] || '')
+      emitChange(next)
+      inputsRef.current[OTP_LENGTH - 1]?.focus()
+      return
+    }
+    const digit = cleaned.slice(-1)
     const next = [...digits]
     next[index] = digit
     emitChange(next)
-    if (digit && index < OTP_LENGTH - 1) {
+    if (index < OTP_LENGTH - 1) {
       inputsRef.current[index + 1]?.focus()
     }
   }
@@ -104,7 +117,13 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false, remain
             ref={(el) => { inputsRef.current[index] = el }}
             type="text"
             inputMode="numeric"
-            maxLength={1}
+            pattern="[0-9]*"
+            autoComplete={index === 0 ? 'one-time-code' : 'off'}
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            lang="en"
+            maxLength={6}
             disabled={disabled}
             value={digit}
             onChange={(e) => handleChange(index, e.target.value)}

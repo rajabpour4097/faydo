@@ -365,3 +365,9 @@ body {
 .persian-wheel-scroll::-webkit-scrollbar {
   display: none;
 }
+
+/* Android WebView: allow typing into inputs (some WebViews inherit user-select:none) */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}

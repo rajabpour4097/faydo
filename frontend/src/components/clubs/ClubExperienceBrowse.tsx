@@ -30,7 +30,7 @@ import {
 } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useFavorites } from '../../contexts/FavoritesContext'
-import { MEMBERSHIP_TIERS, TIER_MIN_POINTS } from '../../constants/membershipTiers'
+import { hasReachedClubTab, MEMBERSHIP_TIERS, TIER_MIN_POINTS } from '../../constants/membershipTiers'
 import { buildCoverUrl, formatDistance, haversineKm } from '../../utils/exploreHelpers'
 import { mergeWithExploreSamples } from '../../data/exploreSamplePackages'
 import tasteImage from '../../assets/clubs/taste.png'
@@ -403,6 +403,7 @@ export const ClubExperienceBrowse: React.FC<ClubExperienceBrowseProps> = ({
               onFavorite={e => toggleFavorite(pkg, e)}
               onClick={() => navigate(`/dashboard/business/${pkg.id}`)}
               isDark={isDark}
+              locked={!hasReachedClubTab(tab, points)}
             />
           ))}
           {filtered.length === 0 && (
@@ -428,9 +429,7 @@ function ClubTierStatus({
   const target = tab
   const needed = TIER_MIN_POINTS[target]
   const current = summary.points_6months ?? summary.total_points ?? 0
-  const rank: Record<string, number> = { bronze: 0, silver: 1, gold: 2, vip: 3 }
-  const reached =
-    current >= needed || (rank[summary.membership_level] ?? 0) >= rank[target]
+  const reached = hasReachedClubTab(target, summary)
   const remaining = Math.max(0, needed - current)
   const percent = reached ? 100 : Math.min(100, Math.round((current / needed) * 100))
   const accent = tab === 'gold' ? '#C9A227' : '#6B4EA8'
@@ -574,14 +573,59 @@ function FilterChip({
   )
 }
 
+function OfferLockBadge({ isVip, isDark }: { isVip: boolean; isDark: boolean }) {
+  const accent = isVip
+    ? isDark
+      ? '#C4B0E8'
+      : '#6B4EA8'
+    : isDark
+      ? '#E8D48A'
+      : '#C9A227'
+  const fill = isVip
+    ? isDark
+      ? 'linear-gradient(165deg, #4A3766 0%, #3A2A52 55%, #2C2438 100%)'
+      : 'linear-gradient(165deg, #F7F2FC 0%, #EDE3F8 55%, #E4D6F4 100%)'
+    : isDark
+      ? 'linear-gradient(165deg, #5A4A28 0%, #4A3D22 55%, #3A3220 100%)'
+      : 'linear-gradient(165deg, #FBF6E8 0%, #F6E9C4 55%, #EBD89A 100%)'
+  const ring = isVip ? 'rgba(107, 78, 168, 0.38)' : 'rgba(201, 162, 39, 0.42)'
+
+  return (
+    <span
+      className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+      style={{
+        background: fill,
+        boxShadow: `inset 0 0 0 1.5px ${ring}, 0 2px 8px ${ring}`,
+      }}
+      aria-hidden
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M8.2 11V8.3a3.8 3.8 0 0 1 7.6 0V11"
+          stroke={accent}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+        <path
+          fill={accent}
+          fillRule="evenodd"
+          d="M6.85 10.85c0-.8.65-1.45 1.45-1.45h7.4c.8 0 1.45.65 1.45 1.45v6.7c0 .8-.65 1.45-1.45 1.45h-7.4c-.8 0-1.45-.65-1.45-1.45v-6.7Zm5.15 1.75a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm-.4 2.65c0-.22.18-.4.4-.4s.4.18.4.4v1.35a.4.4 0 0 1-.8 0v-1.35Z"
+        />
+      </svg>
+    </span>
+  )
+}
+
 function OfferFrame({
   tab,
   offers,
   isDark,
+  locked,
 }: {
   tab: LevelTab
   offers: PackageExperienceOffer[]
   isDark: boolean
+  locked?: boolean
 }) {
   const isVip = tab === 'vip'
   const Icon = isVip ? Crown : Gift
@@ -589,6 +633,7 @@ function OfferFrame({
   return (
     <div
       className="mt-2 overflow-hidden rounded-[14px] px-3 py-2"
+      aria-label={locked ? 'این تجربه قفل است' : undefined}
       style={{
         background: isVip
           ? isDark
@@ -603,24 +648,31 @@ function OfferFrame({
       }}
     >
       <div className="flex items-center gap-2">
-        <span
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-          style={{
-            background: isVip ? '#6B4EA8' : '#C9A227',
-            boxShadow: isVip
-              ? '0 4px 10px rgba(107, 78, 168, 0.28)'
-              : '0 4px 10px rgba(201, 162, 39, 0.28)',
-          }}
-        >
-          <Icon className="h-3.5 w-3.5 text-white" />
-        </span>
+        {!locked && (
+          <span
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+            style={{
+              background: isVip ? '#6B4EA8' : '#C9A227',
+              boxShadow: isVip
+                ? '0 4px 10px rgba(107, 78, 168, 0.28)'
+                : '0 4px 10px rgba(201, 162, 39, 0.28)',
+            }}
+          >
+            <Icon className="h-3.5 w-3.5 text-white" />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           {offers[0] ? (
-            <p className={`line-clamp-2 text-[12px] font-semibold ${isDark ? 'text-slate-200' : isVip ? 'text-[#5A3F8A]' : 'text-[#8A7040]'}`}>
+            <p
+              className={`line-clamp-2 text-[12px] font-semibold ${
+                locked ? 'opacity-80' : ''
+              } ${isDark ? 'text-slate-200' : isVip ? 'text-[#5A3F8A]' : 'text-[#8A7040]'}`}
+            >
               {offers[0].description || offers[0].name}
             </p>
           ) : null}
         </div>
+        {locked && <OfferLockBadge isVip={isVip} isDark={isDark} />}
       </div>
     </div>
   )
@@ -636,6 +688,7 @@ function BusinessExperienceCard({
   onFavorite,
   onClick,
   isDark,
+  locked,
 }: {
   pkg: Package
   theme: (typeof CLUB_META)[ClubThemeKey]
@@ -646,6 +699,7 @@ function BusinessExperienceCard({
   onFavorite: (e: React.MouseEvent) => void
   onClick: () => void
   isDark: boolean
+  locked?: boolean
 }) {
   const cover = buildCoverUrl(pkg)
   const offers = pickTabOffers(pkg, tab, selectedName)
@@ -704,7 +758,7 @@ function BusinessExperienceCard({
         </div>
       </div>
 
-      {offers.length > 0 && <OfferFrame tab={tab} offers={offers} isDark={isDark} />}
+      {offers.length > 0 && <OfferFrame tab={tab} offers={offers} isDark={isDark} locked={locked} />}
     </article>
   )
 }
@@ -718,6 +772,7 @@ export function ClubBusinessCard({
   onFavorite,
   onClick,
   isDark,
+  locked,
 }: {
   pkg: Package
   tab?: LevelTab
@@ -727,6 +782,7 @@ export function ClubBusinessCard({
   onFavorite: (e: React.MouseEvent) => void
   onClick: () => void
   isDark: boolean
+  locked?: boolean
 }) {
   const theme = CLUB_META[clubThemeKey(pkg.club_name || pkg.business_category?.name)]
   const gold = pkg.gold_experiences || []
@@ -752,6 +808,7 @@ export function ClubBusinessCard({
       onFavorite={onFavorite}
       onClick={onClick}
       isDark={isDark}
+      locked={locked}
     />
   )
 }

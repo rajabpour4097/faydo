@@ -1,4 +1,4 @@
-import type { MembershipLevel } from '../services/api'
+import type { MembershipLevel, PointsSummary } from '../services/api'
 import bronzeIcon from '../assets/tiers/bronze.png'
 import silverIcon from '../assets/tiers/silver.png'
 import goldIcon from '../assets/tiers/gold.png'
@@ -14,6 +14,23 @@ export const TIER_MIN_POINTS: Record<MembershipLevel, number> = {
   silver: 500,
   gold: 2000,
   vip: 5000,
+}
+
+const TIER_RANK: Record<MembershipLevel, number> = {
+  bronze: 0,
+  silver: 1,
+  gold: 2,
+  vip: 3,
+}
+
+/** آیا کاربر به حداقل امتیاز تب Gold / VIP رسیده است؟ */
+export function hasReachedClubTab(
+  tab: Extract<MembershipLevel, 'gold' | 'vip'>,
+  summary: Pick<PointsSummary, 'points_6months' | 'total_points' | 'membership_level'> | null,
+): boolean {
+  if (!summary) return true
+  const current = summary.points_6months ?? summary.total_points ?? 0
+  return current >= TIER_MIN_POINTS[tab] || TIER_RANK[summary.membership_level] >= TIER_RANK[tab]
 }
 
 export const NEXT_TIER_LABEL: Record<MembershipLevel, string> = {

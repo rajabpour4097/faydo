@@ -7,9 +7,10 @@ import { ClubBusinessCard } from '../components/clubs/ClubExperienceBrowse'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { useFavorites } from '../contexts/FavoritesContext'
-import { apiService, Package } from '../services/api'
+import { apiService, Package, PointsSummary } from '../services/api'
 import { mergeWithExploreSamples } from '../data/exploreSamplePackages'
 import { formatDistance, haversineKm } from '../utils/exploreHelpers'
+import { hasReachedClubTab } from '../constants/membershipTiers'
 import {
   applyLlmRanking,
   ClubSearchResult,
@@ -40,6 +41,7 @@ export const ClubSearchResults: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortFilter>('suggested')
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
   const [draft, setDraft] = useState(query)
+  const [points, setPoints] = useState<PointsSummary | null>(null)
 
   useEffect(() => {
     setDraft(query)
@@ -48,6 +50,12 @@ export const ClubSearchResults: React.FC = () => {
   useEffect(() => {
     if (user && user.type !== 'customer') navigate('/dashboard')
   }, [user, navigate])
+
+  useEffect(() => {
+    apiService.getPointsSummary().then(res => {
+      if (res.data) setPoints(res.data)
+    })
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -258,6 +266,7 @@ export const ClubSearchResults: React.FC = () => {
             onFavorite={e => toggleFavorite(pkg, e)}
             onClick={() => navigate(`/dashboard/business/${pkg.id}`)}
             isDark={isDark}
+            locked={!hasReachedClubTab(matchedTab, points)}
           />
         ))}
         {ranked.length === 0 && !loading && !ranking && (

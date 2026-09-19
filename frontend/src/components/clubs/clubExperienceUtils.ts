@@ -63,6 +63,35 @@ export function sameExperience(a?: string, b?: string) {
   return normalizeClubName(a) === normalizeClubName(b)
 }
 
+export type ClubThemeKey = 'taste' | 'wellness' | 'lifestyle'
+
+export function clubThemeKey(name?: string | null): ClubThemeKey {
+  const n = normalizeClubName(name || '')
+  if (n.includes('طعم') || n.includes('کافه') || n.includes('رستوران') || n.includes('بیکری') || n.includes('شیرینی')) {
+    return 'taste'
+  }
+  if (
+    n.includes('تندرست') ||
+    n.includes('کلینیک') ||
+    n.includes('زیبایی') ||
+    n.includes('ورزش') ||
+    n.includes('فیت') ||
+    (n.includes('سلامت') && !n.includes('سبک'))
+  ) {
+    return 'wellness'
+  }
+  if (
+    (n.includes('سبک') && n.includes('زندگی')) ||
+    n.includes('آرایش') ||
+    n.includes('مزون') ||
+    n.includes('پت') ||
+    n.includes('بازی')
+  ) {
+    return 'lifestyle'
+  }
+  return 'taste'
+}
+
 export function offersForTab(pkg: Package, tab: ClubLevelTab): PackageExperienceOffer[] {
   let list: PackageExperienceOffer[] = []
   if (tab === 'gold') {

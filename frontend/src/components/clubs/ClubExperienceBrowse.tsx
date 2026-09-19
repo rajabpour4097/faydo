@@ -38,13 +38,13 @@ import wellnessImage from '../../assets/clubs/wellness.png'
 import lifestyleImage from '../../assets/clubs/lifestyle.png'
 import {
   faNum,
+  clubThemeKey,
   normalizeClubName as normalizeName,
   offersForTab,
   sameExperience,
   type ClubLevelTab as LevelTab,
+  type ClubThemeKey,
 } from './clubExperienceUtils'
-
-type ClubThemeKey = 'taste' | 'wellness' | 'lifestyle'
 type SortFilter = 'suggested' | 'nearest' | 'rating' | 'popular'
 
 const GOLD_FALLBACK: { name: string; description: string; Icon: LucideIcon }[] = [
@@ -91,33 +91,6 @@ const CLUB_META: Record<
     image: lifestyleImage,
     label: 'سبک زندگی',
   },
-}
-
-export function clubThemeKey(name?: string | null): ClubThemeKey {
-  const n = normalizeName(name || '')
-  if (n.includes('طعم') || n.includes('کافه') || n.includes('رستوران') || n.includes('بیکری') || n.includes('شیرینی')) {
-    return 'taste'
-  }
-  if (
-    n.includes('تندرست') ||
-    n.includes('کلینیک') ||
-    n.includes('زیبایی') ||
-    n.includes('ورزش') ||
-    n.includes('فیت') ||
-    (n.includes('سلامت') && !n.includes('سبک'))
-  ) {
-    return 'wellness'
-  }
-  if (
-    (n.includes('سبک') && n.includes('زندگی')) ||
-    n.includes('آرایش') ||
-    n.includes('مزون') ||
-    n.includes('پت') ||
-    n.includes('بازی')
-  ) {
-    return 'lifestyle'
-  }
-  return 'taste'
 }
 
 const ClocheIcon: React.FC<{ color: string; className?: string }> = ({ color, className }) => (

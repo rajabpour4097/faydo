@@ -101,6 +101,7 @@ function sample(
     city?: string
     gold?: boolean
     vip?: boolean
+    daysRemaining?: number
   },
 ): SampleExplorePackage {
   const assets = EXPLORE_SAMPLE_ASSETS[assetKey]
@@ -139,7 +140,7 @@ function sample(
     has_vip_plus: includeVip,
     gold_experiences: includeGold && clubData?.gold ? [clubData.gold] : [],
     vip_experiences: includeVip && clubData?.vip ? [clubData.vip] : [],
-    days_remaining: 45,
+    days_remaining: opts.daysRemaining ?? 45,
     is_sample: true,
     explore_category_id: exploreCategoryId,
   }
@@ -157,6 +158,7 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     city: 'بابلسر',
     gold: true,
     vip: true,
+    daysRemaining: 9,
   }),
   sample(-1002, 'burgerland', 'restaurant', 'رستوران', 'رستوران برگرلند', {
     gift: 'برگر دوبل رایگان',
@@ -166,6 +168,7 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     lng: 51.4082,
     gold: true,
     vip: false,
+    daysRemaining: 22,
   }),
   sample(-1003, 'bakery', 'bakery', 'شیرینی و بیکری', 'شیرینی سرای گلستان', {
     gift: 'یک جعبه شیرینی هدیه',
@@ -175,6 +178,7 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     lng: 51.4231,
     gold: false,
     vip: true,
+    daysRemaining: 15,
   }),
   sample(-1004, 'medical', 'medical', 'کلینیک درمانی', 'کلینیک دندانپزشکی نوین', {
     gift: 'معاینه رایگان',
@@ -184,6 +188,7 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     lng: 51.3890,
     gold: true,
     vip: true,
+    daysRemaining: 31,
   }),
   sample(-1005, 'beauty', 'beauty', 'مراکز زیبایی', 'سالن زیبایی آرتمیس', {
     gift: 'یک جلسه فیشیال رایگان',
@@ -193,6 +198,7 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     lng: 51.3654,
     gold: true,
     vip: false,
+    daysRemaining: 12,
   }),
   sample(-1006, 'gym', 'gym', 'باشگاه ورزشی', 'باشگاه فیت‌لند', {
     gift: 'یک جلسه بدنسازی رایگان',
@@ -202,6 +208,7 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     lng: 51.3890,
     gold: false,
     vip: true,
+    daysRemaining: 27,
   }),
   sample(-1007, 'salon', 'salon', 'آرایشگاه', 'آرایشگاه مردانه استایل', {
     gift: 'اصلاح و استایل رایگان',
@@ -211,6 +218,7 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     lng: 51.4012,
     gold: true,
     vip: true,
+    daysRemaining: 5,
   }),
   sample(-1008, 'boutique', 'boutique', 'مزون', 'مزون لباس زنانه نگار', {
     gift: '۱۵٪ تخفیف خرید اول',
@@ -220,6 +228,7 @@ export const EXPLORE_SAMPLE_PACKAGES: SampleExplorePackage[] = [
     lng: 51.3756,
     gold: true,
     vip: false,
+    daysRemaining: 18,
   }),
   sample(-1009, 'pets', 'pets', 'پت شاپ', 'پت شاپ پاز', {
     gift: 'یک بسته تشویقی هدیه',

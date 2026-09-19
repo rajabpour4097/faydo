@@ -18,6 +18,7 @@ import { ExploreSectionList } from './pages/ExploreSectionList'
 import { Clubs } from './pages/Clubs'
 import { ClubDetail } from './pages/ClubDetail'
 import { ClubSearchResults } from './pages/ClubSearchResults'
+import { ClubExperienceResults } from './pages/ClubExperienceResults'
 import { BusinessDetail } from './pages/BusinessDetail'
 import { QRCodePage } from './pages/QRCodePage'
 
@@ -71,6 +72,11 @@ const DashboardRouter = () => {
       <Route path="clubs/search" element={
         <ProfileGuard>
           <ClubSearchResults />
+        </ProfileGuard>
+      } />
+      <Route path="clubs/experiences" element={
+        <ProfileGuard>
+          <ClubExperienceResults />
         </ProfileGuard>
       } />
       <Route path="clubs/:clubId" element={

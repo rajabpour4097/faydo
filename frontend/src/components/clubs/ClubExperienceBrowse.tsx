@@ -36,9 +36,15 @@ import { mergeWithExploreSamples } from '../../data/exploreSamplePackages'
 import tasteImage from '../../assets/clubs/taste.png'
 import wellnessImage from '../../assets/clubs/wellness.png'
 import lifestyleImage from '../../assets/clubs/lifestyle.png'
+import {
+  faNum,
+  normalizeClubName as normalizeName,
+  offersForTab,
+  sameExperience,
+  type ClubLevelTab as LevelTab,
+} from './clubExperienceUtils'
 
 type ClubThemeKey = 'taste' | 'wellness' | 'lifestyle'
-type LevelTab = 'gold' | 'vip'
 type SortFilter = 'suggested' | 'nearest' | 'rating' | 'popular'
 
 const GOLD_FALLBACK: { name: string; description: string; Icon: LucideIcon }[] = [
@@ -87,10 +93,6 @@ const CLUB_META: Record<
   },
 }
 
-function normalizeName(name: string) {
-  return name.replace(/\u200c/g, '').replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, '')
-}
-
 export function clubThemeKey(name?: string | null): ClubThemeKey {
   const n = normalizeName(name || '')
   if (n.includes('طعم') || n.includes('کافه') || n.includes('رستوران') || n.includes('بیکری') || n.includes('شیرینی')) {
@@ -118,10 +120,6 @@ export function clubThemeKey(name?: string | null): ClubThemeKey {
   return 'taste'
 }
 
-function faNum(n: number) {
-  return n.toLocaleString('fa-IR')
-}
-
 const ClocheIcon: React.FC<{ color: string; className?: string }> = ({ color, className }) => (
   <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
     <path d="M4.5 18.2h15" />
@@ -135,34 +133,6 @@ function ClubMark({ themeKey, color }: { themeKey: ClubThemeKey; color: string }
   if (themeKey === 'wellness') return <Heart className="h-5 w-5" color={color} />
   if (themeKey === 'lifestyle') return <Star className="h-5 w-5" color={color} />
   return <ClocheIcon color={color} />
-}
-
-function sameExperience(a?: string, b?: string) {
-  if (!a || !b) return false
-  return normalizeName(a) === normalizeName(b)
-}
-
-function offersForTab(pkg: Package, tab: LevelTab): PackageExperienceOffer[] {
-  let list: PackageExperienceOffer[] = []
-  if (tab === 'gold') {
-    if (Array.isArray(pkg.gold_experiences)) list = pkg.gold_experiences
-  } else if (Array.isArray(pkg.vip_experiences)) {
-    list = pkg.vip_experiences
-  }
-
-  if (list.length === 0) {
-    const wanted = tab === 'gold' ? 'VIP' : 'VIP+'
-    list = (pkg.experiences || [])
-      .filter(exp => exp.vip_experience_category?.vip_type === wanted)
-      .map(exp => ({
-        id: exp.vip_experience_category?.id ?? exp.id,
-        name: exp.vip_experience_category?.name || '',
-        description: exp.description || exp.vip_experience_category?.description || '',
-      }))
-      .filter(exp => exp.name)
-  }
-
-  return list.slice(0, 1)
 }
 
 function pickTabOffers(pkg: Package, tab: LevelTab, selectedName?: string): PackageExperienceOffer[] {

@@ -13,6 +13,18 @@ export type ExperienceIconKey =
   | 'people'
   | 'brandGift'
 
+export type DetailItemIconKey =
+  | 'cake'
+  | 'sparkle'
+  | 'gift'
+  | 'clock'
+  | 'coffee'
+  | 'star'
+  | 'tag'
+  | 'people'
+  | 'percent'
+  | 'return'
+
 export type ExperienceTone = 'pink' | 'purple' | 'yellow'
 
 export interface ClubHomeExperience {

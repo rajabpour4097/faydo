@@ -1,5 +1,5 @@
 import React from 'react'
-import type { ExperienceIconKey, ExperienceTone } from './clubExperienceUtils'
+import type { DetailItemIconKey, ExperienceIconKey, ExperienceTone } from './clubExperienceUtils'
 
 const SVG_PROPS = {
   fill: 'none' as const,
@@ -97,6 +97,23 @@ export const TwoPeopleIcon = ({ className }: { className?: string }) => (
   </IconSvg>
 )
 
+export const CakeSliceIcon = ({ className }: { className?: string }) => (
+  <IconSvg className={className}>
+    <path d="M12 4.2v3.2" />
+    <path d="M12 4.2c.7-.9 1.9-1.2 2.6-.4" />
+    <path d="M5.2 11.2c2.1-2.4 11.5-2.4 13.6 0v7.4c0 .7-.6 1.3-1.3 1.3H6.5c-.7 0-1.3-.6-1.3-1.3v-7.4z" />
+    <path d="M5.4 11.4c2.4 1.5 10.8 1.5 13.2 0" />
+    <path d="M12 11.2v8.6" />
+  </IconSvg>
+)
+
+export const ClockOutlineIcon = ({ className }: { className?: string }) => (
+  <IconSvg className={className}>
+    <circle cx="12" cy="12" r="8.1" />
+    <path d="M12 8.2v4.2l2.8 1.7" />
+  </IconSvg>
+)
+
 export const LockOutlineIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 24 24"
@@ -183,4 +200,28 @@ export function ExperienceIconBadge({
       <ExperienceGlyph icon={icon} />
     </span>
   )
+}
+
+const DETAIL_ICON_MAP: Record<DetailItemIconKey, React.FC<{ className?: string }>> = {
+  cake: CakeSliceIcon,
+  sparkle: SparkleBurstIcon,
+  gift: GiftBoxIcon,
+  clock: ClockOutlineIcon,
+  coffee: WelcomeCupIcon,
+  star: StarOutlineIcon,
+  tag: PriceTagIcon,
+  people: TwoPeopleIcon,
+  percent: PercentBadgeIcon,
+  return: ReturnArrowIcon,
+}
+
+export function DetailItemGlyph({
+  icon,
+  className,
+}: {
+  icon: DetailItemIconKey
+  className?: string
+}) {
+  const Icon = DETAIL_ICON_MAP[icon]
+  return <Icon className={className} />
 }

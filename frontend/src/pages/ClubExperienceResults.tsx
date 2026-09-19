@@ -4,11 +4,11 @@ import { ChevronDown, ChevronLeft, Flame, Sparkle, Star } from 'lucide-react'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { ClubBusinessCard } from '../components/clubs/ClubExperienceBrowse'
-import { ExperienceIconBadge } from '../components/clubs/clubExperienceIcons'
+import { ClubExperienceIntro } from '../components/clubs/ClubExperienceIntro'
+import { findExperienceDetail } from '../components/clubs/clubExperienceDetails'
 import {
   ClubLevelTab,
   faNum,
-  findHomeExperience,
   offersForTab,
   sameExperience,
 } from '../components/clubs/clubExperienceUtils'
@@ -27,10 +27,12 @@ export const ClubExperienceResults: React.FC = () => {
   const { isDark } = useTheme()
   const { isFavorite, toggleFavorite } = useFavorites()
   const navigate = useNavigate()
-  const [params] = useSearchParams()
+  const [params, setSearchParams] = useSearchParams()
   const tab: ClubLevelTab = params.get('tab') === 'vip' ? 'vip' : 'gold'
   const name = (params.get('name') || '').trim()
-  const experience = findHomeExperience(tab, name)
+  const showList = params.get('list') === '1'
+  const detail = findExperienceDetail(tab, name)
+  const accent = tab === 'vip' ? '#7B4DB8' : '#C9A227'
 
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
@@ -109,6 +111,57 @@ export const ClubExperienceResults: React.FC = () => {
     return withDistance
   }, [packages, tab, name, sortBy, userPos])
 
+  const stats = useMemo(() => {
+    const rated = filtered.filter(item => typeof item.pkg.average_rating === 'number')
+    const averageRating =
+      rated.length > 0
+        ? rated.reduce((sum, item) => sum + (item.pkg.average_rating || 0), 0) / rated.length
+        : null
+    const reviewCount = filtered.reduce((sum, item) => sum + (item.pkg.total_comments || 0), 0)
+    return {
+      experienceCount: filtered.length,
+      averageRating,
+      reviewCount,
+    }
+  }, [filtered])
+
+  const goHome = () => navigate(tab === 'vip' ? '/dashboard/clubs?tab=vip' : '/dashboard/clubs')
+  const openList = () => {
+    const next = new URLSearchParams(params)
+    next.set('list', '1')
+    setSearchParams(next)
+  }
+  const closeList = () => {
+    const next = new URLSearchParams(params)
+    next.delete('list')
+    setSearchParams(next)
+  }
+
+  if (!user) {
+    return (
+      <MobileDashboardLayout>
+        <div className="min-h-[50vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500" />
+        </div>
+      </MobileDashboardLayout>
+    )
+  }
+
+  if (!showList && detail) {
+    return (
+      <ClubExperienceIntro
+        detail={detail}
+        accent={accent}
+        experienceCount={stats.experienceCount}
+        averageRating={stats.averageRating}
+        reviewCount={stats.reviewCount}
+        isDark={isDark}
+        onBack={goHome}
+        onViewExperiences={openList}
+      />
+    )
+  }
+
   const LoadingView = () => (
     <div className="min-h-[50vh] flex items-center justify-center">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500" />
@@ -118,15 +171,10 @@ export const ClubExperienceResults: React.FC = () => {
   const content = (
     <div className="-mx-1 bg-white dark:bg-slate-900" style={{ direction: 'rtl' }}>
       <header className="px-1 pb-3 pt-1">
-        <div className="flex items-center justify-between">
-          {experience ? (
-            <ExperienceIconBadge icon={experience.icon} tone={experience.tone} isDark={isDark} />
-          ) : (
-            <span />
-          )}
+        <div className="flex items-center justify-end">
           <button
             type="button"
-            onClick={() => navigate(tab === 'vip' ? '/dashboard/clubs?tab=vip' : '/dashboard/clubs')}
+            onClick={detail ? closeList : goHome}
             className={`flex h-9 w-9 items-center justify-center rounded-full ${
               isDark ? 'bg-slate-800 text-white' : 'bg-white text-gray-800'
             }`}
@@ -135,12 +183,12 @@ export const ClubExperienceResults: React.FC = () => {
             <ChevronLeft className="h-5 w-5" />
           </button>
         </div>
-        <h1 className={`mt-3 text-center text-[22px] font-bold ${isDark ? 'text-white' : 'text-[#2F2F2F]'}`}>
-          {experience?.name || name || 'تجربه'}
+        <h1 className={`mt-1 text-center text-[22px] font-bold ${isDark ? 'text-white' : 'text-[#2F2F2F]'}`}>
+          {detail?.name || name || 'تجربه'}
         </h1>
-        {experience ? (
+        {detail ? (
           <p className={`mt-1 text-center text-[12px] ${isDark ? 'text-slate-400' : 'text-[#9A9A9A]'}`}>
-            {experience.description}
+            {detail.headline}
           </p>
         ) : null}
       </header>
@@ -194,7 +242,7 @@ export const ClubExperienceResults: React.FC = () => {
     </div>
   )
 
-  if (!user || loading) {
+  if (loading) {
     return (
       <>
         <div className="hidden lg:block">

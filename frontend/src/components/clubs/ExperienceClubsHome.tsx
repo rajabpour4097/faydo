@@ -4,6 +4,7 @@ import { apiService, Package } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { mergeWithExploreSamples } from '../../data/exploreSamplePackages'
 import { ExperienceIconBadge } from './clubExperienceIcons'
+import { ClubSmartSearchBar } from './ClubSmartSearchBar'
 import {
   ClubHomeExperience,
   ClubLevelTab,
@@ -142,6 +143,8 @@ export const ExperienceClubsHome: React.FC = () => {
               )
             })}
       </div>
+
+      <ClubSmartSearchBar isDark={isDark} />
     </div>
   )
 }

@@ -197,7 +197,7 @@ export const ClubSearchResults: React.FC = () => {
             type="search"
             value={draft}
             onChange={e => setDraft(e.target.value)}
-            placeholder="کلمه یا توصیف تجربه را بنویسید..."
+            placeholder="توصیف کن تا برات پیداش کنم"
             className={`w-full rounded-full border-0 py-3 pr-11 pl-12 text-[12px] outline-none ${
               isDark ? 'bg-slate-800 text-white' : 'bg-[#F3F2F7] text-gray-700'
             }`}

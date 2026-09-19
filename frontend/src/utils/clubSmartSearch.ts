@@ -1,7 +1,9 @@
 import Fuse from 'fuse.js'
 import type { Package, PackageExperienceOffer } from '../services/api'
+import { GOLD_HOME_ITEMS, VIP_HOME_ITEMS, type ClubLevelTab } from '../components/clubs/clubExperienceUtils'
 
 export const CLUB_SEARCH_SUGGESTION = 'امروز تولدمه، کجا برم؟'
+export const CLUB_SEARCH_HINT = 'توصیف کن تا برات پیداش کنم'
 
 export type SearchLevelTab = 'gold' | 'vip'
 
@@ -168,7 +170,57 @@ export function isDescriptiveQuery(query: string) {
   const normalizedQuery = normalize(query)
   if (!normalizedQuery) return false
   const tokens = normalizedQuery.split(' ').filter(token => token.length >= 2)
-  return isSmartQuery(normalizedQuery, tokens, detectIntents(normalizedQuery))
+  const intents = detectIntents(normalizedQuery)
+  if (intents.length > 0) return true
+  return isSmartQuery(normalizedQuery, tokens, intents)
+}
+
+const EXPERIENCE_BY_INTENT: Record<string, { tab: ClubLevelTab; name: string }[]> = {
+  birthday: [{ tab: 'vip', name: 'روز خاص من' }],
+  welcome: [{ tab: 'gold', name: 'خوشامدگویی' }],
+  gift: [
+    { tab: 'gold', name: 'هدیه کوچک' },
+    { tab: 'vip', name: 'هدیه برند' },
+  ],
+  friend: [{ tab: 'vip', name: 'دعوت از دوست' }],
+  early: [{ tab: 'vip', name: 'دسترسی زودتر' }],
+}
+
+export function suggestClubExperiences(query: string): { tab: ClubLevelTab; name: string }[] {
+  const normalizedQuery = normalize(query)
+  if (normalizedQuery.length < 2) return []
+
+  const seen = new Set<string>()
+  const results: { tab: ClubLevelTab; name: string }[] = []
+  const add = (tab: ClubLevelTab, name: string) => {
+    const key = `${tab}:${name}`
+    if (seen.has(key)) return
+    seen.add(key)
+    results.push({ tab, name })
+  }
+
+  for (const item of GOLD_HOME_ITEMS) {
+    const blob = normalize(`${item.name} ${item.description}`)
+    if (blob.includes(normalizedQuery) || normalizedQuery.includes(normalize(item.name))) {
+      add('gold', item.name)
+    }
+  }
+  for (const item of VIP_HOME_ITEMS) {
+    const blob = normalize(`${item.name} ${item.description}`)
+    if (blob.includes(normalizedQuery) || normalizedQuery.includes(normalize(item.name))) {
+      add('vip', item.name)
+    }
+  }
+
+  detectIntents(normalizedQuery).forEach(intent => {
+    ;(EXPERIENCE_BY_INTENT[intent.id] || []).forEach(row => add(row.tab, row.name))
+  })
+
+  if (/(ویژه|خاص|متفاوت)/.test(normalizedQuery) && !results.some(row => row.name === 'تجربه ویژه')) {
+    add('vip', 'تجربه ویژه')
+  }
+
+  return results.slice(0, 3)
 }
 
 export function toSearchCatalog(packages: Package[]) {

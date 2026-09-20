@@ -41,9 +41,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         { name: 'داشبورد', href: '/dashboard', icon: '📊' },
         { name: 'پکیج‌ها', href: '/dashboard/packages', icon: '📦' },
         { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', badge: pendingCount > 0 ? pendingCount : undefined },
+        { name: 'مشتریان', href: '/dashboard/customers', icon: '👥' },
         { name: 'هدایای ویژه', href: '/dashboard/elite-gift-claims', icon: '🎁', badge: eliteGiftPendingCount > 0 ? eliteGiftPendingCount : undefined },
+        { name: 'QR کسب‌وکار', href: '/dashboard/qrcode', icon: '📱' },
+        { name: 'ثبت تراکنش', href: '/dashboard/transactions/new', icon: '🧾' },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },
-        { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️' },
       ]
     }
 

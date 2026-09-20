@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { apiService, EliteGiftClaim } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
+import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { Gift, Check, X, Clock, CheckCircle } from 'lucide-react'
 
@@ -402,7 +403,9 @@ export const EliteGiftClaimsPage: React.FC = () => {
 
       {/* Desktop View */}
       <div className="hidden md:block">
-        {content}
+        <DashboardLayout>
+          {content}
+        </DashboardLayout>
       </div>
     </>
   )

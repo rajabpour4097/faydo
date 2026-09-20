@@ -148,7 +148,7 @@ export const BusinessQRCode: React.FC = () => {
         {qrGenerated && (
           <button
             onClick={downloadQRCode}
-            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 bg-[#7C5CFC] hover:bg-[#6B4EE8] text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
           >
             <svg
               className="w-5 h-5"

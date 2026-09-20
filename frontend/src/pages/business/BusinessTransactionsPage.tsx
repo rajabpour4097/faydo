@@ -5,6 +5,7 @@ import { TransactionCard } from '../../components/business/TransactionCard'
 import { TransactionApprovalModal } from '../../components/business/TransactionApprovalModal'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
+import { useSearchParams } from 'react-router-dom'
 
 // Mobile Component
 interface MobileTransactionsProps {
@@ -132,6 +133,7 @@ const MobileTransactions: React.FC<MobileTransactionsProps> = ({
 
 export const BusinessTransactionsPage: React.FC = () => {
   const { isDark } = useTheme()
+  const [searchParams] = useSearchParams()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -166,6 +168,13 @@ export const BusinessTransactionsPage: React.FC = () => {
   useEffect(() => {
     loadTransactions()
   }, [])
+
+  useEffect(() => {
+    const status = searchParams.get('status')
+    if (status === 'pending' || status === 'approved' || status === 'rejected') {
+      setFilterStatus(status)
+    }
+  }, [searchParams])
 
   const handleTransactionClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction)

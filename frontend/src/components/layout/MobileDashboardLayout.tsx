@@ -219,10 +219,11 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                     { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' },
                     { name: 'مدیریت پکیج ها', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
                     { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', iconType: 'emoji', badge: pendingCount > 0 ? pendingCount : undefined },
+                    { name: 'مشتریان', href: '/dashboard/customers', icon: '👥', iconType: 'emoji' },
                     { name: 'هدایای ویژه', href: '/dashboard/elite-gift-claims', icon: '🎁', iconType: 'emoji', badge: eliteGiftPendingCount > 0 ? eliteGiftPendingCount : undefined },
                     { name: 'QR Code کسب‌وکار', href: '/dashboard/qrcode', icon: '📱', iconType: 'emoji' },
+                    { name: 'ثبت تراکنش', href: '/dashboard/transactions/new', icon: '🧾', iconType: 'emoji' },
                     { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
-                    { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️', iconType: 'emoji' },
                   ]
                 : [
                     { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },

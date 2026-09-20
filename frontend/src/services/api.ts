@@ -482,6 +482,90 @@ export interface BusinessTransactionsResponse {
   results: BusinessTransaction[]
 }
 
+export interface BusinessHealthMetric {
+  key: string
+  title: string
+  score: number
+  change: number
+  detail: string
+}
+
+export interface BusinessDashboardData {
+  today_label: string
+  health: {
+    score: number
+    label: string
+    metrics: BusinessHealthMetric[]
+  }
+  kpis: {
+    sales_this_month: number
+    sales_change: number
+    active_customers: number
+    active_change: number
+    returning_customers: number
+    returning_change: number
+    transactions_this_month: number
+    transactions_change: number
+  }
+  actions: {
+    pending_transactions: number
+    pending_gift_claims: number
+    package_days_remaining: number | null
+    package_status: string | null
+  }
+  customers_summary: {
+    new: number
+    returning: number
+    vip: number
+    churn_risk: number
+    total: number
+  }
+  sales_series: { day: number; label: string; amount: number }[]
+  gift_program: {
+    enabled: boolean
+    gift_name: string
+    gift_type: 'amount' | 'count' | null
+    target: number
+    current: number
+    percent: number
+    new_claims: number
+    customers_on_path: number
+  }
+  package: {
+    id: number
+    status: string
+    is_active: boolean
+    is_complete: boolean
+    days_remaining: number | null
+    start_date: string | null
+    end_date: string | null
+    discount_percentage: number
+    cashback_percentage: number
+    specific_title: string
+    specific_percentage: number
+  } | null
+}
+
+export interface BusinessCustomerRow {
+  id: number
+  customer_id: number
+  name: string
+  phone: string
+  points: number
+  vip_status: 'none' | 'vip' | 'vip_plus'
+  transaction_count: number
+  total_spent: number
+  first_purchase_at: string | null
+  last_purchase_at: string | null
+  segments: string[]
+}
+
+export interface BusinessCustomersResponse {
+  results: BusinessCustomerRow[]
+  counts: { all: number; new: number; returning: number; vip: number; churn: number }
+  transactions?: BusinessTransaction[] | null
+}
+
 // ─────────────────────────────────────────────────────────────────────
 
 export interface BusinessGalleryImage {
@@ -1371,6 +1455,37 @@ class ApiService {
       if (Array.isArray(resp.data.results)) return { data: resp.data.results }
     }
     return resp
+  }
+
+  async getBusinessDashboard(): Promise<ApiResponse<BusinessDashboardData>> {
+    return this.request<BusinessDashboardData>('/loyalty/business-dashboard/')
+  }
+
+  async getBusinessCustomers(params?: {
+    segment?: string
+    search?: string
+    customer_id?: number
+  }): Promise<ApiResponse<BusinessCustomersResponse>> {
+    const qs = new URLSearchParams()
+    if (params?.segment) qs.set('segment', params.segment)
+    if (params?.search) qs.set('search', params.search)
+    if (params?.customer_id) qs.set('customer_id', String(params.customer_id))
+    const query = qs.toString() ? `?${qs}` : ''
+    return this.request<BusinessCustomersResponse>(`/loyalty/business-customers/${query}`)
+  }
+
+  async createBusinessTransaction(payload: {
+    phone: string
+    original_amount: number
+    has_special_discount?: boolean
+    special_discount_original_amount?: number
+    note?: string
+    auto_approve?: boolean
+  }): Promise<ApiResponse<BusinessTransaction>> {
+    return this.request<BusinessTransaction>('/loyalty/business-create-transaction/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
   }
 
   // ─── Password Management ───────────────────────────────────────────

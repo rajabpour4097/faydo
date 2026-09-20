@@ -9,6 +9,11 @@ from .views import (
     CustomerFavoriteViewSet,
     cashback_summary,
 )
+from .dashboard_views import (
+    business_dashboard,
+    business_customers,
+    business_create_transaction,
+)
 
 router = DefaultRouter()
 router.register(r'loyalties', CustomerLoyaltyViewSet, basename='loyalty')
@@ -24,6 +29,9 @@ urlpatterns = [
     path('points-summary/', points_summary, name='points-summary'),
     path('points-history/', points_history, name='points-history'),
     path('cashback-summary/', cashback_summary, name='cashback-summary'),
+    path('business-dashboard/', business_dashboard, name='business-dashboard'),
+    path('business-customers/', business_customers, name='business-customers'),
+    path('business-create-transaction/', business_create_transaction, name='business-create-transaction'),
     path('story-share/', award_story_share, name='story-share'),
     path('favorite/', award_favorite_business, name='favorite-points'),
 ]

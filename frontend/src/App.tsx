@@ -30,6 +30,10 @@ import { ClubManagement } from './pages/dashboard/ClubManagement'
 import { ServiceCategoryManagement } from './pages/dashboard/ServiceCategoryManagement'
 import { BusinessTransactionsPage } from './pages/business/BusinessTransactionsPage'
 import { EliteGiftClaimsPage } from './pages/business/EliteGiftClaimsPage'
+import { BusinessHealthPage } from './pages/business/BusinessHealthPage'
+import { BusinessCustomersPage } from './pages/business/BusinessCustomersPage'
+import { BusinessSalesPage } from './pages/business/BusinessSalesPage'
+import { BusinessRegisterTransactionPage } from './pages/business/BusinessRegisterTransactionPage'
 import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsPage'
 import { CustomerPointsDetailsPage } from './pages/customer/CustomerPointsDetailsPage'
 import { CustomerCashbackDetailsPage } from './pages/customer/CustomerCashbackDetailsPage'
@@ -93,6 +97,26 @@ const DashboardRouter = () => {
       <Route path="qrcode" element={
         <ProfileGuard>
           <QRCodePage />
+        </ProfileGuard>
+      } />
+      <Route path="health" element={
+        <ProfileGuard>
+          {isBusinessUser ? <BusinessHealthPage /> : <Navigate to="/dashboard" />}
+        </ProfileGuard>
+      } />
+      <Route path="customers" element={
+        <ProfileGuard>
+          {isBusinessUser ? <BusinessCustomersPage /> : <Navigate to="/dashboard" />}
+        </ProfileGuard>
+      } />
+      <Route path="sales" element={
+        <ProfileGuard>
+          {isBusinessUser ? <BusinessSalesPage /> : <Navigate to="/dashboard" />}
+        </ProfileGuard>
+      } />
+      <Route path="transactions/new" element={
+        <ProfileGuard>
+          {isBusinessUser ? <BusinessRegisterTransactionPage /> : <Navigate to="/dashboard" />}
         </ProfileGuard>
       } />
       <Route path="transactions" element={

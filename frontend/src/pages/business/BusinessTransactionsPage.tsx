@@ -102,7 +102,7 @@ export const BusinessTransactionsPage = () => {
   return (
     <BusinessScreen>
       <div className={`relative min-h-full ${pageBg}`} dir="rtl">
-        <div className="mx-auto max-w-2xl px-4 pb-28 pt-4">
+        <div className="mx-auto max-w-2xl px-4 pb-8 pt-4">
           <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-l from-[#8B74FF] to-[#7C5CFC] px-5 py-5 text-white shadow-[0_12px_30px_rgba(124,92,252,0.28)]">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -237,19 +237,19 @@ export const BusinessTransactionsPage = () => {
               </div>
             )}
           </div>
-        </div>
 
-        {!selected && (
-        <button
-          onClick={() => setExportOpen(true)}
-          className="fixed bottom-28 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-black text-[#7C5CFC] shadow-[0_10px_30px_rgba(124,92,252,0.25)] md:bottom-8"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-          </svg>
-          خروجی گزارش
-        </button>
-        )}
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setExportOpen(true)}
+              className={`flex items-center gap-2 rounded-full px-5 py-3 text-sm font-black text-[#7C5CFC] shadow-[0_10px_30px_rgba(124,92,252,0.18)] ${card}`}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+              </svg>
+              خروجی گزارش
+            </button>
+          </div>
+        </div>
       </div>
 
       {selected && (

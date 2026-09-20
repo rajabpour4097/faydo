@@ -153,6 +153,17 @@ export const TransactionApprovalModal: React.FC<TransactionApprovalModalProps> =
               </span>
             </div>
 
+            {Number(transaction.cashback_amount) > 0 && (
+              <div className="flex justify-between items-center">
+                <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                  کش‌بک مشتری:
+                </span>
+                <span className="font-bold text-teal-500">
+                  {formatNumber(transaction.cashback_amount || 0)} تومان
+                </span>
+              </div>
+            )}
+
             {transaction.has_special_discount && (
               <>
                 <div className={`h-px ${isDark ? 'bg-slate-600' : 'bg-gray-300'}`} />

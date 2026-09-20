@@ -7,6 +7,7 @@ interface ToggleSwitchProps {
   id?: string
   label?: string
   size?: 'sm' | 'md'
+  tone?: 'indigo' | 'purple'
 }
 
 export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
@@ -16,8 +17,12 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   id,
   label,
   size = 'md',
+  tone = 'indigo',
 }) => {
   const isSmall = size === 'sm'
+  const onClass = tone === 'purple'
+    ? 'border-[#6D28D9] bg-[#7C5CFC] focus:ring-[#7C5CFC]'
+    : 'border-indigo-700 bg-indigo-500 focus:ring-indigo-400'
 
   return (
     <label
@@ -37,7 +42,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
             : 'h-7 w-12 border-2'
         } ${
           checked
-            ? 'border-indigo-700 bg-indigo-500 focus:ring-indigo-400'
+            ? onClass
             : 'border-gray-400 bg-gray-200 focus:ring-gray-400'
         }`}
       >

@@ -32,6 +32,7 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
   // States
   const [mainAmount, setMainAmount] = useState('')
   const [mainAmountAfterDiscount, setMainAmountAfterDiscount] = useState(0)
+  const [cashbackAmount, setCashbackAmount] = useState(0)
   
   const [hasSpecialDiscount, setHasSpecialDiscount] = useState(false)
   const [specialAmount, setSpecialAmount] = useState('')
@@ -41,7 +42,7 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
-  // محاسبه مبلغ بعد از تخفیف اصلی
+  // محاسبه مبلغ بعد از تخفیف اصلی و کش‌بک
   useEffect(() => {
     const amount = parseNumber(mainAmount)
     if (amount > 0 && businessInfo.discount_all_percentage) {
@@ -50,7 +51,12 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
     } else {
       setMainAmountAfterDiscount(amount)
     }
-  }, [mainAmount, businessInfo.discount_all_percentage])
+    if (amount > 0 && businessInfo.cashback_percentage) {
+      setCashbackAmount((amount * Number(businessInfo.cashback_percentage)) / 100)
+    } else {
+      setCashbackAmount(0)
+    }
+  }, [mainAmount, businessInfo.discount_all_percentage, businessInfo.cashback_percentage])
 
   // محاسبه مبلغ بعد از تخفیف خاص
   useEffect(() => {
@@ -206,6 +212,14 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
                   {formatNumber(totalAfterDiscount)} تومان
                 </span>
               </div>
+              {cashbackAmount > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>کش‌بک:</span>
+                  <span className="text-lg font-bold text-teal-500">
+                    {formatNumber(cashbackAmount)} تومان
+                  </span>
+                </div>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -258,12 +272,22 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
           <div className={`p-4 rounded-xl ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
             <div className="flex items-center justify-between">
               <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
-                تخفیف اصلی:
+                تخفیف فوری:
               </span>
               <span className="text-lg font-bold text-blue-500">
                 {businessInfo.discount_all_percentage}%
               </span>
             </div>
+            {Number(businessInfo.cashback_percentage) > 0 && (
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-blue-200">
+                <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                  کش‌بک:
+                </span>
+                <span className="text-lg font-bold text-teal-500">
+                  {businessInfo.cashback_percentage}%
+                </span>
+              </div>
+            )}
           </div>
 
           {/* مبلغ فاکتور */}
@@ -286,6 +310,11 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
             {parseNumber(mainAmount) > 0 && (
               <div className={`mt-2 text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                 مبلغ پس از تخفیف: {formatNumber(mainAmountAfterDiscount)} تومان
+                {cashbackAmount > 0 && (
+                  <div className={`mt-1 ${isDark ? 'text-teal-300' : 'text-teal-600'}`}>
+                    کش‌بک شما: {formatNumber(cashbackAmount)} تومان
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -376,6 +405,16 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
                     {formatNumber(totalBeforeDiscount - totalAfterDiscount)} تومان
                   </span>
                 </div>
+                {cashbackAmount > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className={isDark ? 'text-slate-400' : 'text-gray-600'}>
+                      کش‌بک:
+                    </span>
+                    <span className="text-teal-500 font-medium">
+                      {formatNumber(cashbackAmount)} تومان
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

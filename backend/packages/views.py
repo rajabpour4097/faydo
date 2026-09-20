@@ -278,7 +278,7 @@ class PackageViewSet(viewsets.ModelViewSet):
         Create or update discounts for step 1 (mandatory DiscountAll, optional SpecificDiscount).
         Payload example:
         {
-          "discount_all": {"percentage": 15},
+          "discount_all": {"percentage": 10, "cashback_percentage": 5},
           "specific_discount": {"title": "...", "description": "...", "percentage": 25},
           "remove_specific": false
         }
@@ -293,12 +293,30 @@ class PackageViewSet(viewsets.ModelViewSet):
         if not discount_all_data or 'percentage' not in discount_all_data:
             return Response({"error": "درصد تخفیف کلی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            instant_percent = float(discount_all_data['percentage'])
+            cashback_percent = float(discount_all_data.get('cashback_percentage', 0) or 0)
+        except (TypeError, ValueError):
+            return Response({"error": "مقادیر درصد نامعتبر است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if instant_percent < 1:
+            return Response({"error": "درصد تخفیف فوری نباید کمتر از ۱ باشد."}, status=status.HTTP_400_BAD_REQUEST)
+        if cashback_percent < 1:
+            return Response({"error": "درصد کش‌بک نباید کمتر از ۱ باشد."}, status=status.HTTP_400_BAD_REQUEST)
+        if instant_percent + cashback_percent > 100:
+            return Response({"error": "جمع تخفیف فوری و کش‌بک نباید بیشتر از ۱۰۰ باشد."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Upsert DiscountAll
         if hasattr(package, 'discount_all'):
-            package.discount_all.percentage = discount_all_data['percentage']
+            package.discount_all.percentage = instant_percent
+            package.discount_all.cashback_percentage = cashback_percent
             package.discount_all.save()
         else:
-            DiscountAll.objects.create(package=package, percentage=discount_all_data['percentage'])
+            DiscountAll.objects.create(
+                package=package,
+                percentage=instant_percent,
+                cashback_percentage=cashback_percent,
+            )
         
         # بررسی کامل بودن پکیج
         package.save()  # این کار check_completion را فراخوانی می‌کند
@@ -309,16 +327,16 @@ class PackageViewSet(viewsets.ModelViewSet):
                 package.specific_discount.delete()
         else:
             if specific_data and (specific_data.get('title')):
-                # Validate percentage presence and greater than DiscountAll
+                # Validate percentage presence and greater than total benefit
                 if 'percentage' not in specific_data:
                     return Response({"error": "درصد تخفیف اختصاصی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
                 try:
-                    all_percent = float(package.discount_all.percentage)
+                    all_percent = instant_percent + cashback_percent
                     spec_percent = float(specific_data['percentage'])
                 except Exception:
                     return Response({"error": "مقادیر درصد نامعتبر است."}, status=status.HTTP_400_BAD_REQUEST)
                 if spec_percent <= all_percent:
-                    return Response({"error": "درصد تخفیف اختصاصی باید از تخفیف کلی بیشتر باشد."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "درصد تخفیف اختصاصی باید از مجموع تخفیف و کش‌بک بیشتر باشد."}, status=status.HTTP_400_BAD_REQUEST)
 
                 if hasattr(package, 'specific_discount'):
                     sd = package.specific_discount
@@ -339,14 +357,24 @@ class PackageViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def loyal_gift(self, request, pk=None):
         """
-        Create or update EliteGift for step 2 (mandatory to choose one method and gift text)
+        Create or update EliteGift for step 2 (optional complimentary gift).
         Payload example:
-        {"gift": "کارت هدیه", "amount": 1000000}  or  {"gift": "...", "count": 5}
+        {"gift": "کارت هدیه", "amount": 1000000, "description": "..."}
+        or {"remove_gift": true}
         """
         package = self.get_object()
+        remove_gift = request.data.get('remove_gift', False)
+
+        if remove_gift:
+            if hasattr(package, 'elite_gift'):
+                package.elite_gift.delete()
+            package.save()
+            return Response({"message": "اشانتیون حذف شد."})
+
         gift = request.data.get('gift')
         amount = request.data.get('amount')
         count = request.data.get('count')
+        description = request.data.get('description') or ''
 
         if not gift:
             return Response({"error": "فیلد هدیه الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
@@ -355,18 +383,16 @@ class PackageViewSet(viewsets.ModelViewSet):
 
         # تعیین نوع هدیه و پاک کردن فیلد مخالف
         if amount:
-            # اگر مبلغ انتخاب شده، تعداد را پاک کن
-            payload = {"gift": gift, "amount": amount, "count": None}
+            payload = {"gift": gift, "amount": amount, "count": None, "description": description}
         else:
-            # اگر تعداد انتخاب شده، مبلغ را پاک کن
-            payload = {"gift": gift, "amount": None, "count": count}
+            payload = {"gift": gift, "amount": None, "count": count, "description": description}
 
         if hasattr(package, 'elite_gift'):
             eg = package.elite_gift
-            # به‌روزرسانی تمام فیلدها (شامل پاک کردن فیلد مخالف)
             eg.gift = payload["gift"]
             eg.amount = payload["amount"]
             eg.count = payload["count"]
+            eg.description = payload["description"]
             eg.save()
         else:
             EliteGift.objects.create(package=package, **payload)
@@ -556,8 +582,13 @@ class PackageViewSet(viewsets.ModelViewSet):
 
         if not agree:
             return Response({"error": "پذیرش قوانین الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
-        if duration_months not in [3, 6, 9, 12]:
-            return Response({"error": "مدت زمان نامعتبر است."}, status=status.HTTP_400_BAD_REQUEST)
+        if duration_months not in [3, 6]:
+            return Response({"error": "مدت زمان نامعتبر است. فقط ۳ یا ۶ ماه مجاز است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not hasattr(package, 'discount_all'):
+            return Response({"error": "تخفیف و کش‌بک پکیج تکمیل نشده است."}, status=status.HTTP_400_BAD_REQUEST)
+        if not package.experiences.filter(vip_experience_category__vip_type='VIP').exists():
+            return Response({"error": "انتخاب یک تجربه طلایی الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
 
         # تعیین تاریخ شروع بر اساس وجود پکیج فعال
         active_package = package.get_active_package_for_business()
@@ -602,6 +633,9 @@ class PackageViewSet(viewsets.ModelViewSet):
             "has_vip_experiences": package.experiences.exists(),
             "has_dates": bool(package.start_date and package.end_date),
             "discount_all": package.discount_all.percentage if hasattr(package, 'discount_all') else None,
+            "cashback_percentage": (
+                package.discount_all.cashback_percentage if hasattr(package, 'discount_all') else None
+            ),
             "specific_discount": {
                 "title": package.specific_discount.title,
                 "percentage": package.specific_discount.percentage,
@@ -610,7 +644,8 @@ class PackageViewSet(viewsets.ModelViewSet):
             "elite_gift": {
                 "gift": package.elite_gift.gift,
                 "amount": package.elite_gift.amount,
-                "count": package.elite_gift.count
+                "count": package.elite_gift.count,
+                "description": package.elite_gift.description,
             } if hasattr(package, 'elite_gift') else None,
             "vip_experiences": [
                 {

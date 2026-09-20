@@ -40,11 +40,11 @@ class VipExperienceCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(DiscountAll)
 class DiscountAllAdmin(admin.ModelAdmin):
-    list_display = ('id', 'percentage', 'score')
+    list_display = ('id', 'percentage', 'cashback_percentage', 'score')
     search_fields = ('percentage', 'score')
     list_filter = ('percentage', 'score')
     list_per_page = 10
-    list_editable = ('percentage', 'score')
+    list_editable = ('percentage', 'cashback_percentage', 'score')
     list_filter = ('percentage', 'score')
 
 @admin.register(SpecificDiscount)

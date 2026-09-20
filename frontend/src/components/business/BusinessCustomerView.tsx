@@ -190,6 +190,11 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
                 {pkg.discount_percentage}%
               </div>
               <p className="text-[11px] text-primary-600/70 dark:text-primary-300/70 mt-1">تخفیف روی کل منو</p>
+              {Number(pkg.cashback_percentage) > 0 && (
+                <p className="text-[11px] font-bold text-teal-600 mt-1">
+                  + {pkg.cashback_percentage}٪ کش‌بک
+                </p>
+              )}
             </div>
           )}
           {pkg.specific_discount_percentage != null && (

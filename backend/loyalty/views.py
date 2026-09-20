@@ -251,6 +251,7 @@ def get_business_by_code(request):
         'package_id': package.id if package else None,
         'has_active_package': package is not None,
         'discount_all_percentage': None,
+        'cashback_percentage': None,
         'has_specific_discount': False,
         'specific_discount_title': None,
         'specific_discount_percentage': None,
@@ -274,6 +275,7 @@ def get_business_by_code(request):
     if package:
         if hasattr(package, 'discount_all'):
             data['discount_all_percentage'] = package.discount_all.percentage
+            data['cashback_percentage'] = getattr(package.discount_all, 'cashback_percentage', 0) or 0
         
         if hasattr(package, 'specific_discount'):
             data['has_specific_discount'] = True
@@ -851,3 +853,60 @@ def elite_gift_progress(request, package_id):
     
     serializer = EliteGiftProgressSerializer(progress)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def cashback_summary(request):
+    """
+    مجموع و لیست کش‌بک‌های تاییدشده مشتری
+    GET /api/loyalty/cashback-summary/?page=1
+    """
+    if request.user.role != 'customer':
+        return Response({'detail': 'فقط مشتریان'}, status=status.HTTP_403_FORBIDDEN)
+
+    from django.db.models import Sum
+
+    customer = request.user.customerprofile
+    queryset = Transaction.objects.filter(
+        customer=customer,
+        status='approved',
+        cashback_amount__gt=0,
+    ).select_related('business').order_by('-created_at')
+
+    total_tomans = queryset.aggregate(total=Sum('cashback_amount'))['total'] or 0
+
+    page = int(request.query_params.get('page', 1) or 1)
+    page_size = int(request.query_params.get('page_size', 20) or 20)
+    page = max(1, page)
+    page_size = min(max(1, page_size), 100)
+    total_count = queryset.count()
+    total_pages = max(1, (total_count + page_size - 1) // page_size)
+    offset = (page - 1) * page_size
+
+    results = []
+    for tx in queryset[offset:offset + page_size]:
+        logo = None
+        if getattr(tx.business, 'logo', None):
+            try:
+                logo = tx.business.logo.url
+            except Exception:
+                logo = None
+        results.append({
+            'id': tx.id,
+            'business_id': tx.business_id,
+            'business_name': tx.business.name,
+            'business_logo': logo,
+            'amount': int(tx.cashback_amount or 0),
+            'original_amount': int(tx.original_amount or 0),
+            'cashback_percentage': tx.cashback_percentage,
+            'created_at': tx.created_at.isoformat(),
+        })
+
+    return Response({
+        'total_tomans': int(total_tomans),
+        'count': total_count,
+        'page': page,
+        'total_pages': total_pages,
+        'results': results,
+    })

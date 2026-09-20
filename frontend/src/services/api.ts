@@ -190,6 +190,7 @@ export interface Package {
   experiences?: VipExperience[]
   // فیلدهای جدید از PackageListSerializer
   discount_percentage?: number
+  cashback_percentage?: number
   specific_discount_title?: string
   specific_discount_percentage?: number
   specific_discount_description?: string
@@ -227,6 +228,7 @@ export interface Package {
 export interface DiscountAll {
   id: number
   percentage: number
+  cashback_percentage?: number
   score: number
   comments: Comment[]
   created_at: string
@@ -249,6 +251,7 @@ export interface EliteGift {
   amount?: number
   count?: number
   gift: string
+  description?: string
   score: number
   comments: Comment[]
   created_at: string
@@ -410,6 +413,25 @@ export interface PointsHistoryResponse {
   results: PointsEvent[]
 }
 
+export interface CashbackEntry {
+  id: number
+  business_id: number
+  business_name: string
+  business_logo: string | null
+  amount: number
+  original_amount: number
+  cashback_percentage: number | string
+  created_at: string
+}
+
+export interface CashbackSummary {
+  total_tomans: number
+  count: number
+  page: number
+  total_pages: number
+  results: CashbackEntry[]
+}
+
 // ─────────────────────────────────────────────────────────────────────
 
 // ─── Business Dashboard Interfaces ──────────────────────────────────
@@ -424,6 +446,8 @@ export interface BusinessTransaction {
   loyalty: number
   original_amount: string
   discount_all_amount: string
+  cashback_amount?: string
+  cashback_percentage?: string
   final_amount: string
   points_earned: number
   status: 'pending' | 'approved' | 'rejected'
@@ -1088,7 +1112,12 @@ class ApiService {
   }
 
   // Stepwise package creation methods
-  async savePackageDiscounts(packageId: number, discountAll: { percentage: number }, specificDiscount?: { title: string; description?: string; percentage: number }, removeSpecific?: boolean): Promise<ApiResponse<{ message: string }>> {
+  async savePackageDiscounts(
+    packageId: number,
+    discountAll: { percentage: number; cashback_percentage: number },
+    specificDiscount?: { title: string; description?: string; percentage: number },
+    removeSpecific?: boolean
+  ): Promise<ApiResponse<{ message: string }>> {
     return this.request<{ message: string }>(`/packages/packages/${packageId}/discounts/`, {
       method: 'POST',
       body: JSON.stringify({
@@ -1099,14 +1128,26 @@ class ApiService {
     })
   }
 
-  async savePackageLoyalGift(packageId: number, gift: string, amount?: number, count?: number): Promise<ApiResponse<{ message: string }>> {
+  async savePackageLoyalGift(
+    packageId: number,
+    gift: string,
+    amount?: number,
+    count?: number,
+    description?: string,
+    removeGift?: boolean,
+  ): Promise<ApiResponse<{ message: string }>> {
     return this.request<{ message: string }>(`/packages/packages/${packageId}/loyal_gift/`, {
       method: 'POST',
-      body: JSON.stringify({
-        gift,
-        amount,
-        count,
-      }),
+      body: JSON.stringify(
+        removeGift
+          ? { remove_gift: true }
+          : {
+              gift,
+              amount,
+              count,
+              description: description || '',
+            },
+      ),
     })
   }
 
@@ -1167,8 +1208,9 @@ class ApiService {
     has_vip_experiences: boolean;
     has_dates: boolean;
     discount_all: number | null;
+    cashback_percentage: number | null;
     specific_discount: { title: string; percentage: number; description: string } | null;
-    elite_gift: { gift: string; amount: number | null; count: number | null } | null;
+    elite_gift: { gift: string; amount: number | null; count: number | null; description?: string | null } | null;
     vip_experiences: { id: number; name: string; vip_type: string; description?: string }[];
     selected_amenity_ids?: number[];
     working_hours?: { weekday: number; weekday_display: string; start_time: string | null; end_time: string | null; is_closed: boolean }[];
@@ -1257,6 +1299,10 @@ class ApiService {
 
   async getPointsHistory(page = 1, pageSize = 20): Promise<ApiResponse<PointsHistoryResponse>> {
     return this.request<PointsHistoryResponse>(`/loyalty/points-history/?page=${page}&page_size=${pageSize}`)
+  }
+
+  async getCashbackSummary(page = 1, pageSize = 20): Promise<ApiResponse<CashbackSummary>> {
+    return this.request<CashbackSummary>(`/loyalty/cashback-summary/?page=${page}&page_size=${pageSize}`)
   }
 
   async awardStoryShare(): Promise<ApiResponse<{ message: string }>> {

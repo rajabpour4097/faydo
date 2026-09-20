@@ -32,6 +32,7 @@ import { BusinessTransactionsPage } from './pages/business/BusinessTransactionsP
 import { EliteGiftClaimsPage } from './pages/business/EliteGiftClaimsPage'
 import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsPage'
 import { CustomerPointsDetailsPage } from './pages/customer/CustomerPointsDetailsPage'
+import { CustomerCashbackDetailsPage } from './pages/customer/CustomerCashbackDetailsPage'
 import { CustomerFavoritesPage } from './pages/customer/CustomerFavoritesPage'
 import { useAuth } from './contexts/AuthContext'
 
@@ -102,6 +103,11 @@ const DashboardRouter = () => {
       <Route path="points" element={
         <ProfileGuard>
           {isBusinessUser ? <Navigate to="/dashboard" /> : <CustomerPointsDetailsPage />}
+        </ProfileGuard>
+      } />
+      <Route path="cashback" element={
+        <ProfileGuard>
+          {isBusinessUser ? <Navigate to="/dashboard" /> : <CustomerCashbackDetailsPage />}
         </ProfileGuard>
       } />
       <Route path="favorites" element={

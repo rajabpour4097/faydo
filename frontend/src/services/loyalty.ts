@@ -9,6 +9,7 @@ export interface BusinessInfo {
   package_id: number | null
   has_active_package: boolean
   discount_all_percentage: number | null
+  cashback_percentage: number | null
   has_specific_discount: boolean
   specific_discount_title: string | null
   specific_discount_percentage: number | null
@@ -47,6 +48,8 @@ export interface Transaction {
   special_discount_title: string | null
   special_discount_original_amount: string
   special_discount_amount: string
+  cashback_percentage?: string | number
+  cashback_amount?: string | number
   final_amount: string
   points_earned: number
   status: 'pending' | 'approved' | 'rejected'

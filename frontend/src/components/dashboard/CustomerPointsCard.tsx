@@ -180,6 +180,7 @@ export const CustomerPointsCard = ({
   const { isDark } = useTheme()
   const [summary, setSummary] = useState<PointsSummary | null>(null)
   const [loading, setLoading] = useState(fetchFromApi)
+  const [cashbackTotal, setCashbackTotal] = useState(cashbackTomans)
 
   useEffect(() => {
     if (!fetchFromApi) return
@@ -190,6 +191,16 @@ export const CustomerPointsCard = ({
       })
       .finally(() => setLoading(false))
   }, [fetchFromApi])
+
+  useEffect(() => {
+    if (!fetchFromApi) {
+      setCashbackTotal(cashbackTomans)
+      return
+    }
+    apiService.getCashbackSummary(1, 1).then((res) => {
+      if (res.data) setCashbackTotal(res.data.total_tomans)
+    })
+  }, [fetchFromApi, cashbackTomans])
 
   const totalPoints = summary?.total_points ?? propPoints
   const pts6m = summary?.points_6months ?? propPoints
@@ -358,11 +369,11 @@ export const CustomerPointsCard = ({
         <MetricRow
           icon={cashbackIcon}
           label="کش بک شما"
-          value={`${cashbackTomans.toLocaleString('fa-IR')} تومان`}
+          value={`${cashbackTotal.toLocaleString('fa-IR')} تومان`}
           barColor="linear-gradient(90deg, #2dd4bf, #14b8a6)"
-          progress={cashbackTomans > 0 ? 72 : 8}
+          progress={cashbackTotal > 0 ? 72 : 8}
           isDark={isDark}
-          href="/wallet"
+          href="/dashboard/cashback"
         />
       </div>
     </div>

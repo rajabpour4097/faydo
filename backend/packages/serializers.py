@@ -36,7 +36,7 @@ class DiscountAllSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = DiscountAll
-        fields = ['id', 'percentage', 'score', 'comments', 'created_at', 'modified_at']
+        fields = ['id', 'percentage', 'cashback_percentage', 'score', 'comments', 'created_at', 'modified_at']
         read_only_fields = ['id', 'created_at', 'modified_at']
 
 
@@ -54,7 +54,7 @@ class EliteGiftSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = EliteGift
-        fields = ['id', 'amount', 'count', 'gift', 'score', 'comments', 'created_at', 'modified_at']
+        fields = ['id', 'amount', 'count', 'gift', 'description', 'score', 'comments', 'created_at', 'modified_at']
         read_only_fields = ['id', 'created_at', 'modified_at']
 
 
@@ -110,6 +110,7 @@ class PackageListSerializer(serializers.ModelSerializer):
     
     # اطلاعات تخفیف کلی
     discount_percentage = serializers.SerializerMethodField()
+    cashback_percentage = serializers.SerializerMethodField()
     
     # اطلاعات تخفیف اختصاصی
     specific_discount_title = serializers.SerializerMethodField()
@@ -157,7 +158,7 @@ class PackageListSerializer(serializers.ModelSerializer):
             'id', 'business_id', 'business_name', 'is_active', 'start_date', 'end_date', 
             'status', 'status_display', 'is_complete', 'created_at', 'modified_at',
             'business_logo', 'business_image', 'business_category', 'city',
-            'discount_percentage', 'specific_discount_title', 'specific_discount_percentage', 'specific_discount_description',
+            'discount_percentage', 'cashback_percentage', 'specific_discount_title', 'specific_discount_percentage', 'specific_discount_description',
             'elite_gift_title', 'elite_gift_gift', 'elite_gift_amount', 'elite_gift_count',
             'vip_experiences_count', 'has_vip', 'has_vip_plus',
             'gold_experiences', 'vip_experiences', 'days_remaining',
@@ -169,9 +170,19 @@ class PackageListSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'modified_at']
     
     def get_discount_percentage(self, obj):
-        """درصد تخفیف کلی"""
+        """درصد تخفیف فوری"""
         try:
             return obj.discount_all.percentage if hasattr(obj, 'discount_all') else None
+        except:
+            return None
+
+    def get_cashback_percentage(self, obj):
+        """درصد کش‌بک مشتری"""
+        try:
+            if not hasattr(obj, 'discount_all'):
+                return None
+            value = getattr(obj.discount_all, 'cashback_percentage', None)
+            return value if value is not None else 0
         except:
             return None
     

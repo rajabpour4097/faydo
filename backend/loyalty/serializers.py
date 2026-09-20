@@ -36,12 +36,14 @@ class TransactionSerializer(serializers.ModelSerializer):
             'package', 'loyalty', 'original_amount', 'discount_all_amount',
             'has_special_discount', 'special_discount_title',
             'special_discount_original_amount', 'special_discount_amount',
+            'cashback_percentage', 'cashback_amount',
             'final_amount', 'points_earned', 'status', 'note',
             'can_comment', 'comment_deadline', 'has_commented', 'can_add_comment',
             'created_at', 'modified_at'
         ]
         read_only_fields = [
             'discount_all_amount', 'special_discount_amount',
+            'cashback_percentage', 'cashback_amount',
             'final_amount', 'points_earned', 'created_at', 'modified_at',
             'can_comment', 'comment_deadline', 'has_commented'
         ]
@@ -160,6 +162,7 @@ class BusinessInfoSerializer(serializers.Serializer):
     package_id = serializers.IntegerField(allow_null=True)
     has_active_package = serializers.BooleanField()
     discount_all_percentage = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+    cashback_percentage = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
     
     has_specific_discount = serializers.BooleanField()
     specific_discount_title = serializers.CharField(allow_null=True)

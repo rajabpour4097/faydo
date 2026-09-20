@@ -127,6 +127,17 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             {formatNumber(transaction.final_amount)} تومان
           </span>
         </div>
+
+        {Number(transaction.cashback_amount) > 0 && (
+          <div className="flex justify-between items-center">
+            <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+              کش‌بک:
+            </span>
+            <span className="font-bold text-teal-500">
+              {formatNumber(transaction.cashback_amount || 0)} تومان
+            </span>
+          </div>
+        )}
         
         <div className="flex justify-between items-center">
           <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>

@@ -310,6 +310,21 @@ class Transaction(BaseModel):
         validators=[MinValueValidator(0)],
         verbose_name='مبلغ نهایی'
     )
+
+    cashback_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='درصد کش‌بک'
+    )
+    cashback_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='مبلغ کش‌بک'
+    )
     
     # امتیاز کسب شده
     points_earned = models.IntegerField(
@@ -407,6 +422,24 @@ class Transaction(BaseModel):
         
         return max(0, final)  # حداقل 0
 
+    def calculate_cashback(self):
+        """
+        محاسبه مبلغ کش‌بک بر اساس درصد کش‌بک پکیج و مبلغ اصلی فاکتور
+        """
+        if not self.package:
+            return 0
+
+        try:
+            discount_all = self.package.discount_all
+        except Exception:
+            return 0
+
+        cashback_pct = getattr(discount_all, 'cashback_percentage', 0) or 0
+        if float(cashback_pct) <= 0:
+            return 0
+
+        return float(self.original_amount) * float(cashback_pct) / 100
+
     def calculate_points(self):
         """
         محاسبه امتیاز بر اساس مبلغ نهایی
@@ -485,6 +518,12 @@ class Transaction(BaseModel):
             self.discount_all_amount = discount_all_amount
             self.special_discount_amount = special_discount_amount
             self.final_amount = self.calculate_final_amount()
+            try:
+                cashback_pct = getattr(self.package.discount_all, 'cashback_percentage', 0) or 0
+            except Exception:
+                cashback_pct = 0
+            self.cashback_percentage = cashback_pct
+            self.cashback_amount = self.calculate_cashback()
         
         super().save(*args, **kwargs)
 

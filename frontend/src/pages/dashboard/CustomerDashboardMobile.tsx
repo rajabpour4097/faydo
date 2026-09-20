@@ -13,7 +13,7 @@ export const CustomerDashboardMobile = () => {
         <CustomerHeroSection />
 
         {/* بخش میانی: امتیاز، سطوح، آمار */}
-        <CustomerPointsCard fetchFromApi={true} cashbackTomans={245000} />
+        <CustomerPointsCard fetchFromApi={true} />
 
         <QuickAccessMenu />
 

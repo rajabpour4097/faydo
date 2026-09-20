@@ -153,17 +153,16 @@ class Package(BaseModel):
         """
         بررسی کامل بودن پکیج:
         - باید DiscountAll داشته باشد
-        - باید EliteGift داشته باشد  
-        - باید حداقل یک VipExperience داشته باشد
+        - باید حداقل یک تجربه طلایی (Gold) داشته باشد
         - باید start_date و end_date پر شده باشد
+        اشانتیون و تجربه VIP+ اختیاری هستند
         """
         has_discount_all = hasattr(self, 'discount_all')
-        has_elite_gift = hasattr(self, 'elite_gift')
-        # سطح طلایی (VIP) الزامی است؛ سطح VIP+ اختیاری
+        # سطح طلایی (VIP) الزامی است؛ اشانتیون و سطح VIP+ اختیاری هستند
         has_gold = self.experiences.filter(vip_experience_category__vip_type='VIP').exists()
         has_dates = bool(self.start_date and self.end_date)
 
-        return bool(has_discount_all and has_elite_gift and has_gold and has_dates)
+        return bool(has_discount_all and has_gold and has_dates)
     
     def get_active_package_for_business(self):
         """
@@ -295,7 +294,14 @@ class DiscountAll(BaseModel):
     package = models.OneToOneField(Package, on_delete=models.CASCADE, related_name="discount_all")
     percentage = models.DecimalField(
         max_digits=5, decimal_places=2,
-        validators=[MinValueValidator(1), MaxValueValidator(100)]
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+        verbose_name='درصد تخفیف فوری'
+    )
+    cashback_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name='درصد کش‌بک'
     )
     score = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
@@ -347,6 +353,7 @@ class EliteGift(BaseModel):
         validators=[MinValueValidator(1)], blank=True, null=True
     )
     gift = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات هدیه')
     score = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         default=1

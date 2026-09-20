@@ -109,7 +109,11 @@ export function formatDistance(km: number | null | undefined): string {
 export function giftLabel(pkg: Package): string {
   if (pkg.elite_gift_gift) return pkg.elite_gift_gift
   if (pkg.elite_gift_title) return pkg.elite_gift_title
-  if (pkg.discount_percentage) return `${pkg.discount_percentage}٪ تخفیف`
+  if (pkg.discount_percentage) {
+    const cashback = Number(pkg.cashback_percentage)
+    if (cashback > 0) return `${pkg.discount_percentage}٪ تخفیف + ${cashback}٪ کش‌بک`
+    return `${pkg.discount_percentage}٪ تخفیف`
+  }
   if (pkg.specific_discount_title) return pkg.specific_discount_title
   return 'پیشنهاد ویژه'
 }

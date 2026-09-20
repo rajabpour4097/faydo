@@ -27,7 +27,7 @@ class TransactionAdmin(admin.ModelAdmin):
     ]
     list_filter = ['status', 'business', 'created_at']
     search_fields = ['customer__user__first_name', 'customer__user__last_name', 'business__name']
-    readonly_fields = ['created_at', 'modified_at', 'discount_all_amount', 'special_discount_amount', 'final_amount']
+    readonly_fields = ['created_at', 'modified_at', 'discount_all_amount', 'special_discount_amount', 'cashback_percentage', 'cashback_amount', 'final_amount']
     
     fieldsets = (
         ('اطلاعات اصلی', {
@@ -38,6 +38,7 @@ class TransactionAdmin(admin.ModelAdmin):
                 'original_amount', 'discount_all_amount',
                 'has_special_discount', 'special_discount_title',
                 'special_discount_original_amount', 'special_discount_amount',
+                'cashback_percentage', 'cashback_amount',
                 'final_amount', 'points_earned'
             )
         }),

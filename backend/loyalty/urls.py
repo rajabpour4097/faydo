@@ -7,6 +7,7 @@ from .views import (
     points_summary, points_history,
     award_story_share, award_favorite_business,
     CustomerFavoriteViewSet,
+    cashback_summary,
 )
 
 router = DefaultRouter()
@@ -22,6 +23,7 @@ urlpatterns = [
     # Points & Tier
     path('points-summary/', points_summary, name='points-summary'),
     path('points-history/', points_history, name='points-history'),
+    path('cashback-summary/', cashback_summary, name='cashback-summary'),
     path('story-share/', award_story_share, name='story-share'),
     path('favorite/', award_favorite_business, name='favorite-points'),
 ]

@@ -13,6 +13,8 @@ from .dashboard_views import (
     business_dashboard,
     business_customers,
     business_create_transaction,
+    business_transactions_summary,
+    business_transactions_export,
 )
 
 router = DefaultRouter()
@@ -32,6 +34,8 @@ urlpatterns = [
     path('business-dashboard/', business_dashboard, name='business-dashboard'),
     path('business-customers/', business_customers, name='business-customers'),
     path('business-create-transaction/', business_create_transaction, name='business-create-transaction'),
+    path('business-transactions-summary/', business_transactions_summary, name='business-transactions-summary'),
+    path('business-transactions-export/', business_transactions_export, name='business-transactions-export'),
     path('story-share/', award_story_share, name='story-share'),
     path('favorite/', award_favorite_business, name='favorite-points'),
 ]

@@ -38,22 +38,34 @@ export interface Transaction {
   id: number
   customer: number
   customer_name: string
+  customer_image?: string | null
+  customer_phone?: string
+  customer_membership_level?: 'bronze' | 'silver' | 'gold' | 'vip'
+  visit_count?: number
   business: number
   business_name: string
   package: number
   loyalty: number
   original_amount: string
   discount_all_amount: string
+  discount_percentage?: number
   has_special_discount: boolean
   special_discount_title: string | null
   special_discount_original_amount: string
   special_discount_amount: string
+  special_discount_percentage?: number
   cashback_percentage?: string | number
   cashback_amount?: string | number
   final_amount: string
   points_earned: number
   status: 'pending' | 'approved' | 'rejected'
   note: string | null
+  description?: string | null
+  transaction_type?: string
+  reference_code?: string
+  service_category?: string
+  elite_gift_title?: string
+  approved_at?: string | null
   can_comment: boolean
   comment_deadline: string | null
   has_commented: boolean

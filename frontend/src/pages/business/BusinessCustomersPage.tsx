@@ -40,6 +40,20 @@ export const BusinessCustomersPage = () => {
     setHistory(response.data?.transactions || [])
   }
 
+  const closeCustomer = () => {
+    setSelected(null)
+    const next = new URLSearchParams(params)
+    next.delete('customer_id')
+    setParams(next, { replace: true })
+  }
+
+  useEffect(() => {
+    const customerId = Number(params.get('customer_id') || 0)
+    if (!customerId || selected || rows.length === 0) return
+    const row = rows.find(item => item.customer_id === customerId)
+    if (row) openCustomer(row)
+  }, [params, rows, selected])
+
   const page = isDark ? 'bg-slate-900 text-white' : 'bg-[#F4F6FB] text-gray-900'
   const card = isDark ? 'bg-slate-800' : 'bg-white'
 
@@ -115,11 +129,11 @@ export const BusinessCustomersPage = () => {
         )}
 
         {selected && (
-          <div className="fixed inset-0 z-50 flex items-end bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setSelected(null)}>
+          <div className="fixed inset-0 z-50 flex items-end bg-black/40 p-0 sm:items-center sm:p-4" onClick={closeCustomer}>
             <div className={`max-h-[80vh] w-full overflow-y-auto rounded-t-3xl p-5 sm:rounded-3xl ${card}`} dir="rtl" onClick={e => e.stopPropagation()}>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-base font-black">{selected.name}</h2>
-                <button onClick={() => setSelected(null)} className="text-gray-400">بستن</button>
+                <button onClick={closeCustomer} className="text-gray-400">بستن</button>
               </div>
               <p className="text-[12px] text-gray-400">{selected.phone}</p>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">

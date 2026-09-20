@@ -440,12 +440,22 @@ export interface BusinessTransaction {
   id: number
   customer: number
   customer_name: string
+  customer_image?: string | null
+  customer_phone?: string
+  customer_membership_level?: 'bronze' | 'silver' | 'gold' | 'vip'
+  visit_count?: number
   business: number
   business_name: string
   package: number | null
   loyalty: number
   original_amount: string
   discount_all_amount: string
+  discount_percentage?: number
+  has_special_discount?: boolean
+  special_discount_title?: string | null
+  special_discount_original_amount?: string
+  special_discount_amount?: string
+  special_discount_percentage?: number
   cashback_amount?: string
   cashback_percentage?: string
   final_amount: string
@@ -453,12 +463,39 @@ export interface BusinessTransaction {
   status: 'pending' | 'approved' | 'rejected'
   note: string | null
   description?: string | null
-  transaction_type?: string
+  transaction_type?: 'regular' | 'elite_gift' | string
+  reference_code?: string
+  service_category?: string
+  elite_gift_title?: string
+  approved_at?: string | null
   can_comment: boolean
   comment_deadline?: string | null
   has_commented: boolean
   created_at: string
   modified_at: string
+}
+
+export interface BusinessTransactionSummary {
+  period: string
+  period_label: string
+  date_from: string | null
+  date_to: string | null
+  sales: number
+  cashback: number
+  discount: number
+  success_count: number
+  total_count: number
+}
+
+export interface BusinessTransactionQuery {
+  status?: string
+  page?: number
+  page_size?: number
+  period?: string
+  date_from?: string
+  date_to?: string
+  search?: string
+  transaction_type?: string
 }
 
 export interface BusinessLoyalty {
@@ -1426,13 +1463,69 @@ class ApiService {
 
   // ─── Business Dashboard ────────────────────────────────────────────
 
-  async getTransactions(params?: { status?: string; page?: number; page_size?: number }): Promise<ApiResponse<BusinessTransactionsResponse>> {
+  async getTransactions(params?: BusinessTransactionQuery): Promise<ApiResponse<BusinessTransactionsResponse>> {
     const qs = new URLSearchParams()
-    if (params?.status) qs.set('status', params.status)
+    if (params?.status && params.status !== 'all') qs.set('status', params.status)
     if (params?.page) qs.set('page', String(params.page))
     if (params?.page_size) qs.set('page_size', String(params.page_size))
+    if (params?.period) qs.set('period', params.period)
+    if (params?.date_from) qs.set('date_from', params.date_from)
+    if (params?.date_to) qs.set('date_to', params.date_to)
+    if (params?.search) qs.set('search', params.search)
+    if (params?.transaction_type && params.transaction_type !== 'all') qs.set('transaction_type', params.transaction_type)
     const query = qs.toString() ? `?${qs}` : ''
     return this.request<BusinessTransactionsResponse>(`/loyalty/transactions/${query}`)
+  }
+
+  async getBusinessTransactionsSummary(params?: BusinessTransactionQuery): Promise<ApiResponse<BusinessTransactionSummary>> {
+    const qs = new URLSearchParams()
+    if (params?.period) qs.set('period', params.period)
+    if (params?.date_from) qs.set('date_from', params.date_from)
+    if (params?.date_to) qs.set('date_to', params.date_to)
+    if (params?.search) qs.set('search', params.search)
+    if (params?.transaction_type && params.transaction_type !== 'all') qs.set('transaction_type', params.transaction_type)
+    const query = qs.toString() ? `?${qs}` : ''
+    return this.request<BusinessTransactionSummary>(`/loyalty/business-transactions-summary/${query}`)
+  }
+
+  async exportBusinessTransactions(
+    params: BusinessTransactionQuery & { format: 'csv' | 'xlsx' | 'pdf' },
+  ): Promise<{ blob?: Blob; filename?: string; error?: string }> {
+    this.updateToken()
+    if (this.isTokenExpired()) {
+      const refreshSuccess = await this.refreshToken()
+      if (!refreshSuccess) {
+        this.clearTokens()
+        return { error: 'نشست شما منقضی شده است. لطفا مجددا وارد شوید.' }
+      }
+      this.updateToken()
+    }
+
+    const qs = new URLSearchParams()
+    qs.set('export_format', params.format)
+    if (params.status && params.status !== 'all') qs.set('status', params.status)
+    if (params.period) qs.set('period', params.period)
+    if (params.date_from) qs.set('date_from', params.date_from)
+    if (params.date_to) qs.set('date_to', params.date_to)
+    if (params.search) qs.set('search', params.search)
+    if (params.transaction_type && params.transaction_type !== 'all') qs.set('transaction_type', params.transaction_type)
+
+    try {
+      const response = await fetch(`${this.baseUrl}/loyalty/business-transactions-export/?${qs}`, {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      })
+      if (!response.ok) {
+        return { error: 'خطا در تهیه گزارش' }
+      }
+      const blob = await response.blob()
+      const disposition = response.headers.get('Content-Disposition') || ''
+      const matched = disposition.match(/filename="?([^"]+)"?/)
+      return { blob, filename: matched?.[1] }
+    } catch {
+      return { error: 'خطا در تهیه گزارش' }
+    }
   }
 
   async approveTransaction(transactionId: number): Promise<ApiResponse<BusinessTransaction>> {

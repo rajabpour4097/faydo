@@ -74,6 +74,8 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
+CORS_EXPOSE_HEADERS = ['Content-Disposition']
+
 
 # Application definition
 

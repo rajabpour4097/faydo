@@ -25,21 +25,33 @@ class CustomerLoyaltySerializer(serializers.ModelSerializer):
 
 
 class TransactionSerializer(serializers.ModelSerializer):
-    customer_name = serializers.CharField(source='customer.user.get_full_name', read_only=True)
+    customer_name = serializers.SerializerMethodField()
     business_name = serializers.CharField(source='business.name', read_only=True)
     can_add_comment = serializers.SerializerMethodField()
-    
+    customer_image = serializers.SerializerMethodField()
+    customer_phone = serializers.SerializerMethodField()
+    customer_membership_level = serializers.SerializerMethodField()
+    visit_count = serializers.SerializerMethodField()
+    discount_percentage = serializers.SerializerMethodField()
+    special_discount_percentage = serializers.SerializerMethodField()
+    reference_code = serializers.SerializerMethodField()
+    service_category = serializers.SerializerMethodField()
+    elite_gift_title = serializers.SerializerMethodField()
+    approved_at = serializers.SerializerMethodField()
+
     class Meta:
         model = Transaction
         fields = [
-            'id', 'customer', 'customer_name', 'business', 'business_name',
+            'id', 'customer', 'customer_name', 'customer_image', 'customer_phone',
+            'customer_membership_level', 'visit_count', 'business', 'business_name',
             'package', 'loyalty', 'original_amount', 'discount_all_amount',
-            'has_special_discount', 'special_discount_title',
+            'discount_percentage', 'has_special_discount', 'special_discount_title',
             'special_discount_original_amount', 'special_discount_amount',
-            'cashback_percentage', 'cashback_amount',
-            'final_amount', 'points_earned', 'status', 'note',
-            'can_comment', 'comment_deadline', 'has_commented', 'can_add_comment',
-            'created_at', 'modified_at'
+            'special_discount_percentage', 'cashback_percentage', 'cashback_amount',
+            'final_amount', 'points_earned', 'status', 'note', 'description',
+            'transaction_type', 'reference_code', 'service_category', 'elite_gift_title',
+            'approved_at', 'can_comment', 'comment_deadline', 'has_commented',
+            'can_add_comment', 'created_at', 'modified_at'
         ]
         read_only_fields = [
             'discount_all_amount', 'special_discount_amount',
@@ -47,9 +59,83 @@ class TransactionSerializer(serializers.ModelSerializer):
             'final_amount', 'points_earned', 'created_at', 'modified_at',
             'can_comment', 'comment_deadline', 'has_commented'
         ]
-    
+
+    def get_customer_name(self, obj):
+        user = obj.customer.user
+        fn = (user.first_name or '').strip()
+        ln = (user.last_name or '').strip()
+        name = f'{fn} {ln}'.strip()
+        return name or user.username or 'مشتری'
+
     def get_can_add_comment(self, obj):
         return obj.can_add_comment()
+
+    def get_customer_image(self, obj):
+        image = getattr(obj.customer.user, 'image', None)
+        if not image:
+            return None
+        request = self.context.get('request')
+        try:
+            url = image.url
+        except ValueError:
+            return None
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def get_customer_phone(self, obj):
+        return obj.customer.user.phone_number or ''
+
+    def get_customer_membership_level(self, obj):
+        return obj.customer.membership_level or 'bronze'
+
+    def get_visit_count(self, obj):
+        annotated = getattr(obj, 'visit_count', None)
+        if annotated is not None:
+            return int(annotated)
+        return Transaction.objects.filter(
+            business_id=obj.business_id,
+            customer_id=obj.customer_id,
+            status='approved',
+        ).count()
+
+    def get_discount_percentage(self, obj):
+        try:
+            return float(obj.package.discount_all.percentage)
+        except Exception:
+            original = float(obj.original_amount or 0)
+            if original <= 0:
+                return 0
+            return round(float(obj.discount_all_amount or 0) / original * 100, 1)
+
+    def get_special_discount_percentage(self, obj):
+        if not obj.has_special_discount:
+            return 0
+        try:
+            return float(obj.package.specific_discount.percentage)
+        except Exception:
+            original = float(obj.special_discount_original_amount or 0)
+            if original <= 0:
+                return 0
+            return round(float(obj.special_discount_amount or 0) / original * 100, 1)
+
+    def get_reference_code(self, obj):
+        from .transaction_utils import reference_code
+        return reference_code(obj)
+
+    def get_service_category(self, obj):
+        category = getattr(obj.business, 'category', None)
+        return category.name if category else ''
+
+    def get_elite_gift_title(self, obj):
+        gift = getattr(obj, 'elite_gift', None)
+        return gift.gift if gift else ''
+
+    def get_approved_at(self, obj):
+        if obj.status != 'approved':
+            return None
+        when = obj.modified_at or obj.created_at
+        return when.isoformat() if when else None
 
 
 class TransactionCreateSerializer(serializers.ModelSerializer):

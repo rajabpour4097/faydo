@@ -4,6 +4,7 @@ import re
 
 from django.db.models import Count, Max, Min, Sum
 from django.db.models.functions import TruncDate
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import permissions, status
 from rest_framework.decorators import api_view, permission_classes
@@ -14,6 +15,19 @@ from packages.models import Package
 
 from .models import CustomerLoyalty, EliteGiftClaim, Transaction
 from .serializers import TransactionSerializer
+from .transaction_utils import (
+    PERIOD_LABELS,
+    STATUS_LABELS,
+    TYPE_LABELS,
+    apply_transaction_filters,
+    build_csv,
+    build_pdf_html,
+    build_xlsx,
+    jalali_datetime_label,
+    optimized_transactions,
+    period_bounds,
+    reference_code,
+)
 
 
 def _month_bounds(year, month):
@@ -539,3 +553,99 @@ def business_create_transaction(request):
         transaction.approve()
 
     return Response(TransactionSerializer(transaction).data, status=status.HTTP_201_CREATED)
+
+
+def _business_transaction_qs(business, params):
+    qs = optimized_transactions(Transaction.objects.filter(business=business))
+    return apply_transaction_filters(qs, params)
+
+
+def _export_row(transaction):
+    discount = float(transaction.discount_all_amount or 0) + float(transaction.special_discount_amount or 0)
+    phone = transaction.customer.user.phone_number or ''
+    digits = ''.join(ch for ch in phone if ch.isdigit())
+    if len(digits) >= 8:
+        masked = f'{digits[:4]} *** {digits[-4:]}'
+    else:
+        masked = phone
+    name = (transaction.customer.user.get_full_name() or '').strip() or transaction.customer.user.username
+    return {
+        'reference': reference_code(transaction),
+        'created_label': jalali_datetime_label(transaction.created_at),
+        'customer_name': name,
+        'customer_phone': masked,
+        'type_label': TYPE_LABELS.get(transaction.transaction_type, transaction.transaction_type or 'عادی'),
+        'status_label': STATUS_LABELS.get(transaction.status, transaction.status),
+        'original_amount': int(transaction.original_amount or 0),
+        'discount_amount': int(discount),
+        'cashback_amount': int(transaction.cashback_amount or 0),
+        'final_amount': int(transaction.final_amount or 0),
+        'points_earned': int(transaction.points_earned or 0),
+    }
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def business_transactions_summary(request):
+    business, error = _require_business(request)
+    if error:
+        return error
+
+    params = request.query_params.copy()
+    if not params.get('period') and not params.get('date_from'):
+        params['period'] = 'today'
+    start, end, period = period_bounds(params)
+    qs = _business_transaction_qs(business, params)
+    approved = qs.filter(status='approved')
+    totals = approved.aggregate(
+        sales=Sum('final_amount'),
+        cashback=Sum('cashback_amount'),
+        discount=Sum('discount_all_amount'),
+        special=Sum('special_discount_amount'),
+        success_count=Count('id'),
+    )
+    return Response({
+        'period': period or 'today',
+        'period_label': PERIOD_LABELS.get(period or 'today', 'خلاصه'),
+        'date_from': start.date().isoformat() if start else None,
+        'date_to': end.date().isoformat() if end else None,
+        'sales': float(totals['sales'] or 0),
+        'cashback': float(totals['cashback'] or 0),
+        'discount': float(totals['discount'] or 0) + float(totals['special'] or 0),
+        'success_count': int(totals['success_count'] or 0),
+        'total_count': qs.count(),
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def business_transactions_export(request):
+    business, error = _require_business(request)
+    if error:
+        return error
+
+    fmt = (request.query_params.get('export_format') or request.query_params.get('file_format') or request.query_params.get('output') or 'csv').lower()
+    if fmt not in ('csv', 'xlsx', 'xls', 'pdf', 'excel'):
+        return Response({'error': 'فرمت خروجی نامعتبر است'}, status=status.HTTP_400_BAD_REQUEST)
+    if fmt in ('xls', 'excel'):
+        fmt = 'xlsx'
+
+    qs = _business_transaction_qs(business, request.query_params).order_by('-created_at')[:5000]
+    rows = [_export_row(item) for item in qs]
+    stamp = timezone.localdate().isoformat()
+
+    if fmt == 'csv':
+        response = HttpResponse(build_csv(rows), content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="faydo-transactions-{stamp}.csv"'
+        return response
+    if fmt == 'xlsx':
+        response = HttpResponse(
+            build_xlsx(rows),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = f'attachment; filename="faydo-transactions-{stamp}.xlsx"'
+        return response
+
+    response = HttpResponse(build_pdf_html(rows), content_type='text/html; charset=utf-8')
+    response['Content-Disposition'] = f'inline; filename="faydo-transactions-{stamp}.html"'
+    return response

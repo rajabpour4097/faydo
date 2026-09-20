@@ -1,9 +1,11 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import CustomerLoyalty, Transaction, EliteGiftClaim, CustomerFavorite
+from .transaction_utils import apply_transaction_filters, optimized_transactions
 from .serializers import (
     CustomerLoyaltySerializer, TransactionSerializer,
     TransactionCreateSerializer, BusinessInfoSerializer,
@@ -32,23 +34,35 @@ class CustomerLoyaltyViewSet(viewsets.ReadOnlyModelViewSet):
         return CustomerLoyalty.objects.none()
 
 
+class TransactionPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+
 class TransactionViewSet(viewsets.ModelViewSet):
     """
     ViewSet برای مدیریت تراکنش‌ها
     """
     permission_classes = [permissions.IsAuthenticated]
-    
+    pagination_class = TransactionPagination
+
     def get_queryset(self):
         user = self.request.user
-        
+
         if user.role == 'customer':
-            return Transaction.objects.filter(customer=user.customerprofile)
+            qs = Transaction.objects.filter(customer=user.customerprofile)
         elif user.role == 'business':
-            return Transaction.objects.filter(business=user.businessprofile)
+            qs = Transaction.objects.filter(business=user.businessprofile)
         elif user.role in ['admin', 'it_manager', 'project_manager']:
-            return Transaction.objects.all()
-        
-        return Transaction.objects.none()
+            qs = Transaction.objects.all()
+        else:
+            return Transaction.objects.none()
+
+        qs = optimized_transactions(qs)
+        if self.action == 'list':
+            qs = apply_transaction_filters(qs, self.request.query_params)
+        return qs
     
     def get_serializer_class(self):
         if self.action == 'create':

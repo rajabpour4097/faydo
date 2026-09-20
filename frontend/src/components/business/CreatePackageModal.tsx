@@ -220,7 +220,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
     specificDescription: '',
     specificPercentage: '',
     showSpecificDiscount: false,
-    giftEnabled: true,
+    giftEnabled: false,
     giftType: 'amount',
     giftAmount: '',
     giftCount: '',
@@ -898,9 +898,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                 اجباری
               </span>
             </div>
-            {formData.goldFeatureId && (
-              <p className="text-[11px] text-[#7C5CFC]">۱ از {goldOptions.length} انتخاب شده</p>
-            )}
+            
             {renderExperienceGrid(
               goldOptions,
               formData.goldFeatureId,

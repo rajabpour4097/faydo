@@ -343,7 +343,7 @@ const PackageCard = ({
           </span>
           {pkg.status === 'approved' ? '✅ تأیید شده' :
            pkg.status === 'pending' ? '⏳ در انتظار' :
-           pkg.status === 'draft' ? '📝 پیش‌نویس' : '❌ رد شده'}
+           pkg.status === 'draft' ? '📝 تکمیل نشده' : '❌ رد شده'}
         </div>
         {pkg.start_date && (
           <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>

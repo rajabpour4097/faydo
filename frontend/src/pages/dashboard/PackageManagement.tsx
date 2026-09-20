@@ -19,6 +19,27 @@ const formatAmount = (value: string | number): string => {
   return Number(num).toLocaleString('en-US')
 }
 
+function packageStatusBadge(pkg: { status: string; is_complete?: boolean; is_active?: boolean; days_remaining?: number | null; end_date?: string | null }) {
+  if (pkg.is_active) {
+    return { text: 'فعال', className: 'text-green-600 bg-green-100' }
+  }
+  if (pkg.status === 'approved') {
+    const isExpired =
+      (pkg.days_remaining !== null && pkg.days_remaining !== undefined && pkg.days_remaining <= 0) ||
+      (pkg.end_date && new Date(pkg.end_date) < new Date())
+    return isExpired
+      ? { text: 'منقضی شده', className: 'text-red-600 bg-red-100' }
+      : { text: 'در انتظار انتشار', className: 'text-blue-600 bg-blue-100' }
+  }
+  if (pkg.status === 'pending' && pkg.is_complete) {
+    return { text: 'در حال بررسی', className: 'text-orange-600 bg-orange-100' }
+  }
+  if (pkg.status === 'rejected') {
+    return { text: 'نیاز به ویرایش', className: 'text-red-600 bg-red-100' }
+  }
+  return { text: 'تکمیل نشده', className: 'text-blue-600 bg-blue-100' }
+}
+
 interface PackageManagementProps {}
 
 export const PackageManagement: React.FC<PackageManagementProps> = () => {
@@ -305,7 +326,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'پیش‌نویس'
+        return 'تکمیل نشده'
       case 'approved':
         return 'تایید شده'
       case 'pending':
@@ -512,36 +533,15 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center space-x-2 space-x-reverse">
-                              {pkg.status === 'draft' && (
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(pkg.status)}`}>
-                                  {getStatusText(pkg.status)}
-                                </span>
-                              )}
-                              {pkg.status === 'pending' && (
-                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-orange-600 bg-orange-100">
-                                  در حال بررسی
-                                </span>
-                              )}
-                              {pkg.status === 'approved' && !pkg.is_active && (() => {
-                                const isExpired = (pkg.days_remaining !== null && pkg.days_remaining !== undefined && pkg.days_remaining <= 0) ||
-                                                (pkg.end_date && new Date(pkg.end_date) < new Date());
-                                console.log(`Package ${pkg.id}: days_remaining=${pkg.days_remaining}, end_date=${pkg.end_date}, isExpired=${isExpired}`);
+                              {(() => {
+                                const badge = packageStatusBadge(pkg)
                                 return (
-                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                    isExpired
-                                      ? 'text-red-600 bg-red-100' 
-                                      : 'text-blue-600 bg-blue-100'
-                                  }`}>
-                                    {isExpired ? 'منقضی شده' : 'در انتظار انتشار'}
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${badge.className}`}>
+                                    {badge.text}
                                   </span>
-                                );
+                                )
                               })()}
-                              {pkg.is_active && (
-                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
-                                  فعال
-                                </span>
-                              )}
-                              {pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
+                              {pkg.is_complete && pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                   pkg.days_remaining > 7 ? 'text-green-700 bg-green-100' : 
                                   pkg.days_remaining > 0 ? 'text-orange-700 bg-orange-100' : 'text-red-700 bg-red-100'
@@ -846,42 +846,21 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    {pkg.status === 'draft' && (
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(pkg.status)}`}>
-                        {getStatusText(pkg.status)}
-                      </span>
-                    )}
-                    {pkg.status === 'pending' && (
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-orange-600 bg-orange-100">
-                        در حال بررسی
-                      </span>
-                    )}
-                    {pkg.status === 'approved' && !pkg.is_active && (() => {
-                      const isExpired = (pkg.days_remaining !== null && pkg.days_remaining !== undefined && pkg.days_remaining <= 0) ||
-                                      (pkg.end_date && new Date(pkg.end_date) < new Date());
-                      console.log(`Mobile Package ${pkg.id}: days_remaining=${pkg.days_remaining}, end_date=${pkg.end_date}, isExpired=${isExpired}`);
+                    {(() => {
+                      const badge = packageStatusBadge(pkg)
                       return (
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          isExpired
-                            ? 'text-red-600 bg-red-100' 
-                            : 'text-blue-600 bg-blue-100'
-                        }`}>
-                          {isExpired ? 'منقضی شده' : 'در انتظار انتشار'}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${badge.className}`}>
+                          {badge.text}
                         </span>
-                      );
+                      )
                     })()}
-                    {pkg.is_active && (
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
-                        فعال
-                      </span>
-                    )}
                   </div>
                 </div>
                 
                 {/* اطلاعات پکیج */}
                 <div className="space-y-3 mb-4">
                   {/* تاریخ‌ها */}
-                  {(pkg.start_date || pkg.end_date) && (
+                  {(pkg.status !== 'draft' && (pkg.start_date || pkg.end_date)) && (
                     <div className="flex items-center justify-between text-sm">
                       {pkg.start_date && (
                         <div className={`flex items-center ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
@@ -1081,7 +1060,7 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
   const getStatusText = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'پیش‌نویس'
+        return 'تکمیل نشده'
       case 'approved':
         return 'تایید شده'
       case 'pending':
@@ -1125,14 +1104,14 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
                     وضعیت پکیج
                   </label>
                   <div className="mt-1">
-                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(pkg.status)}`}>
-                      {getStatusText(pkg.status)}
-                    </span>
-                    {pkg.is_active && (
-                      <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full text-green-600 bg-green-100 mr-2">
-                        فعال
-                      </span>
-                    )}
+                    {(() => {
+                      const badge = packageStatusBadge(pkg)
+                      return (
+                        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${badge.className}`}>
+                          {badge.text}
+                        </span>
+                      )
+                    })()}
                   </div>
                 </div>
                 <div>

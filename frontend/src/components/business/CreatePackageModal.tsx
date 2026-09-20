@@ -19,6 +19,12 @@ const formatAmount = (value: string | number): string => {
   return Number(num).toLocaleString('en-US')
 }
 
+const faNum = (value: string | number): string => {
+  const n = typeof value === 'string' ? Number(value.replace(/,/g, '')) : value
+  if (!Number.isFinite(n)) return String(value)
+  return n.toLocaleString('fa-IR')
+}
+
 const stripFormat = (value: string): string => value.replace(/,/g, '').replace(/[^0-9]/g, '')
 
 const parseAmount = (value: string): number => {
@@ -1005,29 +1011,53 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         )
       case 6: {
         const durationLabel = formData.duration === '6months' ? '۶ ماه' : '۳ ماه'
+        const giftCondition =
+          formData.giftType === 'amount' && formData.giftAmount
+            ? `پس از ${faNum(formData.giftAmount)} تومان خرید`
+            : formData.giftType === 'count' && formData.giftCount
+              ? `پس از ${faNum(formData.giftCount)} مراجعه`
+              : undefined
+        const joinRelated = (...parts: Array<string | undefined>) =>
+          parts.map(part => part?.trim()).filter(Boolean).join(' · ')
         return (
           <div className="space-y-4">
             <div className={`overflow-hidden rounded-3xl border ${isDark ? 'border-slate-700 bg-slate-800' : 'border-gray-100 bg-white'}`}>
               <div className="h-28 bg-gradient-to-l from-[#7C5CFC] to-[#A78BFA] px-4 py-4 text-white">
-                <div className="text-[11px] opacity-80">پیش‌نمایش</div>
-                <div className="mt-6 text-lg font-black">پکیج ویژه {businessName}</div>
+                <div className="text-right text-[11px] opacity-80">پیش‌نمایش</div>
+                <div className="mt-6 text-right text-lg font-black">پکیج ویژه {businessName}</div>
               </div>
-              <div className="space-y-3 p-4 text-sm">
-                <PreviewRow label="مزیت مشتری" value={`${instantValue}٪ تخفیف + ${cashbackValue}٪ کش‌بک`} />
+              <div className="p-2">
+                <PreviewRow
+                  label="مزیت مشتری"
+                  value={`${faNum(instantValue)}٪ تخفیف فوری + ${faNum(cashbackValue)}٪ کش‌بک`}
+                />
                 {formData.giftEnabled && formData.giftDescription && (
                   <PreviewRow
                     label="اشانتیون وفاداری"
-                    value={`${formData.giftDescription}${formData.giftType === 'amount' && formData.giftAmount ? ` · پس از ${formData.giftAmount} تومان` : ''}${formData.giftType === 'count' && formData.giftCount ? ` · پس از ${formData.giftCount} مراجعه` : ''}`}
+                    value={joinRelated(formData.giftDescription, giftCondition)}
                   />
                 )}
                 {selectedGold && (
-                  <PreviewRow label="تجربه‌های Gold" value={`${selectedGold.name}${formData.goldDescription ? ` · ${formData.goldDescription}` : ''}`} />
+                  <PreviewRow
+                    label="تجربه طلایی"
+                    value={joinRelated(selectedGold.name, formData.goldDescription)}
+                  />
                 )}
                 {formData.vipEnabled && selectedVip && (
-                  <PreviewRow label="تجربه VIP" value={`${selectedVip.name}${formData.vipDescription ? ` · ${formData.vipDescription}` : ''}`} />
+                  <PreviewRow
+                    label="تجربه VIP"
+                    value={joinRelated(selectedVip.name, formData.vipDescription)}
+                  />
                 )}
                 {formData.showSpecificDiscount && formData.specificTitle && (
-                  <PreviewRow label="تخفیف اختصاصی" value={`${formData.specificTitle} (${formData.specificPercentage}٪)`} />
+                  <PreviewRow
+                    label="تخفیف اختصاصی"
+                    value={
+                      formData.specificPercentage
+                        ? `${formData.specificTitle} — ${faNum(formData.specificPercentage)}٪`
+                        : formData.specificTitle
+                    }
+                  />
                 )}
                 <PreviewRow label="مدت اعتبار" value={durationLabel} />
               </div>
@@ -1186,11 +1216,24 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
   )
 }
 
-function PreviewRow({ label, value }: { label: string; value: string }) {
+function PreviewRow({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-gray-50 py-2.5 last:border-0">
-      <span className="min-w-0 text-left text-[12px] font-medium text-gray-800">{value}</span>
-      <span className="shrink-0 text-[12px] text-gray-500">{label}</span>
+    <div
+      dir="ltr"
+      className="grid grid-cols-[minmax(0,1fr)_max-content] items-start gap-x-4 border-b border-gray-100 px-3 py-3 last:border-0"
+    >
+      <div dir="rtl" className="min-w-0 break-words text-left text-[13px] font-semibold leading-6 text-gray-900 [unicode-bidi:isolate]">
+        {value}
+      </div>
+      <div dir="rtl" className="whitespace-nowrap pt-0.5 text-right text-[12px] font-medium leading-6 text-gray-500">
+        {label}
+      </div>
     </div>
   )
 }

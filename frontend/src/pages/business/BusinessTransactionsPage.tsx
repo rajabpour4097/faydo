@@ -18,6 +18,7 @@ import {
   percentLabel,
   statusStyle,
 } from '../../components/business/businessTransactionUtils'
+import { PersianDateTimePicker, nowDateTimeValue, startOfTodayValue } from '../../components/PersianDateTimePicker'
 
 const emptySummary: BusinessTransactionSummary = {
   period: 'today',
@@ -153,6 +154,10 @@ export const BusinessTransactionsPage = () => {
                         onClick={() => {
                           setPeriod(item.id)
                           setPeriodOpen(false)
+                          if (item.id === 'custom') {
+                            setDateFrom(current => current || startOfTodayValue())
+                            setDateTo(current => current || nowDateTimeValue())
+                          }
                         }}
                         className="block w-full px-3 py-2 text-right text-[12px] hover:bg-[#F3EEFF]"
                       >
@@ -165,9 +170,23 @@ export const BusinessTransactionsPage = () => {
             </div>
 
             {period === 'custom' && (
-              <div className="mb-3 grid grid-cols-2 gap-2">
-                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`rounded-2xl border px-3 py-2 text-sm ${isDark ? 'border-slate-600 bg-slate-700' : 'border-gray-100'}`} />
-                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`rounded-2xl border px-3 py-2 text-sm ${isDark ? 'border-slate-600 bg-slate-700' : 'border-gray-100'}`} />
+              <div className="mb-3 space-y-2">
+                <PersianDateTimePicker
+                  label="از تاریخ و ساعت"
+                  value={dateFrom}
+                  onChange={setDateFrom}
+                  isDark={isDark}
+                  fallback="start"
+                  placeholder="شروع بازه"
+                />
+                <PersianDateTimePicker
+                  label="تا تاریخ و ساعت"
+                  value={dateTo}
+                  onChange={setDateTo}
+                  isDark={isDark}
+                  fallback="now"
+                  placeholder="پایان بازه"
+                />
               </div>
             )}
 

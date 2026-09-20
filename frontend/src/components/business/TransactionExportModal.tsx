@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { apiService, BusinessTransactionQuery } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
+import { PersianDateTimePicker, nowDateTimeValue, startOfTodayValue } from '../PersianDateTimePicker'
 import {
   PERIOD_OPTIONS,
   STATUS_TABS,
@@ -35,9 +36,6 @@ export function TransactionExportModal({ open, onClose, initial }: Props) {
   if (!open) return null
 
   const card = isDark ? 'bg-slate-800 text-white' : 'bg-white text-gray-900'
-  const field = isDark
-    ? 'border-slate-600 bg-slate-700 text-white'
-    : 'border-gray-200 bg-[#F4F6FB] text-gray-900'
 
   const query = (): BusinessTransactionQuery => ({
     period,
@@ -67,7 +65,7 @@ export function TransactionExportModal({ open, onClose, initial }: Props) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
-      <div className={`w-full max-w-md rounded-t-3xl p-5 sm:rounded-3xl ${card}`} dir="rtl" onClick={event => event.stopPropagation()}>
+      <div className={`w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl p-5 sm:rounded-3xl ${card}`} dir="rtl" onClick={event => event.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-black">خروجی گزارش</h2>
           <button onClick={onClose} className="text-sm text-gray-400">بستن</button>
@@ -81,7 +79,13 @@ export function TransactionExportModal({ open, onClose, initial }: Props) {
           {PERIOD_OPTIONS.map(item => (
             <button
               key={item.id}
-              onClick={() => setPeriod(item.id)}
+              onClick={() => {
+                setPeriod(item.id)
+                if (item.id === 'custom') {
+                  setDateFrom(current => current || startOfTodayValue())
+                  setDateTo(current => current || nowDateTimeValue())
+                }
+              }}
               className={`rounded-2xl px-2 py-2 text-[11px] font-bold ${
                 period === item.id ? 'bg-[#7C5CFC] text-white' : isDark ? 'bg-slate-700 text-slate-300' : 'bg-[#F4F6FB] text-gray-600'
               }`}
@@ -91,9 +95,23 @@ export function TransactionExportModal({ open, onClose, initial }: Props) {
           ))}
         </div>
         {period === 'custom' && (
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`rounded-2xl border px-3 py-2 text-sm ${field}`} />
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`rounded-2xl border px-3 py-2 text-sm ${field}`} />
+          <div className="mb-3 space-y-2">
+            <PersianDateTimePicker
+              label="از تاریخ و ساعت"
+              value={dateFrom}
+              onChange={setDateFrom}
+              isDark={isDark}
+              fallback="start"
+              placeholder="شروع بازه"
+            />
+            <PersianDateTimePicker
+              label="تا تاریخ و ساعت"
+              value={dateTo}
+              onChange={setDateTo}
+              isDark={isDark}
+              fallback="now"
+              placeholder="پایان بازه"
+            />
           </div>
         )}
 

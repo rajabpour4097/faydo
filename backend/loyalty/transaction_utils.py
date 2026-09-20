@@ -128,20 +128,33 @@ def annotate_visit_count(qs):
     )
 
 
-def _parse_date(raw):
+def _parse_datetime(raw, end_of_day=False):
     if not raw:
         return None
-    try:
-        return datetime.strptime(str(raw)[:10], '%Y-%m-%d').date()
-    except (TypeError, ValueError):
+    text = str(raw).strip().replace('Z', '')
+    if ' ' in text and 'T' not in text:
+        text = text.replace(' ', 'T', 1)
+    naive = None
+    date_only = False
+    for fmt, size in (('%Y-%m-%dT%H:%M:%S', 19), ('%Y-%m-%dT%H:%M', 16), ('%Y-%m-%d', 10)):
+        try:
+            naive = datetime.strptime(text[:size], fmt)
+            date_only = fmt == '%Y-%m-%d'
+            break
+        except ValueError:
+            continue
+    if naive is None:
         return None
+    if date_only:
+        naive = naive.replace(hour=23, minute=59, second=59) if end_of_day else naive.replace(hour=0, minute=0, second=0)
+    return naive.replace(tzinfo=TEHRAN)
 
 
 def period_bounds(params):
     period = (params.get('period') or '').strip()
-    date_from = _parse_date(params.get('date_from'))
-    date_to = _parse_date(params.get('date_to'))
-    if not period and not date_from and not date_to:
+    dt_from = _parse_datetime(params.get('date_from'), end_of_day=False)
+    dt_to = _parse_datetime(params.get('date_to'), end_of_day=True)
+    if not period and not dt_from and not dt_to:
         return None, None, None
 
     now = timezone.now().astimezone(TEHRAN)
@@ -156,15 +169,21 @@ def period_bounds(params):
         jy, jm, _jd = gregorian_to_jalali(today.year, today.month, today.day)
         gy, gm, gd = jalali_to_gregorian(jy, jm, 1)
         start_d, end_d = date(gy, gm, gd), today
-    elif period == 'custom' or date_from or date_to:
-        period = 'custom'
-        start_d = date_from or today
-        end_d = date_to or today
-        if start_d > end_d:
-            start_d, end_d = end_d, start_d
-    else:
-        period = 'today'
+    elif period in ('today', ''):
+        if period == '' and (dt_from or dt_to):
+            start = dt_from or datetime.combine(today, datetime.min.time(), tzinfo=TEHRAN)
+            end = dt_to or datetime.combine(today, datetime.max.time().replace(microsecond=0), tzinfo=TEHRAN)
+            if start > end:
+                start, end = end, start
+            return start, end, 'custom'
         start_d, end_d = today, today
+        period = 'today'
+    else:
+        start = dt_from or datetime.combine(today, datetime.min.time(), tzinfo=TEHRAN)
+        end = dt_to or datetime.combine(today, datetime.max.time().replace(microsecond=0), tzinfo=TEHRAN)
+        if start > end:
+            start, end = end, start
+        return start, end, 'custom'
 
     start = datetime.combine(start_d, datetime.min.time(), tzinfo=TEHRAN)
     end = datetime.combine(end_d, datetime.max.time().replace(microsecond=0), tzinfo=TEHRAN)

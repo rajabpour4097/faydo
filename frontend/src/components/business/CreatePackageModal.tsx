@@ -659,35 +659,38 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
               subtitle="با تنظیم مزیت‌های متنوع، تخفیف‌های ویژه و پیشنهادهای جذاب برای مشتریان فروش خود را افزایش دهید."
             />
             <div>
-              <label className={`mb-2 flex items-center justify-end gap-1.5 text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                <span className="text-red-500">*</span>
-                مقدار تخفیف
+              <label className={`mb-2 flex items-center justify-start gap-1.5 text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#7C5CFC]" aria-hidden>
                   <path d="M20 12l-8 8-8-8 8-8 8 8z" stroke="currentColor" strokeWidth="1.7" />
                   <circle cx="12" cy="12" r="1.4" fill="currentColor" />
                 </svg>
+                مقدار تخفیف
+                <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
-                  type="number"
-                  min={2}
-                  max={100}
+                  type="text"
+                  inputMode="decimal"
+                  dir="rtl"
                   value={formData.globalDiscountPercentage}
-                  onChange={e => handleInputChange('globalDiscountPercentage', e.target.value)}
+                  onChange={e => {
+                    const next = e.target.value.replace(/[^\d.]/g, '')
+                    handleInputChange('globalDiscountPercentage', next)
+                  }}
                   placeholder="مثال: ۲۰ درصد تخفیف"
-                  className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#7C5CFC]/40 ${
+                  className={`w-full rounded-2xl border py-3 pl-4 pr-11 text-right text-sm outline-none focus:ring-2 focus:ring-[#7C5CFC]/40 ${
                     isDark ? 'border-slate-600 bg-slate-800 text-white' : 'border-gray-200 bg-white'
                   }`}
                 />
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
               </div>
             </div>
             <div className={`rounded-2xl p-3 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
-              <div className={`mb-1 flex items-center justify-end gap-1 text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                مزیت مشتری
+              <div className={`mb-1 flex items-center justify-start gap-1.5 text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[10px] text-gray-500">i</span>
+                مزیت مشتری
               </div>
-              <p className={`mb-3 text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+              <p className={`mb-3 text-right text-[11px] leading-5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                 متنوع تخفیف، پکیج و یا تخفیف به مشتری ارائه می‌شود.
               </p>
               <SplitSlider
@@ -739,12 +742,13 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                 <div className="relative">
                   <input
                     type="number"
+                    dir="rtl"
                     value={formData.specificPercentage}
                     onChange={e => handleInputChange('specificPercentage', e.target.value)}
                     placeholder="درصد تخفیف اختصاصی"
-                    className={`w-full rounded-2xl border px-3 py-2.5 text-sm ${isDark ? 'border-slate-600 bg-slate-800' : 'border-gray-200'}`}
+                    className={`w-full rounded-2xl border py-2.5 pl-3 pr-10 text-right text-sm ${isDark ? 'border-slate-600 bg-slate-800' : 'border-gray-200'}`}
                   />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
                 </div>
                 <p className="text-[11px] text-gray-500">
                   درصد تخفیف اختصاصی باید از مجموع تخفیف فوری و کش‌بک بیشتر باشد.

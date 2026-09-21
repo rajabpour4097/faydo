@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { getOverlayRoot, lockAppScroll } from '../utils/overlayRoot'
 import moment from 'moment-jalaali'
 
 const persianMonths = [
@@ -202,11 +203,7 @@ export const PersianDatePicker = ({
 
   useEffect(() => {
     if (!showSheet) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
+    return lockAppScroll()
   }, [showSheet])
 
   const years = Array.from(
@@ -332,7 +329,7 @@ export const PersianDatePicker = ({
             </div>
           </div>
         </div>,
-        document.body
+        getOverlayRoot()
       )
     : null
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
 import {
   apiService, Package, BusinessGalleryImage, EliteGiftProgress, AmenityItem, WorkingHoursEntry,
 } from '../services/api'
@@ -178,18 +177,9 @@ export const BusinessDetail: React.FC = () => {
       )
 
   return (
-    <>
-      <div className="hidden lg:block">
-        <DashboardLayout>
-          <div className="max-w-lg mx-auto">{content}</div>
-        </DashboardLayout>
-      </div>
-      <div className="lg:hidden">
-        <MobileDashboardLayout>
-          {content}
-        </MobileDashboardLayout>
-      </div>
-    </>
+    <MobileDashboardLayout>
+      {content}
+    </MobileDashboardLayout>
   )
 }
 

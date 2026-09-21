@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { SlidersHorizontal } from 'lucide-react'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { SpecialOfferCard } from '../../components/explore/ExploreSectionCards'
 import { favoriteToPackage, useFavorites } from '../../contexts/FavoritesContext'
 import { useAuth } from '../../contexts/AuthContext'
@@ -11,7 +10,6 @@ import { EXPLORE_CATEGORIES } from '../../constants/exploreCategories'
 
 export const CustomerFavoritesPage: React.FC = () => {
   const { user } = useAuth()
-  const navigate = useNavigate()
 
   if (!user) {
     return (
@@ -248,18 +246,5 @@ const CustomerFavoritesView: React.FC = () => {
     </div>
   )
 
-  return (
-    <>
-      <div className="hidden lg:block">
-        <DashboardLayout>
-          <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
-            {content}
-          </div>
-        </DashboardLayout>
-      </div>
-      <div className="lg:hidden">
-        <MobileDashboardLayout>{content}</MobileDashboardLayout>
-      </div>
-    </>
-  )
+  return <MobileDashboardLayout>{content}</MobileDashboardLayout>
 }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { apiService, CashbackEntry } from '../../services/api'
 
@@ -190,17 +189,8 @@ export function CustomerCashbackDetailsPage() {
   }
 
   return (
-    <>
-      <div className="md:hidden">
-        <MobileDashboardLayout>
-          <CashbackDetailsContent {...contentProps} />
-        </MobileDashboardLayout>
-      </div>
-      <div className="hidden md:block">
-        <DashboardLayout>
-          <CashbackDetailsContent {...contentProps} />
-        </DashboardLayout>
-      </div>
-    </>
+    <MobileDashboardLayout>
+      <CashbackDetailsContent {...contentProps} />
+    </MobileDashboardLayout>
   )
 }

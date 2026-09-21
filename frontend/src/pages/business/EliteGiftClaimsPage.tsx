@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { apiService, EliteGiftClaim } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { Gift, Check, X, Clock, CheckCircle } from 'lucide-react'
 
@@ -134,21 +133,11 @@ export const EliteGiftClaimsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <>
-        {/* Mobile Loading */}
-        <div className="md:hidden">
-          <MobileDashboardLayout>
-            <div className="flex items-center justify-center min-h-screen">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-            </div>
-          </MobileDashboardLayout>
-        </div>
-
-        {/* Desktop Loading */}
-        <div className="hidden md:flex items-center justify-center min-h-screen">
+      <MobileDashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
         </div>
-      </>
+      </MobileDashboardLayout>
     )
   }
 
@@ -393,20 +382,8 @@ export const EliteGiftClaimsPage: React.FC = () => {
   )
 
   return (
-    <>
-      {/* Mobile View */}
-      <div className="md:hidden">
-        <MobileDashboardLayout>
-          {content}
-        </MobileDashboardLayout>
-      </div>
-
-      {/* Desktop View */}
-      <div className="hidden md:block">
-        <DashboardLayout>
-          {content}
-        </DashboardLayout>
-      </div>
-    </>
+    <MobileDashboardLayout>
+      {content}
+    </MobileDashboardLayout>
   )
 }

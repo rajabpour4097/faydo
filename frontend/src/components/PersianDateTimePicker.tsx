@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { getOverlayRoot, lockAppScroll } from '../utils/overlayRoot'
 import moment from 'moment-jalaali'
 
 moment.loadPersian({ dialect: 'persian-modern', usePersianDigits: false })
@@ -153,11 +154,7 @@ export function PersianDateTimePicker({
 
   useEffect(() => {
     if (!open) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
+    return lockAppScroll()
   }, [open])
 
   const applyMoment = (m: JMoment) => {
@@ -257,7 +254,7 @@ export function PersianDateTimePicker({
             </div>
           </div>
         </div>,
-        document.body,
+        getOverlayRoot(),
       )
     : null
 

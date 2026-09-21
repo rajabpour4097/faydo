@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { apiService, ClubItem } from '../../services/api'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { useTheme } from '../../contexts/ThemeContext'
 
@@ -94,8 +93,6 @@ export const ClubManagement: React.FC = () => {
       setTimeout(() => setSuccessMsg(null), 3000)
     }
   }
-
-  const isMobile = window.innerWidth < 1024
 
   const content = (
     <div style={{ direction: 'rtl' }}>
@@ -306,8 +303,5 @@ export const ClubManagement: React.FC = () => {
     </div>
   )
 
-  if (isMobile) {
-    return <MobileDashboardLayout>{content}</MobileDashboardLayout>
-  }
-  return <DashboardLayout>{content}</DashboardLayout>
+  return <MobileDashboardLayout>{content}</MobileDashboardLayout>
 }

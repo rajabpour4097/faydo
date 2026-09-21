@@ -5,6 +5,15 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    // Always use the mobile layout, even on wide desktop viewports.
+    // The app is rendered inside a centered phone-width frame.
+    screens: {
+      sm: '10000px',
+      md: '10000px',
+      lg: '10000px',
+      xl: '10000px',
+      '2xl': '10000px',
+    },
     extend: {
       colors: {
         night: {

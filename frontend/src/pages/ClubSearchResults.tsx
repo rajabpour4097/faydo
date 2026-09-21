@@ -2,7 +2,6 @@ import React, { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronDown, ChevronLeft, Flame, Search, Sparkle, Star } from 'lucide-react'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { ClubBusinessCard } from '../components/clubs/ClubExperienceBrowse'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -282,36 +281,16 @@ export const ClubSearchResults: React.FC = () => {
 
   if (!user || loading) {
     return (
-      <>
-        <div className="hidden lg:block">
-          <DashboardLayout>
-            <LoadingView />
-          </DashboardLayout>
-        </div>
-        <div className="lg:hidden">
-          <MobileDashboardLayout>
-            <LoadingView />
-          </MobileDashboardLayout>
-        </div>
-      </>
+      <MobileDashboardLayout>
+        <LoadingView />
+      </MobileDashboardLayout>
     )
   }
 
   return (
-    <>
-      <div className="hidden lg:block">
-        <DashboardLayout>
-          <div className="mx-auto max-w-[480px] overflow-hidden rounded-[28px] bg-white px-4 py-3 dark:bg-slate-900">
-            {content}
-          </div>
-        </DashboardLayout>
-      </div>
-      <div className="lg:hidden">
-        <MobileDashboardLayout>
-          <div className="px-4 py-3">{content}</div>
-        </MobileDashboardLayout>
-      </div>
-    </>
+    <MobileDashboardLayout>
+      <div className="px-4 py-3">{content}</div>
+    </MobileDashboardLayout>
   )
 }
 

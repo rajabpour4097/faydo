@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { apiService, Package, VipExperienceCategory } from '../../services/api'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { useTheme } from '../../contexts/ThemeContext'
 import { CreatePackageModal } from '../../components/business/CreatePackageModal'
@@ -43,7 +42,6 @@ function packageStatusBadge(pkg: { status: string; is_complete?: boolean; is_act
 interface PackageManagementProps {}
 
 export const PackageManagement: React.FC<PackageManagementProps> = () => {
-  const { isDark } = useTheme()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [packages, setPackages] = useState<Package[]>([])
@@ -308,405 +306,54 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'text-blue-600 bg-blue-100'
-      case 'approved':
-        return 'text-green-600 bg-green-100'
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100'
-      case 'rejected':
-        return 'text-red-600 bg-red-100'
-      default:
-        return 'text-gray-600 bg-gray-100'
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'تکمیل نشده'
-      case 'approved':
-        return 'تایید شده'
-      case 'pending':
-        return 'در حال بررسی'
-      case 'rejected':
-        return 'نیاز به ویرایش'
-      default:
-        return status
-    }
-  }
-
   // Show loading if user is not loaded yet
   if (!user) {
     return (
-      <>
-        {/* Mobile */}
-        <div className="md:hidden">
-          <MobileDashboardLayout>
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-          </MobileDashboardLayout>
+      <MobileDashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-
-        {/* Desktop */}
-        <div className="hidden md:block">
-          <DashboardLayout>
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-          </DashboardLayout>
-        </div>
-      </>
+      </MobileDashboardLayout>
     )
   }
 
   // Show access denied if user is not business
   if (user.type !== 'business') {
     return (
-      <>
-        {/* Mobile */}
-        <div className="md:hidden">
-          <MobileDashboardLayout>
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="text-6xl mb-4">🚫</div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  دسترسی محدود
-                </h1>
-                <p className="text-gray-600 dark:text-slate-400">
-                  این صفحه فقط برای کسب‌وکارها قابل دسترسی است
-                </p>
-              </div>
-            </div>
-          </MobileDashboardLayout>
+      <MobileDashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🚫</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              دسترسی محدود
+            </h1>
+            <p className="text-gray-600 dark:text-slate-400">
+              این صفحه فقط برای کسب‌وکارها قابل دسترسی است
+            </p>
+          </div>
         </div>
-
-        {/* Desktop */}
-        <div className="hidden md:block">
-          <DashboardLayout>
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="text-6xl mb-4">🚫</div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  دسترسی محدود
-                </h1>
-                <p className="text-gray-600 dark:text-slate-400">
-                  این صفحه فقط برای کسب‌وکارها قابل دسترسی است
-                </p>
-              </div>
-            </div>
-          </DashboardLayout>
-        </div>
-      </>
+      </MobileDashboardLayout>
     )
   }
 
   if (loading) {
     return (
-      <>
-        {/* Mobile */}
-        <div className="md:hidden">
-          <MobileDashboardLayout>
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-          </MobileDashboardLayout>
+      <MobileDashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-
-        {/* Desktop */}
-        <div className="hidden md:block">
-          <DashboardLayout>
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-          </DashboardLayout>
-        </div>
-      </>
+      </MobileDashboardLayout>
     )
   }
 
   return (
     <>
-      {/* Mobile */}
-      <div className="md:hidden">
-        <MobilePackageManagement
-          packages={packages}
-          error={error}
-          onCreatePackage={handleCreatePackage}
-          onPackageClick={handlePackageClick}
-          getStatusColor={getStatusColor}
-          getStatusText={getStatusText}
-        />
-      </div>
-
-      {/* Desktop */}
-      <div className="hidden md:block">
-        <DashboardLayout>
-          <div className="p-6 max-w-7xl mx-auto" dir="rtl">
-            {/* Header */}
-            <div className="mb-8">
-              <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                مدیریت پکیج‌های تبلیغاتی
-              </h1>
-              <p className={`${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                پکیج‌های من
-              </p>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            {/* Stats Bar */}
-            <div className="mb-6">
-              <div className="flex items-center space-x-4 space-x-reverse">
-                <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                  تعداد کل: {packages.length}
-                </span>
-                <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                  فعال: {packages.filter(pkg => pkg.is_active).length}
-                </span>
-                <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                  تایید شده: {packages.filter(pkg => pkg.status === 'approved').length}
-                </span>
-              </div>
-            </div>
-
-            {/* Packages List */}
-            {packages.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 mb-4">
-                  <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-                <h3 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                  هنوز پکیجی ایجاد نکرده‌اید
-                </h3>
-                <p className={`${isDark ? 'text-slate-400' : 'text-gray-600'} mb-6`}>
-                  برای شروع، اولین پکیج تبلیغاتی خود را ایجاد کنید
-                </p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
-                >
-                  ایجاد اولین پکیج
-                </button>
-              </div>
-            ) : (
-              <div className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-lg shadow-sm border ${isDark ? 'border-slate-600' : 'border-gray-200'} overflow-hidden`}>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'}`}>
-                      <tr>
-                        <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                          وضعیت
-                        </th>
-                        <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                          تاریخ شروع/پایان
-                        </th>
-                        <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                          تخفیف/هدیه
-                        </th>
-                        <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                          تجربیات VIP
-                        </th>
-                        <th className={`px-6 py-3 text-right text-xs font-medium ${isDark ? 'text-slate-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                          عملیات
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className={`${isDark ? 'bg-slate-800' : 'bg-white'} divide-y ${isDark ? 'divide-slate-600' : 'divide-gray-200'}`}>
-                      {packages.map((pkg) => (
-                        <tr 
-                          key={pkg.id} 
-                          className={`${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'} ${
-                            (pkg.status === 'draft' && !pkg.is_complete) || pkg.status === 'pending' || ['approved', 'rejected'].includes(pkg.status) ? 'cursor-pointer' : ''
-                          }`}
-                          onClick={() => handlePackageClick(pkg)}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2 space-x-reverse">
-                              {(() => {
-                                const badge = packageStatusBadge(pkg)
-                                return (
-                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${badge.className}`}>
-                                    {badge.text}
-                                  </span>
-                                )
-                              })()}
-                              {pkg.is_complete && pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  pkg.days_remaining > 7 ? 'text-green-700 bg-green-100' : 
-                                  pkg.days_remaining > 0 ? 'text-orange-700 bg-orange-100' : 'text-red-700 bg-red-100'
-                                }`}>
-                                  {pkg.days_remaining > 0 ? `${pkg.days_remaining} روز` : 'منقضی'}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                            <div className="space-y-1">
-                              {pkg.start_date && (
-                                <div className="flex items-center">
-                                  <svg className="w-3 h-3 ml-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                  {new Date(pkg.start_date).toLocaleDateString('fa-IR')}
-                                </div>
-                              )}
-                              {pkg.end_date && (
-                                <div className="flex items-center">
-                                  <svg className="w-3 h-3 ml-1 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                  {new Date(pkg.end_date).toLocaleDateString('fa-IR')}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                            <div className="space-y-1">
-                              {pkg.discount_percentage && (
-                                <div className="flex items-center">
-                                  <div className="w-4 h-4 bg-red-100 rounded flex items-center justify-center ml-1">
-                                    <svg className="w-2 h-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
-                                    </svg>
-                                  </div>
-                                  <span className="text-red-600 font-medium">%{pkg.discount_percentage}</span>
-                                </div>
-                              )}
-                              {Number(pkg.cashback_percentage) > 0 && (
-                                <div className="flex items-center">
-                                  <span className="text-teal-600 font-medium">کش‌بک %{pkg.cashback_percentage}</span>
-                                </div>
-                              )}
-                              {pkg.specific_discount_title && pkg.specific_discount_percentage && (
-                                <div className="flex items-center">
-                                  <div className="w-4 h-4 bg-orange-100 rounded flex items-center justify-center ml-1">
-                                    <svg className="w-2 h-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
-                                    </svg>
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-orange-600 font-medium">%{pkg.specific_discount_percentage}</span>
-                                    <span className="text-orange-500 text-xs truncate max-w-20" title={pkg.specific_discount_title}>
-                                      {pkg.specific_discount_title}
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-                              {/* فضای خالی برای حفظ یکدستی layout */}
-                              {!pkg.discount_percentage && !pkg.specific_discount_title && (
-                                <div className="h-6"></div>
-                              )}
-                              {pkg.discount_percentage && !pkg.specific_discount_title && (
-                                <div className="h-6"></div>
-                              )}
-                              {pkg.elite_gift_title && (
-                                <div className="flex items-center">
-                                  <div className="w-4 h-4 bg-purple-100 rounded flex items-center justify-center ml-1">
-                                    <svg className="w-2 h-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                                    </svg>
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-purple-600 truncate max-w-20" title={pkg.elite_gift_title}>
-                                      {pkg.elite_gift_title}
-                                    </span>
-                                    {pkg.elite_gift_amount && (
-                                      <span className="text-xs text-purple-500">
-                                        برای {formatAmount(pkg.elite_gift_amount)} تومان خرید
-                                      </span>
-                                    )}
-                                    {pkg.elite_gift_count && (
-                                      <span className="text-xs text-purple-500">
-                                        برای این تعداد خرید
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 ml-1 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                              </svg>
-                              <span className="font-medium">{pkg.vip_experiences_count}</span>
-                              <span className="mr-1">تجربه</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-2 space-x-reverse">
-                              {pkg.status === 'draft' && (
-                                <span className="text-blue-600 text-sm">
-                                  کلیک کنید تا ویرایش کنید
-                                </span>
-                              )}
-                              {pkg.status === 'pending' && (
-                                <span className="text-orange-600 text-sm">
-                                  کلیک کنید تا ویرایش کنید
-                                </span>
-                              )}
-                              {pkg.status === 'approved' && (
-                                <span className="text-green-600 text-sm">
-                                  تایید شده - فقط مشاهده
-                                </span>
-                              )}
-                              {pkg.status === 'rejected' && (
-                                <span className="text-red-600 text-sm">
-                                  نیاز به ویرایش - فقط مشاهده
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        </DashboardLayout>
-
-        {/* Floating Action Button - فقط زمانی که پکیج وجود دارد */}
-        {packages.length > 0 && (
-          <button
-            onClick={handleCreatePackage}
-            disabled={!canCreatePackage || loading}
-            className={`fixed bottom-8 right-6 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-40 ${
-              canCreatePackage && !loading
-                ? 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-110 shadow-blue-500/25'
-                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-            }`}
-            title={
-              !canCreatePackage 
-                ? (packageBlockReason === 'draft' 
-                    ? 'شما پکیج پیش‌نویس دارید' 
-                    : packageBlockReason === 'pending'
-                    ? 'شما پکیج در حال بررسی دارید'
-                    : packageBlockReason === 'active'
-                    ? 'پکیج فعال شما بیش از ۱۰ روز باقی‌مانده دارد'
-                    : 'امکان ایجاد پکیج جدید وجود ندارد')
-                : 'ایجاد پکیج جدید'
-            }
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-        )}
-      </div>
+      <MobilePackageManagement
+        packages={packages}
+        error={error}
+        onCreatePackage={handleCreatePackage}
+        onPackageClick={handlePackageClick}
+      />
 
       {/* Create Package Modal */}
         {showCreateModal && (
@@ -755,8 +402,6 @@ interface MobilePackageManagementProps {
   error: string | null
   onCreatePackage: () => void
   onPackageClick: (pkg: Package) => void
-  getStatusColor: (status: string) => string
-  getStatusText: (status: string) => string
 }
 
 const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
@@ -764,8 +409,6 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
   error,
   onCreatePackage,
   onPackageClick,
-  getStatusColor,
-  getStatusText
 }) => {
   const { isDark } = useTheme()
 

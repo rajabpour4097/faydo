@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import {
   apiService,
@@ -505,17 +504,8 @@ export function CustomerPointsDetailsPage() {
   }
 
   return (
-    <>
-      <div className="md:hidden">
-        <MobileDashboardLayout>
-          <PointsDetailsContent {...contentProps} />
-        </MobileDashboardLayout>
-      </div>
-      <div className="hidden md:block">
-        <DashboardLayout>
-          <PointsDetailsContent {...contentProps} />
-        </DashboardLayout>
-      </div>
-    </>
+    <MobileDashboardLayout>
+      <PointsDetailsContent {...contentProps} />
+    </MobileDashboardLayout>
   )
 }

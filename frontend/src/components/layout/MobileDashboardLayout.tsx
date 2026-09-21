@@ -96,7 +96,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
 
   return (
     <div
-      className={`min-h-screen font-persian ${
+      className={`min-h-[100dvh] font-persian ${
         isDark ? 'bg-slate-900' : useNewHeader ? 'bg-[#f5f6f8]' : 'bg-gray-50'
       }`}
       style={{ direction: 'rtl' }}

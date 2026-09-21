@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { SlidersHorizontal } from 'lucide-react'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
 import {
   CompactOfferCard,
   ExploreEmptySection,
@@ -345,18 +344,5 @@ const ExploreSectionListView: React.FC = () => {
     </div>
   )
 
-  return (
-    <>
-      <div className="hidden lg:block">
-        <DashboardLayout>
-          <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
-            {content}
-          </div>
-        </DashboardLayout>
-      </div>
-      <div className="lg:hidden">
-        <MobileDashboardLayout>{content}</MobileDashboardLayout>
-      </div>
-    </>
-  )
+  return <MobileDashboardLayout>{content}</MobileDashboardLayout>
 }

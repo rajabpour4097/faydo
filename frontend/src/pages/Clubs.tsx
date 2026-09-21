@@ -1,14 +1,11 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { ExperienceClubsHome } from '../components/clubs/ExperienceClubsHome'
 import { useAuth } from '../contexts/AuthContext'
-import { useTheme } from '../contexts/ThemeContext'
 
 export const Clubs: React.FC = () => {
   const { user } = useAuth()
-  const { isDark } = useTheme()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -53,18 +50,5 @@ export const Clubs: React.FC = () => {
     </div>
   )
 
-  return (
-    <>
-      <div className="hidden lg:block">
-        <DashboardLayout>
-          <div className={`rounded-[28px] ${isDark ? 'bg-slate-900' : 'bg-[#f7f7fb]'} py-4`}>
-            {content}
-          </div>
-        </DashboardLayout>
-      </div>
-      <div className="lg:hidden">
-        <MobileDashboardLayout>{content}</MobileDashboardLayout>
-      </div>
-    </>
-  )
+  return <MobileDashboardLayout>{content}</MobileDashboardLayout>
 }

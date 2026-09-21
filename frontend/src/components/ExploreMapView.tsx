@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { lockAppScroll } from '../utils/overlayRoot'
 import {
   MapContainer,
   TileLayer,
@@ -183,13 +184,12 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
   const mapZoom = initialUserPosition ? 14 : locatedPackages.length > 1 ? 11 : 13
 
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const unlock = lockAppScroll()
     const timer = window.setTimeout(() => setIsMapReady(true), 0)
 
     return () => {
       window.clearTimeout(timer)
-      document.body.style.overflow = prevOverflow
+      unlock()
       setIsMapReady(false)
     }
   }, [])

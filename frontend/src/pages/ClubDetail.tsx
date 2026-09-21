@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { MobileDashboardLayout } from '../components/layout/MobileDashboardLayout'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { ClubExperienceBrowse } from '../components/clubs/ClubExperienceBrowse'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService, ClubItem, VipExperienceCategory, Package } from '../services/api'
@@ -72,18 +71,9 @@ export const ClubDetail: React.FC = () => {
 
   if (!user || loading) {
     return (
-      <>
-        <div className="hidden lg:block">
-          <DashboardLayout>
-            <LoadingView />
-          </DashboardLayout>
-        </div>
-        <div className="lg:hidden">
-          <MobileDashboardLayout>
-            <LoadingView />
-          </MobileDashboardLayout>
-        </div>
-      </>
+      <MobileDashboardLayout>
+        <LoadingView />
+      </MobileDashboardLayout>
     )
   }
 
@@ -118,18 +108,5 @@ export const ClubDetail: React.FC = () => {
     </div>
   )
 
-  return (
-    <>
-      <div className="hidden lg:block">
-        <DashboardLayout>
-          <div className="mx-auto max-w-[480px] overflow-hidden rounded-[28px] bg-white dark:bg-slate-900">
-            {content}
-          </div>
-        </DashboardLayout>
-      </div>
-      <div className="lg:hidden">
-        <MobileDashboardLayout>{content}</MobileDashboardLayout>
-      </div>
-    </>
-  )
+  return <MobileDashboardLayout>{content}</MobileDashboardLayout>
 }

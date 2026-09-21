@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { apiService, ClubItem, ServiceCategoryItem } from '../../services/api'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { useTheme } from '../../contexts/ThemeContext'
 
@@ -125,8 +124,6 @@ export const ServiceCategoryManagement: React.FC = () => {
     if (cat.club_detail) return cat.club_detail
     return clubs.find(cl => cl.id === cat.club)
   }
-
-  const isMobile = window.innerWidth < 1024
 
   const content = (
     <div style={{ direction: 'rtl' }}>
@@ -435,8 +432,5 @@ export const ServiceCategoryManagement: React.FC = () => {
     </div>
   )
 
-  if (isMobile) {
-    return <MobileDashboardLayout>{content}</MobileDashboardLayout>
-  }
-  return <DashboardLayout>{content}</DashboardLayout>
+  return <MobileDashboardLayout>{content}</MobileDashboardLayout>
 }

@@ -6,6 +6,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { QrScannerProvider } from './contexts/QrScannerContext'
 import { Layout } from './components/layout/Layout'
+import { MobileAppFrame } from './components/layout/MobileAppFrame'
 import { ProfileGuard } from './components/ProfileGuard'
 import { AutoTransactionNotification } from './components/customer/AutoTransactionNotification'
 import { QRScannerModal } from './components/scanner/QRScannerModal'
@@ -194,7 +195,9 @@ function App() {
         <FavoritesProvider>
         <NotificationProvider>
           <Router>
-            <AppShell />
+            <MobileAppFrame>
+              <AppShell />
+            </MobileAppFrame>
           </Router>
         </NotificationProvider>
         </FavoritesProvider>

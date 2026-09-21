@@ -18,11 +18,15 @@ export interface BusinessInfo {
   elite_gift_description: string | null
   customer_points: number
   customer_vip_status: string
+  customer_membership_level?: 'bronze' | 'silver' | 'gold' | 'vip'
   elite_gift_target_reached: boolean
   elite_gift_used: boolean
   can_use_elite_gift: boolean
   can_use_vip: boolean
   can_use_vip_plus: boolean
+  available_cashback?: number
+  is_first_purchase?: boolean
+  average_rating?: number
 }
 
 export interface TransactionCreate {
@@ -31,6 +35,7 @@ export interface TransactionCreate {
   has_special_discount: boolean
   special_discount_title?: string
   special_discount_original_amount?: number
+  cashback_used_amount?: number
   note?: string
 }
 
@@ -56,16 +61,20 @@ export interface Transaction {
   special_discount_percentage?: number
   cashback_percentage?: string | number
   cashback_amount?: string | number
+  cashback_used_amount?: string | number
   final_amount: string
   points_earned: number
   status: 'pending' | 'approved' | 'rejected'
   note: string | null
+  rejection_reason?: string | null
   description?: string | null
   transaction_type?: string
   reference_code?: string
   service_category?: string
   elite_gift_title?: string
   approved_at?: string | null
+  business_logo?: string | null
+  business_rating?: number
   can_comment: boolean
   comment_deadline: string | null
   has_commented: boolean
@@ -160,15 +169,16 @@ export const loyaltyService = {
   },
 
   /**
-   * رد تراکنش توسط کسب‌وکار
+   * رد تراکنش توسط کسب‌وکار (دلیل الزامی است)
    */
-  async rejectTransaction(id: number): Promise<Transaction> {
+  async rejectTransaction(id: number, reason: string): Promise<Transaction> {
     const response = await fetch(`${API_BASE_URL}/loyalty/transactions/${id}/reject/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeader()
-      }
+      },
+      body: JSON.stringify({ rejection_reason: reason })
     })
     return handleResponse(response)
   },
@@ -181,7 +191,7 @@ export const loyaltyService = {
     text: string
     score: number | null
     service_type: string
-  }): Promise<{ success: boolean; message: string; comment_id: number }> {
+  }): Promise<{ success: boolean; message: string; comment_id: number; points_earned?: number }> {
     const response = await fetch(`${API_BASE_URL}/loyalty/transactions/add_comment/`, {
       method: 'POST',
       headers: {

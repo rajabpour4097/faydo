@@ -3,8 +3,10 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { Transaction, loyaltyService } from '../../services/loyalty'
 import { TransactionCard } from '../../components/business/TransactionCard'
 import { TransactionRatingModal } from '../../components/customer/TransactionRatingModal'
+import { PurchaseResultModal } from '../../components/customer/PurchaseResultModal'
 import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
+import { useQrScanner } from '../../contexts/QrScannerContext'
 
 // Mobile Component
 interface MobileMyTransactionsProps {
@@ -153,11 +155,13 @@ const MobileMyTransactions: React.FC<MobileMyTransactionsProps> = ({
 
 export const CustomerTransactionsPage: React.FC = () => {
   const { isDark } = useTheme()
+  const qrScanner = useQrScanner()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [showRatingModal, setShowRatingModal] = useState(false)
+  const [showResultModal, setShowResultModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
 
   const loadTransactions = async () => {
@@ -188,14 +192,14 @@ export const CustomerTransactionsPage: React.FC = () => {
   }, [])
 
   const handleTransactionClick = (transaction: Transaction) => {
-    if (transaction.can_add_comment) {
-      setSelectedTransaction(transaction)
-      setShowRatingModal(true)
-    }
+    setSelectedTransaction(transaction)
+    if (transaction.status === 'pending') return
+    setShowResultModal(true)
   }
 
   const handleModalClose = () => {
     setShowRatingModal(false)
+    setShowResultModal(false)
     setSelectedTransaction(null)
   }
 
@@ -395,7 +399,7 @@ export const CustomerTransactionsPage: React.FC = () => {
                     <div key={transaction.id} className="relative">
                       <TransactionCard
                         transaction={transaction}
-                        onClick={() => transaction.can_add_comment && handleTransactionClick(transaction)}
+                        onClick={() => handleTransactionClick(transaction)}
                         showActions={false}
                       />
                       {transaction.has_commented && (
@@ -417,13 +421,29 @@ export const CustomerTransactionsPage: React.FC = () => {
         </DashboardLayout>
       </div>
 
-      {/* Rating Modal */}
-      {selectedTransaction && (
+      {selectedTransaction && showResultModal && (
+        <PurchaseResultModal
+          isOpen
+          transaction={selectedTransaction}
+          onClose={handleModalClose}
+          onReview={() => {
+            setShowResultModal(false)
+            setShowRatingModal(true)
+          }}
+          onRestart={() => {
+            handleModalClose()
+            qrScanner?.openScanner()
+          }}
+        />
+      )}
+
+      {selectedTransaction && showRatingModal && (
         <TransactionRatingModal
-          isOpen={showRatingModal}
+          isOpen
           onClose={handleModalClose}
           transactionId={selectedTransaction.id}
           businessName={selectedTransaction.business_name}
+          businessLogo={selectedTransaction.business_logo}
           serviceTypes={getServiceTypes(selectedTransaction)}
           transactionDate={selectedTransaction.created_at}
           originalAmount={selectedTransaction.original_amount}

@@ -1,10 +1,9 @@
 from rest_framework import serializers
-from .models import CustomerLoyalty, Transaction, EliteGiftClaim
+from .models import CustomerLoyalty, Transaction, EliteGiftClaim, available_cashback
 from accounts.serializers import CustomerProfileSerializer, BusinessProfileSerializer
 from packages.serializers import PackageDetailSerializer
 from packages.models import Comment
 from django.contrib.contenttypes.models import ContentType
-from django.utils import timezone
 
 
 class CustomerLoyaltySerializer(serializers.ModelSerializer):
@@ -38,6 +37,8 @@ class TransactionSerializer(serializers.ModelSerializer):
     service_category = serializers.SerializerMethodField()
     elite_gift_title = serializers.SerializerMethodField()
     approved_at = serializers.SerializerMethodField()
+    business_logo = serializers.SerializerMethodField()
+    business_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
@@ -48,16 +49,18 @@ class TransactionSerializer(serializers.ModelSerializer):
             'discount_percentage', 'has_special_discount', 'special_discount_title',
             'special_discount_original_amount', 'special_discount_amount',
             'special_discount_percentage', 'cashback_percentage', 'cashback_amount',
-            'final_amount', 'points_earned', 'status', 'note', 'description',
+            'cashback_used_amount', 'final_amount', 'points_earned', 'status', 'note',
+            'rejection_reason', 'description',
             'transaction_type', 'reference_code', 'service_category', 'elite_gift_title',
-            'approved_at', 'can_comment', 'comment_deadline', 'has_commented',
+            'approved_at', 'business_logo', 'business_rating',
+            'can_comment', 'comment_deadline', 'has_commented',
             'can_add_comment', 'created_at', 'modified_at'
         ]
         read_only_fields = [
             'discount_all_amount', 'special_discount_amount',
-            'cashback_percentage', 'cashback_amount',
+            'cashback_percentage', 'cashback_amount', 'cashback_used_amount',
             'final_amount', 'points_earned', 'created_at', 'modified_at',
-            'can_comment', 'comment_deadline', 'has_commented'
+            'can_comment', 'comment_deadline', 'has_commented', 'rejection_reason'
         ]
 
     def get_customer_name(self, obj):
@@ -137,6 +140,25 @@ class TransactionSerializer(serializers.ModelSerializer):
         when = obj.modified_at or obj.created_at
         return when.isoformat() if when else None
 
+    def get_business_logo(self, obj):
+        logo = getattr(obj.business, 'logo', None)
+        if not logo:
+            return None
+        request = self.context.get('request')
+        try:
+            url = logo.url
+        except ValueError:
+            return None
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def get_business_rating(self, obj):
+        try:
+            return obj.business.get_average_rating()
+        except Exception:
+            return float(getattr(obj.business, 'rating_avg', 0) or 0)
+
 
 class TransactionCreateSerializer(serializers.ModelSerializer):
     """
@@ -147,7 +169,8 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         fields = [
             'business', 'original_amount',
             'has_special_discount', 'special_discount_title',
-            'special_discount_original_amount', 'note'
+            'special_discount_original_amount', 'note',
+            'cashback_used_amount',
         ]
 
     def validate(self, data):
@@ -164,7 +187,52 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'special_discount_original_amount': 'مبلغ تخفیف خاص الزامی است'
                 })
-        
+
+        request = self.context.get('request')
+        used = int(data.get('cashback_used_amount') or 0)
+        if used < 0:
+            raise serializers.ValidationError({
+                'cashback_used_amount': 'مبلغ کش‌بک نامعتبر است'
+            })
+
+        original = float(data.get('original_amount') or 0)
+        if original <= 0:
+            raise serializers.ValidationError({
+                'original_amount': 'مبلغ فاکتور باید بیشتر از صفر باشد'
+            })
+
+        if used > 0:
+            if not request or not hasattr(request.user, 'customerprofile'):
+                raise serializers.ValidationError({
+                    'error': 'پروفایل مشتری یافت نشد'
+                })
+            customer = request.user.customerprofile
+            business = data.get('business')
+            from accounts.models import BusinessProfile
+            if isinstance(business, int):
+                try:
+                    business = BusinessProfile.objects.get(id=business)
+                except BusinessProfile.DoesNotExist:
+                    raise serializers.ValidationError({'error': 'کسب‌وکار یافت نشد'})
+            available = available_cashback(customer, business)
+            if used > available:
+                raise serializers.ValidationError({
+                    'cashback_used_amount': f'کش‌بک قابل استفاده در این کسب‌وکار حداکثر {available:,} تومان است'
+                })
+            package = business.packages.filter(is_active=True, status='approved').first()
+            discount_pct = 0
+            if package and hasattr(package, 'discount_all'):
+                discount_pct = float(package.discount_all.percentage or 0)
+            after = original - (original * discount_pct / 100)
+            if data.get('has_special_discount') and package and hasattr(package, 'specific_discount'):
+                special_orig = float(data.get('special_discount_original_amount') or 0)
+                special_pct = float(package.specific_discount.percentage or 0)
+                after += special_orig - (special_orig * special_pct / 100)
+            if used > after:
+                raise serializers.ValidationError({
+                    'cashback_used_amount': 'مبلغ کش‌بک نمی‌تواند بیشتر از مبلغ پس از تخفیف باشد'
+                })
+
         return data
 
     def create(self, validated_data):
@@ -261,8 +329,12 @@ class BusinessInfoSerializer(serializers.Serializer):
     # اطلاعات مشتری
     customer_points = serializers.IntegerField()
     customer_vip_status = serializers.CharField()
+    customer_membership_level = serializers.CharField()
     elite_gift_target_reached = serializers.BooleanField()
     elite_gift_used = serializers.BooleanField()
+    available_cashback = serializers.IntegerField()
+    is_first_purchase = serializers.BooleanField()
+    average_rating = serializers.FloatField()
     
     # دسترسی به ویژگی‌ها
     can_use_elite_gift = serializers.BooleanField()
@@ -309,14 +381,12 @@ class TransactionCommentSerializer(serializers.Serializer):
         if transaction.customer != request.user.customerprofile:
             raise serializers.ValidationError('شما مجاز به کامنت‌گذاری برای این تراکنش نیستید')
         
-        # بررسی امکان کامنت‌گذاری
+        # بررسی امکان کامنت‌گذاری — مهلت فقط برای نمایش فوریت است
         if not transaction.can_add_comment():
             if transaction.has_commented:
                 raise serializers.ValidationError('شما قبلاً برای این تراکنش کامنت گذاشته‌اید')
             elif transaction.status != 'approved':
                 raise serializers.ValidationError('فقط می‌توانید برای تراکنش‌های تایید شده کامنت بگذارید')
-            elif transaction.comment_deadline and timezone.now() > transaction.comment_deadline:
-                raise serializers.ValidationError('مهلت کامنت‌گذاری (12 ساعت) به پایان رسیده است')
             else:
                 raise serializers.ValidationError('امکان کامنت‌گذاری برای این تراکنش وجود ندارد')
         
@@ -365,7 +435,17 @@ class TransactionCommentSerializer(serializers.Serializer):
         # علامت‌گذاری تراکنش به عنوان کامنت شده
         transaction.has_commented = True
         transaction.save(update_fields=['has_commented'])
-        
+
+        from loyalty import services as pts_svc
+        points_earned = 0
+        if (validated_data.get('text') or '').strip():
+            pts_svc.award_comment(transaction.customer, transaction.id)
+            points_earned += pts_svc.PointsConfig.COMMENT
+        if validated_data.get('score'):
+            pts_svc.award_rating(transaction.customer, transaction.id)
+            points_earned += pts_svc.PointsConfig.RATING
+        comment._points_earned = points_earned
+
         return comment
 
 

@@ -1,11 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useState } from 'react'
 import { AuthProvider } from './contexts/AuthContext'
 import { FavoritesProvider } from './contexts/FavoritesContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { NotificationProvider } from './contexts/NotificationContext'
+import { QrScannerProvider } from './contexts/QrScannerContext'
 import { Layout } from './components/layout/Layout'
 import { ProfileGuard } from './components/ProfileGuard'
 import { AutoTransactionNotification } from './components/customer/AutoTransactionNotification'
+import { QRScannerModal } from './components/scanner/QRScannerModal'
 
 // Pages to keep
 import { Home } from './pages/Home'
@@ -160,6 +163,30 @@ const DashboardRouter = () => {
   )
 }
 
+function AppShell() {
+  const { user } = useAuth()
+  const [scannerOpen, setScannerOpen] = useState(false)
+
+  return (
+    <QrScannerProvider openScanner={() => setScannerOpen(true)}>
+      <AutoTransactionNotification />
+      <Routes>
+        <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/businesses" element={<Layout><Businesses /></Layout>} />
+        <Route path="/about" element={<Layout><About /></Layout>} />
+        <Route path="/contact" element={<Layout><Contact /></Layout>} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/register" element={<Navigate to="/" replace />} />
+        <Route path="/dashboard/*" element={<DashboardRouter />} />
+        <Route path="/test-users" element={<TestUsers />} />
+      </Routes>
+      {user?.type === 'customer' && (
+        <QRScannerModal isOpen={scannerOpen} onClose={() => setScannerOpen(false)} />
+      )}
+    </QrScannerProvider>
+  )
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -167,28 +194,7 @@ function App() {
         <FavoritesProvider>
         <NotificationProvider>
           <Router>
-            {/* Auto Notification برای نمایش خودکار modal نظردهی */}
-            <AutoTransactionNotification />
-            
-            <Routes>
-              {/* Public routes with Layout (Header + Footer) */}
-              <Route path="/" element={<Layout><Home /></Layout>} />
-              <Route path="/businesses" element={<Layout><Businesses /></Layout>} />
-              <Route path="/about" element={<Layout><About /></Layout>} />
-              <Route path="/contact" element={<Layout><Contact /></Layout>} />
-
-              {/* Redirect old auth routes to home */}
-              <Route path="/login" element={<Navigate to="/" replace />} />
-              <Route path="/register" element={<Navigate to="/" replace />} />
-
-              {/* Dashboard routes - no Layout wrapper as DashboardLayout handles its own layout */}
-              <Route path="/dashboard/*" element={<DashboardRouter />} />
-
-              {/* Test Users Page */}
-              <Route path="/test-users" element={<TestUsers />} />
-
-              {/* Only keep specified routes */}
-            </Routes>
+            <AppShell />
           </Router>
         </NotificationProvider>
         </FavoritesProvider>

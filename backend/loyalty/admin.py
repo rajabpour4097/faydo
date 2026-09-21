@@ -38,12 +38,12 @@ class TransactionAdmin(admin.ModelAdmin):
                 'original_amount', 'discount_all_amount',
                 'has_special_discount', 'special_discount_title',
                 'special_discount_original_amount', 'special_discount_amount',
-                'cashback_percentage', 'cashback_amount',
+                'cashback_percentage', 'cashback_amount', 'cashback_used_amount',
                 'final_amount', 'points_earned'
             )
         }),
         ('وضعیت', {
-            'fields': ('status', 'note')
+            'fields': ('status', 'note', 'rejection_reason')
         }),
         ('زمان‌ها', {
             'fields': ('created_at', 'modified_at')

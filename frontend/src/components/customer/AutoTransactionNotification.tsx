@@ -1,60 +1,38 @@
 import { useEffect, useState } from 'react'
 import { useNotification } from '../../contexts/NotificationContext'
 import { useAuth } from '../../contexts/AuthContext'
+import { useQrScanner } from '../../contexts/QrScannerContext'
 import { TransactionRatingModal } from './TransactionRatingModal'
+import { PurchaseResultModal } from './PurchaseResultModal'
 import { Transaction, loyaltyService } from '../../services/loyalty'
 
 /**
- * کامپوننت برای نمایش خودکار modal نظردهی بعد از تایید تراکنش
- * این کامپوننت باید در سطح بالای اپلیکیشن قرار گیرد
+ * نمایش نتیجه تایید/رد کسب‌وکار و سپس فرم نظر و امتیاز
  */
 export const AutoTransactionNotification = () => {
   const { user } = useAuth()
-  const { approvedTransactions, refreshPendingCount } = useNotification()
+  const { resultTransactions, refreshPendingCount, dismissResultTransaction } = useNotification()
+  const qrScanner = useQrScanner()
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [stage, setStage] = useState<'idle' | 'result' | 'review'>('idle')
   const [processedTransactionIds, setProcessedTransactionIds] = useState<Set<number>>(new Set())
 
-  // Log برای دیدن اینکه component render می‌شود یا نه
   useEffect(() => {
-    console.log('🚀 AutoTransactionNotification mounted - user:', user?.type)
-  }, [])
+    if (user?.type !== 'customer') return
+    if (stage !== 'idle') return
+    const unprocessed = resultTransactions.find(tx => !processedTransactionIds.has(tx.id))
+    if (!unprocessed) return
+    setCurrentTransaction(unprocessed)
+    setStage('result')
+    setProcessedTransactionIds(prev => new Set([...prev, unprocessed.id]))
+  }, [resultTransactions, user, stage, processedTransactionIds])
 
-  useEffect(() => {
-    // فقط برای مشتری‌ها
-    if (user?.type !== 'customer') {
-      console.log('⚠️ کاربر مشتری نیست:', user?.type)
-      return
+  const finish = () => {
+    if (currentTransaction) {
+      dismissResultTransaction(currentTransaction.id)
     }
-
-    console.log('🔔 بررسی تراکنش‌های تایید شده:', {
-      count: approvedTransactions.length,
-      isModalOpen,
-      transactions: approvedTransactions,
-      processedIds: Array.from(processedTransactionIds),
-      userAgent: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'
-    })
-
-    // اگر تراکنش جدیدی تایید شده و modal باز نیست
-    if (approvedTransactions.length > 0 && !isModalOpen) {
-      // پیدا کردن اولین تراکنشی که هنوز پردازش نشده
-      const unprocessedTransaction = approvedTransactions.find(
-        tx => !processedTransactionIds.has(tx.id)
-      )
-      
-      if (unprocessedTransaction) {
-        console.log('✅ نمایش popup برای تراکنش:', unprocessedTransaction.id, 'Device:', navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop')
-        setCurrentTransaction(unprocessedTransaction)
-        setIsModalOpen(true)
-        // علامت‌گذاری به عنوان پردازش شده
-        setProcessedTransactionIds(prev => new Set([...prev, unprocessedTransaction.id]))
-      }
-    }
-  }, [approvedTransactions, user, isModalOpen, processedTransactionIds])
-
-  const handleClose = () => {
-    setIsModalOpen(false)
     setCurrentTransaction(null)
+    setStage('idle')
   }
 
   const handleSubmit = async (data: {
@@ -63,20 +41,12 @@ export const AutoTransactionNotification = () => {
     score: number | null
     service_type: string
   }) => {
-    try {
-      await loyaltyService.addTransactionComment(data)
-      // به‌روزرسانی badge
-      await refreshPendingCount()
-      handleClose()
-    } catch (error) {
-      console.error('خطا در ارسال نظر:', error)
-      throw error
-    }
+    await loyaltyService.addTransactionComment(data)
+    await refreshPendingCount()
   }
 
-  if (!currentTransaction) return null
+  if (!currentTransaction || stage === 'idle') return null
 
-  // استخراج service types از تراکنش
   const serviceTypes: Array<'discount_all' | 'specific_discount' | 'elite_gift' | 'vip_experience'> = []
   if (currentTransaction.discount_all_amount && parseFloat(currentTransaction.discount_all_amount) > 0) {
     serviceTypes.push('discount_all')
@@ -84,29 +54,43 @@ export const AutoTransactionNotification = () => {
   if (currentTransaction.has_special_discount) {
     serviceTypes.push('specific_discount')
   }
-  // برای elite_gift و vip_experience باید از اطلاعات package استفاده کنیم
-  // فعلاً فقط همین دو را اضافه می‌کنیم
+  if (!serviceTypes.length) serviceTypes.push('discount_all')
 
-  // محاسبه مجموع تخفیف
   const totalDiscount = (
     parseFloat(currentTransaction.discount_all_amount || '0') +
     parseFloat(currentTransaction.special_discount_amount || '0')
   ).toString()
 
+  if (stage === 'review') {
+    return (
+      <TransactionRatingModal
+        isOpen
+        onClose={finish}
+        transactionId={currentTransaction.id}
+        businessName={currentTransaction.business_name}
+        businessLogo={currentTransaction.business_logo}
+        serviceTypes={serviceTypes}
+        transactionDate={currentTransaction.created_at}
+        originalAmount={currentTransaction.original_amount}
+        finalAmount={currentTransaction.final_amount}
+        discountAmount={totalDiscount}
+        pointsEarned={currentTransaction.points_earned}
+        specialDiscountTitle={currentTransaction.special_discount_title || undefined}
+        onSubmit={handleSubmit}
+      />
+    )
+  }
+
   return (
-    <TransactionRatingModal
-      isOpen={isModalOpen}
-      onClose={handleClose}
-      transactionId={currentTransaction.id}
-      businessName={currentTransaction.business_name}
-      serviceTypes={serviceTypes.length > 0 ? serviceTypes : ['discount_all']}
-      transactionDate={currentTransaction.created_at}
-      originalAmount={currentTransaction.original_amount}
-      finalAmount={currentTransaction.final_amount}
-      discountAmount={totalDiscount}
-      pointsEarned={currentTransaction.points_earned}
-      specialDiscountTitle={currentTransaction.special_discount_title || undefined}
-      onSubmit={handleSubmit}
+    <PurchaseResultModal
+      isOpen
+      transaction={currentTransaction}
+      onClose={finish}
+      onReview={() => setStage('review')}
+      onRestart={() => {
+        finish()
+        qrScanner?.openScanner()
+      }}
     />
   )
 }

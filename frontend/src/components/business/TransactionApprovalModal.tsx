@@ -37,6 +37,7 @@ export const TransactionApprovalModal: React.FC<TransactionApprovalModalProps> =
   const { isDark } = useTheme()
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
 
   if (!isOpen || !transaction) return null
 
@@ -57,11 +58,15 @@ export const TransactionApprovalModal: React.FC<TransactionApprovalModalProps> =
   }
 
   const handleReject = async () => {
+    if (!rejectReason.trim()) {
+      setError('دلیل رد تراکنش الزامی است')
+      return
+    }
     setIsProcessing(true)
     setError(null)
     
     try {
-      await loyaltyService.rejectTransaction(transaction.id)
+      await loyaltyService.rejectTransaction(transaction.id, rejectReason.trim())
       onRejected()
       onClose()
     } catch (err: any) {
@@ -224,6 +229,18 @@ export const TransactionApprovalModal: React.FC<TransactionApprovalModalProps> =
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/50">
               <p className="text-red-500 text-sm text-center">{error}</p>
             </div>
+          )}
+
+          {transaction.status === 'pending' && (
+            <textarea
+              value={rejectReason}
+              onChange={event => setRejectReason(event.target.value)}
+              placeholder="در صورت رد، دلیل را بنویسید"
+              rows={3}
+              className={`w-full rounded-xl border px-3 py-2 text-sm ${
+                isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-gray-200'
+              }`}
+            />
           )}
 
           {/* Actions */}

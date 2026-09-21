@@ -5,10 +5,9 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { useNotification } from '../../contexts/NotificationContext'
 import { CustomIcon } from '../ui/CustomIcon'
 import { ThemeToggle } from '../ui/ThemeToggle'
-import { QRScannerModal } from '../scanner/QRScannerModal'
-import { QrScannerProvider } from '../../contexts/QrScannerContext'
 import { DashboardMobileHeader } from './DashboardMobileHeader'
 import { DashboardMobileBottomNav } from './DashboardMobileBottomNav'
+import { useQrScanner } from '../../contexts/QrScannerContext'
 
 interface MobileDashboardLayoutProps {
   children: ReactNode
@@ -28,12 +27,12 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [forceCloseThemeMenu, setForceCloseThemeMenu] = useState(false)
-  const [scannerOpen, setScannerOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { isDark } = useTheme()
   const { pendingCount, eliteGiftPendingCount } = useNotification()
+  const qrScanner = useQrScanner()
 
   const handleLogout = async () => {
     await logout()
@@ -48,25 +47,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
     setTimeout(() => setForceCloseThemeMenu(false), 100)
   }
 
-  const handleScanSuccess = async (decodedText: string) => {
-    try {
-      // Import API service dynamically
-      const { apiService } = await import('../../services/api')
-      
-      // Verify QR code with backend
-      const response = await apiService.verifyQRCode(decodedText)
-      
-      if (response.data?.success && response.data?.business) {
-        // Navigate to business detail page
-        navigate(`/dashboard/explore/business/${response.data.business.id}`)
-      } else {
-        alert('کد QR معتبر نیست')
-      }
-    } catch (error) {
-      console.error('Error verifying QR code:', error)
-      alert('خطا در بررسی کد QR')
-    }
-  }
+  const openScanner = () => qrScanner?.openScanner()
 
   // Removed unused serviceItems - services are defined in MobileDashboard component
 
@@ -114,7 +95,6 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   const useNewBottomNav = useNewHeader
 
   return (
-    <QrScannerProvider openScanner={() => setScannerOpen(true)}>
     <div
       className={`min-h-screen font-persian ${
         isDark ? 'bg-slate-900' : useNewHeader ? 'bg-[#f5f6f8]' : 'bg-gray-50'
@@ -298,7 +278,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
         <DashboardMobileBottomNav
           userType={user!.type as 'customer' | 'business'}
           isActive={isActive}
-          onScanClick={() => setScannerOpen(true)}
+          onScanClick={openScanner}
           pendingCount={pendingCount + (user?.type === 'business' ? eliteGiftPendingCount : 0)}
           isDark={isDark}
         />
@@ -344,7 +324,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                 {/* دکمه اسکن وسط - فقط برای مشتری‌ها و بعد از آیتم اول (داشبورد) */}
                 {isCustomer && index === 1 && (
                   <button
-                    onClick={() => setScannerOpen(true)}
+                    onClick={openScanner}
                     className={`flex flex-col items-center relative -mt-8 transition-all duration-300 hover:scale-110 hover:-translate-y-1`}
                   >
                     <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 flex items-center justify-center backdrop-blur-sm relative overflow-hidden`}>
@@ -399,14 +379,6 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
         </div>
       </nav>
       )}
-
-      {/* QR Scanner Modal */}
-      <QRScannerModal
-        isOpen={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScanSuccess={handleScanSuccess}
-      />
     </div>
-    </QrScannerProvider>
   )
 }

@@ -3,8 +3,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from .models import CustomerLoyalty, Transaction, EliteGiftClaim, CustomerFavorite
+from .models import CustomerLoyalty, Transaction, EliteGiftClaim, CustomerFavorite, available_cashback
 from .transaction_utils import apply_transaction_filters, optimized_transactions
 from .serializers import (
     CustomerLoyaltySerializer, TransactionSerializer,
@@ -138,7 +137,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
             )
         
         try:
-            transaction.reject()
+            reason = (
+                request.data.get('rejection_reason')
+                or request.data.get('reason')
+                or request.data.get('note')
+                or ''
+            )
+            transaction.reject(reason)
             serializer = self.get_serializer(transaction)
             return Response(serializer.data)
         except Exception as e:
@@ -169,7 +174,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 return Response({
                     'success': True,
                     'message': 'کامنت شما با موفقیت ثبت شد',
-                    'comment_id': comment.id
+                    'comment_id': comment.id,
+                    'points_earned': int(getattr(comment, '_points_earned', 0) or 0),
                 }, status=status.HTTP_201_CREATED)
             except Exception as e:
                 return Response(
@@ -203,7 +209,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 customer=user.customerprofile,
                 can_comment=True,
                 has_commented=False,
-                comment_deadline__gt=timezone.now()
+                status='approved',
             ).count()
             return Response({
                 'count': count,
@@ -276,8 +282,14 @@ def get_business_by_code(request):
         # اطلاعات مشتری
         'customer_points': loyalty.points,
         'customer_vip_status': loyalty.vip_status,
+        'customer_membership_level': getattr(customer, 'membership_level', None) or 'bronze',
         'elite_gift_target_reached': loyalty.elite_gift_target_reached,
         'elite_gift_used': loyalty.elite_gift_used,
+        'available_cashback': available_cashback(customer, business),
+        'is_first_purchase': not Transaction.objects.filter(
+            customer=customer, business=business, status='approved'
+        ).exists(),
+        'average_rating': business.get_average_rating() or float(business.rating_avg or 0),
         
         # دسترسی به ویژگی‌ها
         'can_use_elite_gift': loyalty.elite_gift_target_reached and not loyalty.elite_gift_used,

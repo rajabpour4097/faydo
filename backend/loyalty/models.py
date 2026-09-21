@@ -1,8 +1,26 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.db.models import Sum
 from accounts.models import CustomerProfile, BusinessProfile
 from packages.models import Package
 from django.contrib.contenttypes.fields import GenericRelation
+
+
+def available_cashback(customer, business, exclude_pk=None):
+    """
+    کش‌بک قابل استفاده مشتری در یک کسب‌وکار (تومان):
+    مجموع کش‌بک تراکنش‌های تاییدشده منهای کش‌بک مصرف‌شده
+    (شامل رزرو تراکنش‌های در انتظار).
+    """
+    qs = Transaction.objects.filter(customer=customer, business=business)
+    approved = qs.filter(status='approved')
+    earned = approved.aggregate(s=Sum('cashback_amount'))['s'] or 0
+    used = approved.aggregate(s=Sum('cashback_used_amount'))['s'] or 0
+    pending_qs = qs.filter(status='pending')
+    if exclude_pk:
+        pending_qs = pending_qs.exclude(pk=exclude_pk)
+    pending_used = pending_qs.aggregate(s=Sum('cashback_used_amount'))['s'] or 0
+    return max(0, int(earned) - int(used) - int(pending_used))
 
 
 class BaseModel(models.Model):
@@ -325,6 +343,13 @@ class Transaction(BaseModel):
         validators=[MinValueValidator(0)],
         verbose_name='مبلغ کش‌بک'
     )
+    cashback_used_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='مبلغ کش‌بک استفاده‌شده'
+    )
     
     # امتیاز کسب شده
     points_earned = models.IntegerField(
@@ -346,6 +371,11 @@ class Transaction(BaseModel):
         blank=True,
         null=True,
         verbose_name='یادداشت'
+    )
+    rejection_reason = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='دلیل رد تراکنش'
     )
     
     # فیلدهای مربوط به کامنت و امتیاز
@@ -404,27 +434,24 @@ class Transaction(BaseModel):
         
         return float(discount_all_amount), float(special_discount_amount)
 
+    def amount_after_discount(self):
+        """مبلغ پس از تخفیف (قبل از کسر کش‌بک قبلی) به تومان"""
+        discount_all_amount, special_discount_amount = self.calculate_discount()
+        total = float(self.original_amount or 0) - float(discount_all_amount or 0)
+        if self.has_special_discount:
+            total += float(self.special_discount_original_amount or 0) - float(special_discount_amount or 0)
+        return max(0, total)
+
     def calculate_final_amount(self):
         """
-        محاسبه مبلغ نهایی
+        مبلغ نهایی پرداختی = پس از تخفیف منهای کش‌بک استفاده‌شده
         """
-        discount_all_amount, special_discount_amount = self.calculate_discount()
-        
-        # مبلغ نهایی = (مبلغ اصلی - تخفیف اصلی) + (مبلغ خاص - تخفیف خاص)
-        final = (
-            float(self.original_amount) - discount_all_amount
-        )
-        
-        if self.has_special_discount:
-            final += (
-                float(self.special_discount_original_amount) - special_discount_amount
-            )
-        
-        return max(0, final)  # حداقل 0
+        used = float(self.cashback_used_amount or 0)
+        return max(0, self.amount_after_discount() - used)
 
     def calculate_cashback(self):
         """
-        محاسبه مبلغ کش‌بک بر اساس درصد کش‌بک پکیج و مبلغ اصلی فاکتور
+        کش‌بک این خرید بر اساس درصد پکیج و مبلغ پس از تخفیف
         """
         if not self.package:
             return 0
@@ -438,7 +465,7 @@ class Transaction(BaseModel):
         if float(cashback_pct) <= 0:
             return 0
 
-        return float(self.original_amount) * float(cashback_pct) / 100
+        return self.amount_after_discount() * float(cashback_pct) / 100
 
     def calculate_points(self):
         """
@@ -455,7 +482,7 @@ class Transaction(BaseModel):
         from datetime import timedelta
         from loyalty import services as pts_svc
 
-        if self.status == 'approved':
+        if self.status != 'pending':
             return
 
         self.status = 'approved'
@@ -478,36 +505,31 @@ class Transaction(BaseModel):
 
         self.save()
 
-    def reject(self):
+    def reject(self, reason=None):
         """
-        رد تراکنش
+        رد تراکنش با دلیل الزامی (برای نمایش به مشتری و بررسی مدیر)
         """
+        if self.status != 'pending':
+            raise ValueError('فقط تراکنش‌های در انتظار قابل رد هستند')
+        text = (reason or '').strip()
+        if not text:
+            raise ValueError('دلیل رد تراکنش الزامی است')
         self.status = 'rejected'
-        self.save()
+        self.rejection_reason = text
+        self.save(update_fields=['status', 'rejection_reason', 'modified_at'])
     
     def can_add_comment(self):
         """
-        بررسی امکان کامنت‌گذاری
+        امکان نظردهی تا وقتی مشتری نظر نداده باقی می‌ماند
+        تا بتوانیم نظر و امتیاز را حتماً جمع‌آوری کنیم.
         """
-        from django.utils import timezone
-        
-        # باید تایید شده باشد
         if self.status != 'approved':
             return False
-        
-        # نباید قبلاً کامنت گذاشته باشد
         if self.has_commented:
             return False
-        
-        # باید can_comment فعال باشد
         if not self.can_comment:
             return False
-        
-        # باید در مهلت 12 ساعت باشد
-        if not self.comment_deadline:
-            return False
-        
-        return timezone.now() <= self.comment_deadline
+        return True
 
     def save(self, *args, **kwargs):
         """

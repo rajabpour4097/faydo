@@ -458,16 +458,20 @@ export interface BusinessTransaction {
   special_discount_percentage?: number
   cashback_amount?: string
   cashback_percentage?: string
+  cashback_used_amount?: string
   final_amount: string
   points_earned: number
   status: 'pending' | 'approved' | 'rejected'
   note: string | null
+  rejection_reason?: string | null
   description?: string | null
   transaction_type?: 'regular' | 'elite_gift' | string
   reference_code?: string
   service_category?: string
   elite_gift_title?: string
   approved_at?: string | null
+  business_logo?: string | null
+  business_rating?: number
   can_comment: boolean
   comment_deadline?: string | null
   has_commented: boolean
@@ -1534,10 +1538,10 @@ class ApiService {
     })
   }
 
-  async rejectTransaction(transactionId: number, note?: string): Promise<ApiResponse<BusinessTransaction>> {
+  async rejectTransaction(transactionId: number, reason: string): Promise<ApiResponse<BusinessTransaction>> {
     return this.request<BusinessTransaction>(`/loyalty/transactions/${transactionId}/reject/`, {
       method: 'POST',
-      body: JSON.stringify({ note }),
+      body: JSON.stringify({ rejection_reason: reason }),
     })
   }
 

@@ -8,9 +8,11 @@ interface NotificationContextType {
   eliteGiftPendingCount: number
   newTransactions: Transaction[]
   approvedTransactions: Transaction[]
+  resultTransactions: Transaction[]
   refreshPendingCount: () => Promise<void>
   markTransactionAsSeen: (transactionId: number) => void
   clearApprovedTransactions: () => void
+  dismissResultTransaction: (transactionId: number) => void
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
@@ -33,8 +35,10 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   const [eliteGiftPendingCount, setEliteGiftPendingCount] = useState(0)
   const [newTransactions, setNewTransactions] = useState<Transaction[]>([])
   const [approvedTransactions, setApprovedTransactions] = useState<Transaction[]>([])
+  const [resultTransactions, setResultTransactions] = useState<Transaction[]>([])
   const [previousTransactionIds, setPreviousTransactionIds] = useState<Set<number>>(new Set())
   const [previousCommentableIds, setPreviousCommentableIds] = useState<Set<number>>(new Set())
+  const [previousStatuses, setPreviousStatuses] = useState<Record<number, string>>({})
   const [isFirstCheck, setIsFirstCheck] = useState(true)
 
   const refreshPendingCount = useCallback(async () => {
@@ -96,22 +100,34 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
           console.log('🎯 اولین بررسی - همه تراکنش‌های قابل کامنت:', canCommentTxs)
           if (canCommentTxs.length > 0) {
             setApprovedTransactions(canCommentTxs)
+            setResultTransactions(canCommentTxs)
           }
           setIsFirstCheck(false)
-        } else if (newCommentables.length > 0) {
-          // در بررسی‌های بعدی، فقط تراکنش‌های جدید
-          console.log('✨ افزودن تراکنش‌های جدید به لیست approved:', newCommentables)
-          setApprovedTransactions(prev => {
-            // جلوگیری از duplicate
-            const existingIds = new Set(prev.map(t => t.id))
-            const uniqueNew = newCommentables.filter(t => !existingIds.has(t.id))
-            return [...uniqueNew, ...prev]
+        } else {
+          const newlyDecided = transactions.filter(tx => {
+            const prev = previousStatuses[tx.id]
+            return (tx.status === 'approved' || tx.status === 'rejected') && prev === 'pending'
           })
+          if (newlyDecided.length > 0) {
+            setResultTransactions(prev => {
+              const existingIds = new Set(prev.map(t => t.id))
+              return [...newlyDecided.filter(t => !existingIds.has(t.id)), ...prev]
+            })
+          }
+          if (newCommentables.length > 0) {
+            console.log('✨ افزودن تراکنش‌های جدید به لیست approved:', newCommentables)
+            setApprovedTransactions(prev => {
+              const existingIds = new Set(prev.map(t => t.id))
+              const uniqueNew = newCommentables.filter(t => !existingIds.has(t.id))
+              return [...uniqueNew, ...prev]
+            })
+          }
         }
         
         // به‌روزرسانی لیست ID های قابل کامنت
         const currentCommentableIds = new Set(canCommentTxs.map(tx => tx.id))
         setPreviousCommentableIds(currentCommentableIds)
+        setPreviousStatuses(Object.fromEntries(transactions.map(tx => [tx.id, tx.status])))
       }
 
       // به‌روزرسانی لیست transaction ID های قبلی
@@ -120,7 +136,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     } catch (error) {
       console.error('خطا در دریافت تعداد تراکنش‌های در انتظار:', error)
     }
-  }, [user, previousTransactionIds, previousCommentableIds, isFirstCheck])
+  }, [user, previousTransactionIds, previousCommentableIds, previousStatuses, isFirstCheck])
 
   // Polling هر 5 ثانیه برای واکنش سریع‌تر به تغییرات
   useEffect(() => {
@@ -139,14 +155,21 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     setApprovedTransactions([])
   }, [])
 
+  const dismissResultTransaction = useCallback((transactionId: number) => {
+    setResultTransactions(prev => prev.filter(tx => tx.id !== transactionId))
+    setApprovedTransactions(prev => prev.filter(tx => tx.id !== transactionId))
+  }, [])
+
   const value: NotificationContextType = {
     pendingCount,
     eliteGiftPendingCount,
     newTransactions,
     approvedTransactions,
+    resultTransactions,
     refreshPendingCount,
     markTransactionAsSeen,
-    clearApprovedTransactions
+    clearApprovedTransactions,
+    dismissResultTransaction,
   }
 
   return (

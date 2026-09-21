@@ -59,6 +59,8 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
   const [error, setError] = useState<string | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
 
   const card = isDark ? 'bg-slate-800 text-white' : 'bg-white text-gray-900'
   const page = isDark ? 'bg-slate-900' : 'bg-[#F3F5FA]'
@@ -89,11 +91,15 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
   }
 
   const decide = async (action: 'approve' | 'reject') => {
+    if (action === 'reject' && !rejectReason.trim()) {
+      setError('دلیل رد تراکنش الزامی است')
+      return
+    }
     setBusy(true)
     setError(null)
     try {
       if (action === 'approve') await loyaltyService.approveTransaction(transaction.id)
-      else await loyaltyService.rejectTransaction(transaction.id)
+      else await loyaltyService.rejectTransaction(transaction.id, rejectReason.trim())
       onChanged()
       onClose()
     } catch (err: any) {
@@ -196,7 +202,10 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
               />
             )}
             {Number(transaction.cashback_amount) > 0 && (
-              <Row label="کش‌بک" value={`${money(transaction.cashback_amount)} تومان`} valueClass="text-teal-500" />
+              <Row label="کش‌بک این خرید" value={`${money(transaction.cashback_amount)} تومان`} valueClass="text-teal-500" />
+            )}
+            {Number(transaction.cashback_used_amount) > 0 && (
+              <Row label="کش‌بک استفاده‌شده" value={`−${money(transaction.cashback_used_amount)} تومان`} valueClass="text-rose-500" />
             )}
             <Row label="مبلغ پرداختی" value={`${money(transaction.final_amount)} تومان`} bold />
             <Row
@@ -252,6 +261,12 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
             </div>
           )}
 
+          {rejected && transaction.rejection_reason && (
+            <div className={`rounded-[28px] p-4 text-[12px] text-rose-600 shadow-sm ${card}`}>
+              <span className="font-bold">دلیل رد: </span>{transaction.rejection_reason}
+            </div>
+          )}
+
           {error && <p className="text-center text-sm text-rose-500">{error}</p>}
 
           {pending ? (
@@ -259,7 +274,7 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
               <button disabled={busy} onClick={() => decide('approve')} className="rounded-2xl bg-emerald-500 py-3 text-sm font-black text-white disabled:opacity-50">
                 تایید تراکنش
               </button>
-              <button disabled={busy} onClick={() => decide('reject')} className="rounded-2xl bg-rose-50 py-3 text-sm font-black text-rose-500 disabled:opacity-50">
+              <button disabled={busy} onClick={() => { setRejectOpen(true); setError(null) }} className="rounded-2xl bg-rose-50 py-3 text-sm font-black text-rose-500 disabled:opacity-50">
                 رد تراکنش
               </button>
             </div>
@@ -282,6 +297,32 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
         </div>
       </div>
 
+      {rejectOpen && (
+        <div className="fixed inset-0 z-[80] flex items-end bg-black/40 sm:items-center sm:p-4" onClick={() => !busy && setRejectOpen(false)}>
+          <div className={`w-full rounded-t-3xl p-5 sm:mx-auto sm:max-w-md sm:rounded-3xl ${card}`} onClick={event => event.stopPropagation()}>
+            <h3 className="mb-2 text-base font-black">رد تراکنش</h3>
+            <p className="mb-3 text-[13px] leading-6 text-gray-500">
+              دلیل رد برای مشتری ارسال می‌شود و در بررسی مدیر باقی می‌ماند.
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={event => setRejectReason(event.target.value)}
+              rows={4}
+              placeholder="مثلاً مبلغ فاکتور با فروش مغایرت دارد"
+              className={`w-full resize-none rounded-2xl border px-3 py-3 text-sm ${isDark ? 'border-slate-600 bg-slate-900' : 'border-gray-200'}`}
+            />
+            {error && <p className="mt-2 text-sm text-rose-500">{error}</p>}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button disabled={busy} onClick={() => decide('reject')} className="rounded-2xl bg-rose-500 py-3 text-sm font-black text-white disabled:opacity-50">
+                {busy ? 'در حال ارسال...' : 'ثبت رد'}
+              </button>
+              <button disabled={busy} onClick={() => setRejectOpen(false)} className="rounded-2xl bg-gray-100 py-3 text-sm font-black text-gray-600">
+                انصراف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {reportOpen && (
         <div className="fixed inset-0 z-[80] flex items-end bg-black/40 sm:items-center sm:p-4" onClick={() => setReportOpen(false)}>
           <div className={`w-full rounded-t-3xl p-5 sm:mx-auto sm:max-w-md sm:rounded-3xl ${card}`} onClick={event => event.stopPropagation()}>

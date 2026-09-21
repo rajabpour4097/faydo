@@ -13,6 +13,9 @@ def delete_transaction_comments(sender, instance, **kwargs):
     نظرات روی DiscountAll/SpecificDiscount/EliteGift/VipExperience ذخیره می‌شوند
     پس باید نظرات آن customer برای آن package را پاک کنیم
     """
+    tx_ct = ContentType.objects.get_for_model(Transaction)
+    Comment.objects.filter(content_type=tx_ct, object_id=instance.pk).delete()
+
     if not instance.package:
         return
     

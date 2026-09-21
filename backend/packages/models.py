@@ -123,6 +123,17 @@ class Package(BaseModel):
         for vip_exp in self.experiences.all():
             vip_scores = vip_exp.comments.exclude(score__isnull=True).values_list('score', flat=True)
             total_scores.extend(vip_scores)
+
+        from django.contrib.contenttypes.models import ContentType
+        from loyalty.models import Transaction
+        tx_ids = list(self.transactions.values_list('id', flat=True))
+        if tx_ids:
+            tx_ct = ContentType.objects.get_for_model(Transaction)
+            tx_scores = Comment.objects.filter(
+                content_type=tx_ct,
+                object_id__in=tx_ids,
+            ).exclude(score__isnull=True).values_list('score', flat=True)
+            total_scores.extend(tx_scores)
         
         # محاسبه میانگین
         if total_scores:
@@ -146,6 +157,13 @@ class Package(BaseModel):
         
         for vip_exp in self.experiences.all():
             count += vip_exp.comments.count()
+
+        from django.contrib.contenttypes.models import ContentType
+        from loyalty.models import Transaction
+        tx_ids = list(self.transactions.values_list('id', flat=True))
+        if tx_ids:
+            tx_ct = ContentType.objects.get_for_model(Transaction)
+            count += Comment.objects.filter(content_type=tx_ct, object_id__in=tx_ids).count()
         
         return count
     

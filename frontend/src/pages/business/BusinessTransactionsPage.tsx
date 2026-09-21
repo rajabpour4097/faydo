@@ -3,10 +3,9 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { BusinessScreen } from '../../components/business/BusinessScreen'
 import { BusinessTransactionDetail } from '../../components/business/BusinessTransactionDetail'
 import { TransactionExportModal } from '../../components/business/TransactionExportModal'
-import { apiService, BusinessTransaction, BusinessTransactionQuery, BusinessTransactionSummary } from '../../services/api'
-import { getFullImageUrl } from '../../services/api'
+import { apiService, BusinessTransaction, BusinessTransactionQuery, BusinessTransactionSummary, getFullImageUrl } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
-import { faNum, formatToman } from '../../components/business/businessHomeUtils'
+import { faNum } from '../../components/business/businessHomeUtils'
 import {
   PERIOD_OPTIONS,
   STATUS_TABS,
@@ -102,18 +101,18 @@ export const BusinessTransactionsPage = () => {
 
   return (
     <BusinessScreen>
-      <div className={`relative min-h-full ${pageBg}`} dir="rtl">
-        <div className="mx-auto max-w-2xl px-4 pb-8 pt-4">
-          <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-l from-[#8B74FF] to-[#7C5CFC] px-5 py-5 text-white shadow-[0_12px_30px_rgba(124,92,252,0.28)]">
-            <div className="flex items-start justify-between gap-3">
-              <div>
+      <div className={`relative min-h-full overflow-x-hidden ${pageBg}`} dir="rtl">
+        <div className="mx-auto w-full min-w-0 max-w-2xl px-3 pb-8 pt-4 sm:px-4">
+          <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-l from-[#8B74FF] to-[#7C5CFC] px-4 py-5 text-white shadow-[0_12px_30px_rgba(124,92,252,0.28)] sm:px-5">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <h1 className="text-[22px] font-black leading-none">تراکنش‌ها</h1>
-                <p className="mt-2 max-w-[200px] text-[11px] leading-5 text-white/80">
+                <p className="mt-2 text-[11px] leading-5 text-white/80">
                   همه تراکنش‌های انجام شده از طریق فایدو
                 </p>
               </div>
-              <div className="flex items-start gap-2">
-                <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/15">
+              <div className="flex shrink-0 items-start gap-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-white/15 sm:h-14 sm:w-14">
                   <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
                     <rect x="10" y="8" width="22" height="30" rx="4" fill="white" fillOpacity="0.95" />
                     <rect x="16" y="14" width="18" height="26" rx="4" fill="#EDE7FF" />
@@ -130,10 +129,10 @@ export const BusinessTransactionsPage = () => {
             </div>
           </div>
 
-          <div className={`mt-3 rounded-[28px] p-4 ${card}`}>
-            <div className="mb-3 flex items-center justify-between">
-              <div className="text-sm font-black">{summary.period_label}</div>
-              <div className="relative">
+          <div className={`mt-3 min-w-0 rounded-[28px] p-3 sm:p-4 ${card}`}>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="min-w-0 truncate text-sm font-black">{summary.period_label}</div>
+              <div className="relative shrink-0">
                 <button
                   onClick={() => setPeriodOpen(value => !value)}
                   className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] font-bold ${isDark ? 'bg-slate-700' : 'bg-[#F4F6FB]'}`}
@@ -191,11 +190,11 @@ export const BusinessTransactionsPage = () => {
             )}
 
             {summaryOpen && (
-              <div className="grid grid-cols-4 gap-1 text-center">
-                <Kpi icon="chart" label="فروش از طریق فایدو" value={formatToman(summary.sales)} />
-                <Kpi icon="wallet" label="کش‌بک پرداختی" value={formatToman(summary.cashback)} />
-                <Kpi icon="percent" label="تخفیف ارائه شده" value={formatToman(summary.discount)} />
-                <Kpi icon="check" label="تراکنش تایید شده" value={faNum(summary.success_count)} unit="تراکنش" />
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <Kpi icon="chart" label="فروش از طریق فایدو" value={faNum(Math.round(summary.sales))} isDark={isDark} />
+                <Kpi icon="wallet" label="کش‌بک پرداختی" value={faNum(Math.round(summary.cashback))} isDark={isDark} />
+                <Kpi icon="percent" label="تخفیف ارائه شده" value={faNum(Math.round(summary.discount))} isDark={isDark} />
+                <Kpi icon="check" label="تراکنش تایید شده" value={faNum(summary.success_count)} unit="تراکنش" isDark={isDark} />
               </div>
             )}
             <button onClick={() => setSummaryOpen(value => !value)} className="mx-auto mt-3 flex text-gray-300" aria-label="جمع‌شدن خلاصه">
@@ -205,13 +204,13 @@ export const BusinessTransactionsPage = () => {
             </button>
           </div>
 
-          <div className={`mt-3 rounded-[28px] p-3 ${card}`}>
-            <div className="mb-3 flex gap-1 overflow-x-auto pb-1">
+          <div className={`mt-3 min-w-0 rounded-[28px] p-3 ${card}`}>
+            <div className="mb-3 grid grid-cols-4 gap-1">
               {STATUS_TABS.map(item => (
                 <button
                   key={item.id}
                   onClick={() => setStatus(item.id)}
-                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-[12px] font-bold ${
+                  className={`min-w-0 truncate rounded-full px-1 py-1.5 text-[11px] font-bold sm:px-3 sm:text-[12px] ${
                     status === item.id ? 'bg-[#7C5CFC] text-white' : isDark ? 'bg-slate-700 text-slate-300' : 'bg-[#F4F6FB] text-gray-500'
                   }`}
                 >
@@ -283,7 +282,19 @@ export const BusinessTransactionsPage = () => {
   )
 }
 
-function Kpi({ icon, label, value, unit = 'تومان' }: { icon: 'chart' | 'wallet' | 'percent' | 'check'; label: string; value: string; unit?: string }) {
+function Kpi({
+  icon,
+  label,
+  value,
+  unit = 'تومان',
+  isDark,
+}: {
+  icon: 'chart' | 'wallet' | 'percent' | 'check'
+  label: string
+  value: string
+  unit?: string
+  isDark: boolean
+}) {
   const colors = {
     chart: 'text-sky-400',
     wallet: 'text-amber-400',
@@ -291,7 +302,7 @@ function Kpi({ icon, label, value, unit = 'تومان' }: { icon: 'chart' | 'wal
     check: 'text-emerald-400',
   }
   return (
-    <div className="px-1">
+    <div className={`min-w-0 rounded-2xl px-2 py-2.5 text-center ${isDark ? 'bg-slate-700' : 'bg-[#F4F6FB]'}`}>
       <div className={`mx-auto mb-1 flex h-8 w-8 items-center justify-center ${colors[icon]}`}>
         {icon === 'chart' && (
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -314,8 +325,8 @@ function Kpi({ icon, label, value, unit = 'تومان' }: { icon: 'chart' | 'wal
           </svg>
         )}
       </div>
-      <div className="text-[9px] leading-4 text-gray-400">{label}</div>
-      <div className="mt-1 text-[11px] font-black leading-4">{value.replace(' تومان', '')}</div>
+      <div className="min-h-[32px] text-[10px] leading-4 text-gray-400">{label}</div>
+      <div className="mt-1 truncate text-[13px] font-black leading-5 tabular-nums">{value}</div>
       <div className="text-[9px] text-gray-400">{unit}</div>
     </div>
   )
@@ -337,7 +348,7 @@ function TransactionRow({
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center gap-2 rounded-[22px] px-2 py-2 text-right ${isDark ? 'bg-slate-700' : 'bg-[#F8F9FD]'}`}
+      className={`flex w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-[22px] p-3 text-right ${isDark ? 'bg-slate-700' : 'bg-[#F8F9FD]'}`}
     >
       {photo ? (
         <img src={photo} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
@@ -347,30 +358,32 @@ function TransactionRow({
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-black">{transaction.customer_name}</div>
-        <div className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-400">
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {formatListTime(transaction.created_at)}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="truncate text-[13px] font-black">{transaction.customer_name}</div>
+            <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] text-gray-400">
+              <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="truncate">{formatListTime(transaction.created_at)}</span>
+            </div>
+          </div>
+          <div className="shrink-0 text-left">
+            <div className="text-[13px] font-black tabular-nums">{money(amount)}</div>
+            <div className="text-[9px] text-gray-400">تومان</div>
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold">
+            <span className="text-teal-500">{percentLabel(transaction.discount_percentage)} تخفیف</span>
+            <span className="text-sky-500">{percentLabel(transaction.cashback_percentage)} کش‌بک</span>
+          </div>
+          <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${style.wrap}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+            {style.label}
+          </span>
         </div>
       </div>
-      <div className="text-center">
-        <div className="text-[13px] font-black">{money(amount)}</div>
-        <div className="text-[9px] text-gray-400">تومان</div>
-      </div>
-      <div className="w-12 text-center text-teal-500">
-        <div className="text-[12px] font-black">{percentLabel(transaction.discount_percentage)}</div>
-        <div className="text-[9px]">تخفیف</div>
-      </div>
-      <div className="w-12 text-center text-sky-500">
-        <div className="text-[12px] font-black">{percentLabel(transaction.cashback_percentage)}</div>
-        <div className="text-[9px]">کش‌بک</div>
-      </div>
-      <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${style.wrap}`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
-        {style.label}
-      </span>
       <svg className="h-4 w-4 shrink-0 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
       </svg>

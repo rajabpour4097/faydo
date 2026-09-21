@@ -749,6 +749,15 @@ class PackageViewSet(viewsets.ModelViewSet):
                             'comment': comment,
                             'category': 'vip_experience'
                         })
+
+            from loyalty.models import Transaction
+            tx_ct = ContentType.objects.get_for_model(Transaction)
+            tx_ids = Transaction.objects.filter(business_id=business_id).values_list('id', flat=True)
+            for comment in Comment.objects.filter(content_type=tx_ct, object_id__in=tx_ids):
+                all_comments.append({
+                    'comment': comment,
+                    'category': comment.service_type or 'discount_all',
+                })
             
             # Sort by creation date (newest first)
             all_comments.sort(key=lambda x: x['comment'].created_at, reverse=True)

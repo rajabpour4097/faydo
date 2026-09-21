@@ -68,7 +68,12 @@ export const TransactionRatingModal: React.FC<TransactionRatingModalProps> = ({
       })
       setEarned(previewPoints)
     } catch (err: any) {
-      setError(err.message || err.error || 'خطا در ثبت نظر')
+      const msg =
+        (typeof err.error === 'string' && err.error) ||
+        (typeof err.message === 'string' && err.message) ||
+        (Array.isArray(err.non_field_errors) && err.non_field_errors[0]) ||
+        'خطا در ثبت نظر'
+      setError(msg)
     } finally {
       setIsSubmitting(false)
     }

@@ -396,6 +396,16 @@ class TransactionCommentSerializer(serializers.Serializer):
                 raise serializers.ValidationError('فقط می‌توانید برای تراکنش‌های تایید شده کامنت بگذارید')
             else:
                 raise serializers.ValidationError('امکان کامنت‌گذاری برای این تراکنش وجود ندارد')
+
+        from django.contrib.contenttypes.models import ContentType
+        from packages.models import Comment
+        existing = Comment.objects.filter(
+            content_type=ContentType.objects.get_for_model(transaction.__class__),
+            object_id=transaction.id,
+            user=request.user.customerprofile,
+        ).exists()
+        if existing:
+            raise serializers.ValidationError('شما قبلاً برای این خرید نظر ثبت کرده‌اید')
         
         # حداقل یکی از text یا score باید وجود داشته باشد
         if not data.get('text') and not data.get('score'):
@@ -404,40 +414,23 @@ class TransactionCommentSerializer(serializers.Serializer):
         return data
     
     def create(self, validated_data):
-        """ایجاد کامنت"""
+        """ایجاد کامنت روی خود تراکنش تا هر خرید جداگانه قابل نظردهی باشد."""
+        from django.db import IntegrityError
+        from packages.models import Comment
+
         transaction = Transaction.objects.get(id=validated_data['transaction_id'])
         service_type = validated_data['service_type']
-        
-        # تعیین content_object بر اساس نوع خدمت
-        content_object = None
-        if service_type == 'discount_all' and hasattr(transaction.package, 'discount_all'):
-            content_object = transaction.package.discount_all
-        elif service_type == 'specific_discount' and hasattr(transaction.package, 'specific_discount'):
-            content_object = transaction.package.specific_discount
-        elif service_type == 'elite_gift':
-            # برای elite_gift از فیلد مستقیم transaction استفاده می‌کنیم
-            if transaction.elite_gift:
-                content_object = transaction.elite_gift
-            elif hasattr(transaction.package, 'elite_gift'):
-                content_object = transaction.package.elite_gift
-        elif service_type == 'vip_experience':
-            # برای VIP باید یکی از experienceها را انتخاب کنیم
-            # فعلاً اولین experience را انتخاب می‌کنیم
-            vip_exp = transaction.package.experiences.first()
-            if vip_exp:
-                content_object = vip_exp
-        
-        if not content_object:
-            raise serializers.ValidationError(f'خدمت {service_type} در این پکیج یافت نشد')
-        
-        # ایجاد کامنت
-        comment = Comment.objects.create(
-            content_object=content_object,
-            user=self.context['request'].user.customerprofile,
-            text=validated_data.get('text', ''),
-            score=validated_data.get('score'),
-            service_type=service_type  # ذخیره نوع سرویس
-        )
+
+        try:
+            comment = Comment.objects.create(
+                content_object=transaction,
+                user=self.context['request'].user.customerprofile,
+                text=validated_data.get('text', ''),
+                score=validated_data.get('score'),
+                service_type=service_type,
+            )
+        except IntegrityError:
+            raise serializers.ValidationError('شما قبلاً برای این خرید نظر ثبت کرده‌اید')
         
         # علامت‌گذاری تراکنش به عنوان کامنت شده
         transaction.has_commented = True

@@ -11,6 +11,7 @@ from .serializers import (
     TransactionCommentSerializer, CustomerFavoriteSerializer,
 )
 from accounts.models import BusinessProfile
+from django.db import IntegrityError
 
 
 class CustomerLoyaltyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -177,6 +178,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     'comment_id': comment.id,
                     'points_earned': int(getattr(comment, '_points_earned', 0) or 0),
                 }, status=status.HTTP_201_CREATED)
+            except IntegrityError:
+                return Response(
+                    {'error': 'شما قبلاً برای این خرید نظر ثبت کرده‌اید'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             except Exception as e:
                 return Response(
                     {'error': str(e)},

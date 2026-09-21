@@ -176,6 +176,47 @@ def award_profile_complete(customer):
                    description='پاداش تکمیل پروفایل')
 
 
+def estimate_purchase_points(customer, transaction_obj):
+    """
+    برآورد امتیاز خرید بدون واریز به حساب مشتری.
+    - اولین خرید از این کسب‌وکار: +30
+    - خریدهای بعدی: +10
+    - بر اساس مبلغ نهایی: هر 10,000 تومان = 1 امتیاز
+    - روز تولد: ضریب 2
+    """
+    from loyalty.models import Transaction
+
+    final_amount = float(getattr(transaction_obj, 'final_amount', 0) or 0)
+    qs = Transaction.objects.filter(
+        customer=customer,
+        business=transaction_obj.business,
+        status='approved',
+    )
+    if getattr(transaction_obj, 'pk', None):
+        qs = qs.exclude(pk=transaction_obj.pk)
+
+    is_first = qs.count() == 0
+    base_pts = PointsConfig.FIRST_PURCHASE if is_first else PointsConfig.REPEAT_PURCHASE
+    amount_pts = int(final_amount * PointsConfig.PURCHASE_AMOUNT_RATE)
+    total_pts = base_pts + amount_pts
+
+    is_birthday = False
+    today = timezone.now().date()
+    birth_date = getattr(customer, 'birth_date', None)
+    if birth_date and birth_date.month == today.month and birth_date.day == today.day:
+        is_birthday = True
+        total_pts = int(total_pts * PointsConfig.BIRTHDAY_MULTIPLIER)
+
+    return {
+        'points': total_pts,
+        'is_first': is_first,
+        'is_birthday': is_birthday,
+        'final_amount': final_amount,
+        'base_pts': base_pts,
+        'amount_pts': amount_pts,
+    }
+
+
 def award_purchase(customer, transaction_obj):
     """
     امتیاز خرید:
@@ -184,30 +225,11 @@ def award_purchase(customer, transaction_obj):
     - بر اساس مبلغ: 0.01% (هر 10,000 = 1 امتیاز)
     - روز تولد: ضریب 2
     """
-    from loyalty.models import Transaction
+    info = estimate_purchase_points(customer, transaction_obj)
+    total_pts = info['points']
+    is_first = info['is_first']
+    is_birthday = info['is_birthday']
     business = transaction_obj.business
-    final_amount = float(transaction_obj.final_amount)
-
-    # آیا اولین خرید از این کسب‌وکار است؟
-    prev_count = Transaction.objects.filter(
-        customer=customer,
-        business=business,
-        status='approved',
-    ).exclude(pk=transaction_obj.pk).count()
-
-    is_first = (prev_count == 0)
-    base_pts = PointsConfig.FIRST_PURCHASE if is_first else PointsConfig.REPEAT_PURCHASE
-    amount_pts = int(final_amount * PointsConfig.PURCHASE_AMOUNT_RATE)
-    total_pts = base_pts + amount_pts
-
-    # روز تولد؟
-    is_birthday = False
-    today = timezone.now().date()
-    if customer.birth_date:
-        bd = customer.birth_date
-        if bd.month == today.month and bd.day == today.day:
-            is_birthday = True
-            total_pts = int(total_pts * PointsConfig.BIRTHDAY_MULTIPLIER)
 
     event_type = 'birthday_purchase' if is_birthday else ('first_purchase' if is_first else 'purchase')
     as_delta = PointsConfig.AS_FIRST_PURCHASE if is_first else PointsConfig.AS_PURCHASE
@@ -221,7 +243,7 @@ def award_purchase(customer, transaction_obj):
                metadata={
                    'transaction_id': transaction_obj.id,
                    'business_id': business.id,
-                   'amount': final_amount,
+                   'amount': info['final_amount'],
                    'is_first': is_first,
                    'is_birthday': is_birthday,
                })

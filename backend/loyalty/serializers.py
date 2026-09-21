@@ -159,6 +159,13 @@ class TransactionSerializer(serializers.ModelSerializer):
         except Exception:
             return float(getattr(obj.business, 'rating_avg', 0) or 0)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # درخواست‌های در انتظار هنوز واریز نشده‌اند؛ برآورد امتیاز را نشان بده
+        if instance.status == 'pending' and instance.transaction_type != 'elite_gift':
+            data['points_earned'] = instance.calculate_points()
+        return data
+
 
 class TransactionCreateSerializer(serializers.ModelSerializer):
     """

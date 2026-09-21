@@ -580,7 +580,11 @@ def _export_row(transaction):
         'discount_amount': int(discount),
         'cashback_amount': int(transaction.cashback_amount or 0),
         'final_amount': int(transaction.final_amount or 0),
-        'points_earned': int(transaction.points_earned or 0),
+        'points_earned': int(
+            transaction.calculate_points()
+            if transaction.status == 'pending' and transaction.transaction_type != 'elite_gift'
+            else (transaction.points_earned or 0)
+        ),
     }
 
 

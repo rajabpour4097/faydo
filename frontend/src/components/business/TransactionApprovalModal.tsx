@@ -206,7 +206,7 @@ export const TransactionApprovalModal: React.FC<TransactionApprovalModalProps> =
 
             <div className="flex justify-between items-center">
               <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                امتیاز کسب شده:
+                {transaction.status === 'pending' ? 'امتیاز پس از تایید:' : 'امتیاز کسب شده:'}
               </span>
               <span className={`text-lg font-bold text-blue-500`}>
                 +{transaction.points_earned} امتیاز

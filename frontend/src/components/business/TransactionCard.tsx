@@ -141,7 +141,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
         
         <div className="flex justify-between items-center">
           <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-            امتیاز کسب شده:
+            {transaction.status === 'pending' ? 'امتیاز پس از تایید:' : 'امتیاز کسب شده:'}
           </span>
           <span className={`font-bold text-blue-500`}>
             {transaction.points_earned} امتیاز

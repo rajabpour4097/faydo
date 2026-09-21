@@ -209,7 +209,7 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
             )}
             <Row label="مبلغ پرداختی" value={`${money(transaction.final_amount)} تومان`} bold />
             <Row
-              label="امتیاز کسب‌شده"
+              label={pending ? 'امتیاز این خرید (پس از تایید)' : 'امتیاز کسب‌شده'}
               value={`+${faNum(transaction.points_earned)} امتیاز`}
               valueClass="text-[#7C5CFC]"
               icon

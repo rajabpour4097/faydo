@@ -469,10 +469,13 @@ class Transaction(BaseModel):
 
     def calculate_points(self):
         """
-        محاسبه امتیاز بر اساس مبلغ نهایی
-        هر 10,000 تومان = 1 امتیاز
+        برآورد امتیاز این خرید (بدون واریز به حساب) مطابق جدول امتیاز.
         """
-        return int(self.final_amount / 10000)
+        from loyalty import services as pts_svc
+        try:
+            return pts_svc.estimate_purchase_points(self.customer, self)['points']
+        except Exception:
+            return int(float(self.final_amount or 0) / 10000)
 
     def approve(self):
         """
@@ -546,6 +549,8 @@ class Transaction(BaseModel):
                 cashback_pct = 0
             self.cashback_percentage = cashback_pct
             self.cashback_amount = self.calculate_cashback()
+            if self.transaction_type != 'elite_gift':
+                self.points_earned = self.calculate_points()
         
         super().save(*args, **kwargs)
 

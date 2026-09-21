@@ -2,6 +2,7 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { CustomerHeroSection } from '../../components/dashboard/CustomerHeroSection'
 import { CustomerPointsCard } from '../../components/dashboard/CustomerPointsCard'
 import { QuickAccessMenu } from '../../components/dashboard/QuickAccessMenu'
+import { CustomerRecentActivities } from '../../components/dashboard/CustomerRecentActivities'
 import { useTheme } from '../../contexts/ThemeContext'
 
 export const CustomerDashboardDesktop = () => {
@@ -127,108 +128,7 @@ export const CustomerDashboardDesktop = () => {
             </div>
           </div>
 
-          <div
-            className={`rounded-[24px] p-6 ${
-              isDark ? 'bg-slate-800' : 'bg-white'
-            }`}
-            style={{ boxShadow: cardShadow }}
-          >
-            <h3
-              className={`text-lg font-bold mb-4 ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}
-            >
-              فعالیت‌های اخیر
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 space-x-reverse">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-xl">✓</span>
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`text-sm font-medium ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}
-                  >
-                    خرید موفق
-                  </p>
-                  <p
-                    className={`text-xs ${
-                      isDark ? 'text-slate-400' : 'text-gray-600'
-                    }`}
-                  >
-                    کافه پاریس - ۵۰ امتیاز دریافت کردید
-                  </p>
-                </div>
-                <span
-                  className={`text-xs ${
-                    isDark ? 'text-slate-400' : 'text-gray-500'
-                  }`}
-                >
-                  امروز
-                </span>
-              </div>
-
-              <div className="flex items-center space-x-3 space-x-reverse">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-warning-500 to-warning-600 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-xl">🎯</span>
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`text-sm font-medium ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}
-                  >
-                    چالش تکمیل شد
-                  </p>
-                  <p
-                    className={`text-xs ${
-                      isDark ? 'text-slate-400' : 'text-gray-600'
-                    }`}
-                  >
-                    چالش هفتگی - ۱۰۰ امتیاز
-                  </p>
-                </div>
-                <span
-                  className={`text-xs ${
-                    isDark ? 'text-slate-400' : 'text-gray-500'
-                  }`}
-                >
-                  دیروز
-                </span>
-              </div>
-
-              <div className="flex items-center space-x-3 space-x-reverse">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-success-500 to-success-600 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-xl">⭐</span>
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`text-sm font-medium ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}
-                  >
-                    ارتقای سطح
-                  </p>
-                  <p
-                    className={`text-xs ${
-                      isDark ? 'text-slate-400' : 'text-gray-600'
-                    }`}
-                  >
-                    به سطح طلایی ارتقا یافتید - ۲۰۰ امتیاز جایزه
-                  </p>
-                </div>
-                <span
-                  className={`text-xs ${
-                    isDark ? 'text-slate-400' : 'text-gray-500'
-                  }`}
-                >
-                  ۲ روز پیش
-                </span>
-              </div>
-            </div>
-          </div>
+          <CustomerRecentActivities compact={false} />
         </div>
       </div>
     </DashboardLayout>

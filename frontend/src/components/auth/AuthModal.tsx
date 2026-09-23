@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { API_BASE_URL, apiService, ServiceCategoryItem } from '../../services/api'
+import { API_BASE_URL, apiService, PackageAmenitiesData, ServiceCategoryItem } from '../../services/api'
+import { AmenitiesPicker } from '../business/AmenitiesPicker'
+import { WorkingHoursEditor } from '../business/WorkingHoursEditor'
+import {
+  WorkingHoursDraft,
+  createDefaultSchedule,
+  scheduleToPayload,
+  validateSchedule,
+} from '../business/workingHoursDraft'
 import { AuthServiceSlider } from './AuthServiceSlider'
 import { OtpInput } from './OtpInput'
 import { LocationPicker } from '../LocationPicker'
@@ -24,6 +32,8 @@ type AuthStep =
   | 'business-1'
   | 'business-2'
   | 'business-3'
+  | 'business-4'
+  | 'business-5'
   | 'password'
 
 interface FormData {
@@ -89,6 +99,10 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [citiesLoading, setCitiesLoading] = useState(false)
   const [lookupsError, setLookupsError] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
+  const [workingSchedule, setWorkingSchedule] = useState<WorkingHoursDraft[]>(createDefaultSchedule())
+  const [amenityCatalog, setAmenityCatalog] = useState<PackageAmenitiesData | null>(null)
+  const [selectedAmenityIds, setSelectedAmenityIds] = useState<number[]>([])
+  const [amenitiesLoading, setAmenitiesLoading] = useState(false)
   const [otpCountdown, setOtpCountdown] = useState<number | null>(null)
   const verifyingOtpRef = useRef(false)
   const mapInitialCenter = useRef({ lat: 35.6892, lng: 51.389 })
@@ -156,6 +170,10 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setError('')
       setIsNewUser(false)
       setOtpCountdown(null)
+      setWorkingSchedule(createDefaultSchedule())
+      setAmenityCatalog(null)
+      setSelectedAmenityIds([])
+      setAmenitiesLoading(false)
     }
   }, [isOpen])
 
@@ -178,6 +196,34 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       loadRegistrationLookups()
     }
   }, [step, isOpen, loadRegistrationLookups])
+
+  useEffect(() => {
+    if (!isOpen || step !== 'business-5') return
+    let active = true
+    const loadAmenities = async () => {
+      setAmenitiesLoading(true)
+      const categoryId = formData.category_id ? parseInt(formData.category_id, 10) : undefined
+      const response = await apiService.getAmenityCatalog(categoryId)
+      if (!active) return
+      if (response.data) {
+        setAmenityCatalog(response.data)
+        const allowed = new Set([
+          ...response.data.general_amenities.map((item) => item.id),
+          ...response.data.specific_amenities.map((item) => item.id),
+        ])
+        setSelectedAmenityIds((current) => current.filter((id) => allowed.has(id)))
+        setError('')
+      } else {
+        setAmenityCatalog(null)
+        setError(response.error || 'خطا در دریافت امکانات')
+      }
+      setAmenitiesLoading(false)
+    }
+    loadAmenities()
+    return () => {
+      active = false
+    }
+  }, [step, isOpen, formData.category_id])
 
   const patchForm = (patch: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...patch }))
@@ -412,6 +458,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
     if (formData.category_id) registerPayload.category = parseInt(formData.category_id)
     if (formData.city_id) registerPayload.city = parseInt(formData.city_id)
+    registerPayload.amenity_ids = selectedAmenityIds
+    registerPayload.schedule = scheduleToPayload(workingSchedule)
     if (formData.business_location_latitude != null) {
       registerPayload.business_location_latitude = roundCoordinate(formData.business_location_latitude)
       registerPayload.business_location_longitude = roundCoordinate(formData.business_location_longitude!)
@@ -471,7 +519,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       )
 
       onClose()
-      window.location.href = '/dashboard?tab=profile&welcome=true'
+      window.location.href = '/dashboard/profile'
     } catch {
       setError('خطا در ثبت نام کسب‌وکار')
     } finally {
@@ -501,7 +549,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       {Array.from({ length: total }, (_, i) => (
         <div
           key={i}
-          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
+          className={`${total > 3 ? 'w-7 h-7 text-xs' : 'w-8 h-8 text-sm'} rounded-full flex items-center justify-center font-bold border-2 transition-colors ${
             i + 1 <= current
               ? `${color} text-white border-transparent`
               : 'bg-gray-100 text-gray-400 border-gray-200'
@@ -739,7 +787,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'business-1' && (
             <>
-              {renderProgress(3, 1, 'bg-red-600')}
+              {renderProgress(5, 1, 'bg-red-600')}
               <h2 className="text-lg font-bold text-center mb-4">اطلاعات کسب‌وکار</h2>
               <div className="space-y-3">
                 <input
@@ -798,7 +846,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'business-2' && (
             <>
-              {renderProgress(3, 2, 'bg-orange-500')}
+              {renderProgress(5, 2, 'bg-orange-500')}
               <h2 className="text-lg font-bold text-center mb-4">اطلاعات مالک کسب‌وکار</h2>
               <div className="space-y-3">
                 <input
@@ -840,7 +888,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'business-3' && (
             <>
-              {renderProgress(3, 3, 'bg-emerald-600')}
+              {renderProgress(5, 3, 'bg-emerald-600')}
               <h2 className="text-lg font-bold text-center mb-4">تماس، مکان و آدرس</h2>
               <div className="space-y-3">
                 <input
@@ -896,9 +944,73 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   قبلی
                 </button>
                 <button
+                  onClick={() => {
+                    if (!formData.map_location_selected || formData.business_location_latitude == null) {
+                      setError('انتخاب موقعیت روی نقشه الزامی است')
+                      return
+                    }
+                    if (!formData.address.trim()) {
+                      setError('آدرس کامل الزامی است')
+                      return
+                    }
+                    setError('')
+                    setStep('business-4')
+                  }}
+                  className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-semibold"
+                >
+                  ادامه
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 'business-4' && (
+            <>
+              {renderProgress(5, 4, 'bg-teal-600')}
+              <h2 className="text-lg font-bold text-center mb-1">ساعات کاری</h2>
+              <p className="text-xs text-center text-gray-500 mb-4">روزهای تعطیل را مشخص کنید و ساعت شروع و پایان را تنظیم کنید</p>
+              <WorkingHoursEditor schedule={workingSchedule} onChange={setWorkingSchedule} />
+              <div className="flex gap-2 mt-5">
+                <button onClick={() => setStep('business-3')} className="flex-1 py-3 border rounded-xl text-gray-600">
+                  قبلی
+                </button>
+                <button
+                  onClick={() => {
+                    const validationError = validateSchedule(workingSchedule)
+                    if (validationError) {
+                      setError(validationError)
+                      return
+                    }
+                    setError('')
+                    setStep('business-5')
+                  }}
+                  className="flex-1 py-3 bg-teal-600 text-white rounded-xl font-semibold"
+                >
+                  ادامه
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 'business-5' && (
+            <>
+              {renderProgress(5, 5, 'bg-teal-700')}
+              <h2 className="text-lg font-bold text-center mb-1">امکانات کسب‌وکار</h2>
+              <p className="text-xs text-center text-gray-500 mb-4">امکاناتی که در مجموعه دارید را انتخاب کنید</p>
+              <AmenitiesPicker
+                catalog={amenityCatalog}
+                selectedIds={selectedAmenityIds}
+                onChange={setSelectedAmenityIds}
+                loading={amenitiesLoading}
+              />
+              <div className="flex gap-2 mt-5">
+                <button onClick={() => setStep('business-4')} className="flex-1 py-3 border rounded-xl text-gray-600">
+                  قبلی
+                </button>
+                <button
                   onClick={submitBusinessRegistration}
-                  disabled={isLoading}
-                  className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-semibold disabled:opacity-50"
+                  disabled={isLoading || amenitiesLoading}
+                  className="flex-1 py-3 bg-teal-700 text-white rounded-xl font-semibold disabled:opacity-50"
                 >
                   {isLoading ? '...' : 'ثبت نهایی'}
                 </button>

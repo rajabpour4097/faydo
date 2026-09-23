@@ -440,6 +440,81 @@ def update_business_profile_view(request):
     })
 
 
+def _owned_business_profile(request):
+    if request.user.role != 'business':
+        return None, Response(
+            {'error': 'Only business users can manage this data'},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    try:
+        business = BusinessProfile.objects.select_related('category').get(user=request.user)
+    except BusinessProfile.DoesNotExist:
+        return None, Response({'error': 'Business profile not found'}, status=status.HTTP_404_NOT_FOUND)
+    return business, None
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def amenity_catalog_view(request):
+    """Public amenity catalog for a service category, used during business registration."""
+    from .business_features import amenities_payload_for_category
+
+    category = None
+    category_id = request.query_params.get('category_id')
+    if category_id:
+        try:
+            category = ServiceCategory.objects.get(id=category_id)
+        except (ServiceCategory.DoesNotExist, ValueError, TypeError):
+            return Response({'error': 'دسته‌بندی یافت نشد.'}, status=status.HTTP_404_NOT_FOUND)
+    return Response(amenities_payload_for_category(category))
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def business_amenities_view(request):
+    """Get or update the signed-in business amenities."""
+    from .business_features import amenities_payload_for_business, save_business_amenities
+    from .serializers import BusinessAmenitiesSaveSerializer
+
+    business, error_response = _owned_business_profile(request)
+    if error_response:
+        return error_response
+
+    if request.method == 'GET':
+        return Response(amenities_payload_for_business(business))
+
+    serializer = BusinessAmenitiesSaveSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    error = save_business_amenities(business, serializer.validated_data['amenity_ids'])
+    if error:
+        return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(amenities_payload_for_business(business))
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def business_working_hours_view(request):
+    """Get or update the signed-in business working hours."""
+    from .business_features import save_business_working_hours, working_hours_payload
+
+    business, error_response = _owned_business_profile(request)
+    if error_response:
+        return error_response
+
+    if request.method == 'GET':
+        return Response(working_hours_payload(business))
+
+    error = save_business_working_hours(
+        business,
+        request.data.get('schedule', []),
+        require_full_week=True,
+    )
+    if error:
+        return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(working_hours_payload(business))
+
+
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_customer_profile_view(request):

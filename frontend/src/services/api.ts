@@ -286,6 +286,12 @@ export interface PackageAmenitiesData {
   general_amenities: AmenityItem[]
   specific_amenities: AmenityItem[]
   selected_amenity_ids: number[]
+  is_configured?: boolean
+}
+
+export interface WorkingHoursResponse {
+  schedule: WorkingHoursEntry[]
+  is_configured?: boolean
 }
 
 export interface WorkingHoursEntry {
@@ -665,6 +671,8 @@ export interface BusinessRegisterRequest {
   business_location_longitude?: number
   category?: number
   city?: number
+  amenity_ids?: number[]
+  schedule?: { weekday: number; start_time: string | null; end_time: string | null; is_closed: boolean }[]
 }
 
 export interface AuthResponse {
@@ -710,7 +718,8 @@ class ApiService {
     if (method === 'GET' && (
       endpoint.includes('/locations/') ||
       endpoint.includes('/service-categories') ||
-      endpoint.includes('/clubs')
+      endpoint.includes('/clubs') ||
+      endpoint.includes('/amenities/catalog')
     )) {
       return true
     }
@@ -1283,6 +1292,35 @@ class ApiService {
     return this.request<{ message: string }>(`/packages/packages/${packageId}/vip/`, {
       method: 'POST',
       body: JSON.stringify({ experiences }),
+    })
+  }
+
+  async getAmenityCatalog(categoryId?: number): Promise<ApiResponse<PackageAmenitiesData>> {
+    const query = categoryId ? `?category_id=${categoryId}` : ''
+    return this.request<PackageAmenitiesData>(`/accounts/amenities/catalog/${query}`)
+  }
+
+  async getBusinessAmenities(): Promise<ApiResponse<PackageAmenitiesData>> {
+    return this.request<PackageAmenitiesData>('/accounts/auth/profile/business/amenities/')
+  }
+
+  async saveBusinessAmenities(amenityIds: number[]): Promise<ApiResponse<PackageAmenitiesData>> {
+    return this.request<PackageAmenitiesData>('/accounts/auth/profile/business/amenities/', {
+      method: 'POST',
+      body: JSON.stringify({ amenity_ids: amenityIds }),
+    })
+  }
+
+  async getBusinessWorkingHours(): Promise<ApiResponse<WorkingHoursResponse>> {
+    return this.request<WorkingHoursResponse>('/accounts/auth/profile/business/working-hours/')
+  }
+
+  async saveBusinessWorkingHours(
+    schedule: { weekday: number; start_time: string | null; end_time: string | null; is_closed: boolean }[]
+  ): Promise<ApiResponse<WorkingHoursResponse>> {
+    return this.request<WorkingHoursResponse>('/accounts/auth/profile/business/working-hours/', {
+      method: 'POST',
+      body: JSON.stringify({ schedule }),
     })
   }
 

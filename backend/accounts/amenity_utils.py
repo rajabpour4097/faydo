@@ -53,17 +53,21 @@ def infer_business_type_from_category(category) -> str | None:
     return None
 
 
-def get_amenities_for_business(business_profile):
-    """Return general + category-specific amenities for a business."""
-    business_type = infer_business_type_from_category(
-        business_profile.category if business_profile else None
-    )
+def get_amenities_for_category(category):
+    """Return general + category-specific amenities for a service category."""
+    business_type = infer_business_type_from_category(category)
     qs = Amenity.objects.filter(is_active=True)
     if business_type:
         qs = qs.filter(business_type__in=['general', business_type])
     else:
         qs = qs.filter(business_type='general')
     return qs.order_by('business_type', 'order', 'name'), business_type
+
+
+def get_amenities_for_business(business_profile):
+    """Return general + category-specific amenities for a business."""
+    category = business_profile.category if business_profile else None
+    return get_amenities_for_category(category)
 
 
 BUSINESS_TYPE_LABELS = dict(Amenity.BUSINESS_TYPE_CHOICES)

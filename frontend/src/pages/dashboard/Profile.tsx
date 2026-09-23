@@ -6,6 +6,9 @@ import { apiService, getFullImageUrl } from '../../services/api'
 import moment from 'moment-jalaali'
 import { LocationPicker } from '../../components/LocationPicker'
 import { GalleryManagement } from '../../components/business/GalleryManagement'
+import { BusinessAmenitiesManageModal } from '../../components/business/BusinessAmenitiesManageModal'
+import { BusinessHoursManageModal } from '../../components/business/BusinessHoursManageModal'
+import { formatTimeDisplay, getTodaySchedule } from '../../utils/workingHours'
 
 interface EditModalProps {
   isOpen: boolean
@@ -1194,10 +1197,45 @@ const MobileProfile = () => {
     { isOpen: false, field: '', title: '', value: '', isPhone: false, isEmail: false, isGender: false, isBirthDate: false, isCategory: false, isAddress: false, isLocation: false }
   )
   const [showGalleryModal, setShowGalleryModal] = useState(false)
+  const [showHoursModal, setShowHoursModal] = useState(false)
+  const [showAmenitiesModal, setShowAmenitiesModal] = useState(false)
+  const [hoursSummary, setHoursSummary] = useState('')
+  const [amenitiesSummary, setAmenitiesSummary] = useState('')
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const refreshBusinessExtras = async () => {
+    const [hoursRes, amenitiesRes] = await Promise.all([
+      apiService.getBusinessWorkingHours(),
+      apiService.getBusinessAmenities(),
+    ])
+    if (hoursRes.data) {
+      if (!hoursRes.data.is_configured) {
+        setHoursSummary('تکمیل نشده')
+      } else {
+        const today = getTodaySchedule(hoursRes.data.schedule)
+        setHoursSummary(
+          !today
+            ? 'ثبت شده'
+            : today.is_closed
+              ? 'امروز تعطیل'
+              : `${formatTimeDisplay(today.start_time)} – ${formatTimeDisplay(today.end_time)}`
+        )
+      }
+    }
+    if (amenitiesRes.data) {
+      const count = amenitiesRes.data.selected_amenity_ids?.length || 0
+      setAmenitiesSummary(count > 0 ? `${count.toLocaleString('fa-IR')} مورد` : 'انتخاب نشده')
+    }
+  }
+
+  useEffect(() => {
+    if (user?.type === 'business') {
+      refreshBusinessExtras()
+    }
+  }, [user?.type])
 
   // Update profile image when user changes
   useEffect(() => {
@@ -1553,6 +1591,46 @@ const MobileProfile = () => {
                 مدیریت
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowHoursModal(true)}
+              className="flex items-center justify-between w-full py-2.5 px-3 rounded-xl border border-gray-100 bg-gray-50/80 text-right"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-[25px] h-[25px] rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
+                  <svg className="w-[10px] h-[10px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-900">ساعات کاری</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{hoursSummary || '—'}</p>
+                </div>
+              </div>
+              <span className="px-3 py-1.5 rounded-full border-2 border-teal-500 text-teal-600 text-xs font-semibold bg-white">
+                مدیریت
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAmenitiesModal(true)}
+              className="flex items-center justify-between w-full py-2.5 px-3 rounded-xl border border-gray-100 bg-gray-50/80 text-right"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-[25px] h-[25px] rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
+                  <svg className="w-[10px] h-[10px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-900">امکانات</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{amenitiesSummary || '—'}</p>
+                </div>
+              </div>
+              <span className="px-3 py-1.5 rounded-full border-2 border-teal-500 text-teal-600 text-xs font-semibold bg-white">
+                مدیریت
+              </span>
+            </button>
           </ProfileSectionCard>
         ) : (
           <ProfileSectionCard title="اطلاعات شخصی" icon={icons.gender} className="mx-4">
@@ -1586,6 +1664,19 @@ const MobileProfile = () => {
         />
 
         <SetPasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
+
+        {showHoursModal && (
+          <BusinessHoursManageModal
+            onClose={() => setShowHoursModal(false)}
+            onSaved={refreshBusinessExtras}
+          />
+        )}
+        {showAmenitiesModal && (
+          <BusinessAmenitiesManageModal
+            onClose={() => setShowAmenitiesModal(false)}
+            onSaved={refreshBusinessExtras}
+          />
+        )}
 
         {/* Gallery Management Modal */}
         {showGalleryModal && (

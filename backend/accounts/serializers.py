@@ -99,10 +99,24 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
     address = serializers.CharField(required=False, default='', allow_blank=True)
     business_location_latitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True, default=None)
     business_location_longitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True, default=None)
+    amenity_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        default=list,
+    )
+    schedule = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        allow_empty=True,
+    )
 
     class Meta:
         model = BusinessProfile
-        fields = ['username', 'email', 'phone_number', 'password', 'password_confirm', 'name', 'description', 'address', 'business_location_latitude', 'business_location_longitude', 'category', 'city']
+        fields = [
+            'username', 'email', 'phone_number', 'password', 'password_confirm',
+            'name', 'description', 'address', 'business_location_latitude',
+            'business_location_longitude', 'category', 'city', 'amenity_ids', 'schedule',
+        ]
         extra_kwargs = {
             'category': {'required': False, 'allow_null': True},
             'city': {'required': False, 'allow_null': True},
@@ -118,6 +132,9 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        from .amenity_utils import get_amenities_for_category
+        from .business_features import parse_working_hours
+
         password = attrs.get('password', '')
         password_confirm = attrs.get('password_confirm', '')
         
@@ -125,9 +142,28 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
         if password or password_confirm:
             if password != password_confirm:
                 raise serializers.ValidationError("Passwords don't match")
+
+        schedule = attrs.get('schedule') or []
+        if schedule:
+            validated_schedule, error = parse_working_hours(schedule, require_full_week=True)
+            if error:
+                raise serializers.ValidationError({'schedule': error})
+            attrs['schedule'] = validated_schedule
+
+        amenity_ids = list(dict.fromkeys(attrs.get('amenity_ids') or []))
+        if amenity_ids:
+            amenities_qs, _ = get_amenities_for_category(attrs.get('category'))
+            allowed_ids = set(amenities_qs.values_list('id', flat=True))
+            if set(amenity_ids) - allowed_ids:
+                raise serializers.ValidationError({'amenity_ids': 'برخی امکانات برای این کسب‌وکار مجاز نیستند.'})
+        attrs['amenity_ids'] = amenity_ids
         return attrs
 
     def create(self, validated_data):
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        from django.db import transaction
+        from .business_features import apply_working_hours, save_business_amenities
+
         # Extract user data
         user_data = {
             'username': validated_data.pop('username'),
@@ -138,22 +174,37 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
         
         validated_data.pop('password_confirm', '')
         password = validated_data.pop('password', '')
+        amenity_ids = validated_data.pop('amenity_ids', [])
+        schedule = validated_data.pop('schedule', [])
         
-        # Create user
-        user = User.objects.create_user(**user_data)
-        if password:
-            user.set_password(password)
-        user.save()
-        
-        # Create business profile — name is intentionally left empty so
-        # is_profile_complete() forces the user to fill it in.
-        if not validated_data.get('name'):
-            validated_data['name'] = ''
+        with transaction.atomic():
+            # Create user
+            user = User.objects.create_user(**user_data)
+            if password:
+                user.set_password(password)
+            user.save()
+            
+            # Create business profile — name is intentionally left empty so
+            # is_profile_complete() forces the user to fill it in.
+            if not validated_data.get('name'):
+                validated_data['name'] = ''
 
-        business_profile = BusinessProfile.objects.create(
-            user=user,
-            **validated_data
-        )
+            business_profile = BusinessProfile.objects.create(
+                user=user,
+                **validated_data
+            )
+
+            if schedule:
+                try:
+                    apply_working_hours(business_profile, schedule)
+                except DjangoValidationError as exc:
+                    messages = getattr(exc, 'messages', None) or [str(exc)]
+                    raise serializers.ValidationError({'schedule': messages[0] if messages else 'ساعات کاری نامعتبر است.'})
+
+            if amenity_ids:
+                error = save_business_amenities(business_profile, amenity_ids)
+                if error:
+                    raise serializers.ValidationError({'amenity_ids': error})
         
         return business_profile
 

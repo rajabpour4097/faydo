@@ -36,6 +36,7 @@ interface AuthContextType {
   registerCustomer: (userData: CustomerRegisterData) => Promise<{ success: boolean; error?: string }>
   registerBusiness: (userData: BusinessRegisterData) => Promise<{ success: boolean; error?: string }>
   logout: () => void
+  establishSession: (user: User, tokens: { access: string; refresh: string }) => void
   updateUser: (userData: Partial<User>) => Promise<boolean>
   refreshProfile: () => Promise<void>
   isLoading: boolean
@@ -252,6 +253,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  const establishSession = (nextUser: User, tokens: { access: string; refresh: string }) => {
+    localStorage.setItem('auth_user', JSON.stringify(nextUser))
+    localStorage.setItem('access_token', tokens.access)
+    localStorage.setItem('refresh_token', tokens.refresh)
+    setUser(nextUser)
+    setIsLoading(false)
+  }
+
   const logout = async () => {
     try {
       await apiService.logout()
@@ -421,6 +430,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         })
         
         if (savedUser && accessToken) {
+          try {
+            setUser(JSON.parse(savedUser) as User)
+          } catch {
+            clearSession()
+            return
+          }
           // Validate the token by making a profile request
           console.log('[MOBILE DEBUG - AuthContext] Found stored session, validating...')
           const response = await apiService.getProfile()
@@ -465,67 +480,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(mappedUser)
             localStorage.setItem('auth_user', JSON.stringify(mappedUser))
             console.log('[MOBILE DEBUG - AuthContext] Session validated successfully, user:', mappedUser.username, 'type:', mappedUser.type)
+          } else if (response.status === 401) {
+            console.log('[MOBILE DEBUG - AuthContext] Session rejected, clearing')
+            clearSession()
           } else {
-            // Token is invalid or expired, try to refresh
-            console.log('[MOBILE DEBUG - AuthContext] Token validation failed, attempting refresh...')
-            const refreshToken = localStorage.getItem('refresh_token')
-            
-            if (refreshToken) {
-              const refreshSuccess = await apiService.refreshToken()
-              if (refreshSuccess) {
-                // Try again after refresh
-                const retryResponse = await apiService.getProfile()
-                if (retryResponse.data) {
-                  const apiUser = retryResponse.data.user
-                  const profile = retryResponse.data.profile
-                  
-                  const mappedUser: User = {
-                    id: apiUser.id,
-                    name: apiUser.display_name || `${apiUser.first_name} ${apiUser.last_name}`.trim() || apiUser.username,
-                    email: apiUser.email,
-                    type: apiUser.role,
-                    avatar: apiUser.image,
-                    username: apiUser.username,
-                    phone_number: normalizePhone(apiUser.phone_number),
-                    display_name: apiUser.display_name,
-                    first_name: apiUser.first_name,
-                    last_name: apiUser.last_name,
-                    profile: apiUser.role === 'customer' && profile && 'gender' in profile ? {
-                      gender: profile.gender,
-                      birth_date: profile.birth_date,
-                      city: profile.city,
-                      address: profile.address
-                    } : undefined,
-                    businessProfile: apiUser.role === 'business' && profile && 'name' in profile ? {
-                      name: profile.name,
-                      business_phone: profile.business_phone,
-                      category: profile.category,
-                      address: profile.address,
-                      city: profile.city,
-                      business_location_latitude: profile.business_location_latitude,
-                      business_location_longitude: profile.business_location_longitude
-                    } : undefined,
-                    isProfileComplete: apiUser.role === 'customer' ? 
-                      (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : 
-                      (apiUser.role === 'business' ? 
-                        (profile && 'is_profile_complete' in profile ? profile.is_profile_complete : false) : true)
-                  }
-                  
-                  setUser(mappedUser)
-                  localStorage.setItem('auth_user', JSON.stringify(mappedUser))
-                  console.log('Session refreshed successfully')
-                } else {
-                  console.log('Profile failed after refresh, clearing session')
-                  clearSession()
-                }
-              } else {
-                console.log('Token refresh failed, clearing session')
-                clearSession()
-              }
-            } else {
-              console.log('No refresh token available, clearing session')
-              clearSession()
-            }
+            console.log('[MOBILE DEBUG - AuthContext] Profile check unavailable, keeping saved session')
           }
         } else {
           console.log('[MOBILE DEBUG - AuthContext] No saved session found in localStorage')
@@ -549,6 +508,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     registerCustomer,
     registerBusiness,
     logout,
+    establishSession,
     updateUser,
     refreshProfile,
     isLoading

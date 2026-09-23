@@ -244,6 +244,7 @@ def login_with_otp_view(request):
         
         # Generate tokens
         refresh = RefreshToken.for_user(user)
+        sms_service.consume_otp(phone_number)
         
         return Response({
             'success': True,
@@ -369,6 +370,7 @@ def update_phone_view(request):
         user = request.user
         user.phone_number = phone_number
         user.save()
+        sms_service.consume_otp(phone_number)
         return Response(_serialize_user_with_absolute_image(user, request))
     else:
         return Response({'error': result['message']}, status=status.HTTP_400_BAD_REQUEST)

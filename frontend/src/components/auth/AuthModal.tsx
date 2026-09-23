@@ -86,7 +86,7 @@ const INITIAL_FORM: FormData = {
 
 
 export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
-  const { registerCustomer, login } = useAuth()
+  const { registerCustomer, login, establishSession } = useAuth()
   const [step, setStep] = useState<AuthStep>('phone')
   const [authMode, setAuthMode] = useState<'otp' | 'password'>('otp')
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM)
@@ -301,13 +301,9 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       first_name: (u.first_name as string) || '',
       last_name: (u.last_name as string) || '',
     }
-    localStorage.setItem('auth_user', JSON.stringify(mappedUser))
-    localStorage.setItem('access_token', loginData.tokens.access)
-    localStorage.setItem('refresh_token', loginData.tokens.refresh)
+    establishSession(mappedUser, loginData.tokens)
     onClose()
-    setTimeout(() => {
-      window.location.href = '/dashboard?tab=profile&welcome=true'
-    }, 300)
+    window.location.replace('/dashboard?tab=profile&welcome=true')
   }
 
   const sendOTP = async () => {
@@ -348,6 +344,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     verifyingOtpRef.current = true
     setIsLoading(true)
     setError('')
+    let signedIn = false
     try {
       const otpResponse = await fetch(`${API_BASE_URL}/accounts/auth/verify-otp/`, {
         method: 'POST',
@@ -370,18 +367,24 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       })
       const loginData = await loginResponse.json()
 
-      if (loginData.success && loginData.user) {
+      if (loginData.success && loginData.user && loginData.tokens?.access && loginData.tokens?.refresh) {
+        signedIn = true
         completeLogin(loginData)
         return
       }
 
-      setIsNewUser(true)
-      setStep('role')
+      if (loginResponse.status === 404) {
+        setIsNewUser(true)
+        setStep('role')
+        return
+      }
+
+      setError(loginData.message || 'خطا در ورود')
     } catch {
       setError('خطا در تایید کد')
     } finally {
       setIsLoading(false)
-      verifyingOtpRef.current = false
+      if (!signedIn) verifyingOtpRef.current = false
     }
   }, [formData.phone_number, formData.otp_code])
 

@@ -62,6 +62,7 @@ export interface ApiResponse<T> {
   data?: T
   message?: string
   error?: string
+  status?: number
 }
 
 export interface User {
@@ -684,6 +685,7 @@ export interface AuthResponse {
 class ApiService {
   private baseUrl: string
   private accessToken: string | null = null
+  private refreshPromise: Promise<boolean> | null = null
 
   constructor() {
     this.baseUrl = API_BASE_URL
@@ -695,18 +697,27 @@ class ApiService {
     this.accessToken = localStorage.getItem('access_token')
   }
 
+  private decodeJwtPayload(token: string): { exp?: number } | null {
+    try {
+      const segment = token.split('.')[1]
+      if (!segment) return null
+      const base64 = segment.replace(/-/g, '+').replace(/_/g, '/')
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4)
+      return JSON.parse(atob(padded))
+    } catch {
+      return null
+    }
+  }
+
   private isTokenExpired(): boolean {
     const token = this.accessToken
     if (!token) return true
 
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const currentTime = Math.floor(Date.now() / 1000)
-      // Check if token expires in next 5 minutes (300 seconds buffer)
-      return payload.exp < (currentTime + 300)
-    } catch {
-      return true
-    }
+    const payload = this.decodeJwtPayload(token)
+    if (!payload?.exp) return true
+    const currentTime = Math.floor(Date.now() / 1000)
+    // Refresh shortly before the server rejects the token
+    return payload.exp < (currentTime + 300)
   }
 
   private isPublicEndpoint(endpoint: string, options: RequestInit): boolean {
@@ -743,7 +754,7 @@ class ApiService {
         if (!refreshSuccess) {
           console.log('Token refresh failed, clearing tokens')
           this.clearTokens()
-          return { error: 'نشست شما منقضی شده است. لطفا مجددا وارد شوید.' }
+          return { error: 'نشست شما منقضی شده است. لطفا مجددا وارد شوید.', status: 401 }
         }
         this.updateToken()
       }
@@ -778,7 +789,7 @@ class ApiService {
       // Check if response is ok before trying to parse JSON
       if (!response.ok) {
         // If it's a 401 error and we have a refresh token, try to refresh
-        if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+        if (response.status === 401 && !isPublic && !endpoint.includes('/auth/refresh')) {
           const refreshSuccess = await this.refreshToken()
           if (refreshSuccess) {
             // Retry the request with the new token
@@ -793,6 +804,8 @@ class ApiService {
               const retryData = await retryResponse.json()
               return { data: retryData }
             }
+          } else {
+            this.clearTokens()
           }
         }
         
@@ -814,24 +827,24 @@ class ApiService {
           errorMessage = `خطا در سرور (${response.status}): ${response.statusText}`
         }
         
-        return { error: errorMessage }
+        return { error: errorMessage, status: response.status }
       }
 
       const data = await response.json()
-      return { data }
+      return { data, status: response.status }
     } catch (error) {
       console.error('API request failed:', error)
       
       // Handle different types of network errors
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        return { error: 'خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید.' }
+        return { error: 'خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید.', status: 0 }
       }
       
       if (error instanceof Error && error.name === 'NetworkError') {
-        return { error: 'خطا در شبکه. لطفا اتصال خود را بررسی کنید.' }
+        return { error: 'خطا در شبکه. لطفا اتصال خود را بررسی کنید.', status: 0 }
       }
       
-      return { error: 'خطا در ارتباط با سرور' }
+      return { error: 'خطا در ارتباط با سرور', status: 0 }
     }
   }
 
@@ -1053,25 +1066,37 @@ class ApiService {
   }
 
   async refreshToken(): Promise<boolean> {
+    if (!this.refreshPromise) {
+      this.refreshPromise = this.performRefresh().finally(() => {
+        this.refreshPromise = null
+      })
+    }
+    return this.refreshPromise
+  }
+
+  private async performRefresh(): Promise<boolean> {
     const refreshToken = localStorage.getItem('refresh_token')
     if (!refreshToken) return false
 
     try {
-      const response = await this.request<{ access: string }>('/accounts/auth/refresh/', {
+      const response = await fetch(`${this.baseUrl}/accounts/auth/refresh/`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh: refreshToken }),
       })
-
-      if (response.data) {
-        this.accessToken = response.data.access
-        localStorage.setItem('access_token', response.data.access)
-        return true
+      if (!response.ok) return false
+      const data = await response.json()
+      if (!data?.access) return false
+      this.accessToken = data.access
+      localStorage.setItem('access_token', data.access)
+      if (data.refresh) {
+        localStorage.setItem('refresh_token', data.refresh)
       }
+      return true
     } catch (error) {
       console.error('Token refresh failed:', error)
+      return false
     }
-
-    return false
   }
 
   private setTokens(tokens: AuthTokens) {

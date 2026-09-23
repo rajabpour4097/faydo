@@ -13,47 +13,60 @@ const OTP_LENGTH = 6
 
 export const OtpInput = ({ value, onChange, onComplete, disabled = false, remainingSeconds = null }: OtpInputProps) => {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
+  const onChangeRef = useRef(onChange)
+  const onCompleteRef = useRef(onComplete)
+  const completedCodeRef = useRef('')
   const [digits, setDigits] = useState<string[]>(() =>
     Array.from({ length: OTP_LENGTH }, (_, i) => value[i] || '')
   )
 
+  onChangeRef.current = onChange
+  onCompleteRef.current = onComplete
+
+  const applyCode = (raw: string) => {
+    const code = normalizeDigits(raw, OTP_LENGTH)
+    const next = Array.from({ length: OTP_LENGTH }, (_, i) => code[i] || '')
+    setDigits(next)
+    onChangeRef.current(code)
+    if (code.length === OTP_LENGTH && completedCodeRef.current !== code) {
+      completedCodeRef.current = code
+      onCompleteRef.current?.(code)
+    }
+    return code
+  }
+
   useEffect(() => {
+    if (value.length < OTP_LENGTH) completedCodeRef.current = ''
     const next = Array.from({ length: OTP_LENGTH }, (_, i) => value[i] || '')
     setDigits(next)
   }, [value])
 
   useEffect(() => {
+    inputsRef.current[0]?.focus()
+  }, [])
+
+  useEffect(() => {
     if (!('OTPCredential' in window)) return
 
     const ac = new AbortController()
-    ;(async () => {
-      try {
-        const cred = (await navigator.credentials.get({
-          otp: { transport: ['sms'] },
-          signal: ac.signal,
-        } as CredentialRequestOptions)) as OTPCredential | null
-        if (cred?.code) {
-          const code = normalizeDigits(cred.code, OTP_LENGTH)
-          if (code.length === OTP_LENGTH) {
-            onChange(code)
-            onComplete?.(code)
-          }
-        }
-      } catch {
-        // User dismissed or browser doesn't support — manual entry still works
-      }
-    })()
+    navigator.credentials.get({
+      otp: { transport: ['sms'] },
+      signal: ac.signal,
+    } as CredentialRequestOptions).then((cred) => {
+      const code = (cred as { code?: string } | null)?.code
+      if (code) applyCode(code)
+    }).catch(() => {
+      // User dismissed the prompt, or this browser has no WebOTP support.
+    })
 
     return () => ac.abort()
-  }, [onChange, onComplete])
+    // Listen once for the lifetime of this step. Restarting on each render
+    // aborts the browser prompt before the SMS code can be applied.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const emitChange = (nextDigits: string[]) => {
-    setDigits(nextDigits)
-    const code = nextDigits.join('')
-    onChange(code)
-    if (code.length === OTP_LENGTH && /^\d{6}$/.test(code)) {
-      onComplete?.(code)
-    }
+    applyCode(nextDigits.join(''))
   }
 
   const handleChange = (index: number, raw: string) => {
@@ -96,20 +109,14 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false, remain
   }
 
   return (
-    <div className="space-y-2">
-      <input
-        type="text"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-        value={value}
-        onChange={(e) => {
-          const code = normalizeDigits(e.target.value, OTP_LENGTH)
-          emitChange(Array.from({ length: OTP_LENGTH }, (_, i) => code[i] || ''))
-        }}
-      />
+    <form
+      className="space-y-2"
+      autoComplete="one-time-code"
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (value.length === OTP_LENGTH) onCompleteRef.current?.(value)
+      }}
+    >
       <div className="flex justify-center gap-2 direction-ltr" dir="ltr" onPaste={handlePaste}>
         {digits.map((digit, index) => (
           <input
@@ -118,12 +125,14 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false, remain
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
+            name={index === 0 ? 'one-time-code' : undefined}
             autoComplete={index === 0 ? 'one-time-code' : 'off'}
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
             lang="en"
-            maxLength={6}
+            enterKeyHint="done"
+            maxLength={OTP_LENGTH}
             disabled={disabled}
             value={digit}
             onChange={(e) => handleChange(index, e.target.value)}
@@ -139,6 +148,6 @@ export const OtpInput = ({ value, onChange, onComplete, disabled = false, remain
             : 'مهلت کد به پایان رسید؛ «ارسال مجدد کد» را بزنید'}
         </p>
       )}
-    </div>
+    </form>
   )
 }

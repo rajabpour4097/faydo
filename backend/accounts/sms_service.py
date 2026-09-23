@@ -17,17 +17,8 @@ def store_otp(user_phone, otp, expire_time=300):
     logger.info(f"OTP stored for {user_phone}")
 
 def verify_otp(user_phone, otp):
-    """Verify OTP code for phone number"""
-    cache_key = f"otp_{user_phone}"
-    stored_otp = cache.get(cache_key)
-    
-    if stored_otp and stored_otp == otp:
-        cache.delete(cache_key)
-        logger.info(f"OTP verified successfully for {user_phone}")
-        return True
-    else:
-        logger.warning(f"Invalid OTP attempt for {user_phone}")
-        return False
+    """Verify OTP code for phone number without consuming it."""
+    return sms_service.verify_otp(user_phone, otp)['success']
 
 def send_sms(to, body_id, text):
     """Send SMS using Melipayamak BaseServiceNumber API"""
@@ -101,23 +92,36 @@ class MelipayamakSMSService:
         return send_activation_sms(phone_number)
     
     def verify_otp(self, phone_number, otp_code):
-        """Verify OTP code for phone number"""
+        """Verify OTP code. The same code can be checked again until login consumes it."""
+        otp_code = str(otp_code).strip()
         cache_key = f"otp_{phone_number}"
+        verified_key = f"otp_verified_{phone_number}"
         stored_otp = cache.get(cache_key)
-        
-        if stored_otp and stored_otp == otp_code:
-            cache.delete(cache_key)
+
+        if stored_otp and str(stored_otp) == otp_code:
+            cache.set(verified_key, otp_code, 120)
             logger.info(f"OTP verified successfully for {phone_number}")
             return {
                 'success': True,
                 'message': 'کد تایید صحیح است'
             }
-        else:
-            logger.warning(f"Invalid OTP attempt for {phone_number}")
+
+        verified = cache.get(verified_key)
+        if verified and str(verified) == otp_code:
             return {
-                'success': False,
-                'message': 'کد تایید نامعتبر یا منقضی شده است'
+                'success': True,
+                'message': 'کد تایید صحیح است'
             }
+
+        logger.warning(f"Invalid OTP attempt for {phone_number}")
+        return {
+            'success': False,
+            'message': 'کد تایید نامعتبر یا منقضی شده است'
+        }
+
+    def consume_otp(self, phone_number):
+        cache.delete(f"otp_{phone_number}")
+        cache.delete(f"otp_verified_{phone_number}")
 
 # Create a singleton instance
 sms_service = MelipayamakSMSService()

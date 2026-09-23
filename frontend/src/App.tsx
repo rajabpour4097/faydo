@@ -46,7 +46,15 @@ import { useAuth } from './contexts/AuthContext'
 
 // Dashboard Router Component
 const DashboardRouter = () => {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
+
+  if (isLoading && !user) {
+    return (
+      <Layout>
+        <div className="min-h-[50vh] flex items-center justify-center text-gray-500">در حال ورود...</div>
+      </Layout>
+    )
+  }
 
   if (!user) {
     return <Layout><Home /></Layout>

@@ -706,61 +706,6 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                 isDark={isDark}
               />
             </div>
-            {!formData.showSpecificDiscount ? (
-              <button
-                type="button"
-                onClick={() => handleInputChange('showSpecificDiscount', true)}
-                className="w-full rounded-2xl border-2 border-dashed border-[#7C5CFC]/40 py-3 text-sm font-bold text-[#7C5CFC]"
-              >
-                + ایجاد تخفیف اختصاصی
-              </button>
-            ) : (
-              <div className={`space-y-3 rounded-2xl border p-4 ${isDark ? 'border-slate-600' : 'border-gray-100'}`}>
-                <div className="flex items-center justify-between">
-                  <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>تخفیف اختصاصی</h3>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleInputChange('showSpecificDiscount', false)
-                      handleInputChange('specificTitle', '')
-                      handleInputChange('specificDescription', '')
-                      handleInputChange('specificPercentage', '')
-                    }}
-                    className="text-xs text-red-500"
-                  >
-                    حذف
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={formData.specificTitle}
-                  onChange={e => handleInputChange('specificTitle', e.target.value)}
-                  placeholder="مثال: تخفیف ویژه محصولات جدید"
-                  className={`w-full rounded-2xl border px-3 py-2.5 text-sm ${isDark ? 'border-slate-600 bg-slate-800' : 'border-gray-200'}`}
-                />
-                <textarea
-                  value={formData.specificDescription}
-                  onChange={e => handleInputChange('specificDescription', e.target.value)}
-                  rows={2}
-                  placeholder="توضیحات بیشتر در مورد تخفیف..."
-                  className={`w-full rounded-2xl border px-3 py-2.5 text-sm ${isDark ? 'border-slate-600 bg-slate-800' : 'border-gray-200'}`}
-                />
-                <div className="relative">
-                  <input
-                    type="number"
-                    dir="rtl"
-                    value={formData.specificPercentage}
-                    onChange={e => handleInputChange('specificPercentage', e.target.value)}
-                    placeholder="درصد تخفیف اختصاصی"
-                    className={`w-full rounded-2xl border py-2.5 pl-3 pr-10 text-right text-sm ${isDark ? 'border-slate-600 bg-slate-800' : 'border-gray-200'}`}
-                  />
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
-                </div>
-                <p className="text-[11px] text-gray-500">
-                  درصد تخفیف اختصاصی باید از مجموع تخفیف فوری و کش‌بک بیشتر باشد.
-                </p>
-              </div>
-            )}
           </div>
         )
       case 2:
@@ -1047,16 +992,6 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
                   <PreviewRow
                     label="تجربه VIP"
                     value={joinRelated(selectedVip.name, formData.vipDescription)}
-                  />
-                )}
-                {formData.showSpecificDiscount && formData.specificTitle && (
-                  <PreviewRow
-                    label="تخفیف اختصاصی"
-                    value={
-                      formData.specificPercentage
-                        ? `${formData.specificTitle} — ${faNum(formData.specificPercentage)}٪`
-                        : formData.specificTitle
-                    }
                   />
                 )}
                 <PreviewRow label="مدت اعتبار" value={durationLabel} />

@@ -14,7 +14,7 @@ import { OtpInput } from './OtpInput'
 import { LocationPicker } from '../LocationPicker'
 import { PersianDatePicker } from '../PersianDatePicker'
 import { normalizeDigits, roundCoordinate } from '../../utils/digits'
-import { User, Building2, Check } from 'lucide-react'
+import { User, Building2, Check, ImagePlus } from 'lucide-react'
 
 const OTP_EXPIRY_SECONDS = 300
 
@@ -34,6 +34,7 @@ type AuthStep =
   | 'business-3'
   | 'business-4'
   | 'business-5'
+  | 'business-6'
   | 'password'
 
 interface FormData {
@@ -103,6 +104,9 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [amenityCatalog, setAmenityCatalog] = useState<PackageAmenitiesData | null>(null)
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<number[]>([])
   const [amenitiesLoading, setAmenitiesLoading] = useState(false)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
   const [otpCountdown, setOtpCountdown] = useState<number | null>(null)
   const verifyingOtpRef = useRef(false)
   const mapInitialCenter = useRef({ lat: 35.6892, lng: 51.389 })
@@ -174,6 +178,11 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setAmenityCatalog(null)
       setSelectedAmenityIds([])
       setAmenitiesLoading(false)
+      setLogoFile(null)
+      setLogoPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev)
+        return null
+      })
     }
   }, [isOpen])
 
@@ -435,6 +444,25 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
   }
 
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('لطفاً یک فایل تصویری برای لوگو انتخاب کنید')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('حجم لوگو نباید بیشتر از ۵ مگابایت باشد')
+      return
+    }
+    setError('')
+    setLogoFile(file)
+    setLogoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
+  }
+
   const submitBusinessRegistration = async () => {
     if (!formData.map_location_selected || formData.business_location_latitude == null) {
       setError('انتخاب موقعیت روی نقشه الزامی است')
@@ -444,35 +472,38 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setError('آدرس کامل الزامی است')
       return
     }
+    if (!logoFile) {
+      setError('انتخاب لوگو الزامی است')
+      return
+    }
     setIsLoading(true)
     setError('')
     const timestamp = Date.now().toString().slice(-4)
     const tempUsername = `biz_${formData.phone_number.slice(-6)}_${timestamp}`
 
-    const registerPayload: Record<string, unknown> = {
-      username: tempUsername,
-      email: '',
-      phone_number: formData.phone_number,
-      password: '',
-      password_confirm: '',
-      name: formData.business_name.trim(),
-      description: '',
-      address: formData.address.trim(),
-    }
-    if (formData.category_id) registerPayload.category = parseInt(formData.category_id)
-    if (formData.city_id) registerPayload.city = parseInt(formData.city_id)
-    registerPayload.amenity_ids = selectedAmenityIds
-    registerPayload.schedule = scheduleToPayload(workingSchedule)
+    const registerPayload = new FormData()
+    registerPayload.append('username', tempUsername)
+    registerPayload.append('email', '')
+    registerPayload.append('phone_number', formData.phone_number)
+    registerPayload.append('password', '')
+    registerPayload.append('password_confirm', '')
+    registerPayload.append('name', formData.business_name.trim())
+    registerPayload.append('description', '')
+    registerPayload.append('address', formData.address.trim())
+    registerPayload.append('logo', logoFile)
+    if (formData.category_id) registerPayload.append('category', formData.category_id)
+    if (formData.city_id) registerPayload.append('city', formData.city_id)
+    registerPayload.append('amenity_ids', JSON.stringify(selectedAmenityIds))
+    registerPayload.append('schedule', JSON.stringify(scheduleToPayload(workingSchedule)))
     if (formData.business_location_latitude != null) {
-      registerPayload.business_location_latitude = roundCoordinate(formData.business_location_latitude)
-      registerPayload.business_location_longitude = roundCoordinate(formData.business_location_longitude!)
+      registerPayload.append('business_location_latitude', String(roundCoordinate(formData.business_location_latitude)))
+      registerPayload.append('business_location_longitude', String(roundCoordinate(formData.business_location_longitude!)))
     }
 
     try {
       const response = await fetch(`${API_BASE_URL}/accounts/auth/register/business/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registerPayload),
+        body: registerPayload,
       })
       const data = await response.json()
       if (!response.ok) {
@@ -790,7 +821,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'business-1' && (
             <>
-              {renderProgress(5, 1, 'bg-red-600')}
+              {renderProgress(6, 1, 'bg-red-600')}
               <h2 className="text-lg font-bold text-center mb-4">اطلاعات کسب‌وکار</h2>
               <div className="space-y-3">
                 <input
@@ -849,7 +880,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'business-2' && (
             <>
-              {renderProgress(5, 2, 'bg-orange-500')}
+              {renderProgress(6, 2, 'bg-orange-500')}
               <h2 className="text-lg font-bold text-center mb-4">اطلاعات مالک کسب‌وکار</h2>
               <div className="space-y-3">
                 <input
@@ -891,7 +922,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'business-3' && (
             <>
-              {renderProgress(5, 3, 'bg-emerald-600')}
+              {renderProgress(6, 3, 'bg-emerald-600')}
               <h2 className="text-lg font-bold text-center mb-4">تماس، مکان و آدرس</h2>
               <div className="space-y-3">
                 <input
@@ -969,7 +1000,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'business-4' && (
             <>
-              {renderProgress(5, 4, 'bg-teal-600')}
+              {renderProgress(6, 4, 'bg-teal-600')}
               <h2 className="text-lg font-bold text-center mb-1">ساعات کاری</h2>
               <p className="text-xs text-center text-gray-500 mb-4">روزهای تعطیل را مشخص کنید و ساعت شروع و پایان را تنظیم کنید</p>
               <WorkingHoursEditor schedule={workingSchedule} onChange={setWorkingSchedule} />
@@ -997,7 +1028,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {step === 'business-5' && (
             <>
-              {renderProgress(5, 5, 'bg-teal-700')}
+              {renderProgress(6, 5, 'bg-teal-700')}
               <h2 className="text-lg font-bold text-center mb-1">امکانات کسب‌وکار</h2>
               <p className="text-xs text-center text-gray-500 mb-4">امکاناتی که در مجموعه دارید را انتخاب کنید</p>
               <AmenitiesPicker
@@ -1011,9 +1042,53 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   قبلی
                 </button>
                 <button
-                  onClick={submitBusinessRegistration}
-                  disabled={isLoading || amenitiesLoading}
+                  onClick={() => {
+                    setError('')
+                    setStep('business-6')
+                  }}
+                  disabled={amenitiesLoading}
                   className="flex-1 py-3 bg-teal-700 text-white rounded-xl font-semibold disabled:opacity-50"
+                >
+                  ادامه
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 'business-6' && (
+            <>
+              {renderProgress(6, 6, 'bg-rose-600')}
+              <h2 className="text-lg font-bold text-center mb-1">لوگوی کسب‌وکار *</h2>
+              <p className="text-xs text-center text-gray-500 mb-4">انتخاب لوگو برای تکمیل ثبت‌نام الزامی است</p>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                className="hidden"
+                onChange={handleLogoChange}
+              />
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-rose-300 bg-rose-50 text-rose-600"
+              >
+                {logoPreview ? (
+                  <img src={logoPreview} alt="پیش‌نمایش لوگو" className="h-full w-full object-cover" />
+                ) : (
+                  <ImagePlus className="h-8 w-8" />
+                )}
+              </button>
+              <p className="mt-3 text-center text-xs text-gray-500">
+                {logoFile ? logoFile.name : 'JPG، PNG، WEBP یا HEIC — حداکثر ۵ مگابایت'}
+              </p>
+              <div className="flex gap-2 mt-5">
+                <button onClick={() => setStep('business-5')} className="flex-1 py-3 border rounded-xl text-gray-600">
+                  قبلی
+                </button>
+                <button
+                  onClick={submitBusinessRegistration}
+                  disabled={isLoading || !logoFile}
+                  className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-semibold disabled:opacity-50"
                 >
                   {isLoading ? '...' : 'ثبت نهایی'}
                 </button>

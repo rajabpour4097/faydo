@@ -1,7 +1,11 @@
+import json
+import os
+
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.files.base import ContentFile
 from .models import (
     User, Club, ServiceCategory, Province, City, BusinessProfile, CustomerProfile,
     ITManagerProfile, ProjectManagerProfile, SupporterProfile, FinancialManagerProfile,
@@ -109,6 +113,16 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
         required=False,
         allow_empty=True,
     )
+    logo = serializers.ImageField(
+        required=True,
+        allow_empty_file=False,
+        error_messages={
+            'required': 'انتخاب لوگو الزامی است',
+            'invalid': 'فایل لوگو معتبر نیست',
+            'empty': 'انتخاب لوگو الزامی است',
+            'invalid_image': 'فایل انتخاب‌شده تصویر معتبر نیست',
+        },
+    )
 
     class Meta:
         model = BusinessProfile
@@ -116,11 +130,71 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
             'username', 'email', 'phone_number', 'password', 'password_confirm',
             'name', 'description', 'address', 'business_location_latitude',
             'business_location_longitude', 'category', 'city', 'amenity_ids', 'schedule',
+            'logo',
         ]
         extra_kwargs = {
             'category': {'required': False, 'allow_null': True},
             'city': {'required': False, 'allow_null': True},
         }
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(self._normalize_registration_payload(data))
+
+    def _normalize_registration_payload(self, data):
+        if hasattr(data, 'getlist'):
+            payload = {}
+            for key in data.keys():
+                if key == 'logo':
+                    payload['logo'] = data.get('logo')
+                    continue
+                values = data.getlist(key)
+                payload[key] = values if len(values) > 1 else (values[0] if values else None)
+        else:
+            payload = dict(data)
+
+        logo = payload.get('logo')
+        content_type = (getattr(logo, 'content_type', '') or '').lower()
+        if content_type in ('image/heic', 'image/heif'):
+            payload['logo'] = self._convert_heic_logo(logo)
+
+        for key in ('amenity_ids', 'schedule'):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                try:
+                    payload[key] = json.loads(value)
+                except json.JSONDecodeError:
+                    pass
+        return payload
+
+    def _convert_heic_logo(self, logo):
+        import io
+        import uuid
+        from PIL import Image
+
+        try:
+            from pillow_heif import register_heif_opener
+            register_heif_opener()
+        except Exception as exc:
+            raise serializers.ValidationError({'logo': 'پشتیبانی HEIC نصب نشده است.'}) from exc
+
+        try:
+            image = Image.open(logo).convert('RGB')
+            buffer = io.BytesIO()
+            image.save(buffer, format='JPEG', quality=85, optimize=True)
+            return ContentFile(buffer.getvalue(), name=f'logo_{uuid.uuid4().hex}.jpg')
+        except Exception as exc:
+            raise serializers.ValidationError({'logo': 'تبدیل فایل HEIC ممکن نشد.'}) from exc
+
+    def validate_logo(self, value):
+        if not value:
+            raise serializers.ValidationError('انتخاب لوگو الزامی است')
+        if value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError('حجم لوگو نباید بیشتر از ۵ مگابایت باشد')
+        content_type = (getattr(value, 'content_type', '') or '').lower()
+        allowed = {'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', ''}
+        if content_type not in allowed:
+            raise serializers.ValidationError('فرمت لوگو پشتیبانی نمی‌شود. فرمت‌های مجاز: JPG, PNG, WEBP, HEIC.')
+        return value
 
     def validate_phone_number(self, value):
         if not value:
@@ -205,6 +279,14 @@ class BusinessRegistrationSerializer(serializers.ModelSerializer):
                 error = save_business_amenities(business_profile, amenity_ids)
                 if error:
                     raise serializers.ValidationError({'amenity_ids': error})
+
+            if business_profile.logo:
+                with business_profile.logo.open('rb') as logo_file:
+                    user.image.save(
+                        os.path.basename(business_profile.logo.name),
+                        ContentFile(logo_file.read()),
+                        save=True,
+                    )
         
         return business_profile
 

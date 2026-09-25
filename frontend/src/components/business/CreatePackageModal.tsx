@@ -103,6 +103,86 @@ function GiftBanner({
   )
 }
 
+function ValidationErrorPopup({
+  errors,
+  isDark,
+  onClose,
+}: {
+  errors: string[]
+  isDark: boolean
+  onClose: () => void
+}) {
+  useEffect(() => {
+    if (errors.length === 0) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [errors.length, onClose])
+
+  if (errors.length === 0) return null
+
+  const title = errors.length > 1 ? 'چند مورد نیاز به تکمیل دارد' : 'این مورد را تکمیل کنید'
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-5" dir="rtl">
+      <button
+        type="button"
+        aria-label="بستن پیام خطا"
+        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="package-error-title"
+        className={`relative w-full max-w-sm overflow-hidden rounded-[28px] shadow-2xl ${
+          isDark ? 'bg-slate-900' : 'bg-white'
+        }`}
+      >
+        <div className="h-1.5 bg-gradient-to-l from-rose-400 via-[#7C5CFC] to-rose-500" />
+        <div className="px-6 pb-6 pt-7 text-center">
+          <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isDark ? 'bg-rose-500/15' : 'bg-rose-50'}`}>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isDark ? 'bg-rose-500/25 text-rose-300' : 'bg-rose-100 text-rose-500'}`}>
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M10.29 3.86l-7.4 12.82A2 2 0 004.62 20h14.76a2 2 0 001.73-3.32l-7.4-12.82a2 2 0 00-3.42 0z" />
+              </svg>
+            </div>
+          </div>
+          <h3 id="package-error-title" className={`text-base font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {title}
+          </h3>
+          <p className={`mt-1 text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+            برای ادامه، موارد زیر را بررسی کنید.
+          </p>
+          <ul className="mt-4 space-y-2 text-right">
+            {errors.map(message => (
+              <li
+                key={message}
+                className={`flex items-start gap-2 rounded-2xl px-3 py-2.5 text-sm leading-6 ${
+                  isDark ? 'bg-rose-500/10 text-rose-200' : 'bg-rose-50 text-rose-700'
+                }`}
+              >
+                <span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${isDark ? 'bg-rose-300' : 'bg-rose-400'}`} />
+                <span>{message}</span>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-5 w-full rounded-2xl py-3 text-sm font-bold text-white"
+            style={{ background: PURPLE }}
+          >
+            متوجه شدم
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PaperPlaneMark() {
   return (
     <div className="relative mx-auto mb-4 h-28 w-28">
@@ -216,7 +296,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
   const { isDark } = useTheme()
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<string[]>([])
   const [packageId] = useState<number | null>(editingPackageId || null)
 
   const [formData, setFormData] = useState({
@@ -322,7 +402,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         }))
       }
     } catch {
-      setError('خطا در بارگذاری داده‌های پکیج')
+      setErrors(['خطا در بارگذاری داده‌های پکیج'])
     } finally {
       setLoading(false)
     }
@@ -363,7 +443,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
     if (!packageId) return false
     try {
       setLoading(true)
-      setError(null)
+      setErrors([])
       const specificDiscount = formData.showSpecificDiscount && formData.specificTitle
         ? {
             title: formData.specificTitle,
@@ -379,12 +459,12 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         !formData.showSpecificDiscount,
       )
       if (response.error) {
-        setError(response.error)
+        setErrors([response.error])
         return false
       }
       return true
     } catch {
-      setError('خطا در ذخیره تخفیفات')
+      setErrors(['خطا در ذخیره تخفیفات'])
       return false
     } finally {
       setLoading(false)
@@ -395,11 +475,11 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
     if (!packageId) return false
     try {
       setLoading(true)
-      setError(null)
+      setErrors([])
       if (!formData.giftEnabled) {
         const response = await apiService.savePackageLoyalGift(packageId, '', undefined, undefined, '', true)
         if (response.error) {
-          setError(response.error)
+          setErrors([response.error])
           return false
         }
         return true
@@ -415,12 +495,12 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         formData.giftNotes,
       )
       if (response.error) {
-        setError(response.error)
+        setErrors([response.error])
         return false
       }
       return true
     } catch {
-      setError('خطا در ذخیره اشانتیون')
+      setErrors(['خطا در ذخیره اشانتیون'])
       return false
     } finally {
       setLoading(false)
@@ -431,7 +511,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
     if (!packageId) return false
     try {
       setLoading(true)
-      setError(null)
+      setErrors([])
       const experiences: { category_id: number; description: string }[] = []
       const goldId = parseInt(formData.goldFeatureId)
       if (!isNaN(goldId) && formData.goldDescription.trim()) {
@@ -443,19 +523,19 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         if (!isNaN(vipId) && formData.vipDescription.trim()) {
           experiences.push({ category_id: vipId, description: formData.vipDescription.trim() })
         } else if (requireVip) {
-          setError('برای تجربه VIP انتخاب آیتم و نوشتن جایزه الزامی است.')
+          setErrors(['برای تجربه VIP انتخاب آیتم و نوشتن جایزه الزامی است.'])
           return false
         }
       }
 
       const response = await apiService.savePackageVip(packageId, experiences)
       if (response.error) {
-        setError(response.error)
+        setErrors([response.error])
         return false
       }
       return true
     } catch {
-      setError('خطا در ذخیره تجربه‌ها')
+      setErrors(['خطا در ذخیره تجربه‌ها'])
       return false
     } finally {
       setLoading(false)
@@ -466,93 +546,92 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
     if (!packageId) return false
     try {
       setLoading(true)
-      setError(null)
+      setErrors([])
       const durationMap: Record<string, number> = { '3months': 3, '6months': 6 }
       const response = await apiService.finalizePackage(packageId, durationMap[formData.duration], true)
       if (response.error) {
-        setError(response.error)
+        setErrors([response.error])
         return false
       }
       return true
     } catch {
-      setError('خطا در تکمیل پکیج')
+      setErrors(['خطا در تکمیل پکیج'])
       return false
     } finally {
       setLoading(false)
     }
   }
 
-  const nextStep = async () => {
-    setError(null)
-    let saved = true
+  const collectStepErrors = (): string[] => {
+    const messages: string[] = []
 
     if (currentStep === 1) {
       if (!formData.globalDiscountPercentage) {
-        setError('مقدار تخفیف الزامی است.')
-        return
+        messages.push('مقدار تخفیف الزامی است.')
+      } else if (totalDiscount < 2) {
+        messages.push('مقدار تخفیف باید حداقل ۲ درصد باشد تا هم تخفیف فوری و هم کش‌بک حداقل ۱ درصد باشند.')
+      } else if (instantValue < 1 || cashbackValue < 1) {
+        messages.push('تخفیف فوری و کش‌بک هیچ‌کدام نباید کمتر از ۱ درصد باشند.')
       }
-      if (totalDiscount < 2) {
-        setError('مقدار تخفیف باید حداقل ۲ درصد باشد تا هم تخفیف فوری و هم کش‌بک حداقل ۱ درصد باشند.')
-        return
-      }
-      if (instantValue < 1 || cashbackValue < 1) {
-        setError('تخفیف فوری و کش‌بک هیچ‌کدام نباید کمتر از ۱ درصد باشند.')
-        return
-      }
-      if (formData.showSpecificDiscount && formData.specificTitle && !formData.specificPercentage) {
-        setError('درصد تخفیف اختصاصی الزامی است.')
-        return
-      }
-      if (formData.showSpecificDiscount && formData.specificTitle && formData.specificPercentage) {
-        if (parseFloat(formData.specificPercentage) <= totalDiscount) {
-          setError('درصد تخفیف اختصاصی باید از مجموع تخفیف و کش‌بک بیشتر باشد.')
-          return
+      if (formData.showSpecificDiscount) {
+        if (!formData.specificTitle.trim()) {
+          messages.push('عنوان تخفیف اختصاصی الزامی است.')
+        }
+        if (!formData.specificPercentage) {
+          messages.push('درصد تخفیف اختصاصی الزامی است.')
+        } else if (parseFloat(formData.specificPercentage) <= totalDiscount) {
+          messages.push('درصد تخفیف اختصاصی باید از مجموع تخفیف و کش‌بک بیشتر باشد.')
         }
       }
-      saved = await saveDiscounts()
-    } else if (currentStep === 2) {
-      if (formData.giftEnabled) {
-        if (!formData.giftDescription) {
-          setError('عنوان هدیه الزامی است.')
-          return
-        }
-        if (formData.giftType === 'amount' && !formData.giftAmount) {
-          setError('مبلغ مجموع خرید الزامی است.')
-          return
-        }
-        if (formData.giftType === 'count' && !formData.giftCount) {
-          setError('تعداد مراجعه الزامی است.')
-          return
-        }
+    } else if (currentStep === 2 && formData.giftEnabled) {
+      if (!formData.giftDescription.trim()) {
+        messages.push('عنوان هدیه الزامی است.')
       }
-      saved = await saveLoyalGift()
+      if (formData.giftType === 'amount' && !formData.giftAmount) {
+        messages.push('مبلغ مجموع خرید الزامی است.')
+      }
+      if (formData.giftType === 'count' && !formData.giftCount) {
+        messages.push('تعداد مراجعه الزامی است.')
+      }
     } else if (currentStep === 3) {
       if (!formData.goldFeatureId) {
-        setError('انتخاب یک تجربه طلایی الزامی است.')
-        return
+        messages.push('انتخاب یک تجربه طلایی الزامی است.')
       }
       if (!formData.goldDescription.trim()) {
-        setError('جایزه تجربه طلایی را بنویسید.')
-        return
+        messages.push('جایزه تجربه طلایی را بنویسید.')
       }
+    } else if (currentStep === 4 && formData.vipEnabled) {
+      if (!formData.vipFeatureId) {
+        messages.push('یک تجربه VIP را انتخاب کنید یا فعال‌سازی را خاموش کنید.')
+      }
+      if (!formData.vipDescription.trim()) {
+        messages.push('جایزه تجربه VIP را بنویسید.')
+      }
+    } else if (currentStep === 5 && !formData.duration) {
+      messages.push('مدت زمان پکیج را انتخاب کنید.')
+    }
+
+    return messages
+  }
+
+  const nextStep = async () => {
+    const stepErrors = collectStepErrors()
+    if (stepErrors.length > 0) {
+      setErrors(stepErrors)
+      return
+    }
+
+    setErrors([])
+    let saved = true
+
+    if (currentStep === 1) {
+      saved = await saveDiscounts()
+    } else if (currentStep === 2) {
+      saved = await saveLoyalGift()
+    } else if (currentStep === 3) {
       saved = await saveExperiences(false)
     } else if (currentStep === 4) {
-      if (formData.vipEnabled) {
-        if (!formData.vipFeatureId) {
-          setError('یک تجربه VIP را انتخاب کنید یا فعال‌سازی را خاموش کنید.')
-          return
-        }
-        if (!formData.vipDescription.trim()) {
-          setError('جایزه تجربه VIP را بنویسید.')
-          return
-        }
-      }
       saved = await saveExperiences(formData.vipEnabled)
-    } else if (currentStep === 5) {
-      if (!formData.duration) {
-        setError('مدت زمان پکیج را انتخاب کنید.')
-        return
-      }
     } else if (currentStep === 6) {
       saved = await finalizePackage()
     }
@@ -563,7 +642,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
   const prevStep = () => {
     if (currentStep > 1 && currentStep < SUCCESS_STEP) {
       setCurrentStep(currentStep - 1)
-      setError(null)
+      setErrors([])
     }
   }
 
@@ -1114,11 +1193,6 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
         )}
 
         <div className="flex-1 overflow-y-auto px-4 pb-4">
-          {error && (
-            <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </div>
-          )}
           {renderStep()}
         </div>
 
@@ -1147,6 +1221,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({
           </div>
         )}
       </div>
+      <ValidationErrorPopup errors={errors} isDark={isDark} onClose={() => setErrors([])} />
     </div>
   )
 }

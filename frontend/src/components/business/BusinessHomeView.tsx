@@ -179,8 +179,20 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
         </div>
       </section>
 
-      <div dir="ltr" className="mt-3 grid grid-cols-[1.55fr_1fr] items-start gap-2">
-        <section dir="rtl" className={`min-w-0 rounded-[28px] p-3 shadow-sm ${card}`}>
+      <section className={`mt-3 rounded-[28px] p-3 shadow-sm ${card}`}>
+        <div className="mb-2 flex items-center gap-1">
+          <span className="text-[#7C5CFC]"><KpiIcon name="users" /></span>
+          <h2 className={`text-[14px] font-black ${title}`}>مشتریان شما</h2>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          <CustomerTile to="/dashboard/customers?segment=new" value={customers_summary.new} label="مشتریان جدید" bg={isDark ? 'bg-emerald-500/10' : 'bg-[#E8FBF3]'} tint="text-emerald-500" icon="user" />
+          <CustomerTile to="/dashboard/customers?segment=returning" value={customers_summary.returning} label="مشتریان بازگشتی" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="refresh" />
+          <CustomerTile to="/dashboard/customers?segment=vip" value={customers_summary.vip} label="VIP" bg={isDark ? 'bg-amber-500/10' : 'bg-[#FFF8E6]'} tint="text-amber-500" icon="crown" />
+          <CustomerTile to="/dashboard/customers?segment=all" value={customers_summary.total} label="کل مشتریان" bg={isDark ? 'bg-sky-500/10' : 'bg-[#EEF5FF]'} tint="text-sky-500" icon="users" />
+        </div>
+      </section>
+
+      <section className={`mt-3 min-w-0 rounded-[28px] p-3 shadow-sm ${card}`}>
           <div className="mb-1 flex items-center gap-1">
             <span className="shrink-0 text-[#7C5CFC]"><KpiIcon name="bars" /></span>
             <h2 className={`whitespace-nowrap text-[14px] font-black ${title}`}>عملکرد فروش</h2>
@@ -246,21 +258,7 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
               <div className={`text-[12px] font-black ${title}`}>{formatToman(chart.total)}</div>
             </div>
           </div>
-        </section>
-
-        <section dir="rtl" className={`flex min-w-0 flex-col rounded-[28px] p-3 shadow-sm ${card}`}>
-          <div className="mb-2 flex items-center gap-1">
-            <span className="text-[#7C5CFC]"><KpiIcon name="users" /></span>
-            <h2 className={`text-[10px] font-black ${title}`}>مشتریان شما</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            <CustomerTile to="/dashboard/customers?segment=new" value={customers_summary.new} label="مشتریان جدید" bg={isDark ? 'bg-emerald-500/10' : 'bg-[#E8FBF3]'} tint="text-emerald-500" icon="user" />
-            <CustomerTile to="/dashboard/customers?segment=returning" value={customers_summary.returning} label="مشتریان بازگشتی" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="refresh" />
-            <CustomerTile to="/dashboard/customers?segment=vip" value={customers_summary.vip} label="VIP" bg={isDark ? 'bg-amber-500/10' : 'bg-[#FFF8E6]'} tint="text-amber-500" icon="crown" />
-            <CustomerTile to="/dashboard/customers?segment=all" value={customers_summary.total} label="کل مشتریان" bg={isDark ? 'bg-sky-500/10' : 'bg-[#EEF5FF]'} tint="text-sky-500" icon="users" />
-          </div>
-        </section>
-      </div>
+      </section>
 
       <section className={`mt-3 rounded-[28px] p-3.5 shadow-sm ${card}`}>
         <div className="mb-2.5 flex items-center justify-between gap-2">
@@ -358,12 +356,12 @@ function CustomerTile({
   to, value, label, bg, tint, icon,
 }: { to: string; value: number; label: string; bg: string; tint: string; icon: string }) {
   return (
-    <Link to={to} className={`flex aspect-square flex-col justify-between rounded-[14px] p-1.5 ${bg}`}>
-      <div className="flex items-center justify-between gap-0.5">
-        <span className={tint}><KpiIcon name={icon} size={12} /></span>
-        <span className={`text-[13px] font-black leading-none ${tint}`}>{faNum(value)}</span>
+    <Link to={to} className={`flex flex-col justify-between rounded-[16px] px-1.5 py-2 ${bg}`}>
+      <div className="flex items-center justify-between gap-1">
+        <span className={tint}><KpiIcon name={icon} size={14} /></span>
+        <span className={`text-[16px] font-black leading-none ${tint}`}>{faNum(value)}</span>
       </div>
-      <div className="text-[5px] font-bold leading-3 text-gray-500">{label}</div>
+      <div className="mt-1.5 text-[9px] font-bold leading-[12px] text-gray-500">{label}</div>
     </Link>
   )
 }

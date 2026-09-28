@@ -330,9 +330,9 @@ function ActionCard({
         <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white ${tint}`}>
           <KpiIcon name={icon} />
         </span>
-        <span className={`text-[20px] font-black leading-none ${ink}`}>{faNum(count)}</span>
+        <span className={`text-[15px] font-black leading-none ${ink}`}>{faNum(count)}</span>
       </div>
-      <div className="mt-1 line-clamp-2 text-[10px] font-bold leading-[13px] text-gray-500">{label}</div>
+      <div className="mt-1 line-clamp-2 text-[9px] font-bold leading-[13px] text-gray-500">{label}</div>
     </div>
   )
   if (!to) return body

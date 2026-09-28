@@ -1,5 +1,5 @@
 from calendar import monthrange
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import re
 
 from django.db.models import Count, Max, Min, Sum
@@ -23,7 +23,9 @@ from .transaction_utils import (
     build_csv,
     build_pdf_html,
     build_xlsx,
+    gregorian_to_jalali,
     jalali_datetime_label,
+    jalali_to_gregorian,
     optimized_transactions,
     period_bounds,
     reference_code,
@@ -58,6 +60,130 @@ def _mom_pct(current, previous):
 
 def _clamp(value, low=0, high=100):
     return max(low, min(high, int(round(value))))
+
+
+JALALI_MONTHS = (
+    'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+    'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند',
+)
+
+
+def _shift_jalali_month(year, month, delta):
+    month += delta
+    while month < 1:
+        month += 12
+        year -= 1
+    while month > 12:
+        month -= 12
+        year += 1
+    return year, month
+
+
+def _jalali_month_span(jy, jm):
+    gy, gm, gd = jalali_to_gregorian(jy, jm, 1)
+    start = date(gy, gm, gd)
+    ny, nm = _shift_jalali_month(jy, jm, 1)
+    gy2, gm2, gd2 = jalali_to_gregorian(ny, nm, 1)
+    end = date(gy2, gm2, gd2) - timedelta(days=1)
+    return start, end
+
+
+def _day_bounds(day):
+    start = timezone.make_aware(datetime(day.year, day.month, day.day, 0, 0, 0))
+    end = timezone.make_aware(datetime(day.year, day.month, day.day, 23, 59, 59))
+    return start, end
+
+
+def _daily_amount_map(approved, start_date, end_date):
+    start, _end_ignored = _day_bounds(start_date)
+    _start_ignored, end = _day_bounds(end_date)
+    rows = (
+        approved.filter(created_at__gte=start, created_at__lte=end)
+        .annotate(day=TruncDate('created_at'))
+        .values('day')
+        .annotate(total=Sum('final_amount'))
+    )
+    result = {}
+    for row in rows:
+        day = row['day']
+        if not day:
+            continue
+        if isinstance(day, datetime):
+            day = day.date()
+        elif isinstance(day, str):
+            day = datetime.strptime(day[:10], '%Y-%m-%d').date()
+        result[day] = float(row['total'] or 0)
+    return result
+
+
+def _sum_days(daily, start_date, end_date):
+    total = 0.0
+    cursor = start_date
+    while cursor <= end_date:
+        total += daily.get(cursor, 0)
+        cursor += timedelta(days=1)
+    return total
+
+
+def _jalali_day_label(day):
+    _jy, jm, jd = gregorian_to_jalali(day.year, day.month, day.day)
+    return f'{jd} {JALALI_MONTHS[jm - 1]}'
+
+
+def _chart_daily(daily, today, days):
+    start = today - timedelta(days=days - 1)
+    prev_end = start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=days - 1)
+    points = []
+    total = 0.0
+    cursor = start
+    while cursor <= today:
+        amount = daily.get(cursor, 0)
+        total += amount
+        points.append({'label': _jalali_day_label(cursor), 'amount': amount})
+        cursor += timedelta(days=1)
+    return {
+        'total': total,
+        'change': _mom_pct(total, _sum_days(daily, prev_start, prev_end)),
+        'points': points,
+    }
+
+
+def _chart_months(daily, today, months):
+    jy, jm, _jd = gregorian_to_jalali(today.year, today.month, today.day)
+    points = []
+    total = 0.0
+    for offset in range(months - 1, -1, -1):
+        by, bm = _shift_jalali_month(jy, jm, -offset)
+        start, end = _jalali_month_span(by, bm)
+        if end > today:
+            end = today
+        amount = _sum_days(daily, start, end)
+        total += amount
+        points.append({'label': JALALI_MONTHS[bm - 1], 'amount': amount})
+    prev_total = 0.0
+    for offset in range(months * 2 - 1, months - 1, -1):
+        by, bm = _shift_jalali_month(jy, jm, -offset)
+        start, end = _jalali_month_span(by, bm)
+        prev_total += _sum_days(daily, start, end)
+    return {
+        'total': total,
+        'change': _mom_pct(total, prev_total),
+        'points': points,
+    }
+
+
+def _build_sales_charts(approved, today):
+    jy, jm, _jd = gregorian_to_jalali(today.year, today.month, today.day)
+    start_jy, start_jm = _shift_jalali_month(jy, jm, -23)
+    range_start, _range_end = _jalali_month_span(start_jy, start_jm)
+    daily = _daily_amount_map(approved, range_start, today)
+    return {
+        '7d': _chart_daily(daily, today, 7),
+        '30d': _chart_daily(daily, today, 30),
+        '6m': _chart_months(daily, today, 6),
+        '1y': _chart_months(daily, today, 12),
+    }
 
 
 def _normalize_phone(raw):
@@ -373,9 +499,11 @@ def _build_dashboard(business):
         'actions': {
             'pending_transactions': pending_tx,
             'pending_gift_claims': pending_gifts,
+            'pending_club_gift_claims': 0,
             'package_days_remaining': days_remaining,
             'package_status': current_pkg.status if current_pkg else None,
         },
+        'sales_charts': _build_sales_charts(approved, today),
         'customers_summary': {
             'new': len(new_ids),
             'returning': len(returning_ids),

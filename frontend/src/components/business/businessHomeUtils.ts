@@ -1,6 +1,9 @@
 export const HOME_PURPLE = '#7C5CFC'
 export const HOME_TEAL = '#2DD4BF'
 
+export const faDigits = (value: string) =>
+  value.replace(/\d/g, digit => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)])
+
 export const faNum = (n: number | string) => {
   const value = typeof n === 'string' ? Number(n) : n
   if (!Number.isFinite(value)) return String(n)
@@ -21,7 +24,7 @@ export const todayLabel = () => {
     month: 'long',
     year: 'numeric',
   }).format(new Date())
-  return `امروز ${formatted}`
+  return `امروز • ${formatted}`
 }
 
 export const formatToman = (n: number) => `${faNum(Math.round(n))} تومان`

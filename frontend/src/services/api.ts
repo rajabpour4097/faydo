@@ -538,6 +538,17 @@ export interface BusinessHealthMetric {
   detail: string
 }
 
+export interface SalesChartPoint {
+  label: string
+  amount: number
+}
+
+export interface SalesChartSeries {
+  total: number
+  change: number
+  points: SalesChartPoint[]
+}
+
 export interface BusinessDashboardData {
   today_label: string
   health: {
@@ -558,8 +569,15 @@ export interface BusinessDashboardData {
   actions: {
     pending_transactions: number
     pending_gift_claims: number
+    pending_club_gift_claims?: number
     package_days_remaining: number | null
     package_status: string | null
+  }
+  sales_charts?: {
+    '7d': SalesChartSeries
+    '30d': SalesChartSeries
+    '6m': SalesChartSeries
+    '1y': SalesChartSeries
   }
   customers_summary: {
     new: number

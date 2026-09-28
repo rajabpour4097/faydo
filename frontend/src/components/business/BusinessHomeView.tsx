@@ -14,8 +14,8 @@ import {
 type SalesRange = '7d' | '30d' | '6m' | '1y'
 
 const RANGE_TABS: { id: SalesRange; label: string }[] = [
-  { id: '30d', label: '۳۰ روز' },
   { id: '7d', label: '۷ روز' },
+  { id: '30d', label: '۳۰ روز' },
   { id: '6m', label: '۶ ماه' },
   { id: '1y', label: '۱ سال' },
 ]
@@ -124,25 +124,25 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
         </div>
       </div>
 
-      <section className={`rounded-[28px] p-4 shadow-sm ${card}`}>
-        <h2 className={`mb-3 text-[15px] font-black ${title}`}>خلاصه عملکرد</h2>
+      <section className={`rounded-[28px] px-4 py-3 shadow-sm ${card}`}>
+        <h2 className={`mb-2 text-[15px] font-black ${title}`}>خلاصه عملکرد</h2>
         <div className="flex items-center gap-2">
-          <div className={`grid min-w-0 flex-1 grid-cols-3 overflow-hidden rounded-[22px] py-2.5 ${soft}`}>
+          <div className={`grid min-w-0 flex-1 grid-cols-3 overflow-hidden rounded-[18px] py-2 ${soft}`}>
             <SummaryStat to="/dashboard/customers?segment=returning" label="مشتریان بازگشتی" value={kpis.returning_customers} icon="refresh" tint="text-teal-500" ink={title} />
             <SummaryStat to="/dashboard/customers?segment=all" label="مشتریان فعال" value={kpis.active_customers} icon="users" tint="text-[#7C5CFC]" ink={title} divided />
             <SummaryStat to="/dashboard/transactions" label="تراکنش‌ها" value={kpis.transactions_this_month} icon="invoice" tint="text-sky-500" ink={title} divided />
           </div>
-          <Link to="/dashboard/sales" className="flex shrink-0 items-center gap-2">
+          <Link to="/dashboard/sales" className="flex shrink-0 items-center gap-1.5">
             <div className="text-right">
-              <div className={`text-[26px] font-black leading-none tracking-tight ${title}`}>{faNum(Math.round(kpis.sales_this_month))}</div>
-              <div className={`mt-0.5 text-[11px] ${muted}`}>تومان</div>
-              <div className="mt-1 text-[12px] leading-4">
+              <div className={`text-[21px] font-black leading-none tracking-tight ${title}`}>{faNum(Math.round(kpis.sales_this_month))}</div>
+              <div className={`mt-0.5 text-[10px] leading-3 ${muted}`}>تومان</div>
+              <div className="mt-0.5 text-[11px] leading-4">
                 <Trend value={kpis.sales_change} />
               </div>
-              <div className={`text-[10px] leading-4 ${muted}`}>نسبت به ماه قبل</div>
+              <div className={`text-[9px] leading-3 ${muted}`}>نسبت به ماه قبل</div>
             </div>
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#EDE9FE] text-[#7C5CFC]">
-              <KpiIcon name="wallet" size={22} />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#EDE9FE] text-[#7C5CFC]">
+              <KpiIcon name="wallet" size={18} />
             </span>
           </Link>
         </div>
@@ -179,25 +179,15 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
         </div>
       </section>
 
-      <section className={`mt-3 rounded-[28px] p-3 shadow-sm ${card}`}>
-        <div className="mb-2 flex items-center gap-1">
-          <span className="text-[#7C5CFC]"><KpiIcon name="users" /></span>
-          <h2 className={`text-[14px] font-black ${title}`}>مشتریان شما</h2>
-        </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          <CustomerTile to="/dashboard/customers?segment=new" value={customers_summary.new} label="مشتریان جدید" bg={isDark ? 'bg-emerald-500/10' : 'bg-[#E8FBF3]'} tint="text-emerald-500" icon="user" />
-          <CustomerTile to="/dashboard/customers?segment=returning" value={customers_summary.returning} label="مشتریان بازگشتی" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="refresh" />
-          <CustomerTile to="/dashboard/customers?segment=vip" value={customers_summary.vip} label="VIP" bg={isDark ? 'bg-amber-500/10' : 'bg-[#FFF8E6]'} tint="text-amber-500" icon="crown" />
-          <CustomerTile to="/dashboard/customers?segment=all" value={customers_summary.total} label="کل مشتریان" bg={isDark ? 'bg-sky-500/10' : 'bg-[#EEF5FF]'} tint="text-sky-500" icon="users" />
-        </div>
-      </section>
-
       <section className={`mt-3 min-w-0 rounded-[28px] p-3 shadow-sm ${card}`}>
-          <div className="mb-1 flex items-center gap-1">
-            <span className="shrink-0 text-[#7C5CFC]"><KpiIcon name="bars" /></span>
-            <h2 className={`whitespace-nowrap text-[14px] font-black ${title}`}>عملکرد فروش</h2>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-1">
+              <span className="shrink-0 text-[#7C5CFC]"><KpiIcon name="bars" /></span>
+              <h2 className={`whitespace-nowrap text-[14px] font-black ${title}`}>عملکرد فروش</h2>
+            </div>
+            <Link to="/dashboard/sales" className="shrink-0 text-[11px] font-bold text-[#7C5CFC]">مشاهده جزئیات</Link>
           </div>
-          <div className="mb-2 flex gap-0.5">
+          <div className="mb-2 flex gap-0.5" dir="rtl">
             {RANGE_TABS.map(tab => (
               <button
                 key={tab.id}
@@ -260,6 +250,19 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
           </div>
       </section>
 
+      <section className={`mt-3 rounded-[28px] p-3 shadow-sm ${card}`}>
+        <div className="mb-2 flex items-center gap-1">
+          <span className="text-[#7C5CFC]"><KpiIcon name="users" /></span>
+          <h2 className={`text-[14px] font-black ${title}`}>مشتریان شما</h2>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          <CustomerTile to="/dashboard/customers?segment=new" value={customers_summary.new} label="مشتریان جدید" bg={isDark ? 'bg-emerald-500/10' : 'bg-[#E8FBF3]'} tint="text-emerald-500" icon="user" />
+          <CustomerTile to="/dashboard/customers?segment=returning" value={customers_summary.returning} label="مشتریان بازگشتی" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="refresh" />
+          <CustomerTile to="/dashboard/customers?segment=vip" value={customers_summary.vip} label="VIP" bg={isDark ? 'bg-amber-500/10' : 'bg-[#FFF8E6]'} tint="text-amber-500" icon="crown" />
+          <CustomerTile to="/dashboard/customers?segment=all" value={customers_summary.total} label="کل مشتریان" bg={isDark ? 'bg-sky-500/10' : 'bg-[#EEF5FF]'} tint="text-sky-500" icon="users" />
+        </div>
+      </section>
+
       <section className={`mt-3 rounded-[28px] p-3.5 shadow-sm ${card}`}>
         <div className="mb-2.5 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -309,11 +312,11 @@ function SummaryStat({
 }: { to: string; label: string; value: number; icon: string; tint: string; ink: string; divided?: boolean }) {
   return (
     <Link to={to} className={`px-1 text-center ${divided ? 'border-r border-gray-200/80' : ''}`}>
-      <div className={`mx-auto mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-white ${tint}`}>
-        <KpiIcon name={icon} />
+      <div className={`mx-auto mb-1 flex h-[26px] w-[26px] items-center justify-center rounded-full bg-white ${tint}`}>
+        <KpiIcon name={icon} size={13} />
       </div>
-      <div className="min-h-[24px] text-[10px] font-bold leading-3 text-gray-400">{label}</div>
-      <div className={`mt-1 text-[18px] font-black leading-none ${ink}`}>{faNum(value)}</div>
+      <div className="min-h-[19px] text-[10px] font-bold leading-3 text-gray-400">{label}</div>
+      <div className={`mt-0.5 text-[15px] font-black leading-none ${ink}`}>{faNum(value)}</div>
     </Link>
   )
 }

@@ -262,40 +262,44 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
         </section>
       </div>
 
-      <section className={`mt-3 rounded-[28px] p-4 shadow-sm ${card}`}>
-        <div className="mb-3 flex items-center justify-between gap-2">
+      <section className={`mt-3 rounded-[28px] p-3.5 shadow-sm ${card}`}>
+        <div className="mb-2.5 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-[#F3EEFF] text-[#7C5CFC]">
-              <KpiIcon name="gift" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#F3EEFF] text-[#7C5CFC]">
+              <KpiIcon name="gift" size={16} />
             </span>
-            <h2 className={`text-[15px] font-black ${title}`}>برنامه هدیه ویژه</h2>
+            <h2 className={`text-[14px] font-black ${title}`}>برنامه هدیه ویژه</h2>
           </div>
-          <Link to={giftHref} className={`flex items-center gap-0.5 text-[11px] font-bold ${muted}`}>
+          <Link to={giftHref} className="flex items-center gap-1 rounded-full bg-[#F3EEFF] px-3 py-1.5 text-[11px] font-bold text-[#7C5CFC]">
             مشاهده و مدیریت
-            <Chevron />
+            <Chevron size={12} />
           </Link>
         </div>
         <div className="flex items-stretch gap-2">
-          <div className={`flex min-w-0 flex-1 flex-col items-center rounded-[22px] px-2 py-3 text-center ${isDark ? 'bg-emerald-500/10' : 'bg-[#E8FBF3]'}`}>
-            <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-500">
-              <KpiIcon name="user" />
-            </div>
-            <div className="text-[28px] font-black leading-none text-emerald-500">{faNum(gift_program.customers_on_path)}</div>
-            <div className={`mt-2 text-[10px] font-bold leading-4 ${muted}`}>مشتریان در مسیر به دریافت هدیه نزدیک می‌شوند</div>
-          </div>
-          <div className={`flex min-w-0 flex-1 flex-col items-center rounded-[22px] px-2 py-3 text-center ${isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'}`}>
-            <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#7C5CFC]">
-              <KpiIcon name="gift" />
-            </div>
-            <div className="text-[28px] font-black leading-none text-[#7C5CFC]">{faNum(gift_program.new_claims)}</div>
-            <div className={`mt-2 text-[10px] font-bold leading-4 ${muted}`}>درخواست جدید برای دریافت هدیه ثبت شده است</div>
-          </div>
-          <Link to={giftHref} className="flex w-[78px] shrink-0 items-center justify-center" aria-label="مشاهده برنامه هدیه">
+          <Link to={giftHref} className="flex w-[72px] shrink-0 items-center justify-center" aria-label="مشاهده برنامه هدیه">
             <GiftArt />
           </Link>
+          <div className={`flex min-w-0 flex-1 flex-col justify-center rounded-[18px] px-2.5 py-2 ${isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'}`}>
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[#7C5CFC]">
+                <KpiIcon name="gift" size={14} />
+              </span>
+              <span className="text-[22px] font-black leading-none text-[#7C5CFC]">{faNum(gift_program.new_claims)}</span>
+            </div>
+            <p className="mt-1 text-[10px] font-bold leading-[14px] text-gray-500">درخواست جدید برای دریافت هدیه ثبت شده است</p>
+          </div>
+          <div className={`flex min-w-0 flex-1 flex-col justify-center rounded-[18px] px-2.5 py-2 ${isDark ? 'bg-emerald-500/10' : 'bg-[#E7F8F1]'}`}>
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-emerald-500">
+                <KpiIcon name="user" size={14} />
+              </span>
+              <span className="text-[22px] font-black leading-none text-emerald-500">{faNum(gift_program.customers_on_path)}</span>
+            </div>
+            <p className="mt-1 text-[10px] font-bold leading-[14px] text-gray-500">مشتریان در مسیر به دریافت هدیه نزدیک می‌شوند</p>
+          </div>
         </div>
         {!gift_program.enabled && (
-          <p className={`mt-3 text-center text-[11px] ${muted}`}>هنوز برنامه هدیه ویژه‌ای فعال نیست.</p>
+          <p className={`mt-2 text-center text-[11px] ${muted}`}>هنوز برنامه هدیه ویژه‌ای فعال نیست.</p>
         )}
       </section>
     </div>
@@ -366,7 +370,7 @@ function CustomerTile({
 
 function GiftArt() {
   return (
-    <svg viewBox="0 0 86 96" className="h-[92px] w-[74px]" aria-hidden>
+    <svg viewBox="0 0 86 96" className="h-[76px] w-[68px]" aria-hidden>
       <path d="M18 28c8-16 28-14 32-2 6-10 22-8 24 4 1 8-6 12-14 12H28c-8-1-14-6-10-14z" fill="#E9D5FF" />
       <rect x="16" y="40" width="54" height="36" rx="8" fill="#7C5CFC" />
       <rect x="38" y="40" width="10" height="36" fill="#C4B5FD" />

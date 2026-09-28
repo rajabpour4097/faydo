@@ -166,16 +166,16 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
         </div>
       </section>
 
-      <section className={`mt-3 rounded-[28px] p-4 shadow-sm ${card}`}>
-        <div className="mb-3 flex items-center gap-1">
-          <h2 className={`text-[15px] font-black ${title}`}>دسترسی سریع</h2>
-          <Chevron className={muted} />
+      <section className={`mt-3 rounded-[28px] p-3 shadow-sm ${card}`}>
+        <div className="mb-2 flex items-center gap-1">
+          <span className="text-[#7C5CFC]"><KpiIcon name="grid" /></span>
+          <h2 className={`text-[14px] font-black ${title}`}>دسترسی سریع</h2>
         </div>
-        <div className="grid grid-cols-4 gap-2">
-          <QuickTile to="/dashboard/transactions/new" title="ثبت تراکنش" bg={isDark ? 'bg-rose-500/10' : 'bg-[#FDE8F3]'} tint="text-[#E11D8F]" icon="invoice" ink={title} />
-          <QuickTile to="/dashboard/elite-gift-claims" title="مدیریت هدیه" bg={isDark ? 'bg-emerald-500/10' : 'bg-[#E7FBF3]'} tint="text-emerald-500" icon="gift" ink={title} />
-          <QuickTile to="/dashboard/customers" title="مشتریان" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="user" ink={title} />
-          <QuickTile to="/dashboard/qrcode" title="کیوآر کسب‌وکار" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="qr" ink={title} />
+        <div className="grid grid-cols-4 gap-1.5">
+          <QuickTile to="/dashboard/transactions/new" title="ثبت تراکنش" bg={isDark ? 'bg-rose-500/10' : 'bg-[#FDE8F3]'} tint="text-[#E11D8F]" icon="invoice" />
+          <QuickTile to="/dashboard/elite-gift-claims" title="مدیریت هدیه" bg={isDark ? 'bg-emerald-500/10' : 'bg-[#E7FBF3]'} tint="text-emerald-500" icon="gift" />
+          <QuickTile to="/dashboard/customers" title="مشتریان" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="user" />
+          <QuickTile to="/dashboard/qrcode" title="کیوآر کسب‌وکار" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="qr" />
         </div>
       </section>
 
@@ -337,17 +337,12 @@ function ActionCard({
 }
 
 function QuickTile({
-  to, title, bg, tint, icon, ink,
-}: { to: string; title: string; bg: string; tint: string; icon: string; ink: string }) {
+  to, title, bg, tint, icon,
+}: { to: string; title: string; bg: string; tint: string; icon: string }) {
   return (
-    <Link to={to} className={`flex flex-col items-center rounded-[22px] px-1 py-3 text-center ${bg}`}>
-      <div className={`mb-1.5 flex h-8 w-8 items-center justify-center ${tint}`}>
-        <KpiIcon name={icon} size={22} />
-      </div>
-      <div className={`flex items-center justify-center gap-0.5 ${ink}`}>
-        <span className="text-center text-[11px] font-black leading-4">{title}</span>
-        <Chevron className="shrink-0 text-gray-300" />
-      </div>
+    <Link to={to} className={`flex flex-col justify-between rounded-[16px] px-1.5 py-2 ${bg}`}>
+      <span className={tint}><KpiIcon name={icon} size={14} /></span>
+      <div className="mt-1.5 text-[9px] font-bold leading-[12px] text-gray-500">{title}</div>
     </Link>
   )
 }
@@ -384,6 +379,7 @@ function GiftArt() {
 
 function KpiIcon({ name, size = 16 }: { name: string; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none' as const }
+  if (name === 'grid') return <svg {...common}><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>
   if (name === 'bars') return <svg {...common}><path d="M4 19V10M9 19V5M14 19v-6M19 19V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
   if (name === 'users') return <svg {...common}><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
   if (name === 'user') return <svg {...common}><circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.8" /><path d="M5 19c1.2-3 3.4-4.5 7-4.5S17.8 16 19 19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>

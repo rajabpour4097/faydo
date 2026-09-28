@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import CustomerLoyalty, Transaction, EliteGiftClaim, available_cashback
+from .transaction_utils import mask_customer_phone
 from accounts.serializers import CustomerProfileSerializer, BusinessProfileSerializer
 from packages.serializers import PackageDetailSerializer
 from packages.models import Comment
@@ -87,7 +88,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         return url
 
     def get_customer_phone(self, obj):
-        return obj.customer.user.phone_number or ''
+        return mask_customer_phone(obj.customer.user.phone_number or '')
 
     def get_customer_membership_level(self, obj):
         return obj.customer.membership_level or 'bronze'

@@ -26,6 +26,7 @@ from .transaction_utils import (
     gregorian_to_jalali,
     jalali_datetime_label,
     jalali_to_gregorian,
+    mask_customer_phone,
     optimized_transactions,
     period_bounds,
     reference_code,
@@ -604,6 +605,8 @@ def business_customers(request):
         rows = [row for row in rows if segment in row['segments']]
 
     rows.sort(key=lambda item: item['last_purchase_at'] or '', reverse=True)
+    for row in rows:
+        row['phone'] = mask_customer_phone(row['phone'])
 
     customer_id = request.query_params.get('customer_id')
     detail = None
@@ -690,12 +693,7 @@ def _business_transaction_qs(business, params):
 
 def _export_row(transaction):
     discount = float(transaction.discount_all_amount or 0) + float(transaction.special_discount_amount or 0)
-    phone = transaction.customer.user.phone_number or ''
-    digits = ''.join(ch for ch in phone if ch.isdigit())
-    if len(digits) >= 8:
-        masked = f'{digits[:4]} *** {digits[-4:]}'
-    else:
-        masked = phone
+    masked = mask_customer_phone(transaction.customer.user.phone_number or '')
     name = (transaction.customer.user.get_full_name() or '').strip() or transaction.customer.user.username
     return {
         'reference': reference_code(transaction),

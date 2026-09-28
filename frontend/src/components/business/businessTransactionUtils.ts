@@ -41,10 +41,27 @@ export const statusStyle: Record<Exclude<TxStatus, 'all'>, { label: string; wrap
 export const toFaDigits = (value: string | number) =>
   String(value).replace(/\d/g, digit => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)])
 
+const toAsciiDigits = (value: string) =>
+  value
+    .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
+    .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
+
 export const maskPhone = (phone?: string | null) => {
-  const digits = (phone || '').replace(/\D/g, '')
-  if (digits.length < 8) return phone || '—'
-  return toFaDigits(`${digits.slice(0, 4)} *** ${digits.slice(-4)}`)
+  const cleaned = toAsciiDigits((phone || '').replace(/[\u2066\u2069\u200e\u200f\u202a-\u202e]/g, '')).trim()
+  if (!cleaned) return '—'
+  let body = cleaned.replace(/\s+/g, '')
+  const reversed = body.match(/^(\d{2})\*{4}(\d{4,})$/)
+  if (reversed) {
+    body = `${reversed[2]}****${reversed[1]}`
+  } else if (!body.includes('*')) {
+    const digits = cleaned.replace(/\D/g, '')
+    if (digits.length >= 7) {
+      const headLen = digits.length - 6
+      body = `${digits.slice(0, headLen)}****${digits.slice(-2)}`
+    }
+  }
+  // LTR isolate stops the RTL page from swapping the groups into 85****09111.
+  return `\u2066${toFaDigits(body)}\u2069`
 }
 
 export const money = (value: string | number | null | undefined) => faNum(Math.round(Number(value || 0)))

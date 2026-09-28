@@ -14,6 +14,18 @@ from .models import Transaction
 
 TEHRAN = ZoneInfo('Asia/Tehran')
 
+
+def mask_customer_phone(phone):
+    """Hide the middle four digits: 09111234585 -> 09111****85.
+
+    The prefix stays first so the number is read from 09, not from the last digits.
+    """
+    digits = ''.join(ch for ch in str(phone or '') if ch.isdigit())
+    if len(digits) < 7:
+        return str(phone or '')
+    head_len = len(digits) - 6
+    return f'{digits[:head_len]}****{digits[-2:]}'
+
 STATUS_LABELS = {
     'pending': 'در انتظار تایید',
     'approved': 'تایید شده',

@@ -4,6 +4,7 @@ import { BusinessScreen } from '../../components/business/BusinessScreen'
 import { apiService, BusinessCustomerRow, BusinessTransaction } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { faNum, formatToman } from '../../components/business/businessHomeUtils'
+import { maskPhone } from '../../components/business/businessTransactionUtils'
 
 const SEGMENTS = [
   { id: 'all', label: 'همه' },
@@ -120,6 +121,9 @@ export const BusinessCustomersPage = () => {
                     )}
                   </div>
                   <div className="mt-0.5 text-[11px] text-gray-400">
+                    <span dir="ltr" className="inline-block">{maskPhone(row.phone)}</span>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-gray-400">
                     {faNum(row.points)} امتیاز · {faNum(row.transaction_count)} خرید · {formatToman(row.total_spent)}
                   </div>
                 </div>
@@ -135,7 +139,9 @@ export const BusinessCustomersPage = () => {
                 <h2 className="text-base font-black">{selected.name}</h2>
                 <button onClick={closeCustomer} className="text-gray-400">بستن</button>
               </div>
-              <p className="text-[12px] text-gray-400">{selected.phone}</p>
+              <p className="text-[12px] text-gray-400">
+                <span dir="ltr" className="inline-block">{maskPhone(selected.phone)}</span>
+              </p>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-2xl bg-[#F3EEFF] p-3">
                   <div className="text-lg font-black text-[#7C5CFC]">{faNum(selected.points)}</div>

@@ -13,6 +13,7 @@ import {
   TxStatus,
   customerInitial,
   formatListTime,
+  maskPhone,
   money,
   percentLabel,
   statusStyle,
@@ -361,6 +362,9 @@ function TransactionRow({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="truncate text-[13px] font-black">{transaction.customer_name}</div>
+            <div className="mt-0.5 text-[10px] text-gray-400">
+              <span dir="ltr" className="inline-block">{maskPhone(transaction.customer_phone)}</span>
+            </div>
             <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] text-gray-400">
               <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

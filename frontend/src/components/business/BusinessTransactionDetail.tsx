@@ -171,7 +171,7 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h2.3a1 1 0 01.95.68l1.1 3.3a1 1 0 01-.5 1.21l-1.7.85a11 11 0 005.4 5.4l.85-1.7a1 1 0 011.21-.5l3.3 1.1a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C8.82 21 3 15.18 3 8V7z" />
                   </svg>
-                  {maskPhone(transaction.customer_phone)}
+                  <span dir="ltr" className="inline-block">{maskPhone(transaction.customer_phone)}</span>
                 </div>
                 <div className="mt-2 text-[12px] text-gray-500">
                   تعداد مراجعه به این کسب‌وکار {faNum(transaction.visit_count || 0)} بار

@@ -5,7 +5,7 @@ import {
   apiService, Package, BusinessGalleryImage, EliteGiftProgress, AmenityItem, WorkingHoursEntry,
 } from '../services/api'
 import { BusinessCustomerView } from '../components/business/BusinessCustomerView'
-import { ReviewItem } from '../components/business/AllReviewsModal'
+import { ReviewItem, ReviewReply } from '../components/business/AllReviewsModal'
 
 interface Comment {
   id: number
@@ -15,6 +15,7 @@ interface Comment {
   is_liked: boolean
   category: string
   created_at: string
+  reply?: ReviewReply | null
 }
 
 export const BusinessDetail: React.FC = () => {
@@ -109,6 +110,7 @@ export const BusinessDetail: React.FC = () => {
             is_liked: c.is_liked,
             created_at: c.created_at,
             category: c.category,
+            reply: c.reply || null,
           }))
         )
       }
@@ -121,6 +123,27 @@ export const BusinessDetail: React.FC = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLikeReply = async (commentId: number) => {
+    const response = await apiService.likeCommentReply(commentId)
+    if (response.error || !response.data) {
+      return
+    }
+    setComments(prev =>
+      prev.map(comment =>
+        comment.id === commentId && comment.reply
+          ? {
+              ...comment,
+              reply: {
+                ...comment.reply,
+                is_liked: response.data!.is_liked,
+                likes_count: response.data!.likes_count,
+              },
+            }
+          : comment
+      )
+    )
   }
 
   const handleLikeComment = async (commentId: number) => {
@@ -173,6 +196,7 @@ export const BusinessDetail: React.FC = () => {
           comments={comments}
           eliteGiftProgress={eliteGiftProgress}
           onLikeComment={handleLikeComment}
+          onLikeReply={handleLikeReply}
         />
       )
 

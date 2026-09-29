@@ -190,6 +190,89 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 )
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def _transaction_comment(self, transaction):
+        from django.contrib.contenttypes.models import ContentType
+        from packages.models import Comment
+        content_type = ContentType.objects.get_for_model(transaction.__class__)
+        return Comment.objects.filter(
+            content_type=content_type,
+            object_id=transaction.id,
+        ).select_related(
+            'user__user', 'business_reply__business'
+        ).prefetch_related('likes', 'business_reply__likes').first()
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def review(self, request, pk=None):
+        """نظر مشتری روی همین تراکنش، همراه با پاسخ کسب‌وکار در صورت وجود."""
+        transaction = self.get_object()
+        comment = self._transaction_comment(transaction)
+        if comment is None:
+            return Response({'comment': None})
+        from packages.serializers import serialize_comment_for_display
+        customer_profile = getattr(request.user, 'customerprofile', None) if request.user.role == 'customer' else None
+        return Response({
+            'comment': serialize_comment_for_display(
+                comment,
+                category=comment.service_type,
+                customer_profile=customer_profile,
+            )
+        })
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def reply(self, request, pk=None):
+        """فقط کسب‌وکار صاحب خدمت می‌تواند به نظر مشتری همین تراکنش پاسخ دهد."""
+        if request.user.role != 'business':
+            return Response(
+                {'error': 'فقط کسب‌وکار می‌تواند به نظر مشتری پاسخ دهد'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        transaction = self.get_object()
+        business = request.user.businessprofile
+        if transaction.business_id != business.id:
+            return Response(
+                {'error': 'شما مجاز به پاسخ‌دادن به نظر این تراکنش نیستید'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        comment = self._transaction_comment(transaction)
+        if comment is None:
+            return Response(
+                {'error': 'برای این تراکنش نظری ثبت نشده است'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from packages.models import CommentReply, owning_business
+        owner = owning_business(comment)
+        if owner is None or owner.id != business.id:
+            return Response(
+                {'error': 'فقط کسب‌وکار ارائه‌دهنده این خدمت می‌تواند پاسخ دهد'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        text = (request.data.get('text') or '').strip()
+        if not text:
+            return Response(
+                {'error': 'متن پاسخ را وارد کنید'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(text) > 2000:
+            return Response(
+                {'error': 'متن پاسخ نباید بیشتر از ۲۰۰۰ نویسه باشد'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        reply, created = CommentReply.objects.update_or_create(
+            comment=comment,
+            defaults={'business': business, 'text': text},
+        )
+        reply = CommentReply.objects.select_related('business').prefetch_related('likes').get(pk=reply.pk)
+        from packages.serializers import serialize_reply
+        return Response(
+            {'comment_id': comment.id, 'reply': serialize_reply(reply)},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
     
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def pending_count(self, request):

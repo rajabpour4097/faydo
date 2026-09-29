@@ -1,5 +1,14 @@
 import React from 'react'
 
+export interface ReviewReply {
+  id: number
+  business_name: string
+  content: string
+  likes_count: number
+  is_liked: boolean
+  created_at: string
+}
+
 export interface ReviewItem {
   id: number
   user_name: string
@@ -8,6 +17,38 @@ export interface ReviewItem {
   is_liked: boolean
   created_at: string
   category?: string
+  reply?: ReviewReply | null
+}
+
+export function ReviewReplyBlock({
+  reply,
+  onLike,
+  compact = false,
+}: {
+  reply: ReviewReply
+  onLike: () => void
+  compact?: boolean
+}) {
+  return (
+    <div className={`mt-2 rounded-xl border-r-2 border-[#7C5CFC]/50 bg-[#F6F3FF] dark:bg-slate-800/80 ${compact ? 'px-2 py-1.5' : 'px-3 py-2'}`}>
+      <div className={`font-bold text-[#7C5CFC] ${compact ? 'text-[10px]' : 'text-xs'}`}>
+        پاسخ {reply.business_name}
+      </div>
+      <p className={`text-gray-600 dark:text-slate-300 leading-relaxed ${compact ? 'text-[11px] line-clamp-2 mt-0.5' : 'text-sm mt-1'}`}>
+        {reply.content}
+      </p>
+      <button
+        type="button"
+        onClick={onLike}
+        className={`mt-1 flex items-center gap-1 ${compact ? 'text-[10px]' : 'text-xs'} ${reply.is_liked ? 'text-red-500' : 'text-gray-400'}`}
+      >
+        <svg className={compact ? 'w-3 h-3' : 'w-4 h-4'} fill={reply.is_liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+        {reply.likes_count}
+      </button>
+    </div>
+  )
 }
 
 interface AllReviewsModalProps {
@@ -15,6 +56,7 @@ interface AllReviewsModalProps {
   totalCount?: number
   onClose: () => void
   onLike: (id: number) => void
+  onLikeReply?: (commentId: number) => void
 }
 
 function formatRelativeDate(dateString: string): string {
@@ -30,6 +72,7 @@ export const AllReviewsModal: React.FC<AllReviewsModalProps> = ({
   totalCount,
   onClose,
   onLike,
+  onLikeReply,
 }) => {
   return (
     <div className="fixed inset-0 z-[1100] bg-black/50 flex items-end sm:items-center justify-center" onClick={onClose}>
@@ -76,6 +119,9 @@ export const AllReviewsModal: React.FC<AllReviewsModalProps> = ({
                       </svg>
                       {review.likes_count}
                     </button>
+                    {review.reply && onLikeReply && (
+                      <ReviewReplyBlock reply={review.reply} onLike={() => onLikeReply(review.id)} />
+                    )}
                   </div>
                 </div>
               </div>

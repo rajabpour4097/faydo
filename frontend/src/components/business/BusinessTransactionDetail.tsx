@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BusinessTransaction } from '../../services/api'
-import { loyaltyService } from '../../services/loyalty'
+import { loyaltyService, TransactionReview } from '../../services/loyalty'
 import { useTheme } from '../../contexts/ThemeContext'
 import { faNum } from './businessHomeUtils'
 import {
@@ -61,6 +61,11 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
   const [copied, setCopied] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+  const [review, setReview] = useState<TransactionReview | null>(null)
+  const [reviewLoading, setReviewLoading] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const [replyEditing, setReplyEditing] = useState(false)
+  const [replyBusy, setReplyBusy] = useState(false)
 
   const card = isDark ? 'bg-slate-800 text-white' : 'bg-white text-gray-900'
   const page = isDark ? 'bg-slate-900' : 'bg-[#F3F5FA]'
@@ -79,6 +84,52 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
       document.body.style.overflow = previous
     }
   }, [])
+
+  useEffect(() => {
+    if (!transaction.has_commented) {
+      setReview(null)
+      setReplyText('')
+      setReplyEditing(false)
+      return
+    }
+    let cancelled = false
+    setReviewLoading(true)
+    loyaltyService.getTransactionReview(transaction.id)
+      .then(data => {
+        if (cancelled) return
+        setReview(data.comment)
+        setReplyText(data.comment?.reply?.content || '')
+        setReplyEditing(!data.comment?.reply)
+      })
+      .catch(() => {
+        if (!cancelled) setReview(null)
+      })
+      .finally(() => {
+        if (!cancelled) setReviewLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [transaction.id, transaction.has_commented])
+
+  const submitReply = async () => {
+    if (!replyText.trim()) {
+      setError('متن پاسخ را وارد کنید')
+      return
+    }
+    setReplyBusy(true)
+    setError(null)
+    try {
+      const result = await loyaltyService.replyToTransactionReview(transaction.id, replyText.trim())
+      setReview(current => current ? { ...current, reply: result.reply } : current)
+      setReplyEditing(false)
+    } catch (err) {
+      const message = (err as { error?: string })?.error || 'ثبت پاسخ انجام نشد'
+      setError(message)
+    } finally {
+      setReplyBusy(false)
+    }
+  }
 
   const copyRef = async () => {
     try {
@@ -237,6 +288,82 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
           </div>
 
           <div className={`rounded-[28px] p-4 shadow-sm ${card}`}>
+            <div className="mb-3 text-sm font-black">نظر مشتری</div>
+            {!transaction.has_commented ? (
+              <p className="text-[12px] text-gray-400">مشتری هنوز برای این خرید نظری ثبت نکرده است.</p>
+            ) : reviewLoading ? (
+              <p className="text-[12px] text-gray-400">در حال دریافت نظر...</p>
+            ) : !review ? (
+              <p className="text-[12px] text-gray-400">نظر این تراکنش در دسترس نیست.</p>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-bold">{review.user_name}</span>
+                  <span className="text-[10px] text-gray-400">{formatDetailDate(review.created_at)}</span>
+                </div>
+                {review.score ? (
+                  <div className="mt-1 text-[12px] text-amber-500">امتیاز {faNum(review.score)} از ۵</div>
+                ) : null}
+                {review.service_type && (
+                  <div className="mt-1 text-[11px] text-gray-400">خدمت: {serviceLabel(review.service_type)}</div>
+                )}
+                <p className="mt-2 text-[13px] leading-6 text-gray-600">{review.content || 'بدون متن'}</p>
+                {review.reply && !replyEditing ? (
+                  <div className="mt-3 rounded-2xl border-r-2 border-[#7C5CFC] bg-[#F6F3FF] px-3 py-2">
+                    <div className="text-[11px] font-bold text-[#7C5CFC]">پاسخ شما</div>
+                    <p className="mt-1 text-[13px] leading-6 text-gray-700">{review.reply.content}</p>
+                    <div className="mt-1 text-[11px] text-gray-400">♥ {faNum(review.reply.likes_count)}</div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyText(review.reply?.content || '')
+                        setReplyEditing(true)
+                        setError(null)
+                      }}
+                      className="mt-2 text-[12px] font-bold text-[#7C5CFC]"
+                    >
+                      ویرایش پاسخ
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-3">
+                    <textarea
+                      value={replyText}
+                      onChange={event => setReplyText(event.target.value)}
+                      rows={3}
+                      placeholder="پاسخ شما به نظر مشتری"
+                      className={`w-full resize-none rounded-2xl border px-3 py-3 text-sm ${isDark ? 'border-slate-600 bg-slate-900' : 'border-gray-200'}`}
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        disabled={replyBusy}
+                        onClick={submitReply}
+                        className="flex-1 rounded-2xl bg-[#7C5CFC] py-2.5 text-sm font-black text-white disabled:opacity-50"
+                      >
+                        {replyBusy ? 'در حال ثبت...' : review.reply ? 'ذخیره پاسخ' : 'ثبت پاسخ'}
+                      </button>
+                      {review.reply && (
+                        <button
+                          type="button"
+                          disabled={replyBusy}
+                          onClick={() => {
+                            setReplyText(review.reply?.content || '')
+                            setReplyEditing(false)
+                          }}
+                          className="rounded-2xl bg-gray-100 px-4 py-2.5 text-sm font-bold text-gray-600"
+                        >
+                          انصراف
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className={`rounded-[28px] p-4 shadow-sm ${card}`}>
             <div className="mb-4 flex items-center gap-2 text-sm font-black">
               وضعیت تراکنش
               <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -338,6 +465,17 @@ export function BusinessTransactionDetail({ transaction, onClose, onChanged }: P
       )}
     </div>
   )
+}
+
+const SERVICE_LABELS: Record<string, string> = {
+  discount_all: 'تخفیف روی همه',
+  specific_discount: 'تخفیف خاص',
+  elite_gift: 'هدیه ویژه',
+  vip_experience: 'تجربه VIP',
+}
+
+function serviceLabel(value: string) {
+  return SERVICE_LABELS[value] || value
 }
 
 function Row({

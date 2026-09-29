@@ -1240,6 +1240,12 @@ class ApiService {
     })
   }
 
+  async likeCommentReply(commentId: number): Promise<ApiResponse<{ is_liked: boolean; likes_count: number; message: string }>> {
+    return this.request<{ is_liked: boolean; likes_count: number; message: string }>(`/packages/comments/${commentId}/like_reply/`, {
+      method: 'POST',
+    })
+  }
+
   // Business Gallery management methods
   async getBusinessGallery(): Promise<ApiResponse<BusinessGalleryImage[]>> {
     const resp = await this.request<any>('/accounts/business-gallery/')

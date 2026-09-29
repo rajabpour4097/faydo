@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     DiscountAll, EliteGift, Package, SpecificDiscount, 
-    VipExperience, VipExperienceCategory, Comment, CommentLike
+    VipExperience, VipExperienceCategory, Comment, CommentLike,
+    CommentReply, CommentReplyLike,
 )
 
 
@@ -83,6 +84,12 @@ class CommentLikeInline(admin.TabularInline):
     can_delete = True
 
 
+class CommentReplyInline(admin.StackedInline):
+    model = CommentReply
+    extra = 0
+    readonly_fields = ('business', 'created_at')
+
+
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'content_type', 'object_id', 'text_preview', 'score', 'likes_count', 'created_at')
@@ -90,7 +97,7 @@ class CommentAdmin(admin.ModelAdmin):
     list_filter = ('content_type', 'score', 'created_at')
     list_per_page = 20
     readonly_fields = ('content_type', 'object_id', 'created_at', 'modified_at', 'likes_count')
-    inlines = [CommentLikeInline]
+    inlines = [CommentLikeInline, CommentReplyInline]
     
     fieldsets = (
         ('اطلاعات کاربر', {
@@ -132,4 +139,32 @@ class CommentLikeAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         """جلوگیری از افزودن دستی لایک از پنل ادمین"""
+        return False
+
+
+@admin.register(CommentReply)
+class CommentReplyAdmin(admin.ModelAdmin):
+    list_display = ('id', 'comment', 'business', 'text_preview', 'likes_count', 'created_at')
+    search_fields = ('text', 'business__name', 'comment__text')
+    list_filter = ('created_at',)
+    readonly_fields = ('created_at', 'modified_at')
+
+    def text_preview(self, obj):
+        if obj.text:
+            return obj.text[:50] + ('...' if len(obj.text) > 50 else '')
+        return '-'
+    text_preview.short_description = 'متن پاسخ'
+
+    def likes_count(self, obj):
+        return obj.likes.count()
+    likes_count.short_description = 'تعداد لایک'
+
+
+@admin.register(CommentReplyLike)
+class CommentReplyLikeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'reply', 'user', 'created_at')
+    search_fields = ('user__user__first_name', 'reply__text')
+    readonly_fields = ('reply', 'user', 'created_at')
+
+    def has_add_permission(self, request):
         return False

@@ -7,11 +7,12 @@ from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from .models import (
     Package, DiscountAll, SpecificDiscount, EliteGift, 
-    VipExperienceCategory, VipExperience, Comment, CommentLike
+    VipExperienceCategory, VipExperience, Comment, CommentLike, CommentReply, CommentReplyLike,
 )
 from .serializers import (
     PackageListSerializer, PackageDetailSerializer, PackageCreateUpdateSerializer,
-    VipExperienceCategorySerializer, CommentSerializer, CommentCreateSerializer
+    VipExperienceCategorySerializer, CommentSerializer, CommentCreateSerializer,
+    serialize_comment_for_display, serialize_reply,
 )
 from accounts.models import BusinessProfile, Club
 from accounts.business_features import (
@@ -607,18 +608,22 @@ class PackageViewSet(viewsets.ModelViewSet):
             # Get all packages of this business
             packages = Package.objects.filter(business_id=business_id)
             
+            def load_comments(model, object_ids):
+                content_type = ContentType.objects.get_for_model(model)
+                return Comment.objects.filter(
+                    content_type=content_type,
+                    object_id__in=object_ids,
+                ).select_related(
+                    'user__user', 'business_reply__business'
+                ).prefetch_related('likes', 'business_reply__likes')
+
             # Collect all comments from different package components
             all_comments = []
             
             for package in packages:
                 # Comments from DiscountAll
                 if hasattr(package, 'discount_all'):
-                    discount_all_ct = ContentType.objects.get_for_model(DiscountAll)
-                    comments = Comment.objects.filter(
-                        content_type=discount_all_ct,
-                        object_id=package.discount_all.id
-                    )
-                    for comment in comments:
+                    for comment in load_comments(DiscountAll, [package.discount_all.id]):
                         all_comments.append({
                             'comment': comment,
                             'category': 'discount_all'
@@ -626,12 +631,7 @@ class PackageViewSet(viewsets.ModelViewSet):
                 
                 # Comments from SpecificDiscount
                 if hasattr(package, 'specific_discount'):
-                    specific_discount_ct = ContentType.objects.get_for_model(SpecificDiscount)
-                    comments = Comment.objects.filter(
-                        content_type=specific_discount_ct,
-                        object_id=package.specific_discount.id
-                    )
-                    for comment in comments:
+                    for comment in load_comments(SpecificDiscount, [package.specific_discount.id]):
                         all_comments.append({
                             'comment': comment,
                             'category': 'specific_discount'
@@ -639,38 +639,29 @@ class PackageViewSet(viewsets.ModelViewSet):
                 
                 # Comments from EliteGift
                 if hasattr(package, 'elite_gift'):
-                    elite_gift_ct = ContentType.objects.get_for_model(EliteGift)
-                    comments = Comment.objects.filter(
-                        content_type=elite_gift_ct,
-                        object_id=package.elite_gift.id
-                    )
-                    for comment in comments:
+                    for comment in load_comments(EliteGift, [package.elite_gift.id]):
                         all_comments.append({
                             'comment': comment,
                             'category': 'elite_gift'
                         })
                 
                 # Comments from VipExperience
-                for vip_exp in package.experiences.all():
-                    vip_experience_ct = ContentType.objects.get_for_model(VipExperience)
-                    comments = Comment.objects.filter(
-                        content_type=vip_experience_ct,
-                        object_id=vip_exp.id
-                    )
-                    for comment in comments:
+                vip_ids = list(package.experiences.values_list('id', flat=True))
+                if vip_ids:
+                    for comment in load_comments(VipExperience, vip_ids):
                         all_comments.append({
                             'comment': comment,
                             'category': 'vip_experience'
                         })
 
             from loyalty.models import Transaction
-            tx_ct = ContentType.objects.get_for_model(Transaction)
-            tx_ids = Transaction.objects.filter(business_id=business_id).values_list('id', flat=True)
-            for comment in Comment.objects.filter(content_type=tx_ct, object_id__in=tx_ids):
-                all_comments.append({
-                    'comment': comment,
-                    'category': comment.service_type or 'discount_all',
-                })
+            tx_ids = list(Transaction.objects.filter(business_id=business_id).values_list('id', flat=True))
+            if tx_ids:
+                for comment in load_comments(Transaction, tx_ids):
+                    all_comments.append({
+                        'comment': comment,
+                        'category': comment.service_type or 'discount_all',
+                    })
             
             # Sort by creation date (newest first)
             all_comments.sort(key=lambda x: x['comment'].created_at, reverse=True)
@@ -686,26 +677,11 @@ class PackageViewSet(viewsets.ModelViewSet):
             
             serialized_comments = []
             for item in all_comments:
-                comment = item['comment']
-                is_liked = False
-                if customer_profile:
-                    is_liked = CommentLike.objects.filter(
-                        comment=comment,
-                        user=customer_profile
-                    ).exists()
-                
-                serialized_comments.append({
-                    'id': comment.id,
-                    'user_name': comment.user.user.get_full_name() if hasattr(comment.user, 'user') else str(comment.user),
-                    'user_avatar': '',
-                    'content': comment.text or '',
-                    'score': comment.score,
-                    'service_type': comment.service_type or item['category'],  # استفاده از service_type یا category
-                    'likes_count': comment.likes.count(),
-                    'is_liked': is_liked,
-                    'category': item['category'],
-                    'created_at': comment.created_at.isoformat()
-                })
+                serialized_comments.append(serialize_comment_for_display(
+                    item['comment'],
+                    category=item['category'],
+                    customer_profile=customer_profile,
+                ))
             
             return Response(serialized_comments)
             
@@ -833,7 +809,7 @@ class CommentViewSet(viewsets.ModelViewSet):
                 object_id=object_id
             )
         
-        if self.action in ('retrieve', 'update', 'partial_update', 'destroy', 'like'):
+        if self.action in ('retrieve', 'update', 'partial_update', 'destroy', 'like', 'like_reply'):
             return Comment.objects.all()
         
         return Comment.objects.none()
@@ -890,4 +866,42 @@ class CommentViewSet(viewsets.ModelViewSet):
                 {"error": "Customer profile not found"}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    @action(detail=True, methods=['post'], url_path='like_reply')
+    def like_reply(self, request, pk=None):
+        """لایک یا برداشتن لایک پاسخ کسب‌وکار، مشابه لایک نظر مشتری."""
+        comment = self.get_object()
+        try:
+            reply = comment.business_reply
+        except CommentReply.DoesNotExist:
+            return Response(
+                {'error': 'پاسخی برای این نظر ثبت نشده است'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            customer_profile = request.user.customerprofile
+        except Exception:
+            return Response(
+                {'error': 'Customer profile not found'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        like, created = CommentReplyLike.objects.get_or_create(
+            reply=reply,
+            user=customer_profile,
+        )
+        if not created:
+            like.delete()
+            is_liked = False
+            message = 'Reply unliked'
+        else:
+            is_liked = True
+            message = 'Reply liked'
+
+        reply = CommentReply.objects.select_related('business').prefetch_related('likes').get(pk=reply.pk)
+        payload = serialize_reply(reply, customer_profile)
+        payload['message'] = message
+        payload['is_liked'] = is_liked
+        return Response(payload)
 

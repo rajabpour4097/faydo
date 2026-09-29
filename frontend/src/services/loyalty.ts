@@ -83,6 +83,27 @@ export interface Transaction {
   modified_at: string
 }
 
+export interface TransactionReviewReply {
+  id: number
+  business_name: string
+  content: string
+  likes_count: number
+  is_liked: boolean
+  created_at: string
+}
+
+export interface TransactionReview {
+  id: number
+  user_name: string
+  content: string
+  score: number | null
+  service_type?: string | null
+  likes_count: number
+  is_liked: boolean
+  created_at: string
+  reply: TransactionReviewReply | null
+}
+
 const getAuthHeader = (): Record<string, string> => {
   const token = localStorage.getItem('access_token')
   if (token) {
@@ -206,6 +227,25 @@ export const loyaltyService = {
   /**
    * دریافت تعداد تراکنش‌های در انتظار (برای کسب‌وکار) یا قابل نظردهی (برای مشتری)
    */
+  async getTransactionReview(id: number): Promise<{ comment: TransactionReview | null }> {
+    const response = await fetch(`${API_BASE_URL}/loyalty/transactions/${id}/review/`, {
+      headers: getAuthHeader()
+    })
+    return handleResponse(response)
+  },
+
+  async replyToTransactionReview(id: number, text: string): Promise<{ comment_id: number; reply: TransactionReviewReply }> {
+    const response = await fetch(`${API_BASE_URL}/loyalty/transactions/${id}/reply/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify({ text })
+    })
+    return handleResponse(response)
+  },
+
   async getPendingCount(): Promise<{ count: number; type: string }> {
     const response = await fetch(`${API_BASE_URL}/loyalty/transactions/pending_count/`, {
       headers: getAuthHeader()

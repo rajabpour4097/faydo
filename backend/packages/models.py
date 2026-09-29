@@ -69,7 +69,60 @@ class CommentLike(BaseModel):
     
     def __str__(self):
         return f'{self.user} liked {self.comment.id}'
-    
+
+
+def owning_business(comment):
+    """کسب‌وکاری که خدمتِ موضوع این نظر را ارائه کرده است."""
+    target = comment.content_object
+    if target is None:
+        return None
+    from accounts.models import BusinessProfile
+
+    business = getattr(target, 'business', None)
+    if isinstance(business, BusinessProfile):
+        return business
+    package = getattr(target, 'package', None)
+    if package is not None:
+        business = getattr(package, 'business', None)
+        if isinstance(business, BusinessProfile):
+            return business
+    return None
+
+
+class CommentReply(BaseModel):
+    """پاسخ کسب‌وکار به نظر مشتری درباره خدمت ارائه‌شده."""
+    comment = models.OneToOneField(Comment, on_delete=models.CASCADE, related_name='business_reply')
+    business = models.ForeignKey(
+        'accounts.BusinessProfile',
+        on_delete=models.CASCADE,
+        related_name='comment_replies',
+    )
+    text = models.TextField(verbose_name='متن پاسخ')
+
+    class Meta:
+        verbose_name = 'پاسخ کسب‌وکار'
+        verbose_name_plural = 'پاسخ‌های کسب‌وکار'
+
+    def __str__(self):
+        return f'{self.business} → {self.comment_id}'
+
+
+class CommentReplyLike(BaseModel):
+    reply = models.ForeignKey(CommentReply, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(
+        'accounts.CustomerProfile',
+        on_delete=models.CASCADE,
+        related_name='comment_reply_likes',
+    )
+
+    class Meta:
+        verbose_name = 'لایک پاسخ'
+        verbose_name_plural = 'لایک‌های پاسخ'
+        unique_together = ['reply', 'user']
+
+    def __str__(self):
+        return f'{self.user} liked reply {self.reply_id}'
+
 
 #Business Package
 class Package(BaseModel):

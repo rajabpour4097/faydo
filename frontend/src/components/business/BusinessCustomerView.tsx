@@ -8,7 +8,7 @@ import { getTodayHoursLabel, isBusinessOpenNow, openNavigationApps } from '../..
 import { WorkingHoursModal } from './WorkingHoursModal'
 import { BusinessMapPreview } from './BusinessMapPreview'
 import { ImageLightboxModal } from './ImageLightboxModal'
-import { AllReviewsModal, ReviewItem } from './AllReviewsModal'
+import { AllReviewsModal, ReviewItem, ReviewReplyBlock } from './AllReviewsModal'
 import { Clock, MapPin, MessageSquare, ChevronLeft, Navigation, Gift, Tag, Star } from 'lucide-react'
 
 interface BusinessCustomerViewProps {
@@ -19,6 +19,7 @@ interface BusinessCustomerViewProps {
   comments: ReviewItem[]
   eliteGiftProgress: EliteGiftProgress | null
   onLikeComment: (id: number) => void
+  onLikeReply: (commentId: number) => void
 }
 
 function formatAmount(n: number): string {
@@ -33,6 +34,7 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
   comments,
   eliteGiftProgress,
   onLikeComment,
+  onLikeReply,
 }) => {
   const navigate = useNavigate()
   const [showHoursModal, setShowHoursModal] = useState(false)
@@ -304,6 +306,9 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
                     >
                       ♥ {review.likes_count}
                     </button>
+                    {review.reply && (
+                      <ReviewReplyBlock reply={review.reply} compact onLike={() => onLikeReply(review.id)} />
+                    )}
                   </div>
                 ))}
               </div>
@@ -359,6 +364,7 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
           totalCount={pkg.total_comments || comments.length}
           onClose={() => setShowReviewsModal(false)}
           onLike={onLikeComment}
+          onLikeReply={onLikeReply}
         />
       )}
       {lightboxIndex !== null && lightboxImages.length > 0 && (

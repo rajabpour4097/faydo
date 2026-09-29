@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     Package, DiscountAll, SpecificDiscount, EliteGift, 
-    VipExperienceCategory, VipExperience, Comment, CommentLike
+    VipExperienceCategory, VipExperience, Comment, CommentLike, CommentReply
 )
 from accounts.models import BusinessProfile
 
@@ -29,6 +29,57 @@ class CommentSerializer(serializers.ModelSerializer):
             except:
                 return False
         return False
+
+
+def _like_state(like_manager, customer_profile):
+    likes = list(like_manager.all())
+    is_liked = bool(
+        customer_profile and any(like.user_id == customer_profile.id for like in likes)
+    )
+    return len(likes), is_liked
+
+
+def attached_reply(comment):
+    try:
+        return comment.business_reply
+    except CommentReply.DoesNotExist:
+        return None
+
+
+def serialize_reply(reply, customer_profile=None):
+    if reply is None:
+        return None
+    likes_count, is_liked = _like_state(reply.likes, customer_profile)
+    business_name = (getattr(reply.business, 'name', None) or '').strip() or 'کسب‌وکار'
+    return {
+        'id': reply.id,
+        'business_name': business_name,
+        'content': reply.text or '',
+        'likes_count': likes_count,
+        'is_liked': is_liked,
+        'created_at': reply.created_at.isoformat(),
+    }
+
+
+def serialize_comment_for_display(comment, *, category=None, customer_profile=None):
+    likes_count, is_liked = _like_state(comment.likes, customer_profile)
+    user = comment.user
+    name = ''
+    if hasattr(user, 'user'):
+        name = (user.user.get_full_name() or '').strip() or (user.user.first_name or '').strip()
+    return {
+        'id': comment.id,
+        'user_name': name or 'مشتری',
+        'user_avatar': '',
+        'content': comment.text or '',
+        'score': comment.score,
+        'service_type': comment.service_type or category,
+        'likes_count': likes_count,
+        'is_liked': is_liked,
+        'category': category or comment.service_type or '',
+        'created_at': comment.created_at.isoformat(),
+        'reply': serialize_reply(attached_reply(comment), customer_profile),
+    }
 
 
 class DiscountAllSerializer(serializers.ModelSerializer):

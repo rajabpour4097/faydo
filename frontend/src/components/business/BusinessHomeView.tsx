@@ -127,14 +127,14 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
       <section className={`rounded-[28px] px-4 py-3 shadow-sm ${card}`}>
         <h2 className={`mb-2 text-[15px] font-black ${title}`}>خلاصه عملکرد</h2>
         <div className="flex items-center gap-2">
-          <div className={`grid min-w-0 flex-1 grid-cols-3 overflow-hidden rounded-[18px] py-2 ${soft}`}>
+          <div className={`grid min-w-0 flex-1 grid-cols-3 overflow-hidden rounded-[18px] py-1 ${soft}`}>
             <SummaryStat to="/dashboard/customers?segment=returning" label="مشتریان بازگشتی" value={kpis.returning_customers} icon="refresh" tint="text-teal-500" ink={title} />
             <SummaryStat to="/dashboard/customers?segment=all" label="مشتریان فعال" value={kpis.active_customers} icon="users" tint="text-[#7C5CFC]" ink={title} divided />
             <SummaryStat to="/dashboard/transactions" label="تراکنش‌ها" value={kpis.transactions_this_month} icon="invoice" tint="text-sky-500" ink={title} divided />
           </div>
           <Link to="/dashboard/sales" className="flex shrink-0 items-center gap-1.5">
             <div className="text-right">
-              <div className={`text-[21px] font-black leading-none tracking-tight ${title}`}>{faNum(Math.round(kpis.sales_this_month))}</div>
+              <div className={`text-[18px] font-black leading-none tracking-tight ${title}`}>{faNum(Math.round(kpis.sales_this_month))}</div>
               <div className={`mt-0.5 text-[10px] leading-3 ${muted}`}>تومان</div>
               <div className="mt-0.5 text-[11px] leading-4">
                 <Trend value={kpis.sales_change} />

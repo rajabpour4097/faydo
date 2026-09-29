@@ -149,8 +149,8 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
         </div>
       </section>
 
-      <section className={`mt-3 rounded-[28px] p-4 shadow-sm ${card}`}>
-        <div className="mb-3 flex items-center gap-1.5">
+      <section className={`mt-3 rounded-[28px] px-2.5 py-3 shadow-sm ${card}`}>
+        <div className="mb-2.5 flex items-center gap-1.5 px-1.5">
           <h2 className={`text-[15px] font-black ${title}`}>نیاز به اقدام</h2>
           {attentionCount > 0 && (
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-black text-white">
@@ -159,11 +159,11 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
           )}
           <Chevron className={muted} />
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          <ActionCard to="/dashboard/transactions?status=pending" count={actions.pending_transactions} label="تراکنش در انتظار تأیید" bg={isDark ? 'bg-sky-500/10' : 'bg-[#EEF5FF]'} tint="text-sky-500" icon="card" ink={title} />
-          <ActionCard to="/dashboard/elite-gift-claims" count={actions.pending_gift_claims} label="درخواست هدیه ویژه" bg={isDark ? 'bg-rose-500/10' : 'bg-[#FFF0F5]'} tint="text-rose-400" icon="gift" ink={title} />
-          <ActionCard to="/dashboard/packages" count={pkgCard.count} label={pkgCard.label} bg={isDark ? 'bg-amber-500/10' : 'bg-[#FFF8E8]'} tint="text-amber-500" icon="calendar" ink={title} />
-          <ActionCard count={clubClaims} label="درخواست هدیه باشگاه‌ها" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F6F0FF]'} tint="text-violet-500" icon="gift" ink={title} />
+        <div className="grid grid-cols-4 gap-1">
+          <ActionCard to="/dashboard/transactions?status=pending" count={actions.pending_transactions} label="تراکنش در انتظار تأیید" bg={isDark ? 'bg-sky-500/10' : 'bg-[#EEF5FF]'} tint="text-sky-500" icon="card" />
+          <ActionCard to="/dashboard/elite-gift-claims" count={actions.pending_gift_claims} label="درخواست هدیه ویژه" bg={isDark ? 'bg-rose-500/10' : 'bg-[#FFF0F5]'} tint="text-rose-400" icon="gift" />
+          <ActionCard to="/dashboard/packages" count={pkgCard.count} label={pkgCard.label} bg={isDark ? 'bg-amber-500/10' : 'bg-[#FFF8E8]'} tint="text-amber-500" icon="calendar" />
+          <ActionCard count={clubClaims} label="درخواست هدیه باشگاه‌ها" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F6F0FF]'} tint="text-violet-500" icon="gift" />
         </div>
       </section>
 
@@ -323,17 +323,17 @@ function SummaryStat({
 }
 
 function ActionCard({
-  to, count, label, bg, tint, icon, ink,
-}: { to?: string; count: number; label: string; bg: string; tint: string; icon: string; ink: string }) {
+  to, count, label, bg, tint, icon,
+}: { to?: string; count: number; label: string; bg: string; tint: string; icon: string }) {
   const body = (
-    <div className={`flex h-full flex-col rounded-[18px] px-1.5 py-2.5 ${bg}`}>
-      <div className="flex items-center gap-1">
-        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white ${tint}`}>
-          <KpiIcon name={icon} />
+    <div className={`flex h-full flex-col items-center rounded-[16px] px-0.5 py-2 ${bg}`}>
+      <div className="flex items-center gap-1" dir="ltr">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white ${tint}`}>
+          <KpiIcon name={icon} size={15} />
         </span>
-        <span className={`text-[15px] font-black leading-none ${ink}`}>{faNum(count)}</span>
+        <span className={`text-[18px] font-black leading-none ${tint}`}>{faNum(count)}</span>
       </div>
-      <div className="mt-1 line-clamp-2 text-[9px] font-bold leading-[13px] text-gray-500">{label}</div>
+      <div className="mt-1.5 w-full whitespace-nowrap text-center text-[7px] font-bold leading-none tracking-[-0.04em] text-gray-500">{label}</div>
     </div>
   )
   if (!to) return body

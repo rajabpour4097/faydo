@@ -3,15 +3,66 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import CustomerLoyalty, Transaction, EliteGiftClaim, CustomerFavorite, available_cashback
+from .models import CustomerLoyalty, Notification, Transaction, EliteGiftClaim, CustomerFavorite, available_cashback
 from .transaction_utils import apply_transaction_filters, optimized_transactions
 from .serializers import (
     CustomerLoyaltySerializer, TransactionSerializer,
     TransactionCreateSerializer, BusinessInfoSerializer,
-    TransactionCommentSerializer, CustomerFavoriteSerializer,
+    TransactionCommentSerializer, CustomerFavoriteSerializer, NotificationSerializer,
 )
 from accounts.models import BusinessProfile
 from django.db import IntegrityError
+from django.utils import timezone
+
+
+class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+    """فهرست و مدیریت اعلان‌های کاربر واردشده."""
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        queryset = Notification.objects.filter(recipient=self.request.user)
+        unread = self.request.query_params.get('unread')
+        notification_type = self.request.query_params.get('type')
+        if unread in ('1', 'true'):
+            queryset = queryset.filter(read_at__isnull=True)
+        if notification_type:
+            queryset = queryset.filter(notification_type=notification_type)
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+        if notification.read_at is None:
+            notification.read_at = timezone.now()
+            notification.save(update_fields=['read_at', 'modified_at'])
+        return Response(self.get_serializer(notification).data)
+
+    @action(detail=True, methods=['post'])
+    def mark_unread(self, request, pk=None):
+        notification = self.get_object()
+        notification.read_at = None
+        notification.save(update_fields=['read_at', 'modified_at'])
+        return Response(self.get_serializer(notification).data)
+
+    @action(detail=False, methods=['post'])
+    def mark_all_read(self, request):
+        count = self.get_queryset().filter(read_at__isnull=True).update(read_at=timezone.now())
+        return Response({'updated': count})
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        return Response({'count': self.get_queryset().filter(read_at__isnull=True).count()})
+
+    def destroy(self, request, *args, **kwargs):
+        self.get_object().delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['delete'])
+    def clear_read(self, request):
+        count, _ = self.get_queryset().filter(read_at__isnull=False).delete()
+        return Response({'deleted': count})
 
 
 class CustomerLoyaltyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -266,6 +317,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
         reply, created = CommentReply.objects.update_or_create(
             comment=comment,
             defaults={'business': business, 'text': text},
+        )
+        Notification.objects.create(
+            recipient=transaction.customer.user,
+            notification_type='review_replied',
+            title='پاسخ جدید به نظر شما',
+            message=f'{business.name} به نظر شما درباره تراکنش پاسخ داد.',
+            action_url='/dashboard/transactions',
+            metadata={'transaction_id': transaction.id, 'comment_id': comment.id},
         )
         reply = CommentReply.objects.select_related('business').prefetch_related('likes').get(pk=reply.pk)
         from packages.serializers import serialize_reply

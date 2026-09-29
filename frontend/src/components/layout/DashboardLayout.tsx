@@ -20,7 +20,7 @@ interface SidebarItem {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { isDark } = useTheme()
   const { user, logout } = useAuth()
-  const { pendingCount, eliteGiftPendingCount } = useNotification()
+  const { pendingCount, eliteGiftPendingCount, unreadCount } = useNotification()
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -39,6 +39,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (user.type === 'business') {
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '📊' },
+        { name: 'اعلان‌ها', href: '/dashboard/notifications', icon: '🔔', badge: unreadCount || undefined },
         { name: 'پکیج‌ها', href: '/dashboard/packages', icon: '📦' },
         { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', badge: pendingCount > 0 ? pendingCount : undefined },
         { name: 'مشتریان', href: '/dashboard/customers', icon: '👥' },
@@ -53,6 +54,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (user.type === 'customer') {
       return [
         { name: 'داشبورد', href: '/dashboard', icon: '📊' },
+        { name: 'اعلان‌ها', href: '/dashboard/notifications', icon: '🔔', badge: unreadCount || undefined },
         { name: 'اکتشاف', href: '/dashboard/explore', icon: '🔍' },
         { name: 'تراکنش‌های من', href: '/dashboard/transactions', icon: '📋' },
         { name: 'پروفایل', href: '/dashboard/profile', icon: '👤' },

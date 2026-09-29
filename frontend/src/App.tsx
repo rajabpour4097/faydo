@@ -42,6 +42,7 @@ import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsP
 import { CustomerPointsDetailsPage } from './pages/customer/CustomerPointsDetailsPage'
 import { CustomerCashbackDetailsPage } from './pages/customer/CustomerCashbackDetailsPage'
 import { CustomerFavoritesPage } from './pages/customer/CustomerFavoritesPage'
+import { NotificationsPage } from './pages/dashboard/NotificationsPage'
 import { useAuth } from './contexts/AuthContext'
 
 // Dashboard Router Component
@@ -66,6 +67,11 @@ const DashboardRouter = () => {
   return (
     <Routes>
       <Route path="profile" element={<Profile />} />
+      <Route path="notifications" element={
+        <ProfileGuard>
+          <NotificationsPage />
+        </ProfileGuard>
+      } />
       <Route path="packages" element={
         <ProfileGuard>
           <PackageManagement />

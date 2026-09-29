@@ -66,14 +66,14 @@ export const DashboardMobileHeader = ({
           <button onClick={onMenuOpen} className={actionBtnClass} aria-label="منو">
             <Menu className={actionIconClass} />
           </button>
-          <Link to="/dashboard/transactions" className={`relative ${actionBtnClass}`} aria-label="اعلان‌ها">
+          <Link to="/dashboard/notifications" className={`relative ${actionBtnClass}`} aria-label={`${notificationCount} اعلان خوانده‌نشده`}>
             <Bell className={actionIconClass} />
             {notificationCount > 0 && (
               <span
-                className={`absolute bg-teal-500 rounded-full ring-2 ring-white ${
-                  isCustomer ? 'top-2 right-2 w-1.5 h-1.5' : 'top-2.5 right-2.5 w-2 h-2'
-                }`}
-              />
+                className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black leading-none min-w-[17px] h-[17px] px-1 rounded-full ring-2 ring-white dark:ring-slate-800 flex items-center justify-center"
+              >
+                {notificationCount > 99 ? '+۹۹' : notificationCount.toLocaleString('fa-IR')}
+              </span>
             )}
           </Link>
         </div>

@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import CustomerLoyalty, Transaction, EliteGiftClaim, PointsEvent, CustomerFavorite
+from .models import CustomerLoyalty, Notification, Transaction, EliteGiftClaim, PointsEvent, CustomerFavorite
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ['recipient', 'title', 'notification_type', 'priority', 'read_at', 'created_at']
+    list_filter = ['notification_type', 'priority', 'read_at', 'created_at']
+    search_fields = ['recipient__username', 'recipient__phone_number', 'title', 'message']
+    readonly_fields = ['created_at', 'modified_at']
 
 
 @admin.register(PointsEvent)

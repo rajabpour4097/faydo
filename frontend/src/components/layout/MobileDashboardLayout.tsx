@@ -31,7 +31,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { isDark } = useTheme()
-  const { pendingCount, eliteGiftPendingCount } = useNotification()
+  const { pendingCount, eliteGiftPendingCount, unreadCount } = useNotification()
   const qrScanner = useQrScanner()
 
   const handleLogout = async () => {
@@ -89,8 +89,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
     if (path === '/dashboard') return location.pathname === '/dashboard'
     return location.pathname === path || location.pathname.startsWith(`${path}/`)
   }
-  const notificationCount =
-    pendingCount + (user?.type === 'business' ? eliteGiftPendingCount : 0)
+  const notificationCount = unreadCount
   const useNewHeader = user?.type === 'customer' || user?.type === 'business'
   const useNewBottomNav = useNewHeader
 
@@ -197,6 +196,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
               const sidebarItems = user?.type === 'business' 
                 ? [
                     { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' },
+                    { name: 'اعلان‌ها', href: '/dashboard/notifications', icon: '🔔', iconType: 'emoji', badge: unreadCount || undefined },
                     { name: 'مدیریت پکیج ها', href: '/dashboard/packages', icon: '/src/assets/images/package.png', iconType: 'image' },
                     { name: 'تراکنش‌ها', href: '/dashboard/transactions', icon: '📋', iconType: 'emoji', badge: pendingCount > 0 ? pendingCount : undefined },
                     { name: 'مشتریان', href: '/dashboard/customers', icon: '👥', iconType: 'emoji' },
@@ -208,6 +208,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
                 : [
                     { name: 'پروفایل', href: '/dashboard/profile', icon: '👤', iconType: 'emoji' },
                     { name: 'داشبورد', href: '/dashboard', icon: '📊', iconType: 'emoji' },
+                    { name: 'اعلان‌ها', href: '/dashboard/notifications', icon: '🔔', iconType: 'emoji', badge: unreadCount || undefined },
                     { name: 'تنظیمات', href: '/dashboard/settings', icon: '⚙️', iconType: 'emoji' },
                   ]
 

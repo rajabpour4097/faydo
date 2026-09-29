@@ -4,6 +4,7 @@ from django.db.models import Sum
 from accounts.models import CustomerProfile, BusinessProfile
 from packages.models import Package
 from django.contrib.contenttypes.fields import GenericRelation
+from django.conf import settings
 
 
 def available_cashback(customer, business, exclude_pk=None):
@@ -29,6 +30,51 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class Notification(BaseModel):
+    """اعلان پایدار داخل برنامه برای مشتری و کسب‌وکار."""
+
+    TYPE_CHOICES = [
+        ('transaction_created', 'تراکنش جدید'),
+        ('transaction_approved', 'تایید تراکنش'),
+        ('transaction_rejected', 'رد تراکنش'),
+        ('gift_claim_created', 'درخواست هدیه ویژه'),
+        ('gift_claim_approved', 'تایید درخواست هدیه'),
+        ('gift_claim_rejected', 'رد درخواست هدیه'),
+        ('gift_claim_used', 'استفاده از هدیه'),
+        ('review_created', 'نظر جدید مشتری'),
+        ('review_replied', 'پاسخ کسب‌وکار به نظر'),
+        ('general', 'عمومی'),
+    ]
+    PRIORITY_CHOICES = [
+        ('normal', 'عادی'),
+        ('important', 'مهم'),
+        ('urgent', 'فوری'),
+    ]
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+        verbose_name='دریافت‌کننده',
+    )
+    notification_type = models.CharField(max_length=40, choices=TYPE_CHOICES, default='general')
+    title = models.CharField(max_length=180)
+    message = models.TextField()
+    priority = models.CharField(max_length=12, choices=PRIORITY_CHOICES, default='normal')
+    action_url = models.CharField(max_length=300, blank=True, default='')
+    metadata = models.JSONField(default=dict, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['recipient', 'read_at', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.recipient} - {self.title}'
 
 
 class PointsEvent(BaseModel):

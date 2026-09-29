@@ -7,6 +7,7 @@ from .views import (
     points_summary, points_history,
     award_story_share, award_favorite_business,
     CustomerFavoriteViewSet,
+    NotificationViewSet,
     cashback_summary,
 )
 from .dashboard_views import (
@@ -22,6 +23,7 @@ router.register(r'loyalties', CustomerLoyaltyViewSet, basename='loyalty')
 router.register(r'transactions', TransactionViewSet, basename='transaction')
 router.register(r'elite-gift-claims', EliteGiftClaimViewSet, basename='elite-gift-claim')
 router.register(r'favorites', CustomerFavoriteViewSet, basename='customer-favorite')
+router.register(r'notifications', NotificationViewSet, basename='notification')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -1,10 +1,25 @@
 from rest_framework import serializers
-from .models import CustomerLoyalty, Transaction, EliteGiftClaim, available_cashback
+from .models import CustomerLoyalty, Notification, Transaction, EliteGiftClaim, available_cashback
 from .transaction_utils import mask_customer_phone
 from accounts.serializers import CustomerProfileSerializer, BusinessProfileSerializer
 from packages.serializers import PackageDetailSerializer
 from packages.models import Comment
 from django.contrib.contenttypes.models import ContentType
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    is_read = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = [
+            'id', 'notification_type', 'title', 'message', 'priority',
+            'action_url', 'metadata', 'is_read', 'read_at', 'created_at',
+        ]
+        read_only_fields = fields
+
+    def get_is_read(self, obj):
+        return obj.read_at is not None
 
 
 class CustomerLoyaltySerializer(serializers.ModelSerializer):
@@ -432,6 +447,19 @@ class TransactionCommentSerializer(serializers.Serializer):
             )
         except IntegrityError:
             raise serializers.ValidationError('شما قبلاً برای این خرید نظر ثبت کرده‌اید')
+
+        customer_name = (
+            transaction.customer.user.get_full_name()
+            or transaction.customer.user.username
+        ).strip()
+        Notification.objects.create(
+            recipient=transaction.business.user,
+            notification_type='review_created',
+            title='نظر جدید مشتری',
+            message=f'{customer_name} برای تراکنش خود نظر یا امتیاز ثبت کرد.',
+            action_url='/dashboard/transactions',
+            metadata={'transaction_id': transaction.id, 'comment_id': comment.id},
+        )
         
         # علامت‌گذاری تراکنش به عنوان کامنت شده
         transaction.has_commented = True

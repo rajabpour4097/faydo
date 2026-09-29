@@ -1,8 +1,114 @@
-from django.db.models.signals import pre_delete
+from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
-from .models import Transaction
+from .models import EliteGiftClaim, Notification, Transaction
 from packages.models import Comment, DiscountAll, SpecificDiscount, EliteGift
+
+
+def _person_name(profile):
+    user = profile.user
+    return (user.get_full_name() or user.username or user.phone_number).strip()
+
+
+@receiver(pre_save, sender=Transaction)
+def remember_transaction_status(sender, instance, **kwargs):
+    if instance.pk:
+        instance._previous_status = sender.objects.filter(pk=instance.pk).values_list('status', flat=True).first()
+
+
+@receiver(post_save, sender=Transaction)
+def notify_transaction_event(sender, instance, created, **kwargs):
+    # تراکنش هدیه توسط تایید درخواست ساخته می‌شود و اعلان جداگانه دارد.
+    if instance.transaction_type == 'elite_gift':
+        return
+    amount = f'{int(instance.final_amount or 0):,}'
+    metadata = {'transaction_id': instance.pk, 'status': instance.status}
+    if created and instance.status == 'pending':
+        Notification.objects.create(
+            recipient=instance.business.user,
+            notification_type='transaction_created',
+            title='تراکنش جدید در انتظار تایید',
+            message=f'{_person_name(instance.customer)} تراکنشی به مبلغ {amount} تومان ثبت کرد.',
+            priority='important',
+            action_url='/dashboard/transactions',
+            metadata=metadata,
+        )
+        return
+    previous = getattr(instance, '_previous_status', None)
+    if instance.status == 'approved' and (created or previous == 'pending'):
+        Notification.objects.create(
+            recipient=instance.customer.user,
+            notification_type='transaction_approved',
+            title='تراکنش شما تایید شد',
+            message=f'تراکنش {amount} تومانی شما در {instance.business.name} تایید شد.',
+            priority='important',
+            action_url='/dashboard/transactions',
+            metadata=metadata,
+        )
+    elif instance.status == 'rejected' and previous == 'pending':
+        reason = f' دلیل: {instance.rejection_reason}' if instance.rejection_reason else ''
+        Notification.objects.create(
+            recipient=instance.customer.user,
+            notification_type='transaction_rejected',
+            title='تراکنش شما رد شد',
+            message=f'تراکنش شما در {instance.business.name} رد شد.{reason}',
+            priority='urgent',
+            action_url='/dashboard/transactions',
+            metadata=metadata,
+        )
+
+
+@receiver(pre_save, sender=EliteGiftClaim)
+def remember_gift_claim_status(sender, instance, **kwargs):
+    if instance.pk:
+        instance._previous_status = sender.objects.filter(pk=instance.pk).values_list('status', flat=True).first()
+
+
+@receiver(post_save, sender=EliteGiftClaim)
+def notify_gift_claim_event(sender, instance, created, **kwargs):
+    metadata = {'claim_id': instance.pk, 'status': instance.status}
+    if created:
+        Notification.objects.create(
+            recipient=instance.business.user,
+            notification_type='gift_claim_created',
+            title='درخواست جدید هدیه ویژه',
+            message=f'{_person_name(instance.customer)} درخواست دریافت «{instance.elite_gift.gift}» را ارسال کرد.',
+            priority='important',
+            action_url='/dashboard/elite-gift-claims',
+            metadata=metadata,
+        )
+        return
+    previous = getattr(instance, '_previous_status', None)
+    if instance.status == 'approved' and previous == 'pending':
+        Notification.objects.create(
+            recipient=instance.customer.user,
+            notification_type='gift_claim_approved',
+            title='درخواست هدیه شما تایید شد',
+            message=f'درخواست «{instance.elite_gift.gift}» توسط {instance.business.name} تایید شد.',
+            priority='important',
+            action_url='/dashboard/transactions',
+            metadata=metadata,
+        )
+    elif instance.status == 'rejected' and previous == 'pending':
+        note = f' توضیح: {instance.business_note}' if instance.business_note else ''
+        Notification.objects.create(
+            recipient=instance.customer.user,
+            notification_type='gift_claim_rejected',
+            title='درخواست هدیه شما رد شد',
+            message=f'درخواست «{instance.elite_gift.gift}» توسط {instance.business.name} رد شد.{note}',
+            priority='urgent',
+            action_url='/dashboard/transactions',
+            metadata=metadata,
+        )
+    elif instance.status == 'used' and previous == 'approved':
+        Notification.objects.create(
+            recipient=instance.customer.user,
+            notification_type='gift_claim_used',
+            title='هدیه ویژه استفاده شد',
+            message=f'هدیه «{instance.elite_gift.gift}» در {instance.business.name} استفاده‌شده ثبت شد.',
+            action_url='/dashboard/transactions',
+            metadata=metadata,
+        )
 
 
 @receiver(pre_delete, sender=Transaction)

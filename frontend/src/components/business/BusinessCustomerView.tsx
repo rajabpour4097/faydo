@@ -9,7 +9,7 @@ import { WorkingHoursModal } from './WorkingHoursModal'
 import { BusinessMapPreview } from './BusinessMapPreview'
 import { ImageLightboxModal } from './ImageLightboxModal'
 import { AllReviewsModal, ReviewItem, ReviewReplyBlock } from './AllReviewsModal'
-import { formatRelativeShamsi } from '../../utils/shamsiDate'
+import { formatShamsiDateTime } from '../../utils/shamsiDate'
 import { Clock, MapPin, MessageSquare, ChevronLeft, Navigation, Gift, Tag, Star } from 'lucide-react'
 
 interface BusinessCustomerViewProps {
@@ -297,7 +297,7 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
                   <div key={review.id} className="border-b border-gray-50 dark:border-slate-700 last:border-0 pb-3 last:pb-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-semibold text-gray-800 dark:text-white">{review.user_name}</span>
-                      <span className="text-[10px] text-gray-400">{formatRelativeShamsi(review.created_at)}</span>
+                      <span className="text-[10px] text-gray-400 shrink-0">{formatShamsiDateTime(review.created_at)}</span>
                     </div>
                     <p className="text-xs text-gray-600 dark:text-slate-300 line-clamp-2 mb-1">{review.content}</p>
                     <button

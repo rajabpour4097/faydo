@@ -1,5 +1,5 @@
 import React from 'react'
-import { formatRelativeShamsi } from '../../utils/shamsiDate'
+import { formatShamsiDateTime } from '../../utils/shamsiDate'
 
 export interface ReviewReply {
   id: number
@@ -32,8 +32,9 @@ export function ReviewReplyBlock({
 }) {
   return (
     <div className={`mt-2 rounded-xl border-r-2 border-[#7C5CFC]/50 bg-[#F6F3FF] dark:bg-slate-800/80 ${compact ? 'px-2 py-1.5' : 'px-3 py-2'}`}>
-      <div className={`font-bold text-[#7C5CFC] ${compact ? 'text-[10px]' : 'text-xs'}`}>
-        پاسخ {reply.business_name}
+      <div className={`flex items-center justify-between gap-2 ${compact ? 'text-[10px]' : 'text-xs'}`}>
+        <span className="font-bold text-[#7C5CFC] truncate">پاسخ {reply.business_name}</span>
+        <span className="shrink-0 text-gray-400">{formatShamsiDateTime(reply.created_at)}</span>
       </div>
       <p className={`text-gray-600 dark:text-slate-300 leading-relaxed ${compact ? 'text-[11px] line-clamp-2 mt-0.5' : 'text-sm mt-1'}`}>
         {reply.content}
@@ -96,7 +97,7 @@ export const AllReviewsModal: React.FC<AllReviewsModalProps> = ({
                         {review.user_name}
                       </span>
                       <span className="text-[10px] text-gray-400 shrink-0">
-                        {formatRelativeShamsi(review.created_at)}
+                        {formatShamsiDateTime(review.created_at)}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed mb-2">

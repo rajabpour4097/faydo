@@ -486,6 +486,14 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
   onPackageClick,
 }) => {
   const { isDark } = useTheme()
+  const packageSequenceById = new Map(
+    [...packages]
+      .sort((a, b) => {
+        const dateDifference = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        return dateDifference || a.id - b.id
+      })
+      .map((pkg, index) => [pkg.id, index + 1]),
+  )
 
   return (
     <MobileDashboardLayout>
@@ -590,7 +598,7 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                     </div>
                     <div className="min-w-0">
                       <h4 className={`truncate text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        پکیج تبلیغاتی #{pkg.id.toLocaleString('fa-IR')}
+                        پکیج تبلیغاتی شماره {packageSequenceById.get(pkg.id)?.toLocaleString('fa-IR')}
                       </h4>
                       <p className="mt-1 text-[10px] text-slate-400">
                         ایجاد در {formatShamsiDate(pkg.created_at)}

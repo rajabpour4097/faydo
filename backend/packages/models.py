@@ -486,16 +486,17 @@ class EliteGift(BaseModel):
             business=self.package.business,
             package=self.package,
             status='approved',
-            created_at__gte=self.package.start_date,
-            created_at__lte=self.package.end_date
-        )
+            created_at__date__gte=self.package.start_date,
+            created_at__date__lte=self.package.end_date,
+        ).exclude(transaction_type='elite_gift')
         
-        # تعداد Elite Gift های تایید شده
-        approved_claims_count = EliteGiftClaim.objects.filter(
+        # رزرو هدیه باید بلافاصله پیشرفت را صفر کند. درخواست‌های رد یا
+        # منقضی‌شده دوباره سهم پیشرفت را آزاد می‌کنند.
+        reserved_claims_count = EliteGiftClaim.objects.filter(
             customer=customer,
             package=self.package,
             elite_gift=self,
-            status='approved'
+            status__in=['pending', 'approved', 'used'],
         ).count()
         
         if self.amount:
@@ -506,8 +507,8 @@ class EliteGift(BaseModel):
             
             target = float(self.amount)
             
-            # کسر مقدار Elite Gift های تایید شده
-            total_deducted = target * approved_claims_count
+            # کسر مقدار هدایای رزروشده
+            total_deducted = target * reserved_claims_count
             current = float(total_amount) - total_deducted
             
             # اطمینان از اینکه current منفی نمی‌شود
@@ -525,7 +526,7 @@ class EliteGift(BaseModel):
                 'percentage': round(percentage, 1),
                 'eligible': eligible,
                 'transactions_count': transactions.count(),
-                'approved_claims': approved_claims_count,
+                'approved_claims': reserved_claims_count,
                 'total_deducted': total_deducted
             }
         
@@ -535,8 +536,8 @@ class EliteGift(BaseModel):
             
             target = self.count
             
-            # کسر تعداد Elite Gift های تایید شده
-            total_deducted = target * approved_claims_count
+            # کسر تعداد هدایای رزروشده
+            total_deducted = target * reserved_claims_count
             current = total_count - total_deducted
             
             # اطمینان از اینکه current منفی نمی‌شود
@@ -554,7 +555,7 @@ class EliteGift(BaseModel):
                 'percentage': round(percentage, 1),
                 'eligible': eligible,
                 'transactions_count': total_count,
-                'approved_claims': approved_claims_count,
+                'approved_claims': reserved_claims_count,
                 'total_deducted': total_deducted
             }
         

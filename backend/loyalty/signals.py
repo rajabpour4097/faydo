@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
 from .models import EliteGiftClaim, Notification, Transaction
 from packages.models import Comment, DiscountAll, SpecificDiscount, EliteGift
+from .transaction_utils import jalali_datetime_label
 
 
 def _person_name(profile):
@@ -67,6 +68,10 @@ def remember_gift_claim_status(sender, instance, **kwargs):
 @receiver(post_save, sender=EliteGiftClaim)
 def notify_gift_claim_event(sender, instance, created, **kwargs):
     metadata = {'claim_id': instance.pk, 'status': instance.status}
+    if instance.scheduled_for:
+        metadata['scheduled_for'] = instance.scheduled_for.isoformat()
+    if instance.expires_at:
+        metadata['expires_at'] = instance.expires_at.isoformat()
     if created:
         Notification.objects.create(
             recipient=instance.business.user,
@@ -80,13 +85,18 @@ def notify_gift_claim_event(sender, instance, created, **kwargs):
         return
     previous = getattr(instance, '_previous_status', None)
     if instance.status == 'approved' and previous == 'pending':
+        delivery = jalali_datetime_label(instance.scheduled_for)
+        deadline = jalali_datetime_label(instance.expires_at)
         Notification.objects.create(
             recipient=instance.customer.user,
             notification_type='gift_claim_approved',
             title='درخواست هدیه شما تایید شد',
-            message=f'درخواست «{instance.elite_gift.gift}» توسط {instance.business.name} تایید شد.',
+            message=(
+                f'درخواست «{instance.elite_gift.gift}» توسط {instance.business.name} تایید شد. '
+                f'زمان تحویل: {delivery}. مهلت دریافت تا {deadline} است.'
+            ),
             priority='important',
-            action_url='/dashboard/transactions',
+            action_url='/dashboard/notifications',
             metadata=metadata,
         )
     elif instance.status == 'rejected' and previous == 'pending':

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils import timezone
 from .models import CustomerLoyalty, Notification, Transaction, EliteGiftClaim, PointsEvent, CustomerFavorite
 
 
@@ -87,7 +88,7 @@ class EliteGiftClaimAdmin(admin.ModelAdmin):
             'fields': ('status', 'business_note')
         }),
         ('تاریخ‌ها', {
-            'fields': ('created_at', 'approved_at', 'used_at', 'modified_at')
+            'fields': ('created_at', 'approved_at', 'scheduled_for', 'expires_at', 'used_at', 'modified_at')
         }),
     )
     
@@ -99,7 +100,7 @@ class EliteGiftClaimAdmin(admin.ModelAdmin):
         return obj.elite_gift.gift
     get_gift_name.short_description = 'نام هدیه'
     
-    actions = ['approve_claims', 'reject_claims', 'mark_as_used']
+    actions = ['reject_claims', 'mark_as_used']
     
     def approve_claims(self, request, queryset):
         """
@@ -108,7 +109,7 @@ class EliteGiftClaimAdmin(admin.ModelAdmin):
         count = 0
         for claim in queryset.filter(status='pending'):
             try:
-                claim.approve()
+                claim.approve(scheduled_for=timezone.now() + timezone.timedelta(hours=1))
                 count += 1
             except ValueError:
                 pass

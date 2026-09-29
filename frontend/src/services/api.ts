@@ -334,13 +334,34 @@ export interface EliteGiftClaim {
     approved_claims: number
     total_deducted: number
   }
-  status: 'pending' | 'approved' | 'rejected' | 'used'
+  status: 'pending' | 'approved' | 'rejected' | 'used' | 'expired'
   status_display: string
   approved_at: string | null
   used_at: string | null
+  scheduled_for: string | null
+  expires_at: string | null
   business_note: string | null
   created_at: string
   modified_at: string
+}
+
+export interface EliteGiftCustomerRow {
+  customer_id: number
+  customer_name: string
+  progress: EliteGiftProgress
+  last_purchase_at: string | null
+  status: 'pending' | 'approved' | 'expired' | 'ready' | 'near' | 'in_progress' | 'used' | 'rejected'
+  claim: EliteGiftClaim | null
+}
+
+export interface EliteGiftCustomersResponse {
+  package: {
+    id: number
+    gift_name: string
+    target_type: 'amount' | 'count'
+    target: number
+  } | null
+  customers: EliteGiftCustomerRow[]
 }
 
 export interface EliteGiftProgress {
@@ -1488,10 +1509,10 @@ class ApiService {
   }
 
   // Approve Elite Gift Claim
-  async approveEliteGiftClaim(claimId: number, note?: string): Promise<ApiResponse<EliteGiftClaim>> {
+  async approveEliteGiftClaim(claimId: number, scheduledFor: string, note?: string): Promise<ApiResponse<EliteGiftClaim>> {
     return this.request<EliteGiftClaim>(`/loyalty/elite-gift-claims/${claimId}/approve/`, {
       method: 'POST',
-      body: JSON.stringify({ note })
+      body: JSON.stringify({ scheduled_for: scheduledFor, note })
     })
   }
 
@@ -1501,6 +1522,16 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ note })
     })
+  }
+
+  async markEliteGiftClaimUsed(claimId: number): Promise<ApiResponse<EliteGiftClaim>> {
+    return this.request<EliteGiftClaim>(`/loyalty/elite-gift-claims/${claimId}/mark_used/`, {
+      method: 'POST'
+    })
+  }
+
+  async getEliteGiftCustomers(): Promise<ApiResponse<EliteGiftCustomersResponse>> {
+    return this.request<EliteGiftCustomersResponse>('/loyalty/elite-gift-claims/customers/')
   }
 
   // ─── Points & Tier ───────────────────────────────────────────────

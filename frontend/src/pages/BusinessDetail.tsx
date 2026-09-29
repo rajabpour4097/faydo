@@ -31,6 +31,12 @@ export const BusinessDetail: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const refreshEliteGiftProgress = async () => {
+    if (!currentPackage) return
+    const response = await apiService.getEliteGiftProgress(currentPackage.id)
+    if (response.data) setEliteGiftProgress(response.data)
+  }
+
   useEffect(() => {
     if (businessId) {
       loadBusinessData()
@@ -195,6 +201,7 @@ export const BusinessDetail: React.FC = () => {
           workingHours={workingHours}
           comments={comments}
           eliteGiftProgress={eliteGiftProgress}
+          onEliteGiftClaimed={refreshEliteGiftProgress}
           onLikeComment={handleLikeComment}
           onLikeReply={handleLikeReply}
         />

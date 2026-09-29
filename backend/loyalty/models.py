@@ -5,6 +5,8 @@ from accounts.models import CustomerProfile, BusinessProfile
 from packages.models import Package
 from django.contrib.contenttypes.fields import GenericRelation
 from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
 
 
 def available_cashback(customer, business, exclude_pk=None):
@@ -607,9 +609,10 @@ class EliteGiftClaim(BaseModel):
     """
     STATUS_CHOICES = [
         ('pending', 'در انتظار تایید کسب‌وکار'),
-        ('approved', 'تایید و اعطا شده'),
+        ('approved', 'تایید شده و در انتظار تحویل'),
         ('rejected', 'رد شده'),
         ('used', 'استفاده شده'),
+        ('expired', 'منقضی شده'),
     ]
     
     customer = models.ForeignKey(
@@ -662,6 +665,16 @@ class EliteGiftClaim(BaseModel):
         blank=True,
         verbose_name='تاریخ استفاده'
     )
+    scheduled_for = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='زمان تعیین‌شده برای تحویل'
+    )
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='مهلت دریافت هدیه'
+    )
     
     # یادداشت کسب‌وکار
     business_note = models.TextField(
@@ -680,46 +693,52 @@ class EliteGiftClaim(BaseModel):
     def __str__(self):
         return f"{self.customer.user.get_full_name()} - {self.elite_gift.gift} - {self.get_status_display()}"
     
-    def approve(self, note=None):
+    def approve(self, scheduled_for, note=None):
         """
         تایید و اعطای هدیه
         پس از تایید، یک Transaction برای این Elite Gift ایجاد می‌شود
         تا سیستم نظردهی trigger شود
         """
-        from django.utils import timezone
-        
         if self.status != 'pending':
             raise ValueError('فقط درخواست‌های در انتظار قابل تایید هستند')
-        
-        self.status = 'approved'
-        self.approved_at = timezone.now()
-        if note:
-            self.business_note = note
-        self.save()
-        
-        # پیدا کردن یا ایجاد loyalty (CustomerLoyalty فقط customer و business دارد)
-        loyalty, _ = CustomerLoyalty.objects.get_or_create(
-            customer=self.customer,
-            business=self.business
-        )
-        
-        # ایجاد یک Transaction برای این Elite Gift
-        # تا سیستم نظردهی و امتیازدهی trigger شود
-        Transaction.objects.create(
-            customer=self.customer,
-            business=self.business,
-            package=self.package,
-            loyalty=loyalty,
-            elite_gift=self.elite_gift,
-            transaction_type='elite_gift',
-            original_amount=0,  # Elite Gift بدون مبلغ است
-            final_amount=0,
-            points_earned=0,
-            status='approved',
-            description=f'دریافت هدیه ویژه: {self.elite_gift.gift}',
-            can_comment=True,  # امکان کامنت‌گذاری
-            comment_deadline=timezone.now() + timezone.timedelta(days=7)  # 7 روز مهلت
-        )
+
+        now = timezone.now()
+        if scheduled_for is None:
+            raise ValueError('تاریخ و ساعت تحویل الزامی است')
+        if scheduled_for < now:
+            raise ValueError('زمان تحویل نمی‌تواند در گذشته باشد')
+        if scheduled_for > now + timezone.timedelta(days=3):
+            raise ValueError('زمان تحویل نباید بیشتر از سه روز آینده باشد')
+
+        with transaction.atomic():
+            self.status = 'approved'
+            self.approved_at = now
+            self.scheduled_for = scheduled_for
+            self.expires_at = scheduled_for + timezone.timedelta(days=7)
+            if note:
+                self.business_note = note
+            self.save()
+
+            loyalty, _ = CustomerLoyalty.objects.get_or_create(
+                customer=self.customer,
+                business=self.business
+            )
+
+            Transaction.objects.create(
+                customer=self.customer,
+                business=self.business,
+                package=self.package,
+                loyalty=loyalty,
+                elite_gift=self.elite_gift,
+                transaction_type='elite_gift',
+                original_amount=0,
+                final_amount=0,
+                points_earned=0,
+                status='approved',
+                description=f'دریافت هدیه ویژه: {self.elite_gift.gift}',
+                can_comment=True,
+                comment_deadline=self.expires_at
+            )
     
     def reject(self, note=None):
         """
@@ -737,14 +756,22 @@ class EliteGiftClaim(BaseModel):
         """
         علامت‌گذاری به عنوان استفاده شده
         """
-        from django.utils import timezone
-        
+        self.expire_if_needed()
         if self.status != 'approved':
+            if self.status == 'expired':
+                raise ValueError('مهلت دریافت این هدیه به پایان رسیده است')
             raise ValueError('فقط هدایای تایید شده قابل استفاده هستند')
         
         self.status = 'used'
         self.used_at = timezone.now()
         self.save()
+
+    def expire_if_needed(self):
+        if self.status == 'approved' and self.expires_at and self.expires_at <= timezone.now():
+            self.status = 'expired'
+            self.save(update_fields=['status', 'modified_at'])
+            return True
+        return False
 
 
 class CustomerFavorite(BaseModel):

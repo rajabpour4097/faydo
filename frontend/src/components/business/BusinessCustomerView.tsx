@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Package, BusinessGalleryImage, EliteGiftProgress, AmenityItem, WorkingHoursEntry, getFullImageUrl,
+  Package, BusinessGalleryImage, EliteGiftProgress, AmenityItem, WorkingHoursEntry, getFullImageUrl, apiService,
 } from '../../services/api'
 import { AmenityIcon } from '../../utils/amenityIcons'
 import { getTodayHoursLabel, isBusinessOpenNow, openNavigationApps } from '../../utils/workingHours'
@@ -19,6 +19,7 @@ interface BusinessCustomerViewProps {
   workingHours: WorkingHoursEntry[]
   comments: ReviewItem[]
   eliteGiftProgress: EliteGiftProgress | null
+  onEliteGiftClaimed: () => void
   onLikeComment: (id: number) => void
   onLikeReply: (commentId: number) => void
 }
@@ -34,6 +35,7 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
   workingHours,
   comments,
   eliteGiftProgress,
+  onEliteGiftClaimed,
   onLikeComment,
   onLikeReply,
 }) => {
@@ -41,6 +43,24 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
   const [showHoursModal, setShowHoursModal] = useState(false)
   const [showReviewsModal, setShowReviewsModal] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [showGiftClaim, setShowGiftClaim] = useState(false)
+  const [claimSubmitting, setClaimSubmitting] = useState(false)
+  const [claimSuccess, setClaimSuccess] = useState(false)
+  const [claimError, setClaimError] = useState('')
+
+  const submitGiftClaim = async () => {
+    setClaimSubmitting(true)
+    setClaimError('')
+    const response = await apiService.createEliteGiftClaim(pkg.id)
+    setClaimSubmitting(false)
+    if (response.error) {
+      const error = response.error as any
+      setClaimError(error?.detail || error?.package_id?.[0] || String(response.error))
+      return
+    }
+    setClaimSuccess(true)
+    onEliteGiftClaimed()
+  }
 
   const bannerUrl = gallery.find(g => g.is_featured)?.image_url
     || gallery[0]?.image_url
@@ -236,6 +256,19 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
                 ? `هدف خرید ${formatAmount(eliteGiftProgress.target)} تومان`
                 : `هدف ${eliteGiftProgress.target} مراجعه`}
             </p>
+            {eliteGiftProgress.eligible && (
+              <button
+                type="button"
+                onClick={() => {
+                  setClaimSuccess(false)
+                  setClaimError('')
+                  setShowGiftClaim(true)
+                }}
+                className="w-full mt-3 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors"
+              >
+                دریافت هدیه
+              </button>
+            )}
           </div>
         )}
 
@@ -374,6 +407,54 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
         />
+      )}
+      {showGiftClaim && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 p-5 shadow-2xl">
+            {claimSuccess ? (
+              <>
+                <div className="text-center text-4xl mb-3">🎉</div>
+                <h3 className="text-center text-lg font-black text-gray-900 dark:text-white mb-2">تبریک!</h3>
+                <p className="text-sm leading-7 text-center text-gray-600 dark:text-slate-300">
+                  درخواست دریافت هدیه برای {pkg.business_name} ارسال شد و پس از تایید به شما اطلاع داده خواهد شد.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowGiftClaim(false)}
+                  className="w-full mt-5 py-2.5 rounded-xl bg-red-500 text-white font-bold"
+                >
+                  متوجه شدم
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2">دریافت هدیه ویژه</h3>
+                <p className="text-sm leading-7 text-gray-600 dark:text-slate-300">
+                  آیا درخواست دریافت «{pkg.elite_gift_gift || eliteGiftProgress?.gift_name || 'هدیه ویژه'}» از {pkg.business_name} ارسال شود؟
+                </p>
+                {claimError && <p className="mt-3 text-xs text-red-500">{claimError}</p>}
+                <div className="grid grid-cols-2 gap-2 mt-5">
+                  <button
+                    type="button"
+                    onClick={submitGiftClaim}
+                    disabled={claimSubmitting}
+                    className="py-2.5 rounded-xl bg-red-500 disabled:opacity-50 text-white font-bold"
+                  >
+                    {claimSubmitting ? 'در حال ارسال…' : 'تایید'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowGiftClaim(false)}
+                    disabled={claimSubmitting}
+                    className="py-2.5 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-white font-bold"
+                  >
+                    رد
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   )

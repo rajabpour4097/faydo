@@ -511,10 +511,12 @@ class EliteGiftClaimSerializer(serializers.ModelSerializer):
             'id', 'customer', 'customer_name', 'elite_gift', 'gift_name',
             'package', 'business', 'business_name', 'progress_at_claim',
             'status', 'status_display', 'approved_at', 'used_at',
+            'scheduled_for', 'expires_at',
             'business_note', 'created_at', 'modified_at'
         ]
         read_only_fields = [
             'customer', 'progress_at_claim', 'approved_at', 'used_at',
+            'scheduled_for', 'expires_at',
             'created_at', 'modified_at'
         ]
 

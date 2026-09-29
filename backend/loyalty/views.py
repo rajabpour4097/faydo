@@ -10,7 +10,7 @@ from .serializers import (
     TransactionCreateSerializer, BusinessInfoSerializer,
     TransactionCommentSerializer, CustomerFavoriteSerializer, NotificationSerializer,
 )
-from accounts.models import BusinessProfile
+from accounts.models import BusinessProfile, CustomerProfile
 from django.db import IntegrityError
 from django.utils import timezone
 
@@ -586,11 +586,15 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
         
         try:
             note = request.data.get('note')
-            claim.approve(note)
+            from rest_framework import serializers
+            scheduled_for = serializers.DateTimeField().run_validation(
+                request.data.get('scheduled_for')
+            )
+            claim.approve(scheduled_for=scheduled_for, note=note)
             
             serializer = self.get_serializer(claim)
             return Response(serializer.data)
-        except ValueError as e:
+        except (ValueError, serializers.ValidationError) as e:
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
@@ -669,6 +673,14 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         from .models import EliteGiftClaim
         user = self.request.user
+
+        # بدون نیاز به کار زمان‌بندی‌شده، وضعیت هدایایی که مهلتشان تمام شده
+        # هنگام هر مراجعه به این بخش قطعی می‌شود.
+        EliteGiftClaim.objects.filter(
+            status='approved',
+            expires_at__isnull=False,
+            expires_at__lte=timezone.now(),
+        ).update(status='expired', modified_at=timezone.now())
         
         if user.role == 'customer':
             return EliteGiftClaim.objects.filter(customer=user.customerprofile)
@@ -691,6 +703,12 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
         ایجاد درخواست دریافت هدیه ویژه
         """
         from .serializers import EliteGiftClaimCreateSerializer, EliteGiftClaimSerializer
+
+        if request.user.role != 'customer':
+            return Response(
+                {'detail': 'فقط مشتریان می‌توانند درخواست هدیه ثبت کنند'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         
         serializer = EliteGiftClaimCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -723,12 +741,17 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
         
         try:
             note = request.data.get('note', '')
-            claim.approve(note=note)
+            from rest_framework import serializers
+
+            scheduled_for = serializers.DateTimeField().run_validation(
+                request.data.get('scheduled_for')
+            )
+            claim.approve(scheduled_for=scheduled_for, note=note)
             
             from .serializers import EliteGiftClaimSerializer
             serializer = EliteGiftClaimSerializer(claim)
             return Response(serializer.data)
-        except ValueError as e:
+        except (ValueError, serializers.ValidationError) as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
@@ -791,6 +814,115 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], url_path='customers')
+    def customers(self, request):
+        """جدول مدیریت مشتریان برنامه هدیه ویژه برای کسب‌وکار."""
+        if request.user.role != 'business':
+            return Response(
+                {'detail': 'فقط کسب‌وکار می‌تواند این بخش را مشاهده کند'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        from packages.models import Package
+
+        business = request.user.businessprofile
+        package = (
+            Package.objects.filter(
+                business=business,
+                status='approved',
+                is_active=True,
+                elite_gift__isnull=False,
+            )
+            .select_related('elite_gift')
+            .order_by('-id')
+            .first()
+        )
+        if not package:
+            return Response({'package': None, 'customers': []})
+
+        customer_ids = set(
+            CustomerLoyalty.objects.filter(business=business)
+            .values_list('customer_id', flat=True)
+        )
+        customer_ids.update(
+            Transaction.objects.filter(business=business)
+            .values_list('customer_id', flat=True)
+        )
+        customer_ids.update(
+            EliteGiftClaim.objects.filter(business=business, package=package)
+            .values_list('customer_id', flat=True)
+        )
+
+        rows = []
+        for customer in CustomerProfile.objects.filter(
+            id__in=customer_ids
+        ).select_related('user'):
+            progress = package.elite_gift.get_customer_progress(customer)
+            latest_purchase = (
+                Transaction.objects.filter(
+                    customer=customer,
+                    business=business,
+                    status='approved',
+                )
+                .exclude(transaction_type='elite_gift')
+                .order_by('-created_at')
+                .values_list('created_at', flat=True)
+                .first()
+            )
+            latest_claim = (
+                EliteGiftClaim.objects.filter(
+                    customer=customer,
+                    business=business,
+                    package=package,
+                )
+                .order_by('-created_at')
+                .first()
+            )
+
+            percentage = float(progress.get('percentage') or 0)
+            if latest_claim and latest_claim.status in ('pending', 'approved', 'expired'):
+                row_status = latest_claim.status
+            elif progress.get('eligible'):
+                row_status = 'ready'
+            elif percentage >= 60:
+                row_status = 'near'
+            elif latest_claim and latest_claim.status in ('used', 'rejected') and percentage == 0:
+                row_status = latest_claim.status
+            else:
+                row_status = 'in_progress'
+
+            rows.append({
+                'customer_id': customer.id,
+                'customer_name': (
+                    customer.user.get_full_name()
+                    or customer.user.username
+                    or customer.user.phone_number
+                ),
+                'progress': progress,
+                'last_purchase_at': latest_purchase,
+                'status': row_status,
+                'claim': (
+                    self.get_serializer(latest_claim).data
+                    if latest_claim else None
+                ),
+            })
+
+        rows.sort(
+            key=lambda row: (
+                row['status'] != 'pending',
+                -float(row['progress'].get('percentage') or 0),
+            )
+        )
+        return Response({
+            'package': {
+                'id': package.id,
+                'gift_name': package.elite_gift.gift,
+                'target_type': 'amount' if package.elite_gift.amount else 'count',
+                'target': float(package.elite_gift.amount or package.elite_gift.count or 0),
+            },
+            'customers': rows,
+        })
 
 
 @api_view(['GET'])

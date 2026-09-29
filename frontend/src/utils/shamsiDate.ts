@@ -3,9 +3,33 @@ import moment from 'moment-jalaali'
 moment.loadPersian({ dialect: 'persian-modern', usePersianDigits: false })
 
 const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹'
+const AR_DIGITS = '٠١٢٣٤٥٦٧٨٩'
 
 export function toFaDigits(value: string | number) {
   return String(value).replace(/\d/g, digit => FA_DIGITS[Number(digit)] ?? digit)
+}
+
+export function toEnglishDigits(value: string) {
+  return value
+    .replace(/[۰-۹]/g, digit => String(FA_DIGITS.indexOf(digit)))
+    .replace(/[٠-٩]/g, digit => String(AR_DIGITS.indexOf(digit)))
+}
+
+export function parseShamsiDateTime(date: string, time: string) {
+  const parsed = moment(
+    `${toEnglishDigits(date)} ${toEnglishDigits(time)}`,
+    'jYYYY/jMM/jDD HH:mm',
+    true,
+  )
+  return parsed.isValid() ? parsed.toISOString() : null
+}
+
+export function toShamsiInputParts(value: string | Date) {
+  const date = moment(value)
+  return {
+    date: date.format('jYYYY/jMM/jDD'),
+    time: date.format('HH:mm'),
+  }
 }
 
 function asMoment(value?: string | Date | null) {

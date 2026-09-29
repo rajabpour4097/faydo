@@ -157,7 +157,6 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
               {faNum(attentionCount)}
             </span>
           )}
-          <Chevron className={muted} />
         </div>
         <div className="grid grid-cols-4 gap-1">
           <ActionCard to="/dashboard/transactions?status=pending" count={actions.pending_transactions} label="تراکنش در انتظار تأیید" bg={isDark ? 'bg-sky-500/10' : 'bg-[#EEF5FF]'} tint="text-sky-500" icon="card" />
@@ -169,7 +168,6 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
 
       <section className={`mt-3 rounded-[28px] p-3 shadow-sm ${card}`}>
         <div className="mb-2 flex items-center gap-1">
-          <span className="text-[#7C5CFC]"><KpiIcon name="grid" /></span>
           <h2 className={`text-[14px] font-black ${title}`}>دسترسی سریع</h2>
         </div>
         <div className="grid grid-cols-4 gap-1.5">
@@ -344,9 +342,9 @@ function QuickTile({
   to, title, bg, tint, icon,
 }: { to: string; title: string; bg: string; tint: string; icon: string }) {
   return (
-    <Link to={to} className={`flex flex-col justify-between rounded-[16px] px-1.5 py-2 ${bg}`}>
-      <span className={tint}><KpiIcon name={icon} size={14} /></span>
-      <div className="mt-1.5 text-[9px] font-bold leading-[12px] text-gray-500">{title}</div>
+    <Link to={to} className={`flex flex-col items-center rounded-[16px] px-1 py-2.5 text-center ${bg}`}>
+      <KpiIcon name={icon} className={`h-8 w-8 ${tint}`} />
+      <div className="mt-1.5 w-full text-[10px] font-bold leading-4 text-gray-500">{title}</div>
     </Link>
   )
 }
@@ -381,8 +379,8 @@ function GiftArt() {
   )
 }
 
-function KpiIcon({ name, size = 16 }: { name: string; size?: number }) {
-  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none' as const }
+function KpiIcon({ name, size = 16, className }: { name: string; size?: number; className?: string }) {
+  const common = { width: className ? undefined : size, height: className ? undefined : size, className, viewBox: '0 0 24 24' as const, fill: 'none' as const }
   if (name === 'grid') return <svg {...common}><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>
   if (name === 'bars') return <svg {...common}><path d="M4 19V10M9 19V5M14 19v-6M19 19V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
   if (name === 'users') return <svg {...common}><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>

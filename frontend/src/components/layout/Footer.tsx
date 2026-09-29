@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
+import { shamsiYear } from '../../utils/shamsiDate'
 
 export const Footer = () => {
-  const currentYear = new Date().getFullYear()
+  const currentYear = shamsiYear()
 
   return (
     <footer className="bg-gray-900 text-white">

@@ -9,6 +9,7 @@ import { GalleryManagement } from '../../components/business/GalleryManagement'
 import { BusinessAmenitiesManageModal } from '../../components/business/BusinessAmenitiesManageModal'
 import { BusinessHoursManageModal } from '../../components/business/BusinessHoursManageModal'
 import { formatTimeDisplay, getTodaySchedule } from '../../utils/workingHours'
+import { formatShamsiDate } from '../../utils/shamsiDate'
 
 interface EditModalProps {
   isOpen: boolean
@@ -1636,7 +1637,7 @@ const MobileProfile = () => {
           <ProfileSectionCard title="اطلاعات شخصی" icon={icons.gender} className="mx-4">
             <Field label="جنسیت" value={getCurrentValue('gender')} editable={!isGenderSet(user?.profile?.gender)} isRequired icon={icons.gender}
               onEdit={() => openEditModal('gender', 'جنسیت خود را انتخاب کنید', getCurrentValue('gender'))} />
-            <Field label="تاریخ تولد" value={getCurrentValue('birth_date')} editable={!isBirthDateSet(user?.profile?.birth_date)} isRequired icon={icons.calendar}
+            <Field label="تاریخ تولد" value={user?.profile?.birth_date ? formatShamsiDate(user.profile.birth_date) : ''} editable={!isBirthDateSet(user?.profile?.birth_date)} isRequired icon={icons.calendar}
               onEdit={() => openEditModal('birth_date', 'تاریخ تولد را وارد کنید', getCurrentValue('birth_date'))} />
             <Field label="شهر" value={getCurrentValue('city')} editable isRequired icon={icons.city}
               onEdit={() => openEditModal('city', 'شهر خود را انتخاب کنید', getCurrentValue('city'))} />

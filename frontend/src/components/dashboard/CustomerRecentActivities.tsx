@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import { apiService, PointsEvent } from '../../services/api'
 import { loyaltyService, Transaction } from '../../services/loyalty'
+import { formatRelativeShamsi } from '../../utils/shamsiDate'
 
 const DISPLAY_LIMIT = 5
 
@@ -56,27 +57,6 @@ const TX_APPEARANCE: Record<Transaction['status'], { emoji: string; from: string
   pending: { emoji: '⏳', from: 'from-warning-500', to: 'to-warning-600' },
   approved: { emoji: '✓', from: 'from-primary-500', to: 'to-primary-600' },
   rejected: { emoji: '✕', from: 'from-red-500', to: 'to-red-600' },
-}
-
-function formatRelativeDate(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return ''
-
-  const now = new Date()
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  const days = Math.round(
-    (startOfToday.getTime() - startOfDate.getTime()) / (1000 * 60 * 60 * 24)
-  )
-
-  if (days <= 0) return 'امروز'
-  if (days === 1) return 'دیروز'
-  if (days < 7) return `${days.toLocaleString('fa-IR')} روز پیش`
-
-  return new Intl.DateTimeFormat('fa-IR', {
-    month: 'short',
-    day: 'numeric',
-  }).format(date)
 }
 
 const TIER_LABELS: Record<string, string> = {
@@ -331,7 +311,7 @@ export function CustomerRecentActivities({
                   isDark ? 'text-slate-400' : 'text-gray-500'
                 }`}
               >
-                {formatRelativeDate(item.createdAt)}
+                {formatRelativeShamsi(item.createdAt)}
               </span>
             </div>
           ))}

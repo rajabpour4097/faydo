@@ -3,18 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { apiService, CashbackEntry } from '../../services/api'
-
-function formatDate(iso: string) {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso
-  return new Intl.DateTimeFormat('fa-IR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
+import { formatShamsiDateTime } from '../../utils/shamsiDate'
 
 function CashbackDetailsContent({
   total,
@@ -104,7 +93,7 @@ function CashbackDetailsContent({
                       {entry.business_name}
                     </p>
                     <p className={`mt-1 text-[11px] ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                      {formatDate(entry.created_at)}
+                      {formatShamsiDateTime(entry.created_at)}
                     </p>
                     <p className={`mt-1 text-[11px] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
                       خرید {Number(entry.original_amount).toLocaleString('fa-IR')} تومان

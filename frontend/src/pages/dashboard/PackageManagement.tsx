@@ -5,6 +5,7 @@ import { apiService, Package, VipExperienceCategory } from '../../services/api'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { useTheme } from '../../contexts/ThemeContext'
 import { CreatePackageModal } from '../../components/business/CreatePackageModal'
+import { formatShamsiDate, formatShamsiDateTime } from '../../utils/shamsiDate'
 
 // ─── Helpers for currency formatting ───────────────────────────────────────
 /**
@@ -510,7 +511,7 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                           <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          شروع: {new Date(pkg.start_date).toLocaleDateString('fa-IR')}
+                          شروع: {formatShamsiDate(pkg.start_date)}
                         </div>
                       )}
                       {pkg.end_date && (
@@ -518,7 +519,7 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                           <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          پایان: {new Date(pkg.end_date).toLocaleDateString('fa-IR')}
+                          پایان: {formatShamsiDate(pkg.end_date)}
                         </div>
                       )}
                     </div>
@@ -775,7 +776,7 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
                       تاریخ شروع
                     </label>
                     <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                      {new Date(pkg.start_date).toLocaleDateString('fa-IR')}
+                      {formatShamsiDate(pkg.start_date)}
                     </p>
                   </div>
                 )}
@@ -785,7 +786,7 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
                       تاریخ پایان
                     </label>
                     <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                      {new Date(pkg.end_date).toLocaleDateString('fa-IR')}
+                      {formatShamsiDate(pkg.end_date)}
                     </p>
                   </div>
                 )}
@@ -977,7 +978,7 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
                     تاریخ ایجاد
                   </label>
                   <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                    {new Date(pkg.created_at).toLocaleDateString('fa-IR')} - {new Date(pkg.created_at).toLocaleTimeString('fa-IR')}
+                    {formatShamsiDateTime(pkg.created_at)}
                   </p>
                 </div>
                 <div>
@@ -985,7 +986,7 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
                     آخرین ویرایش
                   </label>
                   <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                    {new Date(pkg.modified_at).toLocaleDateString('fa-IR')} - {new Date(pkg.modified_at).toLocaleTimeString('fa-IR')}
+                    {formatShamsiDateTime(pkg.modified_at)}
                   </p>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import React from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Transaction } from '../../services/loyalty'
+import { formatShamsiDateTime } from '../../utils/shamsiDate'
 
 interface TransactionCardProps {
   transaction: Transaction
@@ -12,17 +13,6 @@ const formatNumber = (num: string | number): string => {
   const numStr = num.toString().replace(/,/g, '')
   if (!numStr || numStr === '0') return '0'
   return parseInt(numStr).toLocaleString('en-US')
-}
-
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('fa-IR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
 }
 
 export const TransactionCard: React.FC<TransactionCardProps> = ({
@@ -83,7 +73,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
               {transaction.customer_name}
             </h3>
             <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-              {formatDate(transaction.created_at)}
+              {formatShamsiDateTime(transaction.created_at)}
             </p>
           </div>
         </div>

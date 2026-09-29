@@ -1,3 +1,5 @@
+import { formatShamsiDate } from '../../utils/shamsiDate'
+
 export const HOME_PURPLE = '#7C5CFC'
 export const HOME_TEAL = '#2DD4BF'
 
@@ -18,14 +20,7 @@ export const faSignedPct = (n: number) => {
   return `${abs}٪`
 }
 
-export const todayLabel = () => {
-  const formatted = new Intl.DateTimeFormat('fa-IR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date())
-  return `امروز • ${formatted}`
-}
+export const todayLabel = () => `امروز • ${formatShamsiDate(new Date())}`
 
 export const formatToman = (n: number) => `${faNum(Math.round(n))} تومان`
 

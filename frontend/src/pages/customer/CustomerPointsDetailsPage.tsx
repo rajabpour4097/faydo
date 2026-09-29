@@ -7,6 +7,7 @@ import {
   PointsEvent,
   PointsSummary,
 } from '../../services/api'
+import { formatShamsiDateTime } from '../../utils/shamsiDate'
 
 type FilterType = 'all' | 'earned' | 'spent'
 
@@ -35,19 +36,6 @@ const EVENT_STYLES: Record<
 }
 
 const DEFAULT_STYLE = { emoji: '✨', bg: 'bg-teal-500/10', ring: 'ring-teal-500/20' }
-
-function formatEventDate(iso: string) {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso
-
-  return new Intl.DateTimeFormat('fa-IR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
 
 function formatPoints(value: number) {
   const prefix = value > 0 ? '+' : ''
@@ -153,7 +141,7 @@ function PointsEventCard({ event, isDark }: PointsEventCardProps) {
               isDark ? 'text-slate-500' : 'text-gray-400'
             }`}
           >
-            {formatEventDate(event.created_at)}
+            {formatShamsiDateTime(event.created_at)}
           </p>
 
           {event.active_score_delta !== 0 && (

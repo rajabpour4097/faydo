@@ -3,6 +3,7 @@ import { apiService, EliteGiftClaim } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { Gift, Check, X, Clock, CheckCircle } from 'lucide-react'
+import { formatShamsiDateTime } from '../../utils/shamsiDate'
 
 export const EliteGiftClaimsPage: React.FC = () => {
   const { isDark } = useTheme()
@@ -253,7 +254,7 @@ export const EliteGiftClaimsPage: React.FC = () => {
                 </div>
 
                 <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                  تاریخ درخواست: {new Date(claim.created_at).toLocaleDateString('fa-IR')}
+                  تاریخ درخواست: {formatShamsiDateTime(claim.created_at)}
                 </div>
 
                 {claim.business_note && (

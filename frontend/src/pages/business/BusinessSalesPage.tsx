@@ -5,6 +5,7 @@ import { BusinessScreen } from '../../components/business/BusinessScreen'
 import { apiService, BusinessDashboardData } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { HOME_PURPLE, faNum, faSignedPct, formatCompact, formatToman } from '../../components/business/businessHomeUtils'
+import { formatShamsiFromGregorianMonthDay, toFaDigits } from '../../utils/shamsiDate'
 
 export const BusinessSalesPage = () => {
   const { isDark } = useTheme()
@@ -45,7 +46,7 @@ export const BusinessSalesPage = () => {
                 <div className="text-[11px] text-gray-400">تعداد تراکنش</div>
                 <div className="mt-1 text-xl font-black">{faNum(data.kpis.transactions_this_month)}</div>
                 <div className="mt-1 text-[12px] text-gray-400">
-                  بهترین روز: {best.day ? `${faNum(best.day)} · ${formatToman(best.amount)}` : '—'}
+                  بهترین روز: {best.day ? `${formatShamsiFromGregorianMonthDay(best.day)} · ${formatToman(best.amount)}` : '—'}
                 </div>
               </div>
             </div>
@@ -60,8 +61,8 @@ export const BusinessSalesPage = () => {
                       </linearGradient>
                     </defs>
                     <YAxis orientation="right" tickFormatter={value => formatCompact(Number(value))} tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} width={32} />
-                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                    <Tooltip formatter={(value: number) => formatToman(Number(value))} labelFormatter={label => `روز ${faNum(Number(label))}`} />
+                    <XAxis dataKey="day" tickFormatter={value => toFaDigits(formatShamsiFromGregorianMonthDay(Number(value)).split(' ')[0] || '')} tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                    <Tooltip formatter={(value: number) => formatToman(Number(value))} labelFormatter={label => formatShamsiFromGregorianMonthDay(Number(label))} />
                     <Area type="monotone" dataKey="amount" stroke={HOME_PURPLE} strokeWidth={2.4} fill="url(#salesFillPage)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -74,7 +75,7 @@ export const BusinessSalesPage = () => {
               ) : (
                 series.filter(item => item.amount > 0).map(item => (
                   <div key={item.day} className="flex items-center justify-between border-b border-gray-50 px-4 py-3 text-sm last:border-0">
-                    <span>روز {faNum(item.day)}</span>
+                    <span>{formatShamsiFromGregorianMonthDay(item.day)}</span>
                     <span className="font-bold">{formatToman(item.amount)}</span>
                   </div>
                 ))

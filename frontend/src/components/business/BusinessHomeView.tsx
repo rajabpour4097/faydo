@@ -10,6 +10,7 @@ import {
   formatToman,
   todayLabel,
 } from './businessHomeUtils'
+import { formatShamsiFromGregorianMonthDay } from '../../utils/shamsiDate'
 
 type SalesRange = '7d' | '30d' | '6m' | '1y'
 
@@ -100,7 +101,7 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
   const fallbackChart: SalesChartSeries = {
     total: kpis.sales_this_month,
     change: kpis.sales_change,
-    points: sales_series.map(item => ({ label: String(item.label || item.day), amount: item.amount })),
+    points: sales_series.map(item => ({ label: formatShamsiFromGregorianMonthDay(item.day), amount: item.amount })),
   }
   const chart = data.sales_charts?.[range] || fallbackChart
   const peak = Math.max(...chart.points.map(item => item.amount), 0)

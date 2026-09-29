@@ -5,6 +5,7 @@ import { apiService, BusinessCustomerRow, BusinessTransaction } from '../../serv
 import { useTheme } from '../../contexts/ThemeContext'
 import { faNum, formatToman } from '../../components/business/businessHomeUtils'
 import { maskPhone } from '../../components/business/businessTransactionUtils'
+import { formatShamsiDateTime } from '../../utils/shamsiDate'
 
 const SEGMENTS = [
   { id: 'all', label: 'همه' },
@@ -164,7 +165,7 @@ export const BusinessCustomersPage = () => {
                   {history.map(tx => (
                     <div key={tx.id} className="flex items-center justify-between rounded-2xl bg-[#F4F6FB] px-3 py-2 text-[12px]">
                       <span>{formatToman(Number(tx.final_amount))}</span>
-                      <span className="text-gray-400">{new Date(tx.created_at).toLocaleDateString('fa-IR')}</span>
+                      <span className="text-gray-400">{formatShamsiDateTime(tx.created_at)}</span>
                     </div>
                   ))}
                 </div>

@@ -1,24 +1,9 @@
 import React, { useMemo, useState } from 'react'
 import { ChevronLeft, Heart, Search, SlidersHorizontal, Star } from 'lucide-react'
-import moment from 'moment-jalaali'
 import { Package } from '../../services/api'
+import { formatShamsiDayMonth } from '../../utils/shamsiDate'
 import { clubThemeKey, faNum } from './clubExperienceUtils'
 import { buildCoverUrl, haversineKm } from '../../utils/exploreHelpers'
-
-const PERSIAN_MONTHS = [
-  'فروردین',
-  'اردیبهشت',
-  'خرداد',
-  'تیر',
-  'مرداد',
-  'شهریور',
-  'مهر',
-  'آبان',
-  'آذر',
-  'دی',
-  'بهمن',
-  'اسفند',
-]
 
 type ClubFilter = 'all' | 'taste' | 'wellness' | 'lifestyle'
 export type ExperienceSort = 'popular' | 'rating' | 'nearest'
@@ -312,12 +297,14 @@ function BusinessRow({
 }
 
 function formatUntilDate(pkg: Package): string | null {
-  const source = pkg.end_date
-    ? moment(pkg.end_date)
-    : pkg.days_remaining && pkg.days_remaining > 0
-      ? moment().add(pkg.days_remaining, 'days')
-      : null
-  if (!source || !source.isValid()) return null
-  const month = PERSIAN_MONTHS[source.jMonth()] || ''
-  return `فقط تا ${source.jDate()} ${month}`
+  if (pkg.end_date) {
+    const label = formatShamsiDayMonth(pkg.end_date)
+    return label === '—' ? null : `فقط تا ${label}`
+  }
+  if (pkg.days_remaining && pkg.days_remaining > 0) {
+    const date = new Date()
+    date.setDate(date.getDate() + pkg.days_remaining)
+    return `فقط تا ${formatShamsiDayMonth(date)}`
+  }
+  return null
 }

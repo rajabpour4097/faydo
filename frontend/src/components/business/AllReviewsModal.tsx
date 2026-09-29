@@ -1,4 +1,5 @@
 import React from 'react'
+import { formatRelativeShamsi } from '../../utils/shamsiDate'
 
 export interface ReviewReply {
   id: number
@@ -59,14 +60,6 @@ interface AllReviewsModalProps {
   onLikeReply?: (commentId: number) => void
 }
 
-function formatRelativeDate(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days === 0) return 'امروز'
-  if (days === 1) return 'دیروز'
-  return `${days} روز پیش`
-}
-
 export const AllReviewsModal: React.FC<AllReviewsModalProps> = ({
   reviews,
   totalCount,
@@ -103,7 +96,7 @@ export const AllReviewsModal: React.FC<AllReviewsModalProps> = ({
                         {review.user_name}
                       </span>
                       <span className="text-[10px] text-gray-400 shrink-0">
-                        {formatRelativeDate(review.created_at)}
+                        {formatRelativeShamsi(review.created_at)}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed mb-2">

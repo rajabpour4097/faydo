@@ -134,13 +134,13 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
             <SummaryStat to="/dashboard/transactions" label="تراکنش‌ها" value={kpis.transactions_this_month} icon="invoice" tint="text-sky-500" ink={title} divided />
           </div>
           <Link to="/dashboard/sales" className="flex shrink-0 items-center gap-1.5">
-            <div className="text-right">
+            <div className="text-left">
               <div className={`text-[18px] font-black leading-none tracking-tight ${title}`}>{faNum(Math.round(kpis.sales_this_month))}</div>
               <div className={`mt-0.5 text-[10px] leading-3 ${muted}`}>تومان</div>
-              <div className="mt-0.5 text-[11px] leading-4">
+              <div className="mt-0.5 flex items-center gap-1 whitespace-nowrap text-[8px] leading-4">
+                <span className={muted}>نسبت به ماه قبل</span>
                 <Trend value={kpis.sales_change} />
               </div>
-              <div className={`text-[9px] leading-3 ${muted}`}>نسبت به ماه قبل</div>
             </div>
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#EDE9FE] text-[#7C5CFC]">
               <KpiIcon name="wallet" size={18} />

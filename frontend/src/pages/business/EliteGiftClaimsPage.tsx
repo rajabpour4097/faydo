@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { apiService, EliteGiftClaim, EliteGiftCustomerRow } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
-import { Gift, Check, X, Clock, CheckCircle } from 'lucide-react'
+import { Gift, Check, X, Clock, CheckCircle, ChevronLeft } from 'lucide-react'
 import { formatRelativeShamsi, formatShamsiDateTime, parseShamsiDateTime, toShamsiInputParts } from '../../utils/shamsiDate'
 
 export const EliteGiftClaimsPage: React.FC = () => {
@@ -187,16 +187,16 @@ export const EliteGiftClaimsPage: React.FC = () => {
 
   const content = (
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                <Gift className="w-6 h-6 text-purple-600 dark:text-purple-300" />
+              <div className="p-2 sm:p-2.5 bg-purple-100 dark:bg-purple-900 rounded-xl">
+                <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-300" />
               </div>
               <div>
-                <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <h1 className={`text-xl sm:text-2xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   درخواست‌های هدیه ویژه
                 </h1>
                 {pendingClaims.length > 0 && (
@@ -209,7 +209,7 @@ export const EliteGiftClaimsPage: React.FC = () => {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[
               { value: 'all', label: 'همه', count: customers.length },
               { value: 'pending', label: 'درخواست‌ها', count: customers.filter(c => c.status === 'pending').length },
@@ -222,7 +222,7 @@ export const EliteGiftClaimsPage: React.FC = () => {
               <button
                 key={filter.value}
                 onClick={() => setFilterStatus(filter.value as any)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`shrink-0 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${
                   filterStatus === filter.value
                     ? 'bg-purple-600 text-white'
                     : isDark
@@ -251,8 +251,67 @@ export const EliteGiftClaimsPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className={`overflow-x-auto rounded-2xl border ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-100 bg-white'}`}>
-            <table className="w-full min-w-[680px] text-right">
+          <>
+            {/* Mobile cards */}
+            <div className="space-y-3 md:hidden">
+              {filteredCustomers.map(row => (
+                <button
+                  type="button"
+                  key={row.customer_id}
+                  onClick={() => row.claim && handleClaimClick(row.claim)}
+                  disabled={!row.claim}
+                  className={`w-full rounded-2xl border p-4 text-right shadow-sm transition ${
+                    isDark
+                      ? 'border-gray-700 bg-gray-800'
+                      : 'border-gray-100 bg-white'
+                  } ${row.claim ? 'active:scale-[0.99]' : ''}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`truncate text-[15px] font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {row.customer_name}
+                      </p>
+                      <p className={`mt-1 text-[11px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        آخرین خرید: {formatRelativeShamsi(row.last_purchase_at)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${getStatusColor(row.status)}`}>
+                        {statusLabel(row.status)}
+                      </span>
+                      {row.claim && <ChevronLeft className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className={`text-[11px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        پیشرفت دریافت هدیه
+                      </span>
+                      <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {row.progress.percentage.toLocaleString('fa-IR')}٪
+                      </span>
+                    </div>
+                    <div className={`h-2.5 overflow-hidden rounded-full ${isDark ? 'bg-gray-700' : 'bg-purple-50'}`}>
+                      <div
+                        className="h-full rounded-full bg-gradient-to-l from-purple-600 to-fuchsia-400 transition-all"
+                        style={{ width: `${Math.min(100, row.progress.percentage || 0)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {row.status === 'pending' && (
+                    <p className="mt-3 text-[11px] font-bold text-purple-600 dark:text-purple-300">
+                      برای بررسی درخواست لمس کنید
+                    </p>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className={`hidden overflow-x-auto rounded-2xl border md:block ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-100 bg-white'}`}>
+              <table className="w-full min-w-[680px] text-right">
               <thead className={isDark ? 'bg-gray-700/60' : 'bg-gray-50'}>
                 <tr className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                   <th className="p-4 font-semibold">مشتری</th>
@@ -295,16 +354,17 @@ export const EliteGiftClaimsPage: React.FC = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
       {/* Modal */}
       {showModal && selectedClaim && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`w-full max-w-lg rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-            <div className="p-6">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
+          <div className={`max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl sm:rounded-2xl ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="p-4 pb-6 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   جزئیات درخواست

@@ -72,6 +72,7 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
   const [vipExperiencesError, setVipExperiencesError] = useState<string | null>(null)
   const [viewingPackage, setViewingPackage] = useState<Package | null>(null)
   const [showPackageDetails, setShowPackageDetails] = useState(false)
+  const [showActivePackageNotice, setShowActivePackageNotice] = useState(false)
 
   // Check if user is business
   useEffect(() => {
@@ -202,6 +203,12 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
     // بررسی شرایط قبل از ایجاد پکیج
     if (!canCreatePackage) {
       console.log('Cannot create package: conditions not met, reason:', packageBlockReason)
+
+      if (packageBlockReason === 'active') {
+        setError(null)
+        setShowActivePackageNotice(true)
+        return
+      }
       
       let errorMessage = ''
       switch (packageBlockReason) {
@@ -408,7 +415,59 @@ export const PackageManagement: React.FC<PackageManagementProps> = () => {
             }}
           />
         )}
+
+        {showActivePackageNotice && (
+          <ActivePackageNotice onClose={() => setShowActivePackageNotice(false)} />
+        )}
     </>
+  )
+}
+
+const ActivePackageNotice: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-5" dir="rtl">
+      <button
+        type="button"
+        aria-label="بستن پیام"
+        className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="active-package-notice-title"
+        className="relative w-full max-w-sm overflow-hidden rounded-[28px] bg-white shadow-2xl dark:bg-slate-900"
+      >
+        <div className="h-1.5 bg-gradient-to-l from-[#7C5CFC] via-violet-400 to-amber-400" />
+        <div className="px-6 pb-6 pt-7 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-violet-50 text-[#7C5CFC] dark:bg-violet-500/10 dark:text-violet-300">
+            <Clock3 className="h-8 w-8" strokeWidth={1.8} />
+          </div>
+          <h3 id="active-package-notice-title" className="text-base font-black text-slate-900 dark:text-white">
+            پکیج فعال دارید
+          </h3>
+          <p className="mt-2 text-sm leading-7 text-slate-500 dark:text-slate-400">
+            بیش از ۱۰ روز تا پایان پکیج فعال شما باقی مانده است. در ۱۰ روز پایانی می‌توانید پکیج جدیدی ایجاد کنید.
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            autoFocus
+            className="mt-6 w-full rounded-2xl bg-[#7C5CFC] py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition hover:bg-[#6D4EED]"
+          >
+            متوجه شدم
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

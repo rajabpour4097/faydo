@@ -7,11 +7,12 @@ import {
   User,
   QrCode,
   Package,
+  Receipt,
 } from 'lucide-react'
-import transactionsIcon from '../../assets/nav/transactions.png'
 
 const ACTIVE = '#14b8a6'
 const INACTIVE = '#5c6b7a'
+const DARK_INACTIVE = '#94a3b8'
 
 type NavIconType = 'home' | 'compass' | 'gift' | 'user' | 'package' | 'transactions'
 
@@ -33,32 +34,16 @@ interface DashboardMobileBottomNavProps {
 function NavIcon({
   type,
   active,
-  size = 22,
+  isDark,
+  size = 20,
 }: {
   type: NavIconType
   active: boolean
+  isDark: boolean
   size?: number
 }) {
-  const color = active ? ACTIVE : INACTIVE
+  const color = active ? ACTIVE : isDark ? DARK_INACTIVE : INACTIVE
   const stroke = active ? 2.4 : 1.8
-
-  if (type === 'transactions') {
-    return (
-      <img
-        src={transactionsIcon}
-        alt=""
-        className="object-contain"
-        style={{
-          width: size,
-          height: size,
-          opacity: active ? 1 : 0.72,
-          filter: active
-            ? 'none'
-            : 'grayscale(30%) brightness(0.85)',
-        }}
-      />
-    )
-  }
 
   const props = {
     size,
@@ -78,6 +63,8 @@ function NavIcon({
       return <User {...props} />
     case 'package':
       return <Package {...props} />
+    case 'transactions':
+      return <Receipt {...props} />
     default:
       return null
   }
@@ -86,26 +73,47 @@ function NavIcon({
 function NavItem({
   tab,
   active,
+  isDark,
 }: {
   tab: NavTab
   active: boolean
+  isDark: boolean
 }) {
   return (
     <Link
       to={tab.href}
-      className="flex flex-col items-center min-w-[52px] py-1 transition-colors"
+      aria-current={active ? 'page' : undefined}
+      className={`group relative flex min-h-[50px] min-w-0 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-1 outline-none transition-all duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 ${
+        active
+          ? isDark
+            ? 'bg-teal-400/10'
+            : 'bg-teal-50/90'
+          : isDark
+            ? 'hover:bg-white/5'
+            : 'hover:bg-slate-50'
+      } ${isDark ? 'focus-visible:ring-offset-slate-900' : 'focus-visible:ring-offset-white'}`}
     >
-      <div className="relative mb-0.5">
-        <NavIcon type={tab.icon} active={active} />
+      <div
+        className={`relative mb-0.5 flex h-6 w-8 items-center justify-center rounded-xl transition-transform duration-200 group-hover:-translate-y-0.5 ${
+          active ? 'drop-shadow-[0_3px_6px_rgba(20,184,166,0.2)]' : ''
+        }`}
+      >
+        <NavIcon type={tab.icon} active={active} isDark={isDark} />
         {tab.badge && tab.badge > 0 && (
-          <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1 py-px rounded-full min-w-[14px] text-center leading-none">
+          <span
+            className={`absolute -right-1.5 -top-1.5 min-w-[16px] rounded-full border-2 bg-rose-500 px-1 py-0.5 text-center text-[9px] font-bold leading-none text-white shadow-sm ${
+              isDark ? 'border-slate-900' : 'border-white'
+            }`}
+          >
             {tab.badge > 9 ? '9+' : tab.badge}
           </span>
         )}
       </div>
       <span
-        className="text-[11px] font-medium leading-tight"
-        style={{ color: active ? ACTIVE : INACTIVE }}
+        className={`whitespace-nowrap text-[10px] leading-tight transition-colors ${
+          active ? 'font-bold' : 'font-medium'
+        }`}
+        style={{ color: active ? ACTIVE : isDark ? DARK_INACTIVE : INACTIVE }}
       >
         {tab.name}
       </span>
@@ -140,14 +148,25 @@ export const DashboardMobileBottomNav = ({
   ]
 
   const renderBar = (children: ReactNode) => (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 px-2 pb-1 pt-0 pointer-events-none">
+    <nav
+      aria-label="منوی اصلی"
+      className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+    >
       <div
-        className={`pointer-events-auto mx-auto max-w-lg rounded-[28px] border shadow-[0_4px_28px_rgba(15,23,42,0.1)] ${
+        className={`pointer-events-auto relative mx-auto max-w-lg rounded-[26px] border backdrop-blur-xl ${
           isDark
-            ? 'bg-slate-800 border-slate-700 shadow-black/20'
-            : 'bg-white border-gray-100/90'
+            ? 'border-white/10 bg-slate-900/95 shadow-[0_12px_36px_rgba(0,0,0,0.35)]'
+            : 'border-white/90 bg-white/95 shadow-[0_12px_36px_rgba(15,23,42,0.14),0_2px_8px_rgba(15,23,42,0.06)]'
         }`}
       >
+        <div
+          aria-hidden="true"
+          className={`absolute inset-x-8 top-0 h-px ${
+            isDark
+              ? 'bg-gradient-to-r from-transparent via-white/20 to-transparent'
+              : 'bg-gradient-to-r from-transparent via-slate-200 to-transparent'
+          }`}
+        />
         {children}
       </div>
     </nav>
@@ -155,9 +174,14 @@ export const DashboardMobileBottomNav = ({
 
   if (userType === 'business') {
     return renderBar(
-      <div className="flex items-end justify-around px-1 pt-2 pb-1.5 relative" dir="rtl">
+      <div className="relative flex items-center justify-around gap-0.5 px-1.5 py-1" dir="rtl">
         {businessTabs.map((tab) => (
-          <NavItem key={tab.href} tab={tab} active={isActive(tab.href)} />
+          <NavItem
+            key={tab.href}
+            tab={tab}
+            active={isActive(tab.href)}
+            isDark={isDark}
+          />
         ))}
       </div>
     )
@@ -166,27 +190,43 @@ export const DashboardMobileBottomNav = ({
   const [leftTab, rightTab, ...restTabs] = customerTabs
 
   return renderBar(
-        <div className="flex items-end justify-around px-1 pt-2 pb-1.5 relative" dir="rtl">
-          <NavItem tab={leftTab} active={isActive(leftTab.href)} />
+    <div className="relative flex items-center justify-around gap-0.5 px-1.5 py-1" dir="rtl">
+      <NavItem tab={leftTab} active={isActive(leftTab.href)} isDark={isDark} />
 
-          <NavItem tab={rightTab} active={isActive(rightTab.href)} />
+      <NavItem tab={rightTab} active={isActive(rightTab.href)} isDark={isDark} />
 
-          <button
-            type="button"
-            onClick={onScanClick}
-            className="flex flex-col items-center min-w-[58px] -mt-7"
-          >
-            <div className="w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#2dd4bf] to-[#0d9488] flex items-center justify-center shadow-[0_6px_20px_rgba(13,148,136,0.45)] ring-4 ring-white">
-              <QrCode className="w-6 h-6 text-white" strokeWidth={2} />
-            </div>
-            <span className="text-[11px] font-medium mt-1" style={{ color: INACTIVE }}>
-              اسکن
-            </span>
-          </button>
-
-          {restTabs.map((tab) => (
-            <NavItem key={tab.href} tab={tab} active={isActive(tab.href)} />
-          ))}
+      <button
+        type="button"
+        onClick={onScanClick}
+        aria-label="اسکن کد"
+        className={`group -mt-7 flex min-h-[58px] w-[54px] shrink-0 flex-col items-center rounded-2xl outline-none transition-transform duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 ${
+          isDark ? 'focus-visible:ring-offset-slate-900' : 'focus-visible:ring-offset-white'
+        }`}
+      >
+        <div
+          className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-[17px] bg-gradient-to-br from-teal-300 via-teal-500 to-teal-700 shadow-[0_8px_20px_rgba(13,148,136,0.42)] ring-4 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_10px_24px_rgba(13,148,136,0.5)] ${
+            isDark ? 'ring-slate-900' : 'ring-white'
+          }`}
+        >
+          <span className="absolute inset-x-2 top-1 h-1/3 rounded-full bg-white/20 blur-md" />
+          <QrCode className="relative h-[22px] w-[22px] text-white" strokeWidth={2.2} />
         </div>
+        <span
+          className="mt-1 text-[10px] font-bold"
+          style={{ color: isDark ? DARK_INACTIVE : INACTIVE }}
+        >
+          اسکن
+        </span>
+      </button>
+
+      {restTabs.map((tab) => (
+        <NavItem
+          key={tab.href}
+          tab={tab}
+          active={isActive(tab.href)}
+          isDark={isDark}
+        />
+      ))}
+    </div>
   )
 }

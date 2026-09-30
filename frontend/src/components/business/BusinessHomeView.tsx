@@ -249,12 +249,12 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
           </div>
       </section>
 
-      <section className={`mt-3 rounded-[28px] p-3 shadow-sm ${card}`}>
-        <div className="mb-2 flex items-center gap-1">
+      <section className={`mt-3 rounded-[28px] px-2.5 py-3 shadow-sm ${card}`}>
+        <div className="mb-2.5 flex items-center gap-1 px-1.5">
           <span className="text-[#7C5CFC]"><KpiIcon name="users" /></span>
           <h2 className={`text-[14px] font-black ${title}`}>مشتریان شما</h2>
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-4 gap-1">
           <CustomerTile to="/dashboard/customers?segment=new" value={customers_summary.new} label="مشتریان جدید" bg={isDark ? 'bg-emerald-500/10' : 'bg-[#E8FBF3]'} tint="text-emerald-500" icon="user" />
           <CustomerTile to="/dashboard/customers?segment=returning" value={customers_summary.returning} label="مشتریان بازگشتی" bg={isDark ? 'bg-violet-500/10' : 'bg-[#F3EEFF]'} tint="text-[#7C5CFC]" icon="refresh" />
           <CustomerTile to="/dashboard/customers?segment=vip" value={customers_summary.vip} label="VIP" bg={isDark ? 'bg-amber-500/10' : 'bg-[#FFF8E6]'} tint="text-amber-500" icon="crown" />
@@ -353,12 +353,14 @@ function CustomerTile({
   to, value, label, bg, tint, icon,
 }: { to: string; value: number; label: string; bg: string; tint: string; icon: string }) {
   return (
-    <Link to={to} className={`flex flex-col justify-between rounded-[16px] px-1.5 py-2 ${bg}`}>
-      <div className="flex items-center justify-between gap-1">
-        <span className={tint}><KpiIcon name={icon} size={14} /></span>
-        <span className={`text-[16px] font-black leading-none ${tint}`}>{faNum(value)}</span>
+    <Link to={to} className={`flex flex-col items-center rounded-[16px] px-0.5 py-2 ${bg}`}>
+      <div className="flex items-center gap-1" dir="ltr">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white ${tint}`}>
+          <KpiIcon name={icon} size={15} />
+        </span>
+        <span className={`text-[18px] font-black leading-none ${tint}`}>{faNum(value)}</span>
       </div>
-      <div className="mt-1.5 text-[9px] font-bold leading-[12px] text-gray-500">{label}</div>
+      <div className="mt-1.5 w-full whitespace-nowrap text-center text-[10px] font-bold leading-none text-gray-500">{label}</div>
     </Link>
   )
 }

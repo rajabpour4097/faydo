@@ -134,12 +134,18 @@ class EliteGiftWorkflowTests(TestCase):
         )
         self.client.force_authenticate(self.business_user)
 
+        today_response = self.client.post(
+            f'/api/loyalty/elite-gift-claims/{claim.id}/approve/',
+            {'delivery_date': timezone.localdate().isoformat()},
+            format='json',
+        )
         response = self.client.post(
             f'/api/loyalty/elite-gift-claims/{claim.id}/approve/',
             {'delivery_date': (timezone.localdate() + timedelta(days=4)).isoformat()},
             format='json',
         )
 
+        self.assertEqual(today_response.status_code, 400)
         self.assertEqual(response.status_code, 400)
         claim.refresh_from_db()
         self.assertEqual(claim.status, 'pending')

@@ -22,9 +22,9 @@ export const EliteGiftClaimsPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | EliteGiftCustomerRow['status']>('all')
   const openedClaimId = useRef(0)
   const deliveryOptions = useMemo(() => (
-    ['امروز', 'فردا', 'پس‌فردا'].map((prefix, index) => {
+    ['فردا', 'پس‌فردا', 'سه روز بعد'].map((prefix, index) => {
       const date = new Date()
-      date.setDate(date.getDate() + index)
+      date.setDate(date.getDate() + index + 1)
       const value = [
         date.getFullYear(),
         String(date.getMonth() + 1).padStart(2, '0'),

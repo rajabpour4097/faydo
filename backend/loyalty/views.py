@@ -24,13 +24,10 @@ def _gift_delivery_datetime(request):
         request.data.get('delivery_date')
     )
     today = timezone.localdate()
-    if delivery_date < today or delivery_date > today + timedelta(days=2):
-        raise serializers.ValidationError('تاریخ تحویل باید یکی از سه روز پیش‌رو باشد.')
+    if delivery_date < today + timedelta(days=1) or delivery_date > today + timedelta(days=3):
+        raise serializers.ValidationError('تاریخ تحویل باید یکی از سه روز بعد باشد.')
 
     local_now = timezone.localtime()
-    if delivery_date == today:
-        return timezone.now()
-
     local_value = datetime.combine(
         delivery_date,
         local_now.time().replace(tzinfo=None, microsecond=0),

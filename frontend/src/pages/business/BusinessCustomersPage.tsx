@@ -80,7 +80,7 @@ export const BusinessCustomersPage = () => {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="جستجو با نام یا شماره موبایل"
+          placeholder="جستجو با نام مشتری"
           className={`mb-3 w-full rounded-2xl border px-4 py-3 text-sm ${isDark ? 'border-slate-600 bg-slate-800' : 'border-gray-100 bg-white'}`}
         />
         <div className="mb-4 flex gap-2 overflow-x-auto pb-1">

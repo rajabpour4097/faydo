@@ -603,10 +603,9 @@ def business_customers(request):
     rows = all_rows
     if search:
         needle = search.strip()
-        phone_needle = _normalize_phone(needle)
         rows = [
             row for row in rows
-            if needle in row['name'] or needle in row['phone'] or (phone_needle and phone_needle in _normalize_phone(row['phone']))
+            if needle in row['name']
         ]
     if segment not in ('all', '', None):
         rows = [row for row in rows if segment in row['segments']]

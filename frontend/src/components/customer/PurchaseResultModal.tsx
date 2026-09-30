@@ -2,6 +2,7 @@ import React from 'react'
 import { Transaction } from '../../services/loyalty'
 import { getFullImageUrl } from '../../services/api'
 import { FLOW_PURPLE, formatTomanFa, parseToman } from '../scanner/purchaseFlowUtils'
+import { formatShamsiDate } from '../../utils/shamsiDate'
 
 interface PurchaseResultModalProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ export const PurchaseResultModal: React.FC<PurchaseResultModalProps> = ({
 
   const approved = transaction.status === 'approved'
   const rejected = transaction.status === 'rejected'
+  const isEliteGift = transaction.transaction_type === 'elite_gift'
   const logo = getFullImageUrl(transaction.business_logo)
   const original = parseToman(transaction.original_amount)
   const discount = parseToman(transaction.discount_all_amount) + parseToman(transaction.special_discount_amount)
@@ -35,7 +37,7 @@ export const PurchaseResultModal: React.FC<PurchaseResultModalProps> = ({
       <div className="mx-auto flex h-full max-w-md flex-col bg-white">
         <div className="flex items-center justify-between px-5 pt-5">
           <h2 className="text-base font-black text-gray-900">
-            {approved ? 'تراکنش موفق' : rejected ? 'تراکنش رد شد' : 'وضعیت تراکنش'}
+            {isEliteGift ? 'هدیه ویژه' : approved ? 'تراکنش موفق' : rejected ? 'تراکنش رد شد' : 'وضعیت تراکنش'}
           </h2>
           <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500" aria-label="بستن">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,7 +48,11 @@ export const PurchaseResultModal: React.FC<PurchaseResultModalProps> = ({
 
         <div className="flex-1 overflow-y-auto px-5 pb-6 pt-8 text-center">
           <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full ${approved ? 'bg-emerald-50' : rejected ? 'bg-rose-50' : 'bg-amber-50'}`}>
-            {approved ? (
+            {isEliteGift ? (
+              <svg className="h-10 w-10 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12v9H4v-9m16 0H4m16 0h1V7H3v5h1m8-5v14m0-14H8.5a2.5 2.5 0 110-5C11 2 12 7 12 7zm0 0h3.5a2.5 2.5 0 100-5C13 2 12 7 12 7z" />
+              </svg>
+            ) : approved ? (
               <svg className="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 13l4 4L19 7" />
               </svg>
@@ -62,7 +68,9 @@ export const PurchaseResultModal: React.FC<PurchaseResultModalProps> = ({
           </div>
 
           <h3 className="text-lg font-black text-gray-900">
-            {approved ? 'خرید با موفقیت ثبت شد' : rejected ? 'خرید توسط کسب‌وکار رد شد' : 'در انتظار تایید کسب‌وکار'}
+            {isEliteGift
+              ? `هدیه «${transaction.elite_gift_title || 'ویژه'}» برای شما آماده است`
+              : approved ? 'خرید با موفقیت ثبت شد' : rejected ? 'خرید توسط کسب‌وکار رد شد' : 'در انتظار تایید کسب‌وکار'}
           </h3>
 
           <div className="mt-4 flex flex-col items-center">
@@ -72,8 +80,28 @@ export const PurchaseResultModal: React.FC<PurchaseResultModalProps> = ({
             <p className="mt-2 text-sm font-bold text-gray-700">{transaction.business_name}</p>
           </div>
 
-          <p className="mt-4 text-2xl font-black text-gray-900">{formatTomanFa(payable)} تومان</p>
+          {!isEliteGift && (
+            <p className="mt-4 text-2xl font-black text-gray-900">{formatTomanFa(payable)} تومان</p>
+          )}
 
+          {isEliteGift ? (
+            <div className="mt-5 rounded-3xl bg-purple-50 p-4 text-right">
+              <Row label="عنوان هدیه" value={transaction.elite_gift_title || 'هدیه وفاداری'} bold />
+              {transaction.gift_scheduled_for && (
+                <Row label="تاریخ تحویل" value={formatShamsiDate(transaction.gift_scheduled_for)} />
+              )}
+              {transaction.gift_expires_at && (
+                <Row
+                  label="مهلت دریافت"
+                  value={formatShamsiDate(transaction.gift_expires_at)}
+                  valueClass="text-rose-500"
+                />
+              )}
+              <p className="mt-3 border-t border-purple-100 pt-3 text-xs leading-6 text-purple-700">
+                برای دریافت هدیه در بازه اعلام‌شده به {transaction.business_name} مراجعه کنید.
+              </p>
+            </div>
+          ) : (
           <div className="mt-5 rounded-3xl bg-gray-50 p-4 text-right">
             <Row label="مبلغ فاکتور" value={`${formatTomanFa(original)} تومان`} />
             {discount > 0 && <Row label="تخفیف" value={`−${formatTomanFa(discount)} تومان`} valueClass="text-rose-500" />}
@@ -86,6 +114,7 @@ export const PurchaseResultModal: React.FC<PurchaseResultModalProps> = ({
               <Row label="امتیاز" value={`+${formatTomanFa(transaction.points_earned)}`} valueClass="text-[#7C5CFC]" />
             )}
           </div>
+          )}
 
           {rejected && (
             <div className="mt-4 rounded-3xl bg-rose-50 p-4 text-right">

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Transaction } from '../../services/loyalty'
-import { formatShamsiDateTime } from '../../utils/shamsiDate'
+import { formatShamsiDate, formatShamsiDateTime } from '../../utils/shamsiDate'
 
 interface TransactionCardProps {
   transaction: Transaction
@@ -21,6 +21,10 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   showActions = false
 }) => {
   const { isDark } = useTheme()
+  const isEliteGift = transaction.transaction_type === 'elite_gift'
+  const displayStatus = isEliteGift
+    ? (transaction.gift_claim_status || transaction.status)
+    : transaction.status
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -30,6 +34,10 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
         return 'text-green-500 bg-green-500/10'
       case 'rejected':
         return 'text-red-500 bg-red-500/10'
+      case 'used':
+        return 'text-blue-500 bg-blue-500/10'
+      case 'expired':
+        return 'text-gray-500 bg-gray-500/10'
       default:
         return 'text-gray-500 bg-gray-500/10'
     }
@@ -43,6 +51,10 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
         return 'تایید شده'
       case 'rejected':
         return 'رد شده'
+      case 'used':
+        return 'دریافت شده'
+      case 'expired':
+        return 'منقضی شده'
       default:
         return status
     }
@@ -53,8 +65,8 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
       onClick={onClick}
       className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
         isDark
-          ? 'bg-slate-800 border-slate-700 hover:border-blue-500'
-          : 'bg-white border-gray-200 hover:border-blue-500'
+          ? `bg-slate-800 ${isEliteGift ? 'border-purple-700/60 hover:border-purple-500' : 'border-slate-700 hover:border-blue-500'}`
+          : `bg-white ${isEliteGift ? 'border-purple-100 hover:border-purple-400' : 'border-gray-200 hover:border-blue-500'}`
       } ${transaction.status === 'pending' ? 'ring-2 ring-yellow-500/20' : ''}`}
       style={{ direction: 'rtl' }}
     >
@@ -62,28 +74,63 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-            isDark ? 'bg-blue-500/20' : 'bg-blue-50'
+            isEliteGift
+              ? (isDark ? 'bg-purple-500/20' : 'bg-purple-50')
+              : (isDark ? 'bg-blue-500/20' : 'bg-blue-50')
           }`}>
-            <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+            {isEliteGift ? (
+              <svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12v9H4v-9m16 0H4m16 0h1V7H3v5h1m8-5v14m0-14H8.5a2.5 2.5 0 110-5C11 2 12 7 12 7zm0 0h3.5a2.5 2.5 0 100-5C13 2 12 7 12 7z" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            )}
           </div>
           <div>
             <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {transaction.customer_name}
+              {isEliteGift ? transaction.business_name : transaction.customer_name}
             </h3>
             <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-              {formatShamsiDateTime(transaction.created_at)}
+              {isEliteGift
+                ? `هدیه ویژه: ${transaction.elite_gift_title || 'هدیه وفاداری'}`
+                : formatShamsiDateTime(transaction.created_at)}
             </p>
           </div>
         </div>
         
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(transaction.status)}`}>
-          {getStatusText(transaction.status)}
+        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(displayStatus)}`}>
+          {getStatusText(displayStatus)}
         </span>
       </div>
 
       {/* Amounts */}
+      {isEliteGift ? (
+        <div className={`rounded-xl p-3 ${isDark ? 'bg-purple-950/30' : 'bg-purple-50/70'}`}>
+          <p className={`text-xs ${isDark ? 'text-purple-200' : 'text-purple-700'}`}>
+            {displayStatus === 'used'
+              ? 'این هدیه دریافت شده است.'
+              : displayStatus === 'expired'
+                ? 'مهلت دریافت این هدیه به پایان رسیده است.'
+                : 'هدیه شما توسط کسب‌وکار تایید و آماده دریافت شده است.'}
+          </p>
+          {transaction.gift_scheduled_for && (
+            <div className="mt-3 flex items-center justify-between text-sm">
+              <span className={isDark ? 'text-slate-400' : 'text-gray-500'}>تاریخ تحویل</span>
+              <b className={isDark ? 'text-white' : 'text-gray-900'}>
+                {formatShamsiDate(transaction.gift_scheduled_for)}
+              </b>
+            </div>
+          )}
+          {transaction.gift_expires_at && (
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className={isDark ? 'text-slate-400' : 'text-gray-500'}>مهلت دریافت</span>
+              <b className="text-rose-500">{formatShamsiDate(transaction.gift_expires_at)}</b>
+            </div>
+          )}
+        </div>
+      ) : (
       <div className={`p-3 rounded-lg space-y-2 ${isDark ? 'bg-slate-700' : 'bg-gray-50'}`}>
         <div className="flex justify-between items-center">
           <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
@@ -138,6 +185,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
           </span>
         </div>
       </div>
+      )}
 
       {/* Note */}
       {transaction.note && (

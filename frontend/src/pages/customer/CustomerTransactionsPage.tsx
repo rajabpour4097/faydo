@@ -55,10 +55,10 @@ const MobileMyTransactions: React.FC<MobileMyTransactionsProps> = ({
               </div>
               <div>
                 <p className="font-bold text-blue-500 text-sm">
-                  {canCommentTransactions.length} تراکنش آماده دریافت نظر شما
+                  {canCommentTransactions.length} خرید یا هدیه آماده دریافت نظر شما
                 </p>
                 <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                  فرصت نظردهی در 12 ساعت اول
+                  تجربه خود را با ثبت امتیاز و نظر به اشتراک بگذارید
                 </p>
               </div>
             </div>
@@ -235,11 +235,13 @@ export const CustomerTransactionsPage: React.FC = () => {
 
   // تعیین نوع‌های خدمت موجود برای تراکنش
   const getServiceTypes = (transaction: Transaction): Array<'discount_all' | 'specific_discount' | 'elite_gift' | 'vip_experience'> => {
+    if (transaction.transaction_type === 'elite_gift') {
+      return ['elite_gift']
+    }
     const types: Array<'discount_all' | 'specific_discount' | 'elite_gift' | 'vip_experience'> = ['discount_all']
     if (transaction.has_special_discount) {
       types.push('specific_discount')
     }
-    // می‌توانید بر اساس منطق برنامه، elite_gift و vip_experience را هم اضافه کنید
     return types
   }
 

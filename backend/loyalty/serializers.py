@@ -5,6 +5,7 @@ from accounts.serializers import CustomerProfileSerializer, BusinessProfileSeria
 from packages.serializers import PackageDetailSerializer
 from packages.models import Comment
 from django.contrib.contenttypes.models import ContentType
+from datetime import timedelta
 
 
 class NotificationSerializer(serializers.ModelSerializer):
@@ -55,6 +56,10 @@ class TransactionSerializer(serializers.ModelSerializer):
     approved_at = serializers.SerializerMethodField()
     business_logo = serializers.SerializerMethodField()
     business_rating = serializers.SerializerMethodField()
+    gift_claim_id = serializers.SerializerMethodField()
+    gift_claim_status = serializers.SerializerMethodField()
+    gift_scheduled_for = serializers.SerializerMethodField()
+    gift_expires_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
@@ -69,6 +74,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             'rejection_reason', 'description',
             'transaction_type', 'reference_code', 'service_category', 'elite_gift_title',
             'approved_at', 'business_logo', 'business_rating',
+            'gift_claim_id', 'gift_claim_status', 'gift_scheduled_for', 'gift_expires_at',
             'can_comment', 'comment_deadline', 'has_commented',
             'can_add_comment', 'created_at', 'modified_at'
         ]
@@ -174,6 +180,36 @@ class TransactionSerializer(serializers.ModelSerializer):
             return obj.business.get_average_rating()
         except Exception:
             return float(getattr(obj.business, 'rating_avg', 0) or 0)
+
+    def _gift_claim(self, obj):
+        if obj.transaction_type != 'elite_gift':
+            return None
+        if hasattr(obj, '_serializer_gift_claim'):
+            return obj._serializer_gift_claim
+        obj._serializer_gift_claim = EliteGiftClaim.objects.filter(
+            customer_id=obj.customer_id,
+            business_id=obj.business_id,
+            package_id=obj.package_id,
+            elite_gift_id=obj.elite_gift_id,
+            approved_at__lte=obj.created_at + timedelta(minutes=1),
+        ).order_by('-approved_at').first()
+        return obj._serializer_gift_claim
+
+    def get_gift_claim_id(self, obj):
+        claim = self._gift_claim(obj)
+        return claim.id if claim else None
+
+    def get_gift_claim_status(self, obj):
+        claim = self._gift_claim(obj)
+        return claim.status if claim else None
+
+    def get_gift_scheduled_for(self, obj):
+        claim = self._gift_claim(obj)
+        return claim.scheduled_for if claim else None
+
+    def get_gift_expires_at(self, obj):
+        claim = self._gift_claim(obj)
+        return claim.expires_at if claim else None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

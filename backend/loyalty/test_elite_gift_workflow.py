@@ -90,12 +90,12 @@ class EliteGiftWorkflowTests(TestCase):
             elite_gift=self.gift,
             progress_at_claim=self.gift.get_customer_progress(self.customer),
         )
-        delivery = timezone.now() + timedelta(days=2)
+        delivery = timezone.localdate() + timedelta(days=2)
         self.client.force_authenticate(self.business_user)
 
         response = self.client.post(
             f'/api/loyalty/elite-gift-claims/{claim.id}/approve/',
-            {'scheduled_for': delivery.isoformat(), 'note': 'همراه داشتن کارت عضویت'},
+            {'delivery_date': delivery.isoformat(), 'note': 'همراه داشتن کارت عضویت'},
             format='json',
         )
 
@@ -112,7 +112,17 @@ class EliteGiftWorkflowTests(TestCase):
             notification_type='gift_claim_approved',
         )
         self.assertIn(self.business.name, notification.message)
-        self.assertIn('زمان تحویل', notification.message)
+        self.assertIn('تاریخ تحویل', notification.message)
+
+        self.client.force_authenticate(self.customer_user)
+        transactions = self.client.get('/api/loyalty/transactions/')
+        gift_transaction = next(
+            item for item in transactions.data['results']
+            if item['transaction_type'] == 'elite_gift'
+        )
+        self.assertEqual(gift_transaction['gift_claim_id'], claim.id)
+        self.assertEqual(gift_transaction['gift_claim_status'], 'approved')
+        self.assertIsNotNone(gift_transaction['gift_scheduled_for'])
 
     def test_delivery_cannot_be_more_than_three_days_away(self):
         claim = EliteGiftClaim.objects.create(
@@ -126,7 +136,7 @@ class EliteGiftWorkflowTests(TestCase):
 
         response = self.client.post(
             f'/api/loyalty/elite-gift-claims/{claim.id}/approve/',
-            {'scheduled_for': (timezone.now() + timedelta(days=4)).isoformat()},
+            {'delivery_date': (timezone.localdate() + timedelta(days=4)).isoformat()},
             format='json',
         )
 

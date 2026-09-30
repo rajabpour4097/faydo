@@ -280,7 +280,7 @@ export const MobileDashboardLayout = ({ children }: MobileDashboardLayoutProps) 
           userType={user!.type as 'customer' | 'business'}
           isActive={isActive}
           onScanClick={openScanner}
-          pendingCount={pendingCount + (user?.type === 'business' ? eliteGiftPendingCount : 0)}
+          pendingCount={pendingCount}
           isDark={isDark}
         />
       ) : (

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { apiService, EliteGiftClaim, EliteGiftCustomerRow } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { Gift, Check, X, Clock, CheckCircle, ChevronLeft } from 'lucide-react'
-import { formatRelativeShamsi, formatShamsiDateTime, parseShamsiDateTime, toShamsiInputParts } from '../../utils/shamsiDate'
+import { formatRelativeShamsi, formatShamsiDate, formatShamsiDateTime } from '../../utils/shamsiDate'
 import { useSearchParams } from 'react-router-dom'
 
 export const EliteGiftClaimsPage: React.FC = () => {
@@ -18,10 +18,21 @@ export const EliteGiftClaimsPage: React.FC = () => {
   const [actionNote, setActionNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deliveryDate, setDeliveryDate] = useState('')
-  const [deliveryTime, setDeliveryTime] = useState('')
   const [modalError, setModalError] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | EliteGiftCustomerRow['status']>('all')
   const openedClaimId = useRef(0)
+  const deliveryOptions = useMemo(() => (
+    ['امروز', 'فردا', 'پس‌فردا'].map((prefix, index) => {
+      const date = new Date()
+      date.setDate(date.getDate() + index)
+      const value = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0'),
+      ].join('-')
+      return { value, label: `${prefix} ـ ${formatShamsiDate(date)}` }
+    })
+  ), [])
 
   const loadClaims = async () => {
     setIsLoading(true)
@@ -53,9 +64,7 @@ export const EliteGiftClaimsPage: React.FC = () => {
   const handleClaimClick = (claim: EliteGiftClaim) => {
     setSelectedClaim(claim)
     setActionNote(claim.business_note || '')
-    const defaultDelivery = toShamsiInputParts(new Date(Date.now() + 60 * 60 * 1000))
-    setDeliveryDate(defaultDelivery.date)
-    setDeliveryTime(defaultDelivery.time)
+    setDeliveryDate(deliveryOptions[0].value)
     setModalError('')
     setShowModal(true)
   }
@@ -79,15 +88,14 @@ export const EliteGiftClaimsPage: React.FC = () => {
 
   const handleApprove = async () => {
     if (!selectedClaim) return
-    const scheduledFor = parseShamsiDateTime(deliveryDate, deliveryTime)
-    if (!scheduledFor) {
-      setModalError('تاریخ شمسی یا ساعت واردشده معتبر نیست.')
+    if (!deliveryDate) {
+      setModalError('تاریخ تحویل را انتخاب کنید.')
       return
     }
     
     setIsSubmitting(true)
     try {
-      const response = await apiService.approveEliteGiftClaim(selectedClaim.id, scheduledFor, actionNote)
+      const response = await apiService.approveEliteGiftClaim(selectedClaim.id, deliveryDate, actionNote)
       if (response.error) {
         const detail = (response.error as any)?.detail || String(response.error)
         setModalError(detail)
@@ -435,22 +443,26 @@ export const EliteGiftClaimsPage: React.FC = () => {
                   <div className="space-y-3">
                     <div>
                       <label className={`block text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        تاریخ شمسی تحویل (حداکثر سه روز آینده)
+                        تاریخ تحویل
                       </label>
-                      <div className="grid grid-cols-2 gap-2" dir="ltr">
-                        <input
-                          value={deliveryDate}
-                          onChange={(e) => setDeliveryDate(e.target.value)}
-                          className={`w-full px-3 py-2 rounded-lg border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                          placeholder="۱۴۰۵/۰۷/۱۰"
-                        />
-                        <input
-                          type="time"
-                          value={deliveryTime}
-                          onChange={(e) => setDeliveryTime(e.target.value)}
-                          className={`w-full px-3 py-2 rounded-lg border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                        />
-                      </div>
+                      <select
+                        value={deliveryDate}
+                        onChange={(e) => setDeliveryDate(e.target.value)}
+                        className={`w-full rounded-xl border px-3 py-3 text-sm font-bold ${
+                          isDark
+                            ? 'border-gray-600 bg-gray-700 text-white'
+                            : 'border-gray-300 bg-white text-gray-900'
+                        }`}
+                      >
+                        {deliveryOptions.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <p className={`mt-1.5 text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                        یکی از سه روز پیش‌رو را انتخاب کنید.
+                      </p>
                     </div>
                     <div>
                       <label className={`block text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -473,8 +485,8 @@ export const EliteGiftClaimsPage: React.FC = () => {
 
                 {selectedClaim.scheduled_for && (
                   <div className={`rounded-lg p-3 text-sm ${isDark ? 'bg-gray-700 text-gray-200' : 'bg-purple-50 text-purple-800'}`}>
-                    <p>زمان تحویل: {formatShamsiDateTime(selectedClaim.scheduled_for)}</p>
-                    <p className="mt-1">مهلت دریافت: {formatShamsiDateTime(selectedClaim.expires_at)}</p>
+                    <p>تاریخ تحویل: {formatShamsiDate(selectedClaim.scheduled_for)}</p>
+                    <p className="mt-1">مهلت دریافت: {formatShamsiDate(selectedClaim.expires_at)}</p>
                   </div>
                 )}
 

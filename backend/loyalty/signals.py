@@ -85,15 +85,15 @@ def notify_gift_claim_event(sender, instance, created, **kwargs):
         return
     previous = getattr(instance, '_previous_status', None)
     if instance.status == 'approved' and previous == 'pending':
-        delivery = jalali_datetime_label(instance.scheduled_for)
-        deadline = jalali_datetime_label(instance.expires_at)
+        delivery = jalali_datetime_label(instance.scheduled_for).split(' - ')[0]
+        deadline = jalali_datetime_label(instance.expires_at).split(' - ')[0]
         Notification.objects.create(
             recipient=instance.customer.user,
             notification_type='gift_claim_approved',
             title='درخواست هدیه شما تایید شد',
             message=(
                 f'درخواست «{instance.elite_gift.gift}» توسط {instance.business.name} تایید شد. '
-                f'زمان تحویل: {delivery}. مهلت دریافت تا {deadline} است.'
+                f'تاریخ تحویل: {delivery}. مهلت دریافت تا {deadline} است.'
             ),
             priority='important',
             action_url=f'/dashboard/gift-claims?claim={instance.pk}',

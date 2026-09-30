@@ -72,6 +72,10 @@ export interface Transaction {
   reference_code?: string
   service_category?: string
   elite_gift_title?: string
+  gift_claim_id?: number | null
+  gift_claim_status?: 'pending' | 'approved' | 'rejected' | 'used' | 'expired' | null
+  gift_scheduled_for?: string | null
+  gift_expires_at?: string | null
   approved_at?: string | null
   business_logo?: string | null
   business_rating?: number

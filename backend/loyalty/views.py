@@ -13,6 +13,29 @@ from .serializers import (
 from accounts.models import BusinessProfile, CustomerProfile
 from django.db import IntegrityError
 from django.utils import timezone
+from datetime import datetime, timedelta
+
+
+def _gift_delivery_datetime(request):
+    """تبدیل یکی از سه تاریخ مجاز به زمان داخلی سیستم."""
+    from rest_framework import serializers
+
+    delivery_date = serializers.DateField().run_validation(
+        request.data.get('delivery_date')
+    )
+    today = timezone.localdate()
+    if delivery_date < today or delivery_date > today + timedelta(days=2):
+        raise serializers.ValidationError('تاریخ تحویل باید یکی از سه روز پیش‌رو باشد.')
+
+    local_now = timezone.localtime()
+    if delivery_date == today:
+        return timezone.now()
+
+    local_value = datetime.combine(
+        delivery_date,
+        local_now.time().replace(tzinfo=None, microsecond=0),
+    )
+    return timezone.make_aware(local_value, timezone.get_current_timezone())
 
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -587,9 +610,7 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
         try:
             note = request.data.get('note')
             from rest_framework import serializers
-            scheduled_for = serializers.DateTimeField().run_validation(
-                request.data.get('scheduled_for')
-            )
+            scheduled_for = _gift_delivery_datetime(request)
             claim.approve(scheduled_for=scheduled_for, note=note)
             
             serializer = self.get_serializer(claim)
@@ -743,9 +764,7 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
             note = request.data.get('note', '')
             from rest_framework import serializers
 
-            scheduled_for = serializers.DateTimeField().run_validation(
-                request.data.get('scheduled_for')
-            )
+            scheduled_for = _gift_delivery_datetime(request)
             claim.approve(scheduled_for=scheduled_for, note=note)
             
             from .serializers import EliteGiftClaimSerializer

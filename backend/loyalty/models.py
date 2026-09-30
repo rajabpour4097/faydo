@@ -705,7 +705,7 @@ class EliteGiftClaim(BaseModel):
         now = timezone.now()
         if scheduled_for is None:
             raise ValueError('تاریخ و ساعت تحویل الزامی است')
-        if scheduled_for < now:
+        if scheduled_for < now - timezone.timedelta(minutes=1):
             raise ValueError('زمان تحویل نمی‌تواند در گذشته باشد')
         if scheduled_for > now + timezone.timedelta(days=3):
             raise ValueError('زمان تحویل نباید بیشتر از سه روز آینده باشد')

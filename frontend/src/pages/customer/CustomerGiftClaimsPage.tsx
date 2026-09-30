@@ -5,7 +5,7 @@ import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLa
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { apiService, EliteGiftClaim } from '../../services/api'
-import { formatShamsiDateTime } from '../../utils/shamsiDate'
+import { formatShamsiDate, formatShamsiDateTime } from '../../utils/shamsiDate'
 
 const statusInfo = {
   pending: { label: 'در انتظار تایید', className: 'bg-amber-50 text-amber-600', icon: Clock },
@@ -92,8 +92,8 @@ export const CustomerGiftClaimsPage = () => {
               <p><span className="text-gray-500">هدیه:</span> <b>{selected.gift_name}</b></p>
               <p><span className="text-gray-500">کسب‌وکار:</span> <b>{selected.business_name}</b></p>
               <p><span className="text-gray-500">وضعیت:</span> <b>{selected.status_display}</b></p>
-              {selected.scheduled_for && <p><span className="text-gray-500">زمان تحویل:</span> {formatShamsiDateTime(selected.scheduled_for)}</p>}
-              {selected.expires_at && <p><span className="text-gray-500">مهلت دریافت:</span> {formatShamsiDateTime(selected.expires_at)}</p>}
+              {selected.scheduled_for && <p><span className="text-gray-500">تاریخ تحویل:</span> {formatShamsiDate(selected.scheduled_for)}</p>}
+              {selected.expires_at && <p><span className="text-gray-500">مهلت دریافت:</span> {formatShamsiDate(selected.expires_at)}</p>}
               {selected.business_note && <p className="rounded-xl bg-gray-50 p-3 text-gray-700">{selected.business_note}</p>}
             </div>
           </section>

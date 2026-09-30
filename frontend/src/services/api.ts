@@ -1509,10 +1509,10 @@ class ApiService {
   }
 
   // Approve Elite Gift Claim
-  async approveEliteGiftClaim(claimId: number, scheduledFor: string, note?: string): Promise<ApiResponse<EliteGiftClaim>> {
+  async approveEliteGiftClaim(claimId: number, deliveryDate: string, note?: string): Promise<ApiResponse<EliteGiftClaim>> {
     return this.request<EliteGiftClaim>(`/loyalty/elite-gift-claims/${claimId}/approve/`, {
       method: 'POST',
-      body: JSON.stringify({ scheduled_for: scheduledFor, note })
+      body: JSON.stringify({ delivery_date: deliveryDate, note })
     })
   }
 

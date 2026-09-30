@@ -25,7 +25,12 @@ export const todayLabel = () => `امروز • ${formatShamsiDate(new Date())}`
 export const formatToman = (n: number) => `${faNum(Math.round(n))} تومان`
 
 export const formatCompact = (n: number) => {
-  if (n >= 1_000_000) return `${faNum(Math.round(n / 1_000_000))}M`
-  if (n >= 1_000) return `${faNum(Math.round(n / 1_000))}K`
+  const absolute = Math.abs(n)
+  if (absolute >= 1_000_000) {
+    return `${faNum(Math.round((n / 1_000_000) * 10) / 10)} میلیون`
+  }
+  if (absolute >= 1_000) {
+    return `${faNum(Math.round((n / 1_000) * 10) / 10)} هزار`
+  }
   return faNum(Math.round(n))
 }

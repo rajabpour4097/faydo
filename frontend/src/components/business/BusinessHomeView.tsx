@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { BusinessDashboardData, SalesChartSeries } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import {
   HOME_PURPLE,
   faDigits,
   faNum,
+  formatCompact,
   formatToman,
   todayLabel,
 } from './businessHomeUtils'
@@ -41,9 +42,7 @@ function Trend({ value }: { value: number }) {
 
 function axisTick(value: number) {
   if (!Number.isFinite(value)) return ''
-  if (Math.abs(value) >= 1_000_000) return `${faNum(Math.round(value / 1_000_000))}M`
-  if (Math.abs(value) >= 1_000) return `${faNum(Math.round(value / 1_000))}K`
-  return faNum(Math.round(value))
+  return formatCompact(value)
 }
 
 function axisTicks(points: { label: string }[]) {
@@ -186,13 +185,13 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
             </div>
             <Link to="/dashboard/sales" className="shrink-0 text-[11px] font-bold text-[#7C5CFC]">مشاهده جزئیات</Link>
           </div>
-          <div className="mb-2 flex gap-0.5" dir="rtl">
+          <div className="mb-2 flex gap-1" dir="rtl">
             {RANGE_TABS.map(tab => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setRange(tab.id)}
-                className={`whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+                className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-bold ${
                   range === tab.id ? 'bg-[#7C5CFC] text-white' : muted
                 }`}
               >
@@ -200,22 +199,23 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
               </button>
             ))}
           </div>
-          <Link to="/dashboard/sales" dir="ltr" className="block h-40" aria-label="مشاهده جزئیات فروش">
+          <Link to="/dashboard/sales" dir="ltr" className="block h-44 font-sans" aria-label="مشاهده جزئیات فروش">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chart.points} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+              <AreaChart data={chart.points} margin={{ top: 10, right: 6, left: 4, bottom: 2 }}>
                 <defs>
                   <linearGradient id="salesFillHome" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={HOME_PURPLE} stopOpacity={0.28} />
                     <stop offset="100%" stopColor={HOME_PURPLE} stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
+                <CartesianGrid vertical={false} stroke={isDark ? '#334155' : '#EEF0F5'} strokeDasharray="3 3" />
                 <YAxis
                   orientation="left"
                   tickFormatter={value => axisTick(Number(value))}
-                  tick={{ fontSize: 9, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 10, fill: '#9CA3AF', fontFamily: 'IRANYekan' }}
                   axisLine={false}
                   tickLine={false}
-                  width={30}
+                  width={52}
                   domain={[0, yMax]}
                   allowDecimals={false}
                   tickCount={4}
@@ -225,26 +225,36 @@ export function BusinessHomeView({ data, loading }: { data: BusinessDashboardDat
                   ticks={xTicks}
                   interval={0}
                   tickFormatter={value => shortAxisLabel(String(value), range)}
-                  tick={{ fontSize: 8, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 10, fill: '#9CA3AF', fontFamily: 'IRANYekan' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
-                  formatter={(value: number) => formatToman(Number(value))}
-                  labelFormatter={label => faDigits(String(label))}
+                  formatter={(value: number) => [formatToman(Number(value)), 'فروش']}
+                  labelFormatter={label => `تاریخ: ${faDigits(String(label))}`}
+                  contentStyle={{
+                    direction: 'rtl',
+                    fontFamily: 'IRANYekan',
+                    fontSize: 11,
+                    border: 'none',
+                    borderRadius: 12,
+                    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
+                  }}
+                  labelStyle={{ color: '#6B7280', marginBottom: 4 }}
+                  itemStyle={{ color: HOME_PURPLE, fontWeight: 700 }}
                 />
-                <Area type="monotone" dataKey="amount" stroke={HOME_PURPLE} strokeWidth={2.2} fill="url(#salesFillHome)" dot={false} activeDot={{ r: 4, fill: HOME_PURPLE }} />
+                <Area name="فروش" type="monotone" dataKey="amount" stroke={HOME_PURPLE} strokeWidth={2.4} fill="url(#salesFillHome)" dot={false} activeDot={{ r: 4, fill: HOME_PURPLE }} />
               </AreaChart>
             </ResponsiveContainer>
           </Link>
           <div className="mt-1 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <Trend value={chart.change} />
-              <div className={`text-[10px] leading-4 ${muted}`}>{compareLabel}</div>
+              <div className={`text-[11px] leading-4 ${muted}`}>{compareLabel}</div>
             </div>
             <div className="shrink-0 text-left">
-              <div className={`text-[10px] ${muted}`}>فروش کل دوره</div>
-              <div className={`text-[12px] font-black ${title}`}>{formatToman(chart.total)}</div>
+              <div className={`text-[11px] ${muted}`}>فروش کل دوره</div>
+              <div className={`text-[13px] font-black ${title}`}>{formatToman(chart.total)}</div>
             </div>
           </div>
       </section>

@@ -787,91 +787,130 @@ interface PackageDetailsModalProps {
 
 const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg, onClose }) => {
   const { isDark } = useTheme()
+  const statusBadge = packageStatusBadge(pkg)
+  const goldExperiences = pkg.experiences?.filter(
+    experience => experience.vip_experience_category?.vip_type === 'VIP',
+  ) || []
+  const vipExperiences = pkg.experiences?.filter(
+    experience => experience.vip_experience_category?.vip_type === 'VIP+',
+  ) || []
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden`}>
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-[2px] sm:items-center sm:p-4" dir="rtl">
+      <button type="button" aria-label="بستن جزئیات" className="absolute inset-0" onClick={onClose} />
+      <div className={`${isDark ? 'bg-slate-950' : 'bg-[#F7F7FB]'} relative flex max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[30px] shadow-2xl sm:max-h-[90vh] sm:rounded-[30px]`}>
         {/* Header */}
-        <div className={`${isDark ? 'bg-slate-700 border-slate-600' : 'bg-gray-50 border-gray-200'} px-6 py-4 border-b flex items-center justify-between`}>
-          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            جزئیات پکیج تبلیغاتی
-          </h2>
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#6D5DFB] via-[#7C5CFC] to-[#9B7BFF] px-5 pb-5 pt-4 text-white">
+          <div className="absolute -left-8 -top-12 h-32 w-32 rounded-full bg-white/10" />
+          <div className="absolute -bottom-16 right-24 h-32 w-32 rounded-full bg-white/10" />
           <button
+            type="button"
             onClick={onClose}
-            className={`${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
+            className="absolute left-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+            aria-label="بستن"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+          <div className="relative flex items-center gap-3 pl-11">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
+              <WalletCards className="h-6 w-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-white/70">جزئیات پیشنهاد</p>
+              <h2 className="mt-0.5 text-lg font-black">پکیج تبلیغاتی</h2>
+              <p className="mt-1 truncate text-[11px] text-white/75">{pkg.business_name}</p>
+            </div>
+          </div>
+          <div className="relative mt-4 flex items-center justify-between rounded-2xl bg-black/10 px-3.5 py-2.5 backdrop-blur-sm">
+            <span className="text-[11px] text-white/75">وضعیت فعلی پکیج</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-700">
+              <span className={`h-1.5 w-1.5 rounded-full ${statusBadge.dot}`} />
+              {statusBadge.text}
+            </span>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-          <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="space-y-3 p-4 sm:p-5">
             {/* وضعیت و اطلاعات کلی */}
-            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
-              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+            <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'} rounded-[24px] border p-4 shadow-sm`}>
+              <h3 className={`mb-3 flex items-center gap-2 text-sm font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 text-[#7C5CFC] dark:bg-violet-500/10 dark:text-violet-300">
+                  <Layers className="h-4 w-4" />
+                </span>
                 اطلاعات کلی
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+              <div className="grid grid-cols-2 gap-2">
+                <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} rounded-2xl p-3`}>
+                  <label className="text-[10px] font-medium text-slate-400">
                     وضعیت پکیج
                   </label>
-                  <div className="mt-1">
-                    {(() => {
-                      const badge = packageStatusBadge(pkg)
-                      return (
-                        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${badge.className}`}>
-                          {badge.text}
-                        </span>
-                      )
-                    })()}
+                  <div className="mt-1.5">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ring-inset ${statusBadge.className}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${statusBadge.dot}`} />
+                      {statusBadge.text}
+                    </span>
                   </div>
                 </div>
-                <div>
-                  <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} rounded-2xl p-3`}>
+                  <label className="text-[10px] font-medium text-slate-400">
                     وضعیت تکمیل
                   </label>
                   <div className="mt-1">
-                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                      pkg.is_complete ? 'text-green-600 bg-green-100' : 'text-gray-600 bg-gray-100'
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                      pkg.is_complete
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                     }`}>
+                      {pkg.is_complete ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                       {pkg.is_complete ? 'کامل' : 'ناقص'}
                     </span>
                   </div>
                 </div>
                 {pkg.start_date && (
-                  <div>
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                  <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} rounded-2xl p-3`}>
+                    <label className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                      <CalendarDays className="h-3.5 w-3.5 text-violet-500" />
                       تاریخ شروع
                     </label>
-                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                    <p className={`mt-1.5 text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
                       {formatShamsiDate(pkg.start_date)}
                     </p>
                   </div>
                 )}
                 {pkg.end_date && (
-                  <div>
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                  <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} rounded-2xl p-3`}>
+                    <label className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                      <CalendarDays className="h-3.5 w-3.5 text-violet-500" />
                       تاریخ پایان
                     </label>
-                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                    <p className={`mt-1.5 text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
                       {formatShamsiDate(pkg.end_date)}
                     </p>
                   </div>
                 )}
                 {pkg.days_remaining !== null && pkg.days_remaining !== undefined && (
-                  <div>
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                  <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} col-span-2 rounded-2xl p-3`}>
+                    <label className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                      <Clock3 className="h-3.5 w-3.5" />
                       روزهای باقی‌مانده
                     </label>
-                    <p className={`mt-1 font-medium ${
-                      pkg.days_remaining > 7 ? 'text-green-600' : 
-                      pkg.days_remaining > 0 ? 'text-orange-600' : 'text-red-600'
+                    <p className={`mt-1.5 text-sm font-black ${
+                      pkg.days_remaining > 7 ? 'text-emerald-600' :
+                      pkg.days_remaining > 0 ? 'text-amber-600' : 'text-rose-600'
                     }`}>
-                      {pkg.days_remaining > 0 ? `${pkg.days_remaining} روز` : 'منقضی شده'}
+                      {pkg.days_remaining > 0 ? `${pkg.days_remaining.toLocaleString('fa-IR')} روز` : 'منقضی شده'}
                     </p>
                   </div>
                 )}
@@ -880,30 +919,28 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
 
             {/* تخفیف کلی */}
             {pkg.discount_all && (
-              <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
-                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
-                  <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center ml-2">
-                    <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                  </div>
+              <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-rose-100 bg-white'} rounded-[24px] border p-4 shadow-sm`}>
+                <h3 className={`mb-3 flex items-center text-sm font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <span className="ml-2 flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">
+                    <Tag className="h-4 w-4" />
+                  </span>
                   تخفیف روی تمام محصولات
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-2xl bg-rose-50 p-3 dark:bg-rose-500/10">
+                    <label className="text-[10px] font-medium text-rose-500">
                       درصد تخفیف فوری
                     </label>
-                    <p className={`mt-1 text-2xl font-bold text-red-600`}>
-                      %{pkg.discount_all.percentage}
+                    <p className="mt-1 text-2xl font-black text-rose-700 dark:text-rose-300">
+                      {Number(pkg.discount_all.percentage).toLocaleString('fa-IR')}٪
                     </p>
                   </div>
-                  <div>
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                  <div className="rounded-2xl bg-emerald-50 p-3 dark:bg-emerald-500/10">
+                    <label className="text-[10px] font-medium text-emerald-500">
                       درصد کش‌بک
                     </label>
-                    <p className={`mt-1 text-2xl font-bold text-teal-600`}>
-                      %{pkg.discount_all.cashback_percentage || pkg.cashback_percentage || 0}
+                    <p className="mt-1 text-2xl font-black text-emerald-700 dark:text-emerald-300">
+                      {Number(pkg.discount_all.cashback_percentage || pkg.cashback_percentage || 0).toLocaleString('fa-IR')}٪
                     </p>
                   </div>
                 </div>
@@ -912,90 +949,88 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
 
             {/* تخفیف ویژه */}
             {pkg.specific_discount && (
-              <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
-                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center ml-2">
-                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                  </div>
+              <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-amber-100 bg-white'} rounded-[24px] border p-4 shadow-sm`}>
+                <h3 className={`mb-3 flex items-center text-sm font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <span className="ml-2 flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
+                    <Sparkles className="h-4 w-4" />
+                  </span>
                   تخفیف ویژه
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <div className={`${isDark ? 'bg-slate-800/70' : 'bg-amber-50/70'} min-w-0 rounded-2xl p-3`}>
+                    <label className="text-[10px] font-medium text-slate-400">
                       عنوان
                     </label>
-                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                    <p className={`mt-1 whitespace-normal break-words text-xs font-bold leading-5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
                       {pkg.specific_discount.title}
                     </p>
                   </div>
-                  <div>
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                  <div className="min-w-[88px] rounded-2xl bg-amber-50 p-3 dark:bg-amber-500/10">
+                    <label className="text-[10px] font-medium text-amber-500">
                       درصد تخفیف
                     </label>
-                    <p className={`mt-1 text-xl font-bold text-orange-600`}>
-                      %{pkg.specific_discount.percentage}
+                    <p className="mt-1 text-xl font-black text-amber-700 dark:text-amber-300">
+                      {Number(pkg.specific_discount.percentage).toLocaleString('fa-IR')}٪
                     </p>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                  {pkg.specific_discount.description && (
+                  <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} col-span-2 rounded-2xl p-3`}>
+                    <label className="text-[10px] font-medium text-slate-400">
                       توضیحات
                     </label>
-                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                    <p className={`mt-1 whitespace-pre-line text-xs leading-6 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                       {pkg.specific_discount.description}
                     </p>
                   </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* هدیه ویژه */}
             {pkg.elite_gift && (
-              <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
-                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center ml-2">
-                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                    </svg>
-                  </div>
-                  هدیه ویژه
+              <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-violet-100 bg-white'} rounded-[24px] border p-4 shadow-sm`}>
+                <h3 className={`mb-3 flex items-center text-sm font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <span className="ml-2 flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300">
+                    <Gift className="h-4 w-4" />
+                  </span>
+                  هدیه وفاداری
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className={`${isDark ? 'bg-slate-800/70' : 'bg-violet-50/70'} col-span-2 rounded-2xl p-3`}>
+                    <label className="text-[10px] font-medium text-violet-500">
                       عنوان هدیه
                     </label>
-                    <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                    <p className={`mt-1 whitespace-normal break-words text-xs font-bold leading-6 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
                       {pkg.elite_gift.gift}
                     </p>
                   </div>
                   {pkg.elite_gift.amount && (
-                    <div>
-                      <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
-                        مبلغ
+                    <div className="col-span-2 rounded-2xl bg-violet-50 p-3 dark:bg-violet-500/10">
+                      <label className="text-[10px] font-medium text-violet-500">
+                        شرط مجموع خرید
                       </label>
-                      <p className={`mt-1 text-lg font-bold text-purple-600`}>
-                        {pkg.elite_gift.amount.toLocaleString()} تومان
+                      <p className="mt-1 text-base font-black text-violet-700 dark:text-violet-300">
+                        {pkg.elite_gift.amount.toLocaleString('fa-IR')} تومان
                       </p>
                     </div>
                   )}
                   {pkg.elite_gift.count && (
-                    <div>
-                      <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
-                        تعداد
+                    <div className="col-span-2 rounded-2xl bg-violet-50 p-3 dark:bg-violet-500/10">
+                      <label className="text-[10px] font-medium text-violet-500">
+                        شرط تعداد مراجعه
                       </label>
-                      <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                        {pkg.elite_gift.count} عدد
+                      <p className="mt-1 text-base font-black text-violet-700 dark:text-violet-300">
+                        {pkg.elite_gift.count.toLocaleString('fa-IR')} مراجعه
                       </p>
                     </div>
                   )}
                   {pkg.elite_gift.description && (
-                    <div className="md:col-span-3">
-                      <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                    <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} col-span-2 rounded-2xl p-3`}>
+                      <label className="text-[10px] font-medium text-slate-400">
                         توضیحات هدیه
                       </label>
-                      <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      <p className={`mt-1 whitespace-pre-line text-xs leading-6 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {pkg.elite_gift.description}
                       </p>
                     </div>
@@ -1006,58 +1041,121 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
 
             {/* تجربیات VIP */}
             {pkg.experiences && pkg.experiences.length > 0 && (
-              <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
-                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
-                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center ml-2">
-                    <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
-                  </div>
-                  تجربیات VIP ({pkg.experiences.length} تجربه)
+              <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-amber-100 bg-white'} rounded-[24px] border p-4 shadow-sm`}>
+                <h3 className={`mb-3 flex items-center text-sm font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <span className="ml-2 flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
+                    <Sparkles className="h-4 w-4" />
+                  </span>
+                  تجربیات ویژه
+                  <span className="mr-auto rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
+                    {pkg.experiences.length.toLocaleString('fa-IR')} تجربه
+                  </span>
                 </h3>
                 <div className="space-y-3">
-                  {pkg.experiences.map((experience, index) => (
-                    <div key={index} className={`${isDark ? 'bg-slate-600' : 'bg-white'} rounded-lg p-3 border ${isDark ? 'border-slate-500' : 'border-gray-200'}`}>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                            {experience.vip_experience_category?.name}
-                          </h4>
-                          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                            {experience.vip_experience_category?.description}
-                          </p>
-                        </div>
-                        <div className="text-left">
-                          <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                            امتیاز: {experience.score}/5
-                          </span>
-                        </div>
+                  {goldExperiences.length > 0 && (
+                    <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-500/15 dark:bg-amber-500/5">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-[11px] font-black text-amber-700 dark:text-amber-300">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-[9px] text-white">G</span>
+                          تجربیات Gold
+                        </span>
+                        <span className="text-[9px] font-bold text-amber-600/70">
+                          {goldExperiences.length.toLocaleString('fa-IR')} مورد
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {goldExperiences.map(experience => (
+                          <div key={experience.id} className={`${isDark ? 'bg-slate-800/80' : 'bg-white'} rounded-xl p-3 shadow-sm`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className={`text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                {experience.vip_experience_category?.name}
+                              </h4>
+                              <span className="shrink-0 text-[9px] font-bold text-amber-600">
+                                امتیاز {Number(experience.score).toLocaleString('fa-IR')} از ۵
+                              </span>
+                            </div>
+                            <p className={`mt-1 whitespace-normal break-words text-[10px] leading-5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                              {experience.description || experience.vip_experience_category?.description}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {vipExperiences.length > 0 && (
+                    <div className="rounded-2xl border border-violet-100 bg-violet-50/50 p-3 dark:border-violet-500/15 dark:bg-violet-500/5">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-[11px] font-black text-violet-700 dark:text-violet-300">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 text-[8px] text-white">VIP</span>
+                          تجربیات VIP
+                        </span>
+                        <span className="text-[9px] font-bold text-violet-600/70">
+                          {vipExperiences.length.toLocaleString('fa-IR')} مورد
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {vipExperiences.map(experience => (
+                          <div key={experience.id} className={`${isDark ? 'bg-slate-800/80' : 'bg-white'} rounded-xl p-3 shadow-sm`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className={`text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                {experience.vip_experience_category?.name}
+                              </h4>
+                              <span className="shrink-0 text-[9px] font-bold text-violet-600">
+                                امتیاز {Number(experience.score).toLocaleString('fa-IR')} از ۵
+                              </span>
+                            </div>
+                            <p className={`mt-1 whitespace-normal break-words text-[10px] leading-5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                              {experience.description || experience.vip_experience_category?.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {goldExperiences.length === 0 && vipExperiences.length === 0 && (
+                    <div className="space-y-2">
+                      {pkg.experiences.map(experience => (
+                        <div key={experience.id} className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} rounded-2xl p-3`}>
+                          <div className="min-w-0">
+                            <h4 className={`text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              {experience.vip_experience_category?.name}
+                            </h4>
+                            <p className={`mt-1 whitespace-normal break-words text-[10px] leading-5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                              {experience.description || experience.vip_experience_category?.description}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* تاریخ‌های ایجاد و ویرایش */}
-            <div className={`${isDark ? 'bg-slate-700' : 'bg-gray-50'} rounded-xl p-4`}>
-              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+            <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'} rounded-[24px] border p-4 shadow-sm`}>
+              <h3 className={`mb-3 flex items-center gap-2 text-sm font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                  <Clock3 className="h-4 w-4" />
+                </span>
                 اطلاعات زمانی
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+              <div className="grid grid-cols-2 gap-2">
+                <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} rounded-2xl p-3`}>
+                  <label className="text-[10px] font-medium text-slate-400">
                     تاریخ ایجاد
                   </label>
-                  <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                  <p className={`mt-1.5 text-[10px] font-bold leading-5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
                     {formatShamsiDateTime(pkg.created_at)}
                   </p>
                 </div>
-                <div>
-                  <label className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                <div className={`${isDark ? 'bg-slate-800/70' : 'bg-slate-50'} rounded-2xl p-3`}>
+                  <label className="text-[10px] font-medium text-slate-400">
                     آخرین ویرایش
                   </label>
-                  <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                  <p className={`mt-1.5 text-[10px] font-bold leading-5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
                     {formatShamsiDateTime(pkg.modified_at)}
                   </p>
                 </div>
@@ -1067,12 +1165,13 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
         </div>
 
         {/* Footer */}
-        <div className={`${isDark ? 'bg-slate-700 border-slate-600' : 'bg-gray-50 border-gray-200'} px-6 py-4 border-t flex justify-end`}>
+        <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'} border-t px-4 py-3`}>
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="w-full rounded-2xl bg-[#7C5CFC] py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/15 transition hover:bg-[#6D4EED]"
           >
-            بستن
+            متوجه شدم
           </button>
         </div>
       </div>

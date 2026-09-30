@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { apiService, Package, VipExperienceCategory } from '../../services/api'
@@ -787,6 +787,7 @@ interface PackageDetailsModalProps {
 
 const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg, onClose }) => {
   const { isDark } = useTheme()
+  const contentScrollRef = useRef<HTMLDivElement>(null)
   const statusBadge = packageStatusBadge(pkg)
   const goldExperiences = pkg.experiences?.filter(
     experience => experience.vip_experience_category?.vip_type === 'VIP',
@@ -796,19 +797,28 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
   ) || []
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    const resetScrollFrame = window.requestAnimationFrame(() => {
+      contentScrollRef.current?.scrollTo({ top: 0 })
+    })
+    return () => {
+      window.cancelAnimationFrame(resetScrollFrame)
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-[2px] sm:items-center sm:p-4" dir="rtl">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-slate-950/60 p-0 backdrop-blur-[2px] sm:p-4" dir="rtl">
       <button type="button" aria-label="بستن جزئیات" className="absolute inset-0" onClick={onClose} />
-      <div className={`${isDark ? 'bg-slate-950' : 'bg-[#F7F7FB]'} relative flex max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[30px] shadow-2xl sm:max-h-[90vh] sm:rounded-[30px]`}>
+      <div className={`${isDark ? 'bg-slate-950' : 'bg-[#F7F7FB]'} relative flex h-[100dvh] min-h-0 w-full max-w-2xl flex-col overflow-hidden shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-[30px]`}>
         {/* Header */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#6D5DFB] via-[#7C5CFC] to-[#9B7BFF] px-5 pb-5 pt-4 text-white">
+        <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-[#6D5DFB] via-[#7C5CFC] to-[#9B7BFF] px-5 pb-5 pt-[max(1rem,env(safe-area-inset-top))] text-white">
           <div className="absolute -left-8 -top-12 h-32 w-32 rounded-full bg-white/10" />
           <div className="absolute -bottom-16 right-24 h-32 w-32 rounded-full bg-white/10" />
           <button
@@ -841,7 +851,7 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
+        <div ref={contentScrollRef} className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
           <div className="space-y-3 p-4 sm:p-5">
             {/* وضعیت و اطلاعات کلی */}
             <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'} rounded-[24px] border p-4 shadow-sm`}>
@@ -1165,7 +1175,7 @@ const PackageDetailsModal: React.FC<PackageDetailsModalProps> = ({ package: pkg,
         </div>
 
         {/* Footer */}
-        <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'} border-t px-4 py-3`}>
+        <div className={`${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'} shrink-0 border-t px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3`}>
           <button
             type="button"
             onClick={onClose}

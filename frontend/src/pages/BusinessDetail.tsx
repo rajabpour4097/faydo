@@ -10,7 +10,10 @@ import { ReviewItem, ReviewReply } from '../components/business/AllReviewsModal'
 interface Comment {
   id: number
   user_name: string
-  content: string
+  content?: string
+  text?: string
+  score?: number | null
+  service_type?: string
   likes_count: number
   is_liked: boolean
   category: string
@@ -111,7 +114,9 @@ export const BusinessDetail: React.FC = () => {
           (commentsRes.value.data as Comment[]).map(c => ({
             id: c.id,
             user_name: c.user_name,
-            content: c.content,
+            content: c.content || c.text || '',
+            score: c.score,
+            service_type: c.service_type || c.category,
             likes_count: c.likes_count,
             is_liked: c.is_liked,
             created_at: c.created_at,

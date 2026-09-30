@@ -8,7 +8,13 @@ import { getTodayHoursLabel, isBusinessOpenNow, openNavigationApps } from '../..
 import { WorkingHoursModal } from './WorkingHoursModal'
 import { BusinessMapPreview } from './BusinessMapPreview'
 import { ImageLightboxModal } from './ImageLightboxModal'
-import { AllReviewsModal, ReviewItem, ReviewReplyBlock } from './AllReviewsModal'
+import {
+  AllReviewsModal,
+  ReviewItem,
+  ReviewReplyBlock,
+  reviewServiceClass,
+  reviewServiceLabel,
+} from './AllReviewsModal'
 import { formatShamsiDateTime } from '../../utils/shamsiDate'
 import { Clock, MapPin, MessageSquare, ChevronLeft, Navigation, Gift, Tag, Star } from 'lucide-react'
 
@@ -331,6 +337,16 @@ export const BusinessCustomerView: React.FC<BusinessCustomerViewProps> = ({
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-semibold text-gray-800 dark:text-white">{review.user_name}</span>
                       <span className="text-[10px] text-gray-400 shrink-0">{formatShamsiDateTime(review.created_at)}</span>
+                    </div>
+                    <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${reviewServiceClass(review.service_type || review.category)}`}>
+                        بابت {reviewServiceLabel(review.service_type || review.category)}
+                      </span>
+                      {review.score != null && (
+                        <span className="text-[10px] font-bold text-amber-500">
+                          ★ {review.score.toLocaleString('fa-IR')} از ۵
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-gray-600 dark:text-slate-300 line-clamp-2 mb-1">{review.content}</p>
                     <button

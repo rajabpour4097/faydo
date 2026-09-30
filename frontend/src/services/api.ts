@@ -307,11 +307,23 @@ export interface WorkingHoursEntry {
 export interface Comment {
   id: number
   text: string
+  content?: string
+  score?: number | null
+  service_type?: 'discount_all' | 'specific_discount' | 'elite_gift' | 'vip_experience' | string
+  category?: string
   user_name: string
   user_last_name: string
   created_at: string
   likes_count: number
   is_liked: boolean
+  reply?: {
+    id: number
+    business_name: string
+    content: string
+    likes_count: number
+    is_liked: boolean
+    created_at: string
+  } | null
 }
 
 export interface EliteGiftClaim {

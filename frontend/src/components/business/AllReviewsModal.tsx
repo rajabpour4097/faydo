@@ -14,11 +14,29 @@ export interface ReviewItem {
   id: number
   user_name: string
   content: string
+  score?: number | null
+  service_type?: string
   likes_count: number
   is_liked: boolean
   created_at: string
   category?: string
   reply?: ReviewReply | null
+}
+
+export function reviewServiceLabel(serviceType?: string) {
+  return ({
+    discount_all: 'خرید معمولی',
+    specific_discount: 'خرید با تخفیف ویژه',
+    elite_gift: 'هدیه ویژه',
+    vip_experience: 'تجربه VIP',
+  } as Record<string, string>)[serviceType || ''] || 'خرید'
+}
+
+export function reviewServiceClass(serviceType?: string) {
+  if (serviceType === 'elite_gift') return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+  if (serviceType === 'specific_discount') return 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'
+  if (serviceType === 'vip_experience') return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+  return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
 }
 
 export function ReviewReplyBlock({
@@ -99,6 +117,16 @@ export const AllReviewsModal: React.FC<AllReviewsModalProps> = ({
                       <span className="text-[10px] text-gray-400 shrink-0">
                         {formatShamsiDateTime(review.created_at)}
                       </span>
+                    </div>
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${reviewServiceClass(review.service_type || review.category)}`}>
+                        بابت {reviewServiceLabel(review.service_type || review.category)}
+                      </span>
+                      {review.score != null && (
+                        <span className="text-[11px] font-bold text-amber-500">
+                          ★ {review.score.toLocaleString('fa-IR')} از ۵
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed mb-2">
                       {review.content}

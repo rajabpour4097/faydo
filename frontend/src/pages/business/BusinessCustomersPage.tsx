@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { BusinessScreen } from '../../components/business/BusinessScreen'
-import { apiService, BusinessCustomerRow, BusinessTransaction } from '../../services/api'
+import { apiService, BusinessCustomerRow, BusinessTransaction, getFullImageUrl } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { faNum, formatToman } from '../../components/business/businessHomeUtils'
 import { maskPhone } from '../../components/business/businessTransactionUtils'
@@ -109,8 +109,16 @@ export const BusinessCustomersPage = () => {
                 onClick={() => openCustomer(row)}
                 className={`flex w-full items-center gap-3 rounded-[22px] p-3 text-right ${card}`}
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#7C5CFC] text-sm font-black text-white">
+                <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#7C5CFC] text-sm font-black text-white">
                   {(row.name || 'م').charAt(0)}
+                  {row.image && (
+                    <img
+                      src={getFullImageUrl(row.image)}
+                      alt={row.name}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      onError={event => { event.currentTarget.style.display = 'none' }}
+                    />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

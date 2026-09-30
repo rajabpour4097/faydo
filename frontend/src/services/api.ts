@@ -650,6 +650,7 @@ export interface BusinessCustomerRow {
   customer_id: number
   name: string
   phone: string
+  image: string | null
   points: number
   vip_status: 'none' | 'vip' | 'vip_plus'
   transaction_count: number

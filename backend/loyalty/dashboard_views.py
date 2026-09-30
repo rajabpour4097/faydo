@@ -570,11 +570,18 @@ def business_customers(request):
         user = loyalty.customer.user
         name = (user.get_full_name() or '').strip() or user.username
         phone = user.phone_number or ''
+        image = None
+        if user.image:
+            try:
+                image = request.build_absolute_uri(user.image.url)
+            except ValueError:
+                pass
         return {
             'id': loyalty.id,
             'customer_id': loyalty.customer_id,
             'name': name,
             'phone': phone,
+            'image': image,
             'points': loyalty.points,
             'vip_status': loyalty.vip_status,
             'transaction_count': tx_count,

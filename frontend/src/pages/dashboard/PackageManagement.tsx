@@ -679,15 +679,17 @@ const MobilePackageManagement: React.FC<MobilePackageManagementProps> = ({
                     )}
 
                     {pkg.elite_gift_title && (
-                      <div className="flex items-center rounded-2xl bg-violet-50 p-3 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+                      <div className="col-span-2 flex items-start rounded-2xl bg-violet-50 p-3 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
                         <div className="ml-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/70">
                           <Gift className="h-4 w-4" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="text-[10px] font-medium opacity-70">هدیه وفاداری</div>
-                          <div className="truncate text-[11px] font-black">{pkg.elite_gift_title}</div>
+                          <div className="mt-0.5 whitespace-normal break-words text-[10px] font-bold leading-5">
+                            {pkg.elite_gift_title}
+                          </div>
                           {pkg.elite_gift_amount && (
-                            <div className="truncate text-[9px] opacity-70">
+                            <div className="mt-0.5 whitespace-normal text-[9px] leading-4 opacity-70">
                               برای {formatAmount(pkg.elite_gift_amount)} تومان خرید
                             </div>
                           )}

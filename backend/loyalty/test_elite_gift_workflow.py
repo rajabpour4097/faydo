@@ -158,6 +158,17 @@ class EliteGiftWorkflowTests(TestCase):
             elite_gift=self.gift,
             progress_at_claim=self.gift.get_customer_progress(self.customer),
         )
+        no_purchase_user = User.objects.create_user(
+            username='gift-no-purchase',
+            password='pass12345',
+            phone_number='09120002003',
+            role='customer',
+        )
+        no_purchase_customer = CustomerProfile.objects.create(user=no_purchase_user)
+        CustomerLoyalty.objects.create(
+            customer=no_purchase_customer,
+            business=self.business,
+        )
         self.client.force_authenticate(self.business_user)
 
         response = self.client.get('/api/loyalty/elite-gift-claims/customers/')
@@ -165,6 +176,7 @@ class EliteGiftWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['customers']), 1)
         row = response.data['customers'][0]
+        self.assertEqual(row['customer_id'], self.customer.id)
         self.assertEqual(row['status'], 'pending')
         self.assertEqual(row['progress']['percentage'], 0)
         self.assertIsNotNone(row['last_purchase_at'])

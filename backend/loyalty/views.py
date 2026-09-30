@@ -857,16 +857,14 @@ class EliteGiftClaimViewSet(viewsets.ModelViewSet):
         if not package:
             return Response({'package': None, 'customers': []})
 
+        # عضویت در باشگاه به‌تنهایی کافی نیست؛ فقط مشتری دارای حداقل یک
+        # خرید عادی تاییدشده باید در مسیر دریافت هدیه نمایش داده شود.
         customer_ids = set(
-            CustomerLoyalty.objects.filter(business=business)
-            .values_list('customer_id', flat=True)
-        )
-        customer_ids.update(
-            Transaction.objects.filter(business=business)
-            .values_list('customer_id', flat=True)
-        )
-        customer_ids.update(
-            EliteGiftClaim.objects.filter(business=business, package=package)
+            Transaction.objects.filter(
+                business=business,
+                status='approved',
+            )
+            .exclude(transaction_type='elite_gift')
             .values_list('customer_id', flat=True)
         )
 

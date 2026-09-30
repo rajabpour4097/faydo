@@ -19,6 +19,7 @@ import {
   statusStyle,
 } from '../../components/business/businessTransactionUtils'
 import { PersianDateTimePicker, nowDateTimeValue, startOfTodayValue } from '../../components/PersianDateTimePicker'
+import { loyaltyService } from '../../services/loyalty'
 
 const emptySummary: BusinessTransactionSummary = {
   period: 'today',
@@ -51,6 +52,7 @@ export const BusinessTransactionsPage = () => {
   const [count, setCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const targetTransactionId = Number(params.get('transaction') || 0)
 
   useEffect(() => {
     const fromUrl = params.get('status')
@@ -94,6 +96,13 @@ export const BusinessTransactionsPage = () => {
     load(1, false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query.status, query.period, query.date_from, query.date_to, query.search])
+
+  useEffect(() => {
+    if (!targetTransactionId) return
+    loyaltyService.getTransaction(targetTransactionId)
+      .then(transaction => setSelected(transaction as BusinessTransaction))
+      .catch(() => setError('تراکنش مربوط به این اعلان یافت نشد.'))
+  }, [targetTransactionId])
 
   const pageBg = isDark ? 'bg-slate-900 text-white' : 'bg-[#F4F6FB] text-gray-900'
   const card = isDark ? 'bg-slate-800' : 'bg-white'

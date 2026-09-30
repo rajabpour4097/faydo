@@ -8,6 +8,7 @@ import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLa
 import { useNotification } from '../../contexts/NotificationContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { AppNotification } from '../../services/notifications'
+import { useAuth } from '../../contexts/AuthContext'
 
 const iconFor = (item: AppNotification) => {
   if (item.notification_type.includes('gift')) return Gift
@@ -23,6 +24,7 @@ const formatDate = (value: string) =>
 
 export const NotificationsPage = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { isDark } = useTheme()
   const {
     notifications, unreadCount, notificationsLoading, soundEnabled,
@@ -37,7 +39,19 @@ export const NotificationsPage = () => {
 
   const openNotification = async (item: AppNotification) => {
     if (!item.is_read) await markNotificationRead(item.id)
-    if (item.action_url) navigate(item.action_url)
+    const transactionId = Number(item.metadata?.transaction_id || 0)
+    const claimId = Number(item.metadata?.claim_id || 0)
+    if (transactionId) {
+      navigate(`/dashboard/transactions?transaction=${transactionId}`)
+    } else if (claimId) {
+      navigate(
+        user?.type === 'business'
+          ? `/dashboard/elite-gift-claims?claim=${claimId}`
+          : `/dashboard/gift-claims?claim=${claimId}`,
+      )
+    } else if (item.action_url) {
+      navigate(item.action_url)
+    }
   }
 
   return (

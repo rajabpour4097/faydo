@@ -42,6 +42,7 @@ import { CustomerTransactionsPage } from './pages/customer/CustomerTransactionsP
 import { CustomerPointsDetailsPage } from './pages/customer/CustomerPointsDetailsPage'
 import { CustomerCashbackDetailsPage } from './pages/customer/CustomerCashbackDetailsPage'
 import { CustomerFavoritesPage } from './pages/customer/CustomerFavoritesPage'
+import { CustomerGiftClaimsPage } from './pages/customer/CustomerGiftClaimsPage'
 import { NotificationsPage } from './pages/dashboard/NotificationsPage'
 import { useAuth } from './contexts/AuthContext'
 
@@ -160,6 +161,11 @@ const DashboardRouter = () => {
       <Route path="elite-gift-claims" element={
         <ProfileGuard>
           {isBusinessUser ? <EliteGiftClaimsPage /> : <Navigate to="/dashboard" />}
+        </ProfileGuard>
+      } />
+      <Route path="gift-claims" element={
+        <ProfileGuard>
+          {isBusinessUser ? <Navigate to="/dashboard/elite-gift-claims" /> : <CustomerGiftClaimsPage />}
         </ProfileGuard>
       } />
       <Route path="admin/clubs" element={<ClubManagement />} />

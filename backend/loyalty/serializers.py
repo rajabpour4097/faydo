@@ -457,7 +457,7 @@ class TransactionCommentSerializer(serializers.Serializer):
             notification_type='review_created',
             title='نظر جدید مشتری',
             message=f'{customer_name} برای تراکنش خود نظر یا امتیاز ثبت کرد.',
-            action_url='/dashboard/transactions',
+            action_url=f'/dashboard/transactions?transaction={transaction.id}',
             metadata={'transaction_id': transaction.id, 'comment_id': comment.id},
         )
         

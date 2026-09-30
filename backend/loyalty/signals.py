@@ -31,7 +31,7 @@ def notify_transaction_event(sender, instance, created, **kwargs):
             title='تراکنش جدید در انتظار تایید',
             message=f'{_person_name(instance.customer)} تراکنشی به مبلغ {amount} تومان ثبت کرد.',
             priority='important',
-            action_url='/dashboard/transactions',
+            action_url=f'/dashboard/transactions?transaction={instance.pk}',
             metadata=metadata,
         )
         return
@@ -43,7 +43,7 @@ def notify_transaction_event(sender, instance, created, **kwargs):
             title='تراکنش شما تایید شد',
             message=f'تراکنش {amount} تومانی شما در {instance.business.name} تایید شد.',
             priority='important',
-            action_url='/dashboard/transactions',
+            action_url=f'/dashboard/transactions?transaction={instance.pk}',
             metadata=metadata,
         )
     elif instance.status == 'rejected' and previous == 'pending':
@@ -54,7 +54,7 @@ def notify_transaction_event(sender, instance, created, **kwargs):
             title='تراکنش شما رد شد',
             message=f'تراکنش شما در {instance.business.name} رد شد.{reason}',
             priority='urgent',
-            action_url='/dashboard/transactions',
+            action_url=f'/dashboard/transactions?transaction={instance.pk}',
             metadata=metadata,
         )
 
@@ -79,7 +79,7 @@ def notify_gift_claim_event(sender, instance, created, **kwargs):
             title='درخواست جدید هدیه ویژه',
             message=f'{_person_name(instance.customer)} درخواست دریافت «{instance.elite_gift.gift}» را ارسال کرد.',
             priority='important',
-            action_url='/dashboard/elite-gift-claims',
+            action_url=f'/dashboard/elite-gift-claims?claim={instance.pk}',
             metadata=metadata,
         )
         return
@@ -96,7 +96,7 @@ def notify_gift_claim_event(sender, instance, created, **kwargs):
                 f'زمان تحویل: {delivery}. مهلت دریافت تا {deadline} است.'
             ),
             priority='important',
-            action_url='/dashboard/notifications',
+            action_url=f'/dashboard/gift-claims?claim={instance.pk}',
             metadata=metadata,
         )
     elif instance.status == 'rejected' and previous == 'pending':
@@ -107,7 +107,7 @@ def notify_gift_claim_event(sender, instance, created, **kwargs):
             title='درخواست هدیه شما رد شد',
             message=f'درخواست «{instance.elite_gift.gift}» توسط {instance.business.name} رد شد.{note}',
             priority='urgent',
-            action_url='/dashboard/transactions',
+            action_url=f'/dashboard/gift-claims?claim={instance.pk}',
             metadata=metadata,
         )
     elif instance.status == 'used' and previous == 'approved':
@@ -116,7 +116,7 @@ def notify_gift_claim_event(sender, instance, created, **kwargs):
             notification_type='gift_claim_used',
             title='هدیه ویژه استفاده شد',
             message=f'هدیه «{instance.elite_gift.gift}» در {instance.business.name} استفاده‌شده ثبت شد.',
-            action_url='/dashboard/transactions',
+            action_url=f'/dashboard/gift-claims?claim={instance.pk}',
             metadata=metadata,
         )
 

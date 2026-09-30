@@ -323,7 +323,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             notification_type='review_replied',
             title='پاسخ جدید به نظر شما',
             message=f'{business.name} به نظر شما درباره تراکنش پاسخ داد.',
-            action_url='/dashboard/transactions',
+            action_url=f'/dashboard/transactions?transaction={transaction.id}',
             metadata={'transaction_id': transaction.id, 'comment_id': comment.id},
         )
         reply = CommentReply.objects.select_related('business').prefetch_related('likes').get(pk=reply.pk)

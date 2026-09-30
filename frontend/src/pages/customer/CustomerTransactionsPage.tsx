@@ -6,6 +6,7 @@ import { TransactionRatingModal } from '../../components/customer/TransactionRat
 import { PurchaseResultModal } from '../../components/customer/PurchaseResultModal'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { useQrScanner } from '../../contexts/QrScannerContext'
+import { useSearchParams } from 'react-router-dom'
 
 // Mobile Component
 interface MobileMyTransactionsProps {
@@ -154,6 +155,7 @@ const MobileMyTransactions: React.FC<MobileMyTransactionsProps> = ({
 
 export const CustomerTransactionsPage: React.FC = () => {
   const qrScanner = useQrScanner()
+  const [params] = useSearchParams()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -188,6 +190,17 @@ export const CustomerTransactionsPage: React.FC = () => {
   useEffect(() => {
     loadTransactions()
   }, [])
+
+  const targetTransactionId = Number(params.get('transaction') || 0)
+  useEffect(() => {
+    if (!targetTransactionId) return
+    loyaltyService.getTransaction(targetTransactionId)
+      .then(transaction => {
+        setSelectedTransaction(transaction)
+        setShowResultModal(true)
+      })
+      .catch(() => setError('تراکنش مربوط به این اعلان یافت نشد.'))
+  }, [targetTransactionId])
 
   const handleTransactionClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction)

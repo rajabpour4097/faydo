@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { apiService, EliteGiftClaim, EliteGiftCustomerRow } from '../../services/api'
 import { useTheme } from '../../contexts/ThemeContext'
 import { MobileDashboardLayout } from '../../components/layout/MobileDashboardLayout'
 import { Gift, Check, X, Clock, CheckCircle, ChevronLeft } from 'lucide-react'
 import { formatRelativeShamsi, formatShamsiDateTime, parseShamsiDateTime, toShamsiInputParts } from '../../utils/shamsiDate'
+import { useSearchParams } from 'react-router-dom'
 
 export const EliteGiftClaimsPage: React.FC = () => {
   const { isDark } = useTheme()
+  const [params] = useSearchParams()
   const [claims, setClaims] = useState<EliteGiftClaim[]>([])
   const [customers, setCustomers] = useState<EliteGiftCustomerRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -19,6 +21,7 @@ export const EliteGiftClaimsPage: React.FC = () => {
   const [deliveryTime, setDeliveryTime] = useState('')
   const [modalError, setModalError] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | EliteGiftCustomerRow['status']>('all')
+  const openedClaimId = useRef(0)
 
   const loadClaims = async () => {
     setIsLoading(true)
@@ -56,6 +59,16 @@ export const EliteGiftClaimsPage: React.FC = () => {
     setModalError('')
     setShowModal(true)
   }
+
+  const targetClaimId = Number(params.get('claim') || 0)
+  useEffect(() => {
+    if (!targetClaimId || showModal || openedClaimId.current === targetClaimId) return
+    const claim = claims.find(item => item.id === targetClaimId)
+    if (claim) {
+      openedClaimId.current = targetClaimId
+      handleClaimClick(claim)
+    }
+  }, [targetClaimId, claims, showModal])
 
   const handleModalClose = () => {
     setShowModal(false)
